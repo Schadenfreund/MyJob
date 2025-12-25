@@ -1,0 +1,41 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+build/
+*.iml
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific exclusions - IMPORTANT
+Design_Template/
+Private_Data/
+
+# Generated files
+*.g.dart
+*.freezed.dart
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Windows build artifacts
+*.exe
+*.dll
+*.pdb
+
+# Logs
+*.log
+
+# Local configuration
+.env
+*.local
+
+# Test coverage
+coverage/
