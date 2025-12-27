@@ -5,11 +5,10 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../models/cv_data.dart';
 import '../models/template_style.dart';
-import '../pdf/cv_templates/professional_cv_template.dart';
-import '../pdf/cv_templates/modern_cv_template.dart';
-import '../pdf/cv_templates/executive_cv_template.dart';
+import '../models/template_customization.dart';
+import '../pdf/cv_templates/electric_cv_template.dart';
 
-/// Service for generating professional CV PDFs from CvTemplate/CvData
+/// Service for generating professional CV PDFs using the Electric magazine-style template
 class CvTemplatePdfService {
   /// Generate a CV PDF from CvData using template classes
   ///
@@ -19,10 +18,16 @@ class CvTemplatePdfService {
     required CvData cvData,
     required String outputPath,
     TemplateStyle? templateStyle,
+    TemplateCustomization? customization,
     bool includeProfilePicture = true,
   }) async {
-    final style = templateStyle ?? TemplateStyle.professional;
+    final style = templateStyle ?? TemplateStyle.electric;
     final pdf = pw.Document();
+
+    // Load fonts for Unicode support (special characters like ć, –, etc.)
+    final boldFont = await PdfGoogleFonts.interBold();
+    final regularFont = await PdfGoogleFonts.interRegular();
+    final mediumFont = await PdfGoogleFonts.interMedium();
 
     // Load profile picture if path is provided
     Uint8List? profileImageBytes;
@@ -32,33 +37,17 @@ class CvTemplatePdfService {
       );
     }
 
-    // Use specialized template classes based on template type (3 distinct templates)
-    switch (style.type) {
-      case TemplateType.modern:
-        // Modern two-column template with sidebar
-        ModernCvTemplate.build(
-          pdf,
-          cvData,
-          style,
-          profileImageBytes: profileImageBytes,
-        );
-      case TemplateType.creative:
-        // Creative template with timeline and unique graphics
-        ExecutiveCvTemplate.build(
-          pdf,
-          cvData,
-          style,
-          profileImageBytes: profileImageBytes,
-        );
-      case TemplateType.professional:
-        // Classic single-column template
-        ProfessionalCvTemplate.build(
-          pdf,
-          cvData,
-          style,
-          profileImageBytes: profileImageBytes,
-        );
-    }
+    // Use Electric magazine-style template
+    ElectricCvTemplate.build(
+      pdf,
+      cvData,
+      style,
+      regularFont: regularFont,
+      boldFont: boldFont,
+      mediumFont: mediumFont,
+      profileImageBytes: profileImageBytes,
+      customization: customization,
+    );
 
     // Save the PDF
     final file = File(outputPath);
@@ -86,7 +75,7 @@ class CvTemplatePdfService {
     required String outputPath,
     TemplateStyle? templateStyle,
   }) async {
-    final style = templateStyle ?? TemplateStyle.professional;
+    final style = templateStyle ?? TemplateStyle.electric;
     final pdf = pw.Document();
 
     // Load fonts for better typography
@@ -252,11 +241,8 @@ class CvTemplatePdfService {
   /// Get margins based on template type
   pw.EdgeInsets _getMargins(TemplateType type) {
     switch (type) {
-      case TemplateType.professional:
-        return const pw.EdgeInsets.all(50); // Traditional margins
-      case TemplateType.modern:
-      case TemplateType.creative:
-        return const pw.EdgeInsets.all(40); // Standard margins
+      case TemplateType.electric:
+        return pw.EdgeInsets.zero; // Electric template uses custom layout with no default margins
     }
   }
 
@@ -268,7 +254,7 @@ class CvTemplatePdfService {
     pw.Font regularFont,
     TemplateType templateType,
   ) {
-    final isClassic = templateType == TemplateType.professional;
+    final isClassic = templateType == TemplateType.electric;
     final contactDetails = cvData.contactDetails;
 
     return pw.Column(
@@ -362,7 +348,7 @@ class CvTemplatePdfService {
     required TemplateType templateType,
     required List<pw.Widget> content,
   }) {
-    final isClassic = templateType == TemplateType.professional;
+    final isClassic = templateType == TemplateType.electric;
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,

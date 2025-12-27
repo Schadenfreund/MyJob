@@ -19,6 +19,9 @@ class ModernCoverLetterTemplate {
     pw.Document pdf,
     CoverLetter letter,
     TemplateStyle style, {
+    required pw.Font regularFont,
+    required pw.Font boldFont,
+    required pw.Font mediumFont,
     String? senderAddress,
     String? senderPhone,
     String? senderEmail,
@@ -26,10 +29,22 @@ class ModernCoverLetterTemplate {
     final primaryColor = PdfColor.fromInt(style.primaryColor.toARGB32());
     final accentColor = PdfColor.fromInt(style.accentColor.toARGB32());
 
+    // Create font fallback list for Unicode support
+    final fontFallback = PdfComponents.getFontFallback(
+      regularFont: regularFont,
+      boldFont: boldFont,
+      mediumFont: mediumFont,
+    );
+
     pdf.addPage(
       pw.Page(
         pageFormat: PdfConstants.pageFormat,
         margin: pw.EdgeInsets.zero,
+        theme: pw.ThemeData.withFont(
+          base: regularFont,
+          bold: boldFont,
+          fontFallback: fontFallback,
+        ),
         build: (context) => pw.Column(
           children: [
             // Colored header bar

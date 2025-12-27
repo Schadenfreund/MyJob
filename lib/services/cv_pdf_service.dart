@@ -163,6 +163,8 @@ class CvPdfService {
       case TemplateType.modern:
       case TemplateType.creative:
         return const pw.EdgeInsets.all(40); // Standard margins
+      case TemplateType.yellow:
+        return pw.EdgeInsets.zero; // Yellow template uses custom layout with no default margins
     }
   }
 

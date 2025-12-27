@@ -159,6 +159,8 @@ class CoverLetterPdfService {
       case TemplateType.modern:
       case TemplateType.creative:
         return const pw.EdgeInsets.all(60); // Standard letter margins
+      case TemplateType.yellow:
+        return const pw.EdgeInsets.all(60); // Yellow template uses custom layout
     }
   }
 

@@ -19,12 +19,22 @@ class ProfessionalCoverLetterTemplate {
     pw.Document pdf,
     CoverLetter letter,
     TemplateStyle style, {
+    required pw.Font regularFont,
+    required pw.Font boldFont,
+    required pw.Font mediumFont,
     String? senderAddress,
     String? senderPhone,
     String? senderEmail,
   }) {
     final primaryColor = PdfColor.fromInt(style.primaryColor.toARGB32());
     final accentColor = PdfColor.fromInt(style.accentColor.toARGB32());
+
+    // Create font fallback list for Unicode support
+    final fontFallback = PdfComponents.getFontFallback(
+      regularFont: regularFont,
+      boldFont: boldFont,
+      mediumFont: mediumFont,
+    );
 
     pdf.addPage(
       pw.MultiPage(
@@ -34,6 +44,11 @@ class ProfessionalCoverLetterTemplate {
           bottom: PdfConstants.marginBottom,
           left: PdfConstants.marginLeft,
           right: PdfConstants.marginRight,
+        ),
+        theme: pw.ThemeData.withFont(
+          base: regularFont,
+          bold: boldFont,
+          fontFallback: fontFallback,
         ),
         build: (context) => [
           // Header with sender info

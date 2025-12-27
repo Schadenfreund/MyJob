@@ -168,6 +168,8 @@ class _TemplateStyleCardState extends State<TemplateStyleCard> {
         return Icons.palette;
       case TemplateType.creative:
         return Icons.auto_awesome;
+      case TemplateType.yellow:
+        return Icons.wb_sunny; // Sun icon for yellow/bright template
     }
   }
 }

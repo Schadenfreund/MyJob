@@ -4,7 +4,9 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../models/cv_data.dart';
 import '../../models/template_style.dart';
+import '../../models/template_customization.dart';
 import '../../constants/pdf_constants.dart';
+import '../core/base_cv_template.dart';
 import '../shared/pdf_components.dart';
 
 /// Professional CV Template - Clean Single-Column Layout
@@ -22,20 +24,17 @@ class ProfessionalCvTemplate {
     pw.Document pdf,
     CvData cv,
     TemplateStyle style, {
+    required pw.Font regularFont,
+    required pw.Font boldFont,
+    required pw.Font mediumFont,
     Uint8List? profileImageBytes,
+    TemplateCustomization? customization,
   }) {
-    final primaryColor = PdfColor.fromInt(style.primaryColor.toARGB32());
-    final accentColor = PdfColor.fromInt(style.accentColor.toARGB32());
-
-    // Create profile image if bytes provided
-    pw.ImageProvider? profileImage;
-    if (profileImageBytes != null) {
-      try {
-        profileImage = pw.MemoryImage(profileImageBytes);
-      } catch (_) {
-        // Ignore image loading errors
-      }
-    }
+    // Use base template helpers (DRY)
+    final custom = BaseCvTemplate.getCustomization(customization);
+    final colors = BaseCvTemplate.getColors(style);
+    final profileImage = BaseCvTemplate.loadProfileImage(profileImageBytes, custom);
+    final fontFallback = [regularFont, boldFont, mediumFont];
 
     pdf.addPage(
       pw.MultiPage(
@@ -46,84 +45,23 @@ class ProfessionalCvTemplate {
           left: PdfConstants.marginLeft,
           right: PdfConstants.marginRight,
         ),
+        theme: pw.ThemeData.withFont(
+          base: regularFont,
+          bold: boldFont,
+          fontFallback: fontFallback,
+        ),
         build: (context) => [
-          // Header with optional profile picture
-          _buildHeader(cv, primaryColor, accentColor, profileImage),
+          // Template-specific header
+          _buildHeader(cv, colors.primary, colors.accent, profileImage),
+          pw.SizedBox(height: custom?.sectionSpacing ?? PdfConstants.sectionSpacing),
 
-          PdfComponents.sectionSpacer,
-
-          // Profile/Summary
-          if (cv.profile.isNotEmpty) ...[
-            PdfComponents.buildSectionHeaderDivider('Professional Summary', primaryColor),
-            pw.SizedBox(height: PdfConstants.spaceMd),
-            PdfComponents.buildParagraph(cv.profile, justified: true),
-            PdfComponents.sectionSpacer,
-          ],
-
-          // Professional Experience
-          if (cv.experiences.isNotEmpty) ...[
-            PdfComponents.buildSectionHeaderDivider('Professional Experience', primaryColor),
-            pw.SizedBox(height: PdfConstants.spaceMd),
-            ...cv.experiences.map((exp) {
-              return PdfComponents.buildExperienceEntry(
-                title: exp.title,
-                company: exp.company,
-                dateRange: exp.dateRange,
-                description: exp.description,
-                bullets: exp.bullets,
-                primaryColor: primaryColor,
-              );
-            }),
-            PdfComponents.sectionSpacer,
-          ],
-
-          // Education
-          if (cv.education.isNotEmpty) ...[
-            PdfComponents.buildSectionHeaderDivider('Education', primaryColor),
-            pw.SizedBox(height: PdfConstants.spaceMd),
-            ...cv.education.map((edu) {
-              return PdfComponents.buildEducationEntry(
-                degree: edu.degree,
-                institution: edu.institution,
-                dateRange: edu.dateRange,
-                details: edu.description,
-                primaryColor: primaryColor,
-              );
-            }),
-            PdfComponents.sectionSpacer,
-          ],
-
-          // Skills (with proficiency levels)
-          if (cv.skills.isNotEmpty) ...[
-            PdfComponents.buildSectionHeaderDivider('Skills', primaryColor),
-            pw.SizedBox(height: PdfConstants.spaceMd),
-            PdfComponents.buildSkillBadgesWithLevels(cv.skills, accentColor),
-            PdfComponents.sectionSpacer,
-          ],
-
-          // Languages
-          if (cv.languages.isNotEmpty) ...[
-            PdfComponents.buildSectionHeaderDivider('Languages', primaryColor),
-            pw.SizedBox(height: PdfConstants.spaceMd),
-            pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: cv.languages.map((lang) {
-                return PdfComponents.buildKeyValuePair(
-                  lang.language,
-                  lang.level,
-                  keyColor: primaryColor,
-                );
-              }).toList(),
-            ),
-            if (cv.interests.isNotEmpty) PdfComponents.sectionSpacer,
-          ],
-
-          // Interests
-          if (cv.interests.isNotEmpty) ...[
-            PdfComponents.buildSectionHeaderDivider('Interests', primaryColor),
-            pw.SizedBox(height: PdfConstants.spaceMd),
-            PdfComponents.buildInlineList(cv.interests),
-          ],
+          // Standard sections (DRY - reused across all templates)
+          ...BaseCvTemplate.buildStandardSections(
+            cv,
+            colors.primary,
+            colors.accent,
+            custom,
+          ),
         ],
       ),
     );
@@ -143,7 +81,7 @@ class ProfessionalCvTemplate {
     return null;
   }
 
-  /// Build header with optional profile picture
+  /// Build header with optional profile picture (template-specific layout)
   static pw.Widget _buildHeader(
     CvData cv,
     PdfColor primaryColor,
@@ -235,5 +173,4 @@ class ProfessionalCvTemplate {
       ],
     );
   }
-
 }

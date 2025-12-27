@@ -23,10 +23,16 @@ class ExecutiveCvTemplate {
     pw.Document pdf,
     CvData cv,
     TemplateStyle style, {
+    required pw.Font regularFont,
+    required pw.Font boldFont,
+    required pw.Font mediumFont,
     Uint8List? profileImageBytes,
   }) {
     final primaryColor = PdfColor.fromInt(style.primaryColor.toARGB32());
     final accentColor = PdfColor.fromInt(style.accentColor.toARGB32());
+
+    // Create font fallback list for Unicode support
+    final fontFallback = [regularFont, boldFont, mediumFont];
 
     // Create profile image if bytes provided
     pw.ImageProvider? profileImage;
@@ -46,6 +52,11 @@ class ExecutiveCvTemplate {
           bottom: PdfConstants.marginBottom,
           left: PdfConstants.marginLeft + 8,
           right: PdfConstants.marginRight + 8,
+        ),
+        theme: pw.ThemeData.withFont(
+          base: regularFont,
+          bold: boldFont,
+          fontFallback: fontFallback,
         ),
         build: (context) => [
           // Elegant centered header

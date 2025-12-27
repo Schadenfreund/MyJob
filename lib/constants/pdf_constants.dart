@@ -15,87 +15,87 @@ class PdfConstants {
   static const PdfPageFormat pageFormat = PdfPageFormat.a4;
 
   /// Professional page margins in points (1 inch = 72 points)
-  /// Following standard business document margins
-  static const double marginTop = 56;        // ~0.78 inches
-  static const double marginBottom = 56;     // ~0.78 inches
-  static const double marginLeft = 60;       // ~0.83 inches
-  static const double marginRight = 60;      // ~0.83 inches
+  /// Standard business document margins for balance and readability
+  static const double marginTop = 54;        // ~0.75 inches (3/4")
+  static const double marginBottom = 54;     // ~0.75 inches
+  static const double marginLeft = 72;       // 1 inch (standard)
+  static const double marginRight = 72;      // 1 inch (standard)
 
   // ============================================================================
   // PROFESSIONAL TYPOGRAPHY SCALE
   // ============================================================================
-  // Based on modular scale (1.200 - minor third)
-  // Provides harmonious font size relationships
+  // Based on professional print standards for maximum readability
+  // 11pt body text is the standard for professional documents
 
-  /// Name/Document title (H1)
-  static const double fontSizeName = 28.0;
+  /// Name/Document title (H1) - Should stand out significantly
+  static const double fontSizeName = 32.0;  // Increased for better presence
 
-  /// Major section headings (H2)
-  static const double fontSizeH2 = 16.0;
+  /// Major section headings (H2) - Clear visual hierarchy
+  static const double fontSizeH2 = 14.0;  // Professional section headers
 
-  /// Subsection headings (H3)
-  static const double fontSizeH3 = 13.0;
+  /// Subsection headings (H3) - Job titles, degree names
+  static const double fontSizeH3 = 12.0;  // Slightly larger for readability
 
-  /// Subheadings within entries (H4)
-  static const double fontSizeH4 = 11.5;
+  /// Subheadings within entries (H4) - Company names, institutions
+  static const double fontSizeH4 = 11.0;  // Match body text weight
 
-  /// Body text (standard paragraphs)
-  static const double fontSizeBody = 10.5;
+  /// Body text (standard paragraphs) - CRITICAL for readability
+  static const double fontSizeBody = 11.0;  // Industry standard (not 10.5pt)
 
-  /// Small text (captions, meta info)
-  static const double fontSizeSmall = 9.5;
+  /// Small text (captions, meta info) - Dates, locations
+  static const double fontSizeSmall = 10.0;  // Still readable
 
-  /// Tiny text (footnotes)
-  static const double fontSizeTiny = 8.5;
+  /// Tiny text (footnotes) - Use sparingly
+  static const double fontSizeTiny = 9.0;  // Minimum for professional docs
 
   // ============================================================================
   // LINE HEIGHT / LEADING
   // ============================================================================
-  // Optimal readability: 1.4-1.6x font size for body text
+  // Professional print standards: 1.4-1.6x font size for optimal readability
 
-  /// Tight line spacing for headings
-  static const double lineHeightTight = 1.2;
+  /// Tight line spacing for headings and names
+  static const double lineHeightTight = 1.15;  // Headers need to be compact
 
-  /// Normal line spacing for body text
-  static const double lineHeightNormal = 1.5;
+  /// Normal line spacing for body text (THE MOST IMPORTANT)
+  static const double lineHeightNormal = 1.4;  // Professional standard
 
-  /// Loose line spacing for emphasized text
-  static const double lineHeightLoose = 1.8;
+  /// Loose line spacing for emphasized paragraphs
+  static const double lineHeightLoose = 1.6;  // More breathing room
 
   // ============================================================================
   // PROFESSIONAL SPACING SYSTEM
   // ============================================================================
-  // Based on 4pt grid for consistency
+  // Based on 4pt grid for visual consistency and breathing room
 
-  /// Extra small spacing (4pt)
+  /// Extra small spacing - Between related inline elements
   static const double spaceXs = 4.0;
 
-  /// Small spacing (8pt)
+  /// Small spacing - Between tightly related items
   static const double spaceSm = 8.0;
 
-  /// Medium spacing (12pt)
-  static const double spaceMd = 12.0;
+  /// Medium spacing - Between paragraphs
+  static const double spaceMd = 14.0;  // Increased for better readability
 
-  /// Large spacing (16pt)
-  static const double spaceLg = 16.0;
+  /// Large spacing - Between job entries
+  static const double spaceLg = 20.0;  // More generous
 
-  /// Extra large spacing (20pt)
-  static const double spaceXl = 20.0;
+  /// Extra large spacing - After subsections
+  static const double spaceXl = 24.0;
 
-  /// 2X extra large spacing (24pt)
-  static const double space2xl = 24.0;
+  /// 2X extra large spacing - Before major sections
+  static const double space2xl = 28.0;
 
-  /// 3X extra large spacing (32pt)
-  static const double space3xl = 32.0;
+  /// 3X extra large spacing - Between major content blocks
+  static const double space3xl = 36.0;  // More professional breathing room
 
-  /// Section spacing (40pt)
-  static const double spaceSection = 40.0;
+  /// Section spacing - Between major CV sections
+  static const double spaceSection = 24.0;  // Reduced from 40pt for balance
 
-  // Semantic spacing names
-  static const double paragraphSpacing = spaceMd;
-  static const double sectionSpacing = spaceSection;
-  static const double entrySpacing = spaceLg;
-  static const double itemSpacing = spaceSm;
+  // Semantic spacing names for clarity
+  static const double paragraphSpacing = spaceMd;  // 14pt between paragraphs
+  static const double sectionSpacing = spaceSection;  // 24pt between sections
+  static const double entrySpacing = spaceLg;  // 20pt between job entries
+  static const double itemSpacing = spaceSm;  // 8pt between list items
 
   // ============================================================================
   // PROFESSIONAL COLOR SYSTEM

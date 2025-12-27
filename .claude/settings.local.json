@@ -19,7 +19,28 @@
       "Bash(del \"c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\services\\\\yaml_import_service.dart\")",
       "Bash(flutter.bat analyze:*)",
       "Bash(copy:*)",
-      "Bash(cmd /c \"cd /d c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife && flutter.bat analyze\")"
+      "Bash(cmd /c \"cd /d c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife && flutter.bat analyze\")",
+      "Bash(cmd /c \"cd /d c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife && flutter.bat analyze --no-fatal-infos 2>&1 | head -n 50\")",
+      "Bash(cmd /c \"flutter.bat analyze\")",
+      "Bash(cmd /c \"cd /d c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife && flutter.bat analyze 2>&1\")",
+      "Bash(cmd /c \"cd /d c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife && flutter.bat analyze lib/screens/templates/template_customizer_screen.dart\")",
+      "Bash(cmd /c \"cd /d c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife && flutter.bat analyze lib/screens/templates/template_customizer_screen.dart lib/models/template_customization.dart 2>&1 | head -n 50\")",
+      "Bash(cmd /c \"cd /d c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife && flutter.bat analyze lib/pdf/cv_templates/yellow_cv_template.dart lib/pdf/core/customized_constants.dart lib/services/pdf_service.dart lib/screens/templates/template_customizer_screen.dart 2>&1 | head -n 100\")",
+      "Bash(cmd /c \"cd /d c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife && flutter.bat analyze 2>&1 | head -n 100\")",
+      "Bash(if exist \"c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\screens\\\\dashboard\" rmdir /s /q \"c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\screens\\\\dashboard\")",
+      "Bash(cmd /c \"if exist c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\screens\\\\dashboard rmdir /s /q c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\screens\\\\dashboard\")",
+      "Bash(cmd /c \"if exist c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\screens\\\\templates rmdir /s /q c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\screens\\\\templates\")",
+      "Bash(cmd /c \"cd /d c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife && flutter.bat build windows 2>&1 | head -n 50\")",
+      "Bash(flutter build:*)",
+      "Bash(cmd /c \"cd /d c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife && flutter build windows 2>&1\")",
+      "Bash(flutter.bat build:*)",
+      "Bash(cmd /c \"cd /d c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife && flutter.bat analyze lib/services lib/models lib/pdf/cv_templates/electric_cv_template.dart lib/pdf/cover_letter_templates/electric_cover_letter_template.dart 2>&1 | head -n 100\")",
+      "Bash(cmd /c \"cd /d c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife && flutter.bat analyze 2>&1 | head -n 150\")",
+      "Bash(cmd /c \"del c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\cv_templates\\\\executive_cv_template.dart\")",
+      "Bash(cmd /c \"del c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\cv_templates\\\\yellow_cv_template.dart && del c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\cv_templates\\\\professional_cv_template.dart && del c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\cv_templates\\\\modern_cv_template.dart\")",
+      "Bash(cmd /c \"del c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\cover_letter_templates\\\\professional_cover_letter_template.dart && del c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\cover_letter_templates\\\\modern_cover_letter_template.dart && del c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\cover_letter_templates\\\\yellow_cover_letter_template.dart\")",
+      "Bash(cmd /c \"if exist c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\core rmdir /s /q c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\core\")",
+      "Bash(cmd /c:*)"
     ]
   }
 }

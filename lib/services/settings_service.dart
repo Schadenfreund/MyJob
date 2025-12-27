@@ -10,8 +10,8 @@ class SettingsService extends ChangeNotifier {
 
   ThemeMode _themeMode = ThemeMode.system;
   Color _accentColor = defaultAccentColor;
-  TemplateStyle _defaultCvTemplate = TemplateStyle.professional;
-  TemplateStyle _defaultCoverLetterTemplate = TemplateStyle.professional;
+  TemplateStyle _defaultCvTemplate = TemplateStyle.electric;
+  TemplateStyle _defaultCoverLetterTemplate = TemplateStyle.electric;
 
   ThemeMode get themeMode => _themeMode;
   Color get accentColor => _accentColor;
@@ -137,8 +137,8 @@ class SettingsService extends ChangeNotifier {
   Future<void> resetSettings() async {
     _themeMode = ThemeMode.system;
     _accentColor = defaultAccentColor;
-    _defaultCvTemplate = TemplateStyle.professional;
-    _defaultCoverLetterTemplate = TemplateStyle.professional;
+    _defaultCvTemplate = TemplateStyle.electric;
+    _defaultCoverLetterTemplate = TemplateStyle.electric;
 
     notifyListeners();
     await _saveSettings();

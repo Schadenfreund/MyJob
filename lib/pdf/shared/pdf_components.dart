@@ -381,6 +381,65 @@ class PdfComponents {
   }
 
   /// Build skill badges with parsed levels (shows level as badge)
+  /// Skill bars with white text for dark backgrounds (sidebar)
+  static pw.Widget buildSkillBarsWhite(List<String> skills) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: skills.map((skill) {
+        final parsed = parseSkillString(skill);
+        return pw.Padding(
+          padding: const pw.EdgeInsets.only(bottom: 10),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    parsed.name,
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.white,
+                    ),
+                  ),
+                  pw.Text(
+                    '${(parsed.percentage * 100).round()}%',
+                    style: pw.TextStyle(
+                      fontSize: 8,
+                      color: PdfConstants.withOpacity(PdfColors.white, 0.7),
+                    ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 4),
+              pw.Stack(
+                children: [
+                  // Background bar
+                  pw.Container(
+                    height: 4,
+                    decoration: pw.BoxDecoration(
+                      color: PdfConstants.withOpacity(PdfColors.white, 0.3),
+                      borderRadius: pw.BorderRadius.circular(2),
+                    ),
+                  ),
+                  // Filled bar
+                  pw.Container(
+                    height: 4,
+                    width: 100 * parsed.percentage, // Max width of ~100 points
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.white,
+                      borderRadius: pw.BorderRadius.circular(2),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   static pw.Widget buildSkillBadgesWithLevels(
     List<String> skills,
     PdfColor accentColor,
@@ -521,11 +580,12 @@ class PdfComponents {
     );
   }
 
-  /// Section heading with full-width divider
+  /// Section heading with optional full-width divider
   static pw.Widget buildSectionHeaderDivider(
     String title,
     PdfColor color, {
     bool uppercase = true,
+    bool showDivider = true,
   }) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -539,11 +599,13 @@ class PdfComponents {
             letterSpacing: uppercase ? PdfConstants.letterSpacingWide : 0,
           ),
         ),
-        pw.SizedBox(height: PdfConstants.spaceXs),
-        pw.Divider(
-          color: PdfConstants.dividerLight,
-          thickness: PdfConstants.dividerThickness,
-        ),
+        if (showDivider) ...[
+          pw.SizedBox(height: PdfConstants.spaceXs),
+          pw.Divider(
+            color: PdfConstants.dividerLight,
+            thickness: PdfConstants.dividerThickness,
+          ),
+        ],
       ],
     );
   }

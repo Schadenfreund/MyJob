@@ -56,7 +56,7 @@ class _CoverLetterTemplatePdfPreviewDialogState
     super.initState();
     _selectedStyle = widget.templateStyle ??
         widget.coverLetterTemplate.templateStyle ??
-        TemplateStyle.professional;
+        TemplateStyle.electric;
   }
 
   void _updateAccentColor(Color color) {
