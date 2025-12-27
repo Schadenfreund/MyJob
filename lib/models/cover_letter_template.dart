@@ -1,5 +1,6 @@
 import '../constants/app_constants.dart';
 import 'cover_letter.dart';
+import 'template_style.dart';
 
 /// Base cover letter template that can be reused across applications
 class CoverLetterTemplate {
@@ -11,6 +12,7 @@ class CoverLetterTemplate {
     this.body = '',
     this.closing = 'Kind regards,',
     this.senderName,
+    this.templateStyle,
     this.createdAt,
     this.lastModified,
   });
@@ -27,6 +29,10 @@ class CoverLetterTemplate {
       body: json['body'] as String? ?? '',
       closing: json['closing'] as String? ?? 'Kind regards,',
       senderName: json['senderName'] as String?,
+      templateStyle: json['templateStyle'] != null
+          ? TemplateStyle.fromJson(
+              json['templateStyle'] as Map<String, dynamic>)
+          : null,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : null,
@@ -43,6 +49,7 @@ class CoverLetterTemplate {
   final String body;
   final String closing;
   final String? senderName;
+  final TemplateStyle? templateStyle;
   final DateTime? createdAt;
   final DateTime? lastModified;
 
@@ -54,6 +61,7 @@ class CoverLetterTemplate {
         'body': body,
         'closing': closing,
         'senderName': senderName,
+        'templateStyle': templateStyle?.toJson(),
         'createdAt': createdAt?.toIso8601String(),
         'lastModified': lastModified?.toIso8601String(),
       };
@@ -66,6 +74,7 @@ class CoverLetterTemplate {
     String? body,
     String? closing,
     String? senderName,
+    TemplateStyle? templateStyle,
     DateTime? createdAt,
     DateTime? lastModified,
   }) {
@@ -77,8 +86,23 @@ class CoverLetterTemplate {
       body: body ?? this.body,
       closing: closing ?? this.closing,
       senderName: senderName ?? this.senderName,
+      templateStyle: templateStyle ?? this.templateStyle,
       createdAt: createdAt ?? this.createdAt,
       lastModified: lastModified ?? this.lastModified,
+    );
+  }
+
+  /// Convert template to CoverLetter for PDF generation
+  CoverLetter toCoverLetter() {
+    return CoverLetter(
+      id: id,
+      name: name,
+      language: language,
+      greeting: greeting,
+      body: body,
+      closing: closing,
+      senderName: senderName,
+      lastModified: lastModified,
     );
   }
 }

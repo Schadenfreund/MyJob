@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/cv_template.dart';
+import '../../models/cover_letter_template.dart';
 import '../../providers/templates_provider.dart';
+import '../../widgets/collapsible_card.dart';
 import '../../widgets/yaml_import_section.dart';
 import '../../widgets/document_template_card.dart';
-import '../../dialogs/template_style_picker_dialog.dart';
-import '../../dialogs/pdf_preview_dialog.dart';
+import '../../dialogs/cv_template_pdf_preview_dialog.dart';
+import '../../dialogs/cover_letter_template_pdf_preview_dialog.dart';
+import '../../utils/ui_utils.dart';
+import '../../utils/dialog_utils.dart';
 import '../cv_template_editor/cv_template_editor_screen.dart';
+import '../cover_letter_template_editor/cover_letter_template_editor_screen.dart';
 
 /// Main Documents screen - YAML-first workflow for CV/Cover Letter creation
+/// Refactored to use CollapsibleCard pattern for better organization
 class DocumentsScreen extends StatelessWidget {
   const DocumentsScreen({super.key});
 
@@ -17,222 +23,194 @@ class DocumentsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final templatesProvider = context.watch<TemplatesProvider>();
 
+    final hasTemplates = templatesProvider.cvTemplates.isNotEmpty ||
+        templatesProvider.coverLetterTemplates.isNotEmpty;
+
     return Container(
       color: theme.colorScheme.surface,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(UIUtils.spacingLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.description,
-                    color: theme.colorScheme.primary,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Documents',
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Import YAML templates and generate beautiful PDFs',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.textTheme.bodySmall?.color
-                              ?.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            UIUtils.buildSectionHeader(
+              context,
+              title: 'Documents',
+              subtitle: 'Import YAML templates and generate beautiful PDFs',
+              icon: Icons.description,
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: UIUtils.spacingXl),
 
-            // YAML Import Section
-            const YamlImportSection(),
-            const SizedBox(height: 32),
+            // YAML Import Section - CollapsibleCard
+            CollapsibleCard(
+              cardDecoration: UIUtils.getCardDecoration(context),
+              title: 'Import from YAML',
+              subtitle: 'Quick setup from UserData folder',
+              status: hasTemplates
+                  ? CollapsibleCardStatus.configured
+                  : CollapsibleCardStatus.unconfigured,
+              initiallyCollapsed: hasTemplates, // Collapse after first import
+              collapsedSummary: Text(
+                hasTemplates
+                    ? 'Import additional CV or Cover Letter templates'
+                    : 'Click to import your first template',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                ),
+              ),
+              expandedContent: const YamlImportSection(),
+            ),
 
-            // Your Documents Section
-            Text(
-              'Your Documents',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
+            SizedBox(height: UIUtils.spacingMd),
+
+            // CV Templates Section - CollapsibleCard
+            CollapsibleCard(
+              cardDecoration: UIUtils.getCardDecoration(context),
+              title: 'CV Templates',
+              subtitle: '${templatesProvider.cvTemplates.length} template${templatesProvider.cvTemplates.length == 1 ? '' : 's'}',
+              status: templatesProvider.cvTemplates.isNotEmpty
+                  ? CollapsibleCardStatus.configured
+                  : CollapsibleCardStatus.unconfigured,
+              initiallyCollapsed: templatesProvider.cvTemplates.isEmpty,
+              collapsedSummary: Row(
+                children: [
+                  Icon(
+                    Icons.description_outlined,
+                    size: 20,
+                    color: theme.colorScheme.primary,
+                  ),
+                  SizedBox(width: UIUtils.spacingSm),
+                  Expanded(
+                    child: Text(
+                      templatesProvider.cvTemplates.isEmpty
+                          ? 'No CV templates yet. Import or create one to get started.'
+                          : '${templatesProvider.cvTemplates.length} ${templatesProvider.cvTemplates.length == 1 ? 'template' : 'templates'} ready to use',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color:
+                            theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              expandedContent: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Template Cards
+                  if (templatesProvider.cvTemplates.isEmpty)
+                    _buildEmptyState(
+                      context,
+                      'No CV templates yet',
+                      'Import a CV YAML file or create a new template',
+                      Icons.description_outlined,
+                    )
+                  else
+                    ...templatesProvider.cvTemplates.map(
+                      (template) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: DocumentTemplateCard(
+                          name: template.name,
+                          language: 'English',
+                          lastModified: template.lastModified ?? DateTime.now(),
+                          type: DocumentType.cv,
+                          onGeneratePdf: () => _generateCvPdf(context, template),
+                          onEdit: () => _editCvTemplate(context, template),
+                          onDuplicate: () =>
+                              _duplicateCvTemplate(context, template),
+                          onDelete: () => _deleteCvTemplate(context, template),
+                        ),
+                      ),
+                    ),
+
+                  // Add New Button
+                  SizedBox(height: UIUtils.spacingSm),
+                  UIUtils.buildOutlinedButton(
+                    label: 'New CV Template',
+                    onPressed: () => _createNewCv(context),
+                    icon: Icons.add,
+                    fullWidth: true,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
 
-            // Two-column layout: CV Documents | Cover Letters
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // CV Documents Column
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Column Header
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.description_outlined,
-                            size: 20,
-                            color: theme.colorScheme.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'CV Documents',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${templatesProvider.cvTemplates.length}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.textTheme.bodySmall?.color
-                                  ?.withValues(alpha: 0.6),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
+            SizedBox(height: UIUtils.spacingMd),
 
-                      // CV Template Cards
-                      if (templatesProvider.cvTemplates.isEmpty)
-                        _buildEmptyState(
-                          context,
-                          'No CV templates yet',
-                          'Import a CV YAML file or create a new template',
-                          Icons.description_outlined,
-                        )
-                      else
-                        ...templatesProvider.cvTemplates.map(
-                          (template) => Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: DocumentTemplateCard(
-                              name: template.name,
-                              language: 'English', // TODO: Get from template
-                              lastModified: DateTime.now(),
-                              type: DocumentType.cv,
-                              onGeneratePdf: () =>
-                                  _generateCvPdf(context, template),
-                              onEdit: () => _editTemplate(context, template),
-                              onDuplicate: () =>
-                                  _duplicateTemplate(context, template),
-                              onDelete: () =>
-                                  _deleteTemplate(context, template),
-                            ),
-                          ),
-                        ),
-
-                      // Add New CV Button
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: () => _createNewCv(context),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('New CV Template'),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 48),
-                        ),
-                      ),
-                    ],
+            // Cover Letter Templates Section - CollapsibleCard
+            CollapsibleCard(
+              cardDecoration: UIUtils.getCardDecoration(context),
+              title: 'Cover Letter Templates',
+              subtitle:
+                  '${templatesProvider.coverLetterTemplates.length} template${templatesProvider.coverLetterTemplates.length == 1 ? '' : 's'}',
+              status: templatesProvider.coverLetterTemplates.isNotEmpty
+                  ? CollapsibleCardStatus.configured
+                  : CollapsibleCardStatus.unconfigured,
+              initiallyCollapsed:
+                  templatesProvider.coverLetterTemplates.isEmpty,
+              collapsedSummary: Row(
+                children: [
+                  Icon(
+                    Icons.mail_outline,
+                    size: 20,
+                    color: theme.colorScheme.primary,
                   ),
-                ),
-
-                const SizedBox(width: 24),
-
-                // Cover Letters Column
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Column Header
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.mail_outline,
-                            size: 20,
-                            color: theme.colorScheme.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Cover Letters',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${templatesProvider.coverLetterTemplates.length}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.textTheme.bodySmall?.color
-                                  ?.withValues(alpha: 0.6),
-                            ),
-                          ),
-                        ],
+                  SizedBox(width: UIUtils.spacingSm),
+                  Expanded(
+                    child: Text(
+                      templatesProvider.coverLetterTemplates.isEmpty
+                          ? 'No cover letter templates yet. Import or create one to get started.'
+                          : '${templatesProvider.coverLetterTemplates.length} ${templatesProvider.coverLetterTemplates.length == 1 ? 'template' : 'templates'} ready to use',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color:
+                            theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                       ),
-                      const SizedBox(height: 16),
-
-                      // Cover Letter Template Cards
-                      if (templatesProvider.coverLetterTemplates.isEmpty)
-                        _buildEmptyState(
-                          context,
-                          'No cover letter templates yet',
-                          'Import a cover letter YAML file or create a new template',
-                          Icons.mail_outline,
-                        )
-                      else
-                        ...templatesProvider.coverLetterTemplates.map(
-                          (template) => Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: DocumentTemplateCard(
-                              name: template.name,
-                              language: 'English', // TODO: Get from template
-                              lastModified: DateTime.now(),
-                              type: DocumentType.coverLetter,
-                              onGeneratePdf: () =>
-                                  _generateCoverLetterPdf(context, template),
-                              onEdit: () => _editTemplate(context, template),
-                              onDuplicate: () =>
-                                  _duplicateTemplate(context, template),
-                              onDelete: () =>
-                                  _deleteTemplate(context, template),
-                            ),
-                          ),
-                        ),
-
-                      // Add New Cover Letter Button
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: () => _createNewCoverLetter(context),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('New Cover Letter'),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 48),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
+              expandedContent: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Template Cards
+                  if (templatesProvider.coverLetterTemplates.isEmpty)
+                    _buildEmptyState(
+                      context,
+                      'No cover letter templates yet',
+                      'Import a cover letter YAML file or create a new template',
+                      Icons.mail_outline,
+                    )
+                  else
+                    ...templatesProvider.coverLetterTemplates.map(
+                      (template) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: DocumentTemplateCard(
+                          name: template.name,
+                          language: 'English',
+                          lastModified: template.lastModified ?? DateTime.now(),
+                          type: DocumentType.coverLetter,
+                          onGeneratePdf: () =>
+                              _generateCoverLetterPdf(context, template),
+                          onEdit: () =>
+                              _editCoverLetterTemplate(context, template),
+                          onDuplicate: () =>
+                              _duplicateCoverLetterTemplate(context, template),
+                          onDelete: () =>
+                              _deleteCoverLetterTemplate(context, template),
+                        ),
+                      ),
+                    ),
+
+                  // Add New Button
+                  SizedBox(height: UIUtils.spacingSm),
+                  UIUtils.buildOutlinedButton(
+                    label: 'New Cover Letter Template',
+                    onPressed: () => _createNewCoverLetter(context),
+                    icon: Icons.add,
+                    fullWidth: true,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -246,188 +224,89 @@ class DocumentsScreen extends StatelessWidget {
     String subtitle,
     IconData icon,
   ) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.5),
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            size: 48,
-            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.3),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return UIUtils.buildEmptyState(
+      context,
+      icon: icon,
+      title: title,
+      message: subtitle,
     );
   }
 
-  void _generateCvPdf(BuildContext context, dynamic template) {
+  // CV Template Methods
+  /// STREAMLINED UX: Direct preview with integrated style selector
+  /// Eliminates redundant style picker dialog - users can now change styles
+  /// in real-time within the preview dialog
+  void _generateCvPdf(BuildContext context, CvTemplate template) {
     showDialog(
       context: context,
-      builder: (context) => TemplateStylePickerDialog(
-        onStyleSelected: (style) {
-          showDialog(
-            context: context,
-            builder: (context) => PdfPreviewDialog(templateStyle: style),
-          );
-        },
+      builder: (context) => CvTemplatePdfPreviewDialog(
+        cvTemplate: template,
+        templateStyle: template.templateStyle, // Use saved style as default
       ),
     );
   }
 
-  void _generateCoverLetterPdf(BuildContext context, dynamic template) {
-    // Show template style picker for cover letters too
-    showDialog(
-      context: context,
-      builder: (context) => TemplateStylePickerDialog(
-        onStyleSelected: (style) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Cover letter PDF generation coming soon'),
-            ),
-          );
-        },
+  void _editCvTemplate(BuildContext context, CvTemplate template) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CvTemplateEditorScreen(templateId: template.id),
       ),
     );
   }
 
-  void _editTemplate(BuildContext context, dynamic template) {
-    final isCv = template.runtimeType.toString().contains('Cv');
-
-    if (isCv && template is CvTemplate) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CvTemplateEditorScreen(template: template),
-        ),
-      );
-    } else {
-      // Cover letter editor - coming soon
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cover letter editor coming soon')),
-      );
-    }
-  }
-
-  void _duplicateTemplate(BuildContext context, dynamic template) async {
+  void _duplicateCvTemplate(BuildContext context, CvTemplate template) async {
     final templatesProvider = context.read<TemplatesProvider>();
-    final isCv = template.runtimeType.toString().contains('Cv');
 
     try {
-      if (isCv) {
-        await templatesProvider.createCvTemplate(
-          name: '${template.name} (Copy)',
-          profile: template.profile,
-          skills: List<String>.from(template.skills ?? []),
-          contactDetails: template.contactDetails,
-        );
-      } else {
-        await templatesProvider.createCoverLetterTemplate(
-          name: '${template.name} (Copy)',
-          greeting: template.greeting,
-          body: template.body,
-          closing: template.closing,
-        );
-      }
+      final newTemplate = await templatesProvider.createCvTemplate(
+        name: '${template.name} (Copy)',
+        profile: template.profile,
+        skills: List<String>.from(template.skills),
+        contactDetails: template.contactDetails,
+      );
+
+      // Copy additional data
+      await templatesProvider.updateCvTemplate(
+        newTemplate.copyWith(
+          languages: List.from(template.languages),
+          interests: List.from(template.interests),
+          experiences: List.from(template.experiences),
+          education: List.from(template.education),
+        ),
+      );
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${template.name} duplicated'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
+        context.showSuccessSnackBar('${template.name} duplicated');
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error duplicating template: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        context.showErrorSnackBar('Error duplicating template: $e');
       }
     }
   }
 
-  void _deleteTemplate(BuildContext context, dynamic template) {
-    final isCv = template.runtimeType.toString().contains('Cv');
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Template'),
-        content: Text(
-          'Are you sure you want to delete "${template.name}"?\n\nThis action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(dialogContext);
-              final templatesProvider = context.read<TemplatesProvider>();
-
-              try {
-                if (isCv) {
-                  await templatesProvider.deleteCvTemplate(template.id);
-                } else {
-                  await templatesProvider
-                      .deleteCoverLetterTemplate(template.id);
-                }
-
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${template.name} deleted'),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error deleting template: $e'),
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                    ),
-                  );
-                }
-              }
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(dialogContext).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+  void _deleteCvTemplate(BuildContext context, CvTemplate template) async {
+    final confirmed = await DialogUtils.showDeleteConfirmation(
+      context,
+      title: 'Delete CV Template',
+      message: 'Are you sure you want to delete "${template.name}"?\n\nThis action cannot be undone.',
     );
+
+    if (confirmed && context.mounted) {
+      final templatesProvider = context.read<TemplatesProvider>();
+
+      try {
+        await templatesProvider.deleteCvTemplate(template.id);
+        if (context.mounted) {
+          context.showSuccessSnackBar('${template.name} deleted');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          context.showErrorSnackBar('Error deleting template: $e');
+        }
+      }
+    }
   }
 
   void _createNewCv(BuildContext context) async {
@@ -440,21 +319,84 @@ class DocumentsScreen extends StatelessWidget {
       );
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('New CV template created'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
+        context.showSuccessSnackBar('New CV template created');
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error creating template: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        context.showErrorSnackBar('Error creating template: $e');
+      }
+    }
+  }
+
+  // Cover Letter Template Methods
+  /// STREAMLINED UX: Direct preview with integrated style selector
+  /// Eliminates redundant style picker dialog - users can now change styles
+  /// in real-time within the preview dialog
+  void _generateCoverLetterPdf(
+      BuildContext context, CoverLetterTemplate template) {
+    showDialog(
+      context: context,
+      builder: (context) => CoverLetterTemplatePdfPreviewDialog(
+        coverLetterTemplate: template,
+        contactDetails: null, // Could extract from template if needed
+        templateStyle: template.templateStyle, // Use saved style as default
+      ),
+    );
+  }
+
+  void _editCoverLetterTemplate(
+      BuildContext context, CoverLetterTemplate template) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            CoverLetterTemplateEditorScreen(templateId: template.id),
+      ),
+    );
+  }
+
+  void _duplicateCoverLetterTemplate(
+      BuildContext context, CoverLetterTemplate template) async {
+    final templatesProvider = context.read<TemplatesProvider>();
+
+    try {
+      await templatesProvider.createCoverLetterTemplate(
+        name: '${template.name} (Copy)',
+        greeting: template.greeting,
+        body: template.body,
+        closing: template.closing,
+      );
+
+      if (context.mounted) {
+        context.showSuccessSnackBar('${template.name} duplicated');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        context.showErrorSnackBar('Error duplicating template: $e');
+      }
+    }
+  }
+
+  void _deleteCoverLetterTemplate(
+      BuildContext context, CoverLetterTemplate template) async {
+    final confirmed = await DialogUtils.showDeleteConfirmation(
+      context,
+      title: 'Delete Cover Letter Template',
+      message: 'Are you sure you want to delete "${template.name}"?\n\nThis action cannot be undone.',
+    );
+
+    if (confirmed && context.mounted) {
+      final templatesProvider = context.read<TemplatesProvider>();
+
+      try {
+        await templatesProvider.deleteCoverLetterTemplate(template.id);
+        if (context.mounted) {
+          context.showSuccessSnackBar('${template.name} deleted');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          context.showErrorSnackBar('Error deleting template: $e');
+        }
       }
     }
   }
@@ -471,21 +413,11 @@ class DocumentsScreen extends StatelessWidget {
       );
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('New cover letter template created'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
+        context.showSuccessSnackBar('New cover letter template created');
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error creating template: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        context.showErrorSnackBar('Error creating template: $e');
       }
     }
   }

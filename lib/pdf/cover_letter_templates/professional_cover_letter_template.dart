@@ -3,8 +3,15 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../models/cover_letter.dart';
 import '../../models/template_style.dart';
 import '../../constants/pdf_constants.dart';
+import '../shared/pdf_components.dart';
 
-/// Professional cover letter template - Clean business letter format
+/// Professional Cover Letter Template - Clean Business Format
+///
+/// Features:
+/// - Professional business letter layout
+/// - Clean typography and spacing
+/// - Consistent header with CV template
+/// - Proper formal letter structure
 class ProfessionalCoverLetterTemplate {
   ProfessionalCoverLetterTemplate._();
 
@@ -20,7 +27,7 @@ class ProfessionalCoverLetterTemplate {
     final accentColor = PdfColor.fromInt(style.accentColor.toARGB32());
 
     pdf.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageFormat: PdfConstants.pageFormat,
         margin: const pw.EdgeInsets.only(
           top: PdfConstants.marginTop,
@@ -28,200 +35,128 @@ class ProfessionalCoverLetterTemplate {
           left: PdfConstants.marginLeft,
           right: PdfConstants.marginRight,
         ),
-        build: (context) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            // Header with sender info
-            _buildHeader(
-              letter,
-              primaryColor,
-              accentColor,
-              senderAddress: senderAddress,
-              senderPhone: senderPhone,
-              senderEmail: senderEmail,
-            ),
-            pw.SizedBox(height: 30),
+        build: (context) => [
+          // Header with sender info
+          PdfComponents.buildDocumentHeader(
+            name: letter.senderName ?? 'Your Name',
+            email: senderEmail,
+            phone: senderPhone,
+            address: senderAddress,
+            primaryColor: primaryColor,
+            accentColor: accentColor,
+            largeHeader: false,
+          ),
 
-            // Date
-            pw.Text(
-              _formatDate(DateTime.now()),
-              style: const pw.TextStyle(
-                fontSize: PdfConstants.fontSizeBody,
-                color: PdfConstants.professionalMuted,
+          pw.SizedBox(height: PdfConstants.space2xl),
+
+          // Date
+          pw.Text(
+            PdfComponents.formatLetterDate(DateTime.now()),
+            style: pw.TextStyle(
+              fontSize: PdfConstants.fontSizeBody,
+              color: PdfConstants.textMuted,
+            ),
+          ),
+
+          pw.SizedBox(height: PdfConstants.spaceLg),
+
+          // Recipient information
+          PdfComponents.buildRecipientBlock(
+            recipientName: letter.recipientName,
+            recipientTitle: letter.recipientTitle,
+            companyName: letter.companyName,
+          ),
+
+          pw.SizedBox(height: PdfConstants.spaceLg),
+
+          // Subject line (optional)
+          if (letter.jobTitle != null && letter.jobTitle!.isNotEmpty) ...[
+            pw.RichText(
+              text: pw.TextSpan(
+                children: [
+                  pw.TextSpan(
+                    text: 'Re: ',
+                    style: pw.TextStyle(
+                      fontSize: PdfConstants.fontSizeBody,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfConstants.textDark,
+                    ),
+                  ),
+                  pw.TextSpan(
+                    text: 'Application for ${letter.jobTitle}',
+                    style: pw.TextStyle(
+                      fontSize: PdfConstants.fontSizeBody,
+                      color: PdfConstants.textBody,
+                    ),
+                  ),
+                ],
               ),
             ),
-            pw.SizedBox(height: 20),
-
-            // Recipient info
-            if (letter.recipientName != null || letter.companyName != null)
-              _buildRecipientInfo(letter),
-            pw.SizedBox(height: 20),
-
-            // Subject line
-            if (letter.jobTitle != null) ...[
-              pw.Text(
-                'Re: Application for ${letter.jobTitle}',
-                style: pw.TextStyle(
-                  fontSize: PdfConstants.fontSizeBody,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfConstants.professionalText,
-                ),
-              ),
-              pw.SizedBox(height: 20),
-            ],
-
-            // Greeting
-            pw.Text(
-              letter.greeting,
-              style: const pw.TextStyle(
-                fontSize: PdfConstants.fontSizeBody,
-                color: PdfConstants.professionalText,
-              ),
-            ),
-            pw.SizedBox(height: 16),
-
-            // Body
-            pw.Text(
-              letter.processedBody,
-              style: const pw.TextStyle(
-                fontSize: PdfConstants.fontSizeBody,
-                color: PdfConstants.professionalText,
-                lineSpacing: 4,
-              ),
-            ),
-            pw.SizedBox(height: 24),
-
-            // Closing
-            pw.Text(
-              letter.closing,
-              style: const pw.TextStyle(
-                fontSize: PdfConstants.fontSizeBody,
-                color: PdfConstants.professionalText,
-              ),
-            ),
-            pw.SizedBox(height: 40),
-
-            // Signature
-            pw.Text(
-              letter.senderName ?? '',
-              style: pw.TextStyle(
-                fontSize: PdfConstants.fontSizeBody,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfConstants.professionalText,
-              ),
-            ),
+            pw.SizedBox(height: PdfConstants.spaceLg),
           ],
-        ),
+
+          // Greeting
+          pw.Text(
+            letter.greeting,
+            style: pw.TextStyle(
+              fontSize: PdfConstants.fontSizeBody,
+              color: PdfConstants.textDark,
+            ),
+          ),
+
+          pw.SizedBox(height: PdfConstants.letterParagraphSpacing),
+
+          // Body paragraphs
+          ..._buildBodyParagraphs(letter.processedBody),
+
+          pw.SizedBox(height: PdfConstants.letterParagraphSpacing),
+
+          // Closing
+          pw.Text(
+            letter.closing,
+            style: pw.TextStyle(
+              fontSize: PdfConstants.fontSizeBody,
+              color: PdfConstants.textDark,
+            ),
+          ),
+
+          pw.SizedBox(height: PdfConstants.letterSignatureSpace),
+
+          // Signature
+          pw.Text(
+            letter.senderName ?? '',
+            style: pw.TextStyle(
+              fontSize: PdfConstants.fontSizeBody,
+              fontWeight: pw.FontWeight.bold,
+              color: primaryColor,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  static pw.Widget _buildHeader(
-    CoverLetter letter,
-    PdfColor primaryColor,
-    PdfColor accentColor, {
-    String? senderAddress,
-    String? senderPhone,
-    String? senderEmail,
-  }) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          letter.senderName ?? '',
-          style: pw.TextStyle(
-            fontSize: PdfConstants.fontSizeName,
-            fontWeight: pw.FontWeight.bold,
-            color: primaryColor,
-          ),
-        ),
-        pw.SizedBox(height: 8),
-        pw.Divider(color: accentColor, thickness: 2),
-        pw.SizedBox(height: 8),
-        pw.Row(
-          children: [
-            if (senderEmail != null)
-              pw.Text(
-                senderEmail,
-                style: const pw.TextStyle(
-                  fontSize: PdfConstants.fontSizeSmall,
-                  color: PdfConstants.professionalMuted,
-                ),
-              ),
-            if (senderPhone != null) ...[
-              pw.SizedBox(width: 16),
-              pw.Text(
-                senderPhone,
-                style: const pw.TextStyle(
-                  fontSize: PdfConstants.fontSizeSmall,
-                  color: PdfConstants.professionalMuted,
-                ),
-              ),
-            ],
-            if (senderAddress != null) ...[
-              pw.SizedBox(width: 16),
-              pw.Text(
-                senderAddress,
-                style: const pw.TextStyle(
-                  fontSize: PdfConstants.fontSizeSmall,
-                  color: PdfConstants.professionalMuted,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ],
-    );
-  }
+  /// Split body text into paragraphs and build widgets
+  static List<pw.Widget> _buildBodyParagraphs(String body) {
+    // Split by double newlines to get paragraphs
+    final paragraphs = body.split('\n\n').where((p) => p.trim().isNotEmpty);
 
-  static pw.Widget _buildRecipientInfo(CoverLetter letter) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        if (letter.recipientName != null)
-          pw.Text(
-            letter.recipientName!,
-            style: const pw.TextStyle(
-              fontSize: PdfConstants.fontSizeBody,
-              color: PdfConstants.professionalText,
-            ),
-          ),
-        if (letter.recipientTitle != null)
-          pw.Text(
-            letter.recipientTitle!,
-            style: const pw.TextStyle(
-              fontSize: PdfConstants.fontSizeBody,
-              color: PdfConstants.professionalMuted,
-            ),
-          ),
-        if (letter.companyName != null)
-          pw.Text(
-            letter.companyName!,
-            style: pw.TextStyle(
-              fontSize: PdfConstants.fontSizeBody,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfConstants.professionalText,
-            ),
-          ),
-      ],
-    );
-  }
+    final widgets = <pw.Widget>[];
+    for (final paragraph in paragraphs) {
+      widgets.add(
+        PdfComponents.buildParagraph(
+          paragraph.trim().replaceAll('\n', ' '),
+          justified: true,
+        ),
+      );
+      widgets.add(pw.SizedBox(height: PdfConstants.letterParagraphSpacing));
+    }
 
-  static String _formatDate(DateTime date) {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
-    ];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    // Remove last spacing
+    if (widgets.isNotEmpty && widgets.length > 1) {
+      widgets.removeLast();
+    }
+
+    return widgets;
   }
 }

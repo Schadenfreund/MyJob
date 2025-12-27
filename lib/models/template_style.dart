@@ -1,16 +1,35 @@
 import 'package:flutter/material.dart';
 
-/// Template styles for PDF generation
+/// Template styles for PDF generation - 3 distinct layouts
 enum TemplateType {
-  professional('Professional', 'Clean and minimalist design'),
-  modern('Modern', 'Colorful with accent elements'),
-  minimalist('Minimalist', 'Ultra-clean with maximum whitespace'),
-  classic('Classic', 'Traditional serif fonts, formal business style'),
-  elegant('Elegant', 'Sophisticated serif-sans mix with refined spacing');
+  /// Classic single-column layout with traditional typography
+  professional('Classic', 'Traditional single-column with elegant typography'),
+
+  /// Modern two-column layout with colored sidebar
+  modern('Modern', 'Contemporary two-column with sidebar profile'),
+
+  /// Creative layout with unique visual elements
+  creative('Creative', 'Bold design with timeline and accent graphics');
 
   const TemplateType(this.label, this.description);
   final String label;
   final String description;
+
+  // Map old enum values to new ones for backwards compatibility
+  static TemplateType fromName(String name) {
+    switch (name) {
+      case 'professional':
+      case 'minimalist':
+      case 'executive':
+        return TemplateType.professional;
+      case 'modern':
+      case 'elegant':
+        return TemplateType.modern;
+      case 'creative':
+      default:
+        return TemplateType.creative;
+    }
+  }
 }
 
 /// Configuration for document template styling
@@ -25,11 +44,10 @@ class TemplateStyle {
   });
 
   factory TemplateStyle.fromJson(Map<String, dynamic> json) {
+    // Use TemplateType.fromName for backwards compatibility with old enum values
+    final typeName = json['type'] as String? ?? 'professional';
     return TemplateStyle(
-      type: TemplateType.values.firstWhere(
-        (t) => t.name == json['type'],
-        orElse: () => TemplateType.professional,
-      ),
+      type: TemplateType.fromName(typeName),
       primaryColor: Color(json['primaryColor'] as int? ?? 0xFF2C3E50),
       accentColor: Color(json['accentColor'] as int? ?? 0xFF3498DB),
       fontFamily: json['fontFamily'] as String? ?? 'Helvetica',
@@ -72,68 +90,34 @@ class TemplateStyle {
     );
   }
 
-  /// Professional template preset
+  /// Classic template - Traditional single-column with navy blue
   static TemplateStyle get professional => TemplateStyle(
         type: TemplateType.professional,
-        primaryColor: const Color(0xFF2C3E50),
-        accentColor: const Color(0xFF3498DB),
+        primaryColor: const Color(0xFF1E3A5F),
+        accentColor: const Color(0xFF2563EB),
       );
 
-  /// Modern template preset with orange accent
-  static TemplateStyle get modernOrange => TemplateStyle(
+  /// Modern template - Two-column with teal sidebar
+  static TemplateStyle get modern => TemplateStyle(
         type: TemplateType.modern,
-        primaryColor: const Color(0xFFE67E22),
-        accentColor: const Color(0xFF27AE60),
+        primaryColor: const Color(0xFF0F766E),
+        accentColor: const Color(0xFF14B8A6),
         twoColumnLayout: true,
+        showPhoto: true,
       );
 
-  /// Modern template preset with blue accent
-  static TemplateStyle get modernBlue => TemplateStyle(
-        type: TemplateType.modern,
-        primaryColor: const Color(0xFF3498DB),
-        accentColor: const Color(0xFFF1C40F),
-        twoColumnLayout: true,
+  /// Creative template - Bold design with timeline graphics
+  static TemplateStyle get creative => TemplateStyle(
+        type: TemplateType.creative,
+        primaryColor: const Color(0xFF7C3AED),
+        accentColor: const Color(0xFFEC4899),
+        twoColumnLayout: false,
       );
 
-  /// Modern template preset with green accent
-  static TemplateStyle get modernGreen => TemplateStyle(
-        type: TemplateType.modern,
-        primaryColor: const Color(0xFF27AE60),
-        accentColor: const Color(0xFF2C3E50),
-        twoColumnLayout: true,
-      );
-
-  /// Minimalist template preset
-  static TemplateStyle get minimalist => TemplateStyle(
-        type: TemplateType.minimalist,
-        primaryColor: const Color(0xFF000000),
-        accentColor: const Color(0xFF666666),
-        fontFamily: 'Helvetica',
-      );
-
-  /// Classic template preset
-  static TemplateStyle get classic => TemplateStyle(
-        type: TemplateType.classic,
-        primaryColor: const Color(0xFF1A237E),
-        accentColor: const Color(0xFF0D47A1),
-        fontFamily: 'Times',
-      );
-
-  /// Elegant template preset
-  static TemplateStyle get elegant => TemplateStyle(
-        type: TemplateType.elegant,
-        primaryColor: const Color(0xFF4A148C),
-        accentColor: const Color(0xFF6A1B9A),
-        fontFamily: 'Georgia',
-        twoColumnLayout: true,
-      );
-
-  /// Get all available presets
+  /// Get all available presets (3 distinct templates)
   static List<TemplateStyle> get allPresets => [
         professional,
-        modernBlue,
-        minimalist,
-        classic,
-        elegant,
+        modern,
+        creative,
       ];
 }

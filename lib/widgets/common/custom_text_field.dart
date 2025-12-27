@@ -51,6 +51,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
   late TextEditingController _controller;
   late bool _obscureText;
   bool _ownsController = false;
+  String? _validationError;
 
   @override
   void initState() {
@@ -72,6 +73,63 @@ class _CustomTextFieldState extends State<CustomTextField> {
     super.dispose();
   }
 
+  /// Validate email format (basic validation)
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return widget.required ? 'Email is required' : null;
+    }
+
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(value)) {
+      return 'Please enter a valid email';
+    }
+
+    return null;
+  }
+
+  /// Validate phone format (basic validation - allows international formats)
+  String? _validatePhone(String? value) {
+    if (value == null || value.isEmpty) {
+      return widget.required ? 'Phone is required' : null;
+    }
+
+    // Allow international formats: +, digits, spaces, dashes, parentheses
+    final phoneRegex = RegExp(r'^\+?[\d\s\-\(\)]{10,}$');
+    if (!phoneRegex.hasMatch(value)) {
+      return 'Please enter a valid phone number';
+    }
+
+    return null;
+  }
+
+  /// Get the appropriate validator based on keyboard type
+  String? Function(String?)? _getValidator() {
+    if (widget.validator != null) {
+      return widget.validator;
+    }
+
+    // Auto-validate based on keyboard type
+    if (widget.keyboardType == TextInputType.emailAddress) {
+      return _validateEmail;
+    } else if (widget.keyboardType == TextInputType.phone) {
+      return _validatePhone;
+    }
+
+    return null;
+  }
+
+  void _handleChanged(String value) {
+    // Run validation
+    final validator = _getValidator();
+    if (validator != null) {
+      setState(() {
+        _validationError = validator(value);
+      });
+    }
+
+    widget.onChanged?.call(value);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -81,7 +139,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
       children: [
         if (widget.label != null)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: 12), // Increased from 8 to 12
             child: Row(
               children: [
                 Text(
@@ -107,11 +165,11 @@ class _CustomTextFieldState extends State<CustomTextField> {
           minLines: widget.minLines,
           maxLength: widget.maxLength,
           textInputAction: widget.textInputAction,
-          onChanged: widget.onChanged,
+          onChanged: _handleChanged,
           onSubmitted: widget.onSubmitted,
           decoration: InputDecoration(
             hintText: widget.hint,
-            errorText: widget.errorText,
+            errorText: widget.errorText ?? _validationError,
             prefixIcon:
                 widget.prefixIcon != null ? Icon(widget.prefixIcon) : null,
             suffixIcon: widget.obscureText

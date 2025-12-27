@@ -10,7 +10,16 @@
       "Bash(git checkout:*)",
       "Bash(cat:*)",
       "Bash(dir:*)",
-      "Bash(where:*)"
+      "Bash(where:*)",
+      "Bash(del \"c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\screens\\\\applications\\\\applications_screen_old.dart\")",
+      "Bash(del \"c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\screens\\\\documents\\\\documents_screen_old.dart\")",
+      "Bash(del \"c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\screens\\\\settings\\\\settings_screen_old.dart\")",
+      "Bash(del \"c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\widgets\\\\app_header.dart\")",
+      "Bash(del \"c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\dialogs\\\\yaml_import_dialog.dart\")",
+      "Bash(del \"c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\services\\\\yaml_import_service.dart\")",
+      "Bash(flutter.bat analyze:*)",
+      "Bash(copy:*)",
+      "Bash(cmd /c \"cd /d c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife && flutter.bat analyze\")"
     ]
   }
 }

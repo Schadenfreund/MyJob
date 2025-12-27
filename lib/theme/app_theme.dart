@@ -13,7 +13,7 @@ class AppTheme {
 
   static const Color lightPrimary = Color(0xFF4F46E5);
   static const Color lightSecondary = Color(0xFF6B7280);
-  static const Color lightSuccess = Color(0xFF10B981);
+  static const Color lightSuccess = Color.fromARGB(255, 16, 185, 129);
   static const Color lightDanger = Color(0xFFEF4444);
   static const Color lightWarning = Color(0xFFF1C232);
   static const Color lightInfo = Color(0xFF3B82F6);
@@ -73,6 +73,70 @@ class AppTheme {
           offset: const Offset(0, 2),
         ),
       ];
+
+  // ============================================================================
+  // ELEVATION SYSTEM
+  // ============================================================================
+
+  /// Elevation constants for Material Design hierarchy
+  static const double elevation0 = 0;
+  static const double elevation1 = 1;
+  static const double elevation2 = 2;
+  static const double elevation4 = 4;
+  static const double elevation8 = 8;
+
+  /// Shadow definitions for elevation1 (subtle depth)
+  static List<BoxShadow> elevation1Shadow(ColorScheme colorScheme) => [
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.08),
+          blurRadius: 2,
+          offset: const Offset(0, 1),
+        ),
+      ];
+
+  /// Shadow definitions for elevation2 (moderate depth)
+  static List<BoxShadow> elevation2Shadow(ColorScheme colorScheme) => [
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.1),
+          blurRadius: 4,
+          offset: const Offset(0, 2),
+        ),
+      ];
+
+  /// Shadow definitions for elevation4 (prominent depth)
+  static List<BoxShadow> elevation4Shadow(ColorScheme colorScheme) => [
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.12),
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        ),
+      ];
+
+  // ============================================================================
+  // INTERACTION STATES
+  // ============================================================================
+
+  /// Opacity for hover state overlays
+  static const double hoverOpacity = 0.08;
+
+  /// Opacity for focus state overlays
+  static const double focusOpacity = 0.12;
+
+  /// Opacity for disabled state
+  static const double disabledOpacity = 0.38;
+
+  // ============================================================================
+  // ANIMATION DURATIONS
+  // ============================================================================
+
+  /// Short animation duration for quick transitions
+  static const Duration shortAnimation = Duration(milliseconds: 150);
+
+  /// Medium animation duration for standard transitions
+  static const Duration mediumAnimation = Duration(milliseconds: 250);
+
+  /// Long animation duration for complex transitions
+  static const Duration longAnimation = Duration(milliseconds: 350);
 
   /// Get the light theme with custom accent color
   static ThemeData lightTheme([Color accentColor = lightPrimary]) =>
@@ -157,7 +221,7 @@ class AppTheme {
         ),
         cardTheme: CardThemeData(
           color: lightSurface,
-          elevation: 0,
+          elevation: 1,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: const BorderSide(color: lightBorder),
@@ -315,7 +379,7 @@ class AppTheme {
         ),
         cardTheme: CardThemeData(
           color: darkSurface,
-          elevation: 0,
+          elevation: 1,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: const BorderSide(color: darkBorder),

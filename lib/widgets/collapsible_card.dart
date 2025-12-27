@@ -155,18 +155,19 @@ class _CollapsibleCardState extends State<CollapsibleCard>
   }
 
   Widget _buildStatusIndicator(CollapsibleCardStatus status) {
+    final colorScheme = Theme.of(context).colorScheme;
     final Color color;
     final IconData icon;
 
     switch (status) {
       case CollapsibleCardStatus.configured:
-        color = Colors.green;
+        color = colorScheme.tertiary; // Theme-aware green
         icon = Icons.check_circle;
       case CollapsibleCardStatus.needsAttention:
-        color = Colors.orange;
+        color = colorScheme.error; // Theme-aware error/warning color
         icon = Icons.warning_rounded;
       case CollapsibleCardStatus.unconfigured:
-        color = Colors.grey;
+        color = colorScheme.outline; // Theme-aware grey
         icon = Icons.circle_outlined;
     }
 

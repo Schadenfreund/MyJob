@@ -154,13 +154,10 @@ class CoverLetterPdfService {
   /// Get margins based on template type
   pw.EdgeInsets _getMargins(TemplateType type) {
     switch (type) {
-      case TemplateType.minimalist:
-        return const pw.EdgeInsets.all(80); // Extra whitespace for letters
-      case TemplateType.classic:
-        return const pw.EdgeInsets.all(70); // Traditional letter margins
-      case TemplateType.elegant:
-      case TemplateType.modern:
       case TemplateType.professional:
+        return const pw.EdgeInsets.all(70); // Traditional letter margins
+      case TemplateType.modern:
+      case TemplateType.creative:
         return const pw.EdgeInsets.all(60); // Standard letter margins
     }
   }
@@ -173,7 +170,7 @@ class CoverLetterPdfService {
     pw.Font regularFont,
     TemplateType templateType,
   ) {
-    final isMinimalist = templateType == TemplateType.minimalist;
+    final isClassic = templateType == TemplateType.professional;
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -183,12 +180,12 @@ class CoverLetterPdfService {
           info.fullName,
           style: pw.TextStyle(
             font: boldFont,
-            fontSize: isMinimalist ? 24 : 20,
-            color: isMinimalist ? PdfColors.black : accentColor,
-            letterSpacing: isMinimalist ? -0.5 : -0.3,
+            fontSize: isClassic ? 24 : 20,
+            color: isClassic ? PdfColors.black : accentColor,
+            letterSpacing: isClassic ? -0.5 : -0.3,
           ),
         ),
-        pw.SizedBox(height: isMinimalist ? 10 : 8),
+        pw.SizedBox(height: isClassic ? 10 : 8),
 
         // Contact info - compact format
         pw.Row(
@@ -205,7 +202,7 @@ class CoverLetterPdfService {
               if (info.phone != null) ...[
                 pw.SizedBox(width: 12),
                 pw.Text(
-                  '•',
+                  '|',
                   style: pw.TextStyle(
                     font: regularFont,
                     fontSize: 9,
@@ -237,11 +234,11 @@ class CoverLetterPdfService {
             ),
           ),
         ],
-        pw.SizedBox(height: isMinimalist ? 10 : 8),
+        pw.SizedBox(height: isClassic ? 10 : 8),
         pw.Container(
-          width: isMinimalist ? 40 : 60,
-          height: isMinimalist ? 1 : 2,
-          color: isMinimalist ? PdfColors.grey400 : accentColor,
+          width: isClassic ? 40 : 60,
+          height: isClassic ? 1 : 2,
+          color: isClassic ? PdfColors.grey400 : accentColor,
         ),
       ],
     );

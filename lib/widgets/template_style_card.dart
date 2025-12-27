@@ -166,11 +166,7 @@ class _TemplateStyleCardState extends State<TemplateStyleCard> {
         return Icons.business_center;
       case TemplateType.modern:
         return Icons.palette;
-      case TemplateType.minimalist:
-        return Icons.minimize;
-      case TemplateType.classic:
-        return Icons.menu_book;
-      case TemplateType.elegant:
+      case TemplateType.creative:
         return Icons.auto_awesome;
     }
   }

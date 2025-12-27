@@ -1,5 +1,6 @@
 import '../constants/app_constants.dart';
 import 'cv_data.dart';
+import 'template_style.dart';
 
 /// Base CV template that can be reused across applications
 class CvTemplate {
@@ -14,6 +15,7 @@ class CvTemplate {
     this.contactDetails,
     this.experiences = const [],
     this.education = const [],
+    this.templateStyle,
     this.createdAt,
     this.lastModified,
   });
@@ -51,6 +53,10 @@ class CvTemplate {
               ?.map((e) => Education.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      templateStyle: json['templateStyle'] != null
+          ? TemplateStyle.fromJson(
+              json['templateStyle'] as Map<String, dynamic>)
+          : null,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : null,
@@ -70,6 +76,7 @@ class CvTemplate {
   final ContactDetails? contactDetails;
   final List<Experience> experiences;
   final List<Education> education;
+  final TemplateStyle? templateStyle;
   final DateTime? createdAt;
   final DateTime? lastModified;
 
@@ -84,6 +91,7 @@ class CvTemplate {
         'contactDetails': contactDetails?.toJson(),
         'experiences': experiences.map((e) => e.toJson()).toList(),
         'education': education.map((e) => e.toJson()).toList(),
+        'templateStyle': templateStyle?.toJson(),
         'createdAt': createdAt?.toIso8601String(),
         'lastModified': lastModified?.toIso8601String(),
       };
@@ -99,6 +107,7 @@ class CvTemplate {
     ContactDetails? contactDetails,
     List<Experience>? experiences,
     List<Education>? education,
+    TemplateStyle? templateStyle,
     DateTime? createdAt,
     DateTime? lastModified,
   }) {
@@ -113,6 +122,7 @@ class CvTemplate {
       contactDetails: contactDetails ?? this.contactDetails,
       experiences: experiences ?? this.experiences,
       education: education ?? this.education,
+      templateStyle: templateStyle ?? this.templateStyle,
       createdAt: createdAt ?? this.createdAt,
       lastModified: lastModified ?? this.lastModified,
     );

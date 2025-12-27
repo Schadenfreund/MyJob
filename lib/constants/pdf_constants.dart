@@ -1,9 +1,9 @@
 import 'package:pdf/pdf.dart';
 
-/// PDF-specific constants for document generation
+/// Professional PDF Design System
 ///
-/// Defines page sizes, margins, fonts, and layout settings
-/// for CV and cover letter PDF generation.
+/// Centralized design constants following professional typographic and
+/// layout principles for CVs and cover letters.
 class PdfConstants {
   PdfConstants._();
 
@@ -14,73 +14,314 @@ class PdfConstants {
   /// A4 page format (210mm x 297mm)
   static const PdfPageFormat pageFormat = PdfPageFormat.a4;
 
-  /// Page margins in points (1 inch = 72 points)
-  static const double marginTop = 40;
-  static const double marginBottom = 40;
-  static const double marginLeft = 50;
-  static const double marginRight = 50;
+  /// Professional page margins in points (1 inch = 72 points)
+  /// Following standard business document margins
+  static const double marginTop = 56;        // ~0.78 inches
+  static const double marginBottom = 56;     // ~0.78 inches
+  static const double marginLeft = 60;       // ~0.83 inches
+  static const double marginRight = 60;      // ~0.83 inches
 
   // ============================================================================
-  // FONT SIZES
+  // PROFESSIONAL TYPOGRAPHY SCALE
   // ============================================================================
+  // Based on modular scale (1.200 - minor third)
+  // Provides harmonious font size relationships
 
-  static const double fontSizeName = 24;
-  static const double fontSizeTitle = 18;
-  static const double fontSizeHeading = 14;
-  static const double fontSizeSubheading = 12;
-  static const double fontSizeBody = 10;
-  static const double fontSizeSmall = 9;
-  static const double fontSizeCaption = 8;
+  /// Name/Document title (H1)
+  static const double fontSizeName = 28.0;
 
-  // ============================================================================
-  // SPACING
-  // ============================================================================
+  /// Major section headings (H2)
+  static const double fontSizeH2 = 16.0;
 
-  static const double sectionSpacing = 16;
-  static const double paragraphSpacing = 8;
-  static const double lineSpacing = 4;
-  static const double bulletIndent = 12;
+  /// Subsection headings (H3)
+  static const double fontSizeH3 = 13.0;
 
-  // ============================================================================
-  // COLORS (as PdfColor)
-  // ============================================================================
+  /// Subheadings within entries (H4)
+  static const double fontSizeH4 = 11.5;
 
-  // Professional Template Colors
-  static const PdfColor professionalPrimary = PdfColor.fromInt(0xFF2C3E50);
-  static const PdfColor professionalAccent = PdfColor.fromInt(0xFF3498DB);
-  static const PdfColor professionalText = PdfColor.fromInt(0xFF333333);
-  static const PdfColor professionalMuted = PdfColor.fromInt(0xFF7F8C8D);
-  static const PdfColor professionalDivider = PdfColor.fromInt(0xFFBDC3C7);
+  /// Body text (standard paragraphs)
+  static const double fontSizeBody = 10.5;
 
-  // Modern Template Colors
-  static const PdfColor modernPrimary = PdfColor.fromInt(0xFFE67E22);
-  static const PdfColor modernAccent = PdfColor.fromInt(0xFF27AE60);
-  static const PdfColor modernText = PdfColor.fromInt(0xFF2C3E50);
-  static const PdfColor modernMuted = PdfColor.fromInt(0xFF95A5A6);
-  static const PdfColor modernBackground = PdfColor.fromInt(0xFFF8F9FA);
+  /// Small text (captions, meta info)
+  static const double fontSizeSmall = 9.5;
+
+  /// Tiny text (footnotes)
+  static const double fontSizeTiny = 8.5;
 
   // ============================================================================
-  // LAYOUT RATIOS
+  // LINE HEIGHT / LEADING
   // ============================================================================
+  // Optimal readability: 1.4-1.6x font size for body text
 
-  /// Sidebar width ratio for two-column layouts
-  static const double sidebarRatio = 0.32;
+  /// Tight line spacing for headings
+  static const double lineHeightTight = 1.2;
 
-  /// Main content width ratio
-  static const double contentRatio = 0.68;
+  /// Normal line spacing for body text
+  static const double lineHeightNormal = 1.5;
 
-  // ============================================================================
-  // SKILL BAR SETTINGS
-  // ============================================================================
-
-  static const double skillBarHeight = 6;
-  static const double skillBarRadius = 3;
-  static const double skillBarMaxWidth = 100;
+  /// Loose line spacing for emphasized text
+  static const double lineHeightLoose = 1.8;
 
   // ============================================================================
-  // PHOTO SETTINGS
+  // PROFESSIONAL SPACING SYSTEM
+  // ============================================================================
+  // Based on 4pt grid for consistency
+
+  /// Extra small spacing (4pt)
+  static const double spaceXs = 4.0;
+
+  /// Small spacing (8pt)
+  static const double spaceSm = 8.0;
+
+  /// Medium spacing (12pt)
+  static const double spaceMd = 12.0;
+
+  /// Large spacing (16pt)
+  static const double spaceLg = 16.0;
+
+  /// Extra large spacing (20pt)
+  static const double spaceXl = 20.0;
+
+  /// 2X extra large spacing (24pt)
+  static const double space2xl = 24.0;
+
+  /// 3X extra large spacing (32pt)
+  static const double space3xl = 32.0;
+
+  /// Section spacing (40pt)
+  static const double spaceSection = 40.0;
+
+  // Semantic spacing names
+  static const double paragraphSpacing = spaceMd;
+  static const double sectionSpacing = spaceSection;
+  static const double entrySpacing = spaceLg;
+  static const double itemSpacing = spaceSm;
+
+  // ============================================================================
+  // PROFESSIONAL COLOR SYSTEM
   // ============================================================================
 
-  static const double photoSize = 80;
-  static const double photoRadius = 40;
+  // Neutral grays for text (ensures readability on white)
+  static const PdfColor textDark = PdfColor.fromInt(0xFF1A1A1A);      // Near black
+  static const PdfColor textBody = PdfColor.fromInt(0xFF333333);       // Dark gray
+  static const PdfColor textMuted = PdfColor.fromInt(0xFF666666);      // Medium gray
+  static const PdfColor textLight = PdfColor.fromInt(0xFF999999);      // Light gray
+
+  // Dividers and borders
+  static const PdfColor dividerDark = PdfColor.fromInt(0xFFCCCCCC);
+  static const PdfColor dividerLight = PdfColor.fromInt(0xFFE0E0E0);
+
+  // Backgrounds
+  static const PdfColor bgWhite = PdfColors.white;
+  static const PdfColor bgLightGray = PdfColor.fromInt(0xFFF5F5F5);
+  static const PdfColor bgMediumGray = PdfColor.fromInt(0xFFF0F0F0);
+
+  // Professional color palettes for different templates
+
+  // Classic Professional (Navy & Blue)
+  static const PdfColor professionalPrimary = PdfColor.fromInt(0xFF1E3A5F);
+  static const PdfColor professionalAccent = PdfColor.fromInt(0xFF2563EB);
+
+  // Modern (Teal & Emerald)
+  static const PdfColor modernPrimary = PdfColor.fromInt(0xFF0F766E);
+  static const PdfColor modernAccent = PdfColor.fromInt(0xFF059669);
+
+  // Executive (Charcoal & Gold)
+  static const PdfColor executivePrimary = PdfColor.fromInt(0xFF2D3748);
+  static const PdfColor executiveAccent = PdfColor.fromInt(0xFFD97706);
+
+  // Creative (Indigo & Purple)
+  static const PdfColor creativePrimary = PdfColor.fromInt(0xFF4F46E5);
+  static const PdfColor creativeAccent = PdfColor.fromInt(0xFF7C3AED);
+
+  // Minimalist (Black & Charcoal)
+  static const PdfColor minimalistPrimary = PdfColor.fromInt(0xFF000000);
+  static const PdfColor minimalistAccent = PdfColor.fromInt(0xFF374151);
+
+  // ============================================================================
+  // LAYOUT PROPORTIONS
+  // ============================================================================
+
+  /// Golden ratio for harmonious proportions
+  static const double goldenRatio = 1.618;
+
+  /// Sidebar width for two-column layouts (30% of page width)
+  static const double sidebarWidthRatio = 0.30;
+
+  /// Main content width for two-column layouts (70% of page width)
+  static const double contentWidthRatio = 0.70;
+
+  /// Gutter between columns
+  static const double columnGutter = 20.0;
+
+  // ============================================================================
+  // DECORATIVE ELEMENTS
+  // ============================================================================
+
+  /// Standard divider thickness
+  static const double dividerThickness = 1.0;
+
+  /// Accent divider thickness
+  static const double accentDividerThickness = 2.5;
+
+  /// Border radius for rounded elements
+  static const double borderRadius = 4.0;
+
+  /// Border radius for pills/badges
+  static const double borderRadiusPill = 12.0;
+
+  // ============================================================================
+  // SKILL & PROGRESS BARS
+  // ============================================================================
+
+  static const double skillBarHeight = 8.0;
+  static const double skillBarRadius = 4.0;
+  static const double skillBarMaxWidth = 120.0;
+  static const double skillBarSpacing = 6.0;
+
+  // ============================================================================
+  // BADGES & CHIPS
+  // ============================================================================
+
+  static const double badgeHeight = 20.0;
+  static const double badgePaddingH = 10.0;
+  static const double badgePaddingV = 4.0;
+  static const double badgeRadius = 10.0;
+  static const double badgeSpacing = 6.0;
+
+  // ============================================================================
+  // ICON SIZES
+  // ============================================================================
+
+  static const double iconSizeSmall = 12.0;
+  static const double iconSizeMedium = 14.0;
+  static const double iconSizeLarge = 16.0;
+
+  // ============================================================================
+  // CONTACT INFO LAYOUT
+  // ============================================================================
+
+  static const double contactIconSize = iconSizeMedium;
+  static const double contactSpacing = 14.0;
+  static const double contactLineSpacing = 6.0;
+
+  // ============================================================================
+  // BULLET POINTS (ASCII-compatible for all fonts)
+  // ============================================================================
+
+  static const double bulletIndent = 16.0;
+  static const double bulletSpacing = 5.0;
+  static const String bulletCharacter = '-';     // ASCII dash (universal)
+  static const String bulletAlternative = '>';   // ASCII arrow (universal)
+  static const String bulletDot = '*';           // ASCII asterisk (universal)
+
+  // ============================================================================
+  // CONTACT LABELS (text-based for universal font compatibility)
+  // ============================================================================
+
+  // Contact label letters (displayed in circular badges)
+  static const String iconEmail = 'E';        // Email
+  static const String iconPhone = 'T';        // Telephone
+  static const String iconLocation = 'A';     // Address
+  static const String iconLink = 'W';         // Web
+  static const String iconLinkedIn = 'in';    // LinkedIn
+  static const String iconWebsite = 'W';      // Website
+  static const String iconCalendar = 'D';     // Date
+
+  // Contact badge settings
+  static const double contactBadgeSize = 16.0;
+  static const double contactBadgeFontSize = 8.0;
+
+  // ============================================================================
+  // ACCENT COLOR PRESETS (for PDF template customization)
+  // ============================================================================
+
+  static const Map<String, int> accentColorPresets = {
+    'Navy': 0xFF1E3A5F,
+    'Teal': 0xFF0F766E,
+    'Burgundy': 0xFF7C2D2D,
+    'Forest': 0xFF166534,
+    'Slate': 0xFF475569,
+    'Indigo': 0xFF4338CA,
+    'Rose': 0xFFBE185D,
+    'Amber': 0xFFB45309,
+    'Charcoal': 0xFF374151,
+    'Ocean': 0xFF0369A1,
+  };
+
+  // ============================================================================
+  // LETTER SPACING (TRACKING)
+  // ============================================================================
+
+  /// Tight letter spacing for headings
+  static const double letterSpacingTight = -0.3;
+
+  /// Normal letter spacing
+  static const double letterSpacingNormal = 0.0;
+
+  /// Wide letter spacing for small caps
+  static const double letterSpacingWide = 1.2;
+
+  /// Extra wide for section headings
+  static const double letterSpacingExtraWide = 2.0;
+
+  // ============================================================================
+  // PHOTO/AVATAR SETTINGS
+  // ============================================================================
+
+  static const double photoSizeLarge = 100.0;
+  static const double photoSizeMedium = 80.0;
+  static const double photoSizeSmall = 60.0;
+  static const double photoRadiusFull = 50.0;  // Circular
+  static const double photoRadiusRounded = 8.0; // Rounded rectangle
+
+  // ============================================================================
+  // TIMELINE GRAPHICS
+  // ============================================================================
+
+  static const double timelineWidth = 2.0;
+  static const double timelineDotSize = 8.0;
+  static const double timelineSpacing = 16.0;
+
+  // ============================================================================
+  // COVER LETTER SPECIFIC
+  // ============================================================================
+
+  /// Standard paragraph indent for formal letters
+  static const double letterParagraphIndent = 0.0;  // Block format (no indent)
+
+  /// Space between paragraphs in cover letter body
+  static const double letterParagraphSpacing = 14.0;
+
+  /// Space for signature area
+  static const double letterSignatureSpace = 48.0;
+
+  // ============================================================================
+  // HELPER METHODS
+  // ============================================================================
+
+  /// Get opacity value for subtle elements
+  static double opacity(double value) => value.clamp(0.0, 1.0);
+
+  /// Apply alpha channel to PdfColor
+  static PdfColor withOpacity(PdfColor color, double opacity) {
+    final alpha = (opacity * 255).round();
+    return PdfColor(color.red, color.green, color.blue, alpha / 255);
+  }
+
+  /// Create a lighter version of a color
+  static PdfColor lighten(PdfColor color, double amount) {
+    final r = (color.red + (1 - color.red) * amount).clamp(0.0, 1.0);
+    final g = (color.green + (1 - color.green) * amount).clamp(0.0, 1.0);
+    final b = (color.blue + (1 - color.blue) * amount).clamp(0.0, 1.0);
+    return PdfColor(r, g, b);
+  }
+
+  /// Create a darker version of a color
+  static PdfColor darken(PdfColor color, double amount) {
+    final r = (color.red * (1 - amount)).clamp(0.0, 1.0);
+    final g = (color.green * (1 - amount)).clamp(0.0, 1.0);
+    final b = (color.blue * (1 - amount)).clamp(0.0, 1.0);
+    return PdfColor(r, g, b);
+  }
 }

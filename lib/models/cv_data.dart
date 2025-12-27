@@ -132,6 +132,7 @@ class CvData {
       interests: ['Technology', 'Innovation', 'Travel', 'Photography'],
       contactDetails: ContactDetails(
         fullName: 'John Doe',
+        jobTitle: 'Senior Software Engineer',
         email: 'john.doe@example.com',
         phone: '+1 234 567 890',
         address: '123 Main Street, City, Country',
@@ -190,6 +191,8 @@ class ContactDetails {
     this.address,
     this.linkedin,
     this.website,
+    this.profilePicturePath,
+    this.jobTitle,
   });
 
   factory ContactDetails.fromJson(Map<String, dynamic> json) {
@@ -200,6 +203,8 @@ class ContactDetails {
       address: json['address'] as String?,
       linkedin: json['linkedin'] as String?,
       website: json['website'] as String?,
+      profilePicturePath: json['profilePicturePath'] as String?,
+      jobTitle: json['jobTitle'] as String?,
     );
   }
 
@@ -209,6 +214,12 @@ class ContactDetails {
   final String? address;
   final String? linkedin;
   final String? website;
+  final String? profilePicturePath;
+  final String? jobTitle;
+
+  /// Check if profile picture exists
+  bool get hasProfilePicture =>
+      profilePicturePath != null && profilePicturePath!.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
         'fullName': fullName,
@@ -217,6 +228,8 @@ class ContactDetails {
         'address': address,
         'linkedin': linkedin,
         'website': website,
+        'profilePicturePath': profilePicturePath,
+        'jobTitle': jobTitle,
       };
 
   ContactDetails copyWith({
@@ -226,6 +239,8 @@ class ContactDetails {
     String? address,
     String? linkedin,
     String? website,
+    String? profilePicturePath,
+    String? jobTitle,
   }) {
     return ContactDetails(
       fullName: fullName ?? this.fullName,
@@ -234,6 +249,8 @@ class ContactDetails {
       address: address ?? this.address,
       linkedin: linkedin ?? this.linkedin,
       website: website ?? this.website,
+      profilePicturePath: profilePicturePath ?? this.profilePicturePath,
+      jobTitle: jobTitle ?? this.jobTitle,
     );
   }
 }

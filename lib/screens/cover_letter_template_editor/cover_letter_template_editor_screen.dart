@@ -1,29 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/cv_template.dart';
 import '../../providers/templates_provider.dart';
-import '../../widgets/tabbed_cv_editor.dart';
-import '../../dialogs/cv_template_pdf_preview_dialog.dart';
+import '../../models/cover_letter_template.dart';
+import '../../widgets/tabbed_cover_letter_editor.dart';
+import '../../dialogs/cover_letter_template_pdf_preview_dialog.dart';
 
-/// CV Template Editor Screen - Streamlined content-focused editor
+/// Cover Letter Template Editor Screen - Streamlined content-focused editor
 ///
 /// **UX IMPROVEMENT:** Removed template style sidebar - users now select
 /// styles directly in the PDF preview dialog where they can see real-time results.
-class CvTemplateEditorScreen extends StatefulWidget {
-  const CvTemplateEditorScreen({
-    required this.templateId,
-    super.key,
-  });
+class CoverLetterTemplateEditorScreen extends StatefulWidget {
+  const CoverLetterTemplateEditorScreen({super.key, required this.templateId});
 
   final String templateId;
 
   @override
-  State<CvTemplateEditorScreen> createState() => _CvTemplateEditorScreenState();
+  State<CoverLetterTemplateEditorScreen> createState() =>
+      _CoverLetterTemplateEditorScreenState();
 }
 
-class _CvTemplateEditorScreenState extends State<CvTemplateEditorScreen> {
-  CvTemplate? _template;
-  CvTemplate? _currentTemplate;
+class _CoverLetterTemplateEditorScreenState
+    extends State<CoverLetterTemplateEditorScreen> {
+  CoverLetterTemplate? _template;
+  CoverLetterTemplate? _currentTemplate;
   bool _hasUnsavedChanges = false;
   bool _isLoading = true;
 
@@ -35,7 +34,7 @@ class _CvTemplateEditorScreenState extends State<CvTemplateEditorScreen> {
 
   Future<void> _loadTemplate() async {
     final provider = context.read<TemplatesProvider>();
-    final template = provider.getCvTemplateById(widget.templateId);
+    final template = provider.getCoverLetterTemplateById(widget.templateId);
 
     if (template == null) {
       if (mounted) {
@@ -53,47 +52,7 @@ class _CvTemplateEditorScreenState extends State<CvTemplateEditorScreen> {
     });
   }
 
-  Future<void> _save() async {
-    if (_template == null || _currentTemplate == null) return;
-
-    try {
-      final provider = context.read<TemplatesProvider>();
-
-      final updatedTemplate = _currentTemplate!.copyWith(
-        lastModified: DateTime.now(),
-      );
-
-      await provider.updateCvTemplate(updatedTemplate);
-
-      setState(() {
-        _template = updatedTemplate;
-        _currentTemplate = updatedTemplate;
-        _hasUnsavedChanges = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Template saved successfully'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save template: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-    }
-  }
-
-  void _onTemplateChanged(CvTemplate template) {
+  void _onTemplateChanged(CoverLetterTemplate template) {
     setState(() {
       _currentTemplate = template;
       _hasUnsavedChanges = true;
@@ -127,46 +86,6 @@ class _CvTemplateEditorScreenState extends State<CvTemplateEditorScreen> {
     );
 
     return result ?? false;
-  }
-
-  Future<void> _handlePreview() async {
-    // Auto-save if there are changes
-    if (_hasUnsavedChanges) {
-      // Show saving indicator
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                SizedBox(width: 16),
-                Text('Saving changes...'),
-              ],
-            ),
-            duration: Duration(seconds: 1),
-          ),
-        );
-      }
-      await _save();
-    }
-
-    if (_template == null) return;
-
-    final previewTemplate = _currentTemplate ?? _template!;
-
-    if (mounted) {
-      await showDialog(
-        context: context,
-        builder: (context) => CvTemplatePdfPreviewDialog(
-          cvTemplate: previewTemplate,
-          templateStyle: previewTemplate.templateStyle,
-        ),
-      );
-    }
   }
 
   @override
@@ -248,11 +167,91 @@ class _CvTemplateEditorScreenState extends State<CvTemplateEditorScreen> {
             const SizedBox(width: 16),
           ],
         ),
-        body: TabbedCvEditor(
+        body: TabbedCoverLetterEditor(
           template: _currentTemplate ?? _template!,
           onChanged: _onTemplateChanged,
         ),
       ),
     );
+  }
+
+  Future<void> _save() async {
+    if (_template == null || _currentTemplate == null) return;
+
+    try {
+      final provider = context.read<TemplatesProvider>();
+
+      final updatedTemplate = _currentTemplate!.copyWith(
+        lastModified: DateTime.now(),
+      );
+
+      await provider.updateCoverLetterTemplate(updatedTemplate);
+
+      setState(() {
+        _template = updatedTemplate;
+        _currentTemplate = updatedTemplate;
+        _hasUnsavedChanges = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Template saved successfully'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save template: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handlePreview() async {
+    // Auto-save if there are changes
+    if (_hasUnsavedChanges) {
+      // Show saving indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 16),
+                Text('Saving changes...'),
+              ],
+            ),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+      await _save();
+    }
+
+    if (_template == null) return;
+
+    final previewTemplate = _currentTemplate ?? _template!;
+
+    if (mounted) {
+      await showDialog(
+        context: context,
+        builder: (context) => CoverLetterTemplatePdfPreviewDialog(
+          coverLetterTemplate: previewTemplate,
+          templateStyle: previewTemplate.templateStyle,
+        ),
+      );
+    }
   }
 }

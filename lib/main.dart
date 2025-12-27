@@ -8,6 +8,7 @@ import 'providers/templates_provider.dart';
 import 'providers/user_data_provider.dart';
 import 'services/settings_service.dart';
 import 'widgets/custom_titlebar.dart';
+import 'screens/profile/profile_screen.dart';
 import 'screens/applications/applications_screen.dart';
 import 'screens/documents/documents_screen.dart';
 import 'screens/settings/settings_screen.dart';
@@ -78,9 +79,26 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   // Define tabs
   final List<TabInfo> _tabs = const [
-    TabInfo(label: 'Documents', icon: Icons.description_outlined),
-    TabInfo(label: 'Tracking', icon: Icons.work_outline),
-    TabInfo(label: 'Settings', icon: Icons.settings_outlined),
+    TabInfo(
+      label: 'Profile',
+      icon: Icons.person_outline,
+      activeIcon: Icons.person,
+    ),
+    TabInfo(
+      label: 'Documents',
+      icon: Icons.description_outlined,
+      activeIcon: Icons.description,
+    ),
+    TabInfo(
+      label: 'Tracking',
+      icon: Icons.work_outline,
+      activeIcon: Icons.work,
+    ),
+    TabInfo(
+      label: 'Settings',
+      icon: Icons.settings_outlined,
+      activeIcon: Icons.settings,
+    ),
   ];
 
   // Screen widgets for each tab
@@ -90,6 +108,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     _screens = [
+      const ProfileScreen(),
       const DocumentsScreen(),
       const ApplicationsScreen(),
       const SettingsScreen(),
@@ -112,36 +131,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           // Custom titlebar with integrated tabs
           CustomTitleBar(
             title: 'MyLife',
-            icon: const Icon(Icons.work, size: 18, color: Colors.white),
+            iconAssetPath: 'assets/Icon.png',
             accentColor: settings.accentColor,
             isDarkMode: settings.themeMode == ThemeMode.dark,
             onThemeToggle: settings.toggleTheme,
             tabs: _tabs,
             currentTabIndex: _currentTabIndex,
             onTabChanged: _onTabChanged,
-            actions: [
-              _TitleBarAction(
-                icon: Icons.search,
-                tooltip: 'Search',
-                isDarkMode: settings.themeMode == ThemeMode.dark,
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Search functionality coming soon')),
-                  );
-                },
-              ),
-              _TitleBarAction(
-                icon: Icons.refresh,
-                tooltip: 'Refresh',
-                isDarkMode: settings.themeMode == ThemeMode.dark,
-                onPressed: () {
-                  context.read<ApplicationsProvider>().loadApplications();
-                  context.read<TemplatesProvider>().loadAll();
-                  context.read<UserDataProvider>().loadAll();
-                },
-              ),
-            ],
           ),
           // Main content
           Expanded(
@@ -153,56 +149,3 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 }
 
-/// Titlebar action button
-class _TitleBarAction extends StatefulWidget {
-  const _TitleBarAction({
-    required this.icon,
-    required this.tooltip,
-    required this.isDarkMode,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final bool isDarkMode;
-  final VoidCallback onPressed;
-
-  @override
-  State<_TitleBarAction> createState() => _TitleBarActionState();
-}
-
-class _TitleBarActionState extends State<_TitleBarAction> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final hoverColor =
-        widget.isDarkMode ? AppTheme.darkHover : AppTheme.lightHover;
-    final iconColor = widget.isDarkMode
-        ? AppTheme.darkTextPrimary
-        : AppTheme.lightTextPrimary;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: Tooltip(
-        message: widget.tooltip,
-        child: GestureDetector(
-          onTap: widget.onPressed,
-          child: Container(
-            width: 46,
-            height: AppTheme.headerHeight,
-            decoration: BoxDecoration(
-              color: _isHovered ? hoverColor : Colors.transparent,
-            ),
-            child: Icon(
-              widget.icon,
-              size: 18,
-              color: iconColor,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

@@ -15,6 +15,7 @@ build/
 # Project specific exclusions - IMPORTANT
 Design_Template/
 Private_Data/
+CV_Template/
 
 # Generated files
 *.g.dart

@@ -22,11 +22,11 @@ class PdfService {
 
     switch (style.type) {
       case TemplateType.professional:
-      case TemplateType.minimalist:
-      case TemplateType.classic:
-      case TemplateType.elegant:
         ProfessionalCvTemplate.build(pdf, cv, style);
       case TemplateType.modern:
+        ModernCvTemplate.build(pdf, cv, style);
+      case TemplateType.creative:
+        // Creative uses modern template with different styling
         ModernCvTemplate.build(pdf, cv, style);
     }
 
@@ -45,9 +45,6 @@ class PdfService {
 
     switch (style.type) {
       case TemplateType.professional:
-      case TemplateType.minimalist:
-      case TemplateType.classic:
-      case TemplateType.elegant:
         ProfessionalCoverLetterTemplate.build(
           pdf,
           letter,
@@ -57,6 +54,7 @@ class PdfService {
           senderEmail: senderEmail,
         );
       case TemplateType.modern:
+      case TemplateType.creative:
         ModernCoverLetterTemplate.build(
           pdf,
           letter,

@@ -1,27 +1,92 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import '../models/user_data/personal_info.dart';
-import '../models/user_data/skill.dart';
-import '../models/user_data/work_experience.dart';
-import '../models/user_data/language.dart';
-import '../models/user_data/interest.dart';
+import '../models/cv_data.dart';
 import '../models/template_style.dart';
+import '../pdf/cv_templates/professional_cv_template.dart';
+import '../pdf/cv_templates/modern_cv_template.dart';
+import '../pdf/cv_templates/executive_cv_template.dart';
 
-/// Service for generating professional CV PDFs
-class CvPdfService {
-  /// Generate a CV PDF from user data
-  Future<File> generateCvPdf({
-    required PersonalInfo personalInfo,
-    required List<Skill> skills,
-    required List<WorkExperience> workExperiences,
-    required List<Language> languages,
-    required List<Interest> interests,
+/// Service for generating professional CV PDFs from CvTemplate/CvData
+class CvTemplatePdfService {
+  /// Generate a CV PDF from CvData using template classes
+  ///
+  /// If [includeProfilePicture] is true, the profile picture from
+  /// contactDetails.profilePicturePath will be loaded and included.
+  Future<File> generatePdfFromCvData({
+    required CvData cvData,
     required String outputPath,
-    required PdfColor accentColor,
-    TemplateType templateType = TemplateType.professional,
+    TemplateStyle? templateStyle,
+    bool includeProfilePicture = true,
   }) async {
+    final style = templateStyle ?? TemplateStyle.professional;
+    final pdf = pw.Document();
+
+    // Load profile picture if path is provided
+    Uint8List? profileImageBytes;
+    if (includeProfilePicture) {
+      profileImageBytes = await _loadProfileImage(
+        cvData.contactDetails?.profilePicturePath,
+      );
+    }
+
+    // Use specialized template classes based on template type (3 distinct templates)
+    switch (style.type) {
+      case TemplateType.modern:
+        // Modern two-column template with sidebar
+        ModernCvTemplate.build(
+          pdf,
+          cvData,
+          style,
+          profileImageBytes: profileImageBytes,
+        );
+      case TemplateType.creative:
+        // Creative template with timeline and unique graphics
+        ExecutiveCvTemplate.build(
+          pdf,
+          cvData,
+          style,
+          profileImageBytes: profileImageBytes,
+        );
+      case TemplateType.professional:
+        // Classic single-column template
+        ProfessionalCvTemplate.build(
+          pdf,
+          cvData,
+          style,
+          profileImageBytes: profileImageBytes,
+        );
+    }
+
+    // Save the PDF
+    final file = File(outputPath);
+    await file.writeAsBytes(await pdf.save());
+    return file;
+  }
+
+  /// Load profile image bytes from file path
+  Future<Uint8List?> _loadProfileImage(String? imagePath) async {
+    if (imagePath == null || imagePath.isEmpty) return null;
+    try {
+      final file = File(imagePath);
+      if (await file.exists()) {
+        return await file.readAsBytes();
+      }
+    } catch (_) {
+      // Ignore file read errors
+    }
+    return null;
+  }
+
+  /// Legacy method - Generate a CV PDF with inline building (kept for compatibility)
+  Future<File> generatePdfFromCvDataLegacy({
+    required CvData cvData,
+    required String outputPath,
+    TemplateStyle? templateStyle,
+  }) async {
+    final style = templateStyle ?? TemplateStyle.professional;
     final pdf = pw.Document();
 
     // Load fonts for better typography
@@ -29,8 +94,17 @@ class CvPdfService {
     final regularFont = await PdfGoogleFonts.interRegular();
     final mediumFont = await PdfGoogleFonts.interMedium();
 
+    // Convert Flutter Color to PdfColor
+    final color = style.primaryColor;
+    final accentColor = PdfColor(
+      (color.r * 255.0).round().clamp(0, 255) / 255,
+      (color.g * 255.0).round().clamp(0, 255) / 255,
+      (color.b * 255.0).round().clamp(0, 255) / 255,
+      (color.a * 255.0).round().clamp(0, 255) / 255,
+    );
+
     // Adjust margins based on template type
-    final margins = _getMargins(templateType);
+    final margins = _getMargins(style.type);
 
     pdf.addPage(
       pw.MultiPage(
@@ -39,27 +113,26 @@ class CvPdfService {
         build: (context) => [
           // Header section with name and contact info
           _buildHeader(
-            personalInfo,
+            cvData,
             accentColor,
             boldFont,
             regularFont,
-            templateType,
+            style.type,
           ),
           pw.SizedBox(height: 24),
 
           // Profile summary
-          if (personalInfo.profileSummary != null &&
-              personalInfo.profileSummary!.isNotEmpty)
+          if (cvData.profile.isNotEmpty)
             _buildSection(
               title: 'Profile',
               accentColor: accentColor,
               boldFont: boldFont,
               mediumFont: mediumFont,
               regularFont: regularFont,
-              templateType: templateType,
+              templateType: style.type,
               content: [
                 pw.Text(
-                  personalInfo.profileSummary!,
+                  cvData.profile,
                   style: pw.TextStyle(
                     font: regularFont,
                     fontSize: 10,
@@ -71,7 +144,7 @@ class CvPdfService {
             ),
 
           // Work Experience
-          if (workExperiences.isNotEmpty) ...[
+          if (cvData.experiences.isNotEmpty) ...[
             pw.SizedBox(height: 20),
             _buildSection(
               title: 'Work Experience',
@@ -79,8 +152,8 @@ class CvPdfService {
               boldFont: boldFont,
               mediumFont: mediumFont,
               regularFont: regularFont,
-              templateType: templateType,
-              content: workExperiences
+              templateType: style.type,
+              content: cvData.experiences
                   .map((exp) => _buildWorkExperience(
                         exp,
                         mediumFont,
@@ -91,8 +164,29 @@ class CvPdfService {
             ),
           ],
 
+          // Education
+          if (cvData.education.isNotEmpty) ...[
+            pw.SizedBox(height: 20),
+            _buildSection(
+              title: 'Education',
+              accentColor: accentColor,
+              boldFont: boldFont,
+              mediumFont: mediumFont,
+              regularFont: regularFont,
+              templateType: style.type,
+              content: cvData.education
+                  .map((edu) => _buildEducation(
+                        edu,
+                        mediumFont,
+                        regularFont,
+                        accentColor,
+                      ))
+                  .toList(),
+            ),
+          ],
+
           // Skills
-          if (skills.isNotEmpty) ...[
+          if (cvData.skills.isNotEmpty) ...[
             pw.SizedBox(height: 20),
             _buildSection(
               title: 'Skills',
@@ -100,15 +194,15 @@ class CvPdfService {
               boldFont: boldFont,
               mediumFont: mediumFont,
               regularFont: regularFont,
-              templateType: templateType,
+              templateType: style.type,
               content: [
-                _buildSkills(skills, regularFont, accentColor),
+                _buildSkills(cvData.skills, regularFont, accentColor),
               ],
             ),
           ],
 
           // Languages
-          if (languages.isNotEmpty) ...[
+          if (cvData.languages.isNotEmpty) ...[
             pw.SizedBox(height: 20),
             _buildSection(
               title: 'Languages',
@@ -116,15 +210,15 @@ class CvPdfService {
               boldFont: boldFont,
               mediumFont: mediumFont,
               regularFont: regularFont,
-              templateType: templateType,
+              templateType: style.type,
               content: [
-                _buildLanguages(languages, regularFont, accentColor),
+                _buildLanguages(cvData.languages, regularFont, accentColor),
               ],
             ),
           ],
 
           // Interests
-          if (interests.isNotEmpty) ...[
+          if (cvData.interests.isNotEmpty) ...[
             pw.SizedBox(height: 20),
             _buildSection(
               title: 'Interests',
@@ -132,10 +226,10 @@ class CvPdfService {
               boldFont: boldFont,
               mediumFont: mediumFont,
               regularFont: regularFont,
-              templateType: templateType,
+              templateType: style.type,
               content: [
                 pw.Text(
-                  interests.map((i) => i.name).join(' • '),
+                  cvData.interests.join(' • '),
                   style: pw.TextStyle(
                     font: regularFont,
                     fontSize: 10,
@@ -168,20 +262,21 @@ class CvPdfService {
 
   /// Build the header with name and contact information
   pw.Widget _buildHeader(
-    PersonalInfo info,
+    CvData cvData,
     PdfColor accentColor,
     pw.Font boldFont,
     pw.Font regularFont,
     TemplateType templateType,
   ) {
     final isClassic = templateType == TemplateType.professional;
+    final contactDetails = cvData.contactDetails;
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         // Name
         pw.Text(
-          info.fullName,
+          contactDetails?.fullName ?? 'No Name',
           style: pw.TextStyle(
             font: boldFont,
             fontSize: isClassic ? 32 : 28,
@@ -192,21 +287,28 @@ class CvPdfService {
         pw.SizedBox(height: isClassic ? 12 : 8),
 
         // Contact info
-        pw.Wrap(
-          spacing: 16,
-          runSpacing: 4,
-          children: [
-            if (info.email != null)
-              _buildContactItem(
-                  'Email', info.email!, regularFont, accentColor, isClassic),
-            if (info.phone != null)
-              _buildContactItem(
-                  'Phone', info.phone!, regularFont, accentColor, isClassic),
-            if (info.address != null)
-              _buildContactItem('Address', info.address!, regularFont,
-                  accentColor, isClassic),
-          ],
-        ),
+        if (contactDetails != null)
+          pw.Wrap(
+            spacing: 16,
+            runSpacing: 4,
+            children: [
+              if (contactDetails.email != null && contactDetails.email!.isNotEmpty)
+                _buildContactItem(
+                    'Email', contactDetails.email!, regularFont, accentColor, isClassic),
+              if (contactDetails.phone != null && contactDetails.phone!.isNotEmpty)
+                _buildContactItem(
+                    'Phone', contactDetails.phone!, regularFont, accentColor, isClassic),
+              if (contactDetails.address != null && contactDetails.address!.isNotEmpty)
+                _buildContactItem('Address', contactDetails.address!, regularFont,
+                    accentColor, isClassic),
+              if (contactDetails.linkedin != null && contactDetails.linkedin!.isNotEmpty)
+                _buildContactItem('LinkedIn', contactDetails.linkedin!, regularFont,
+                    accentColor, isClassic),
+              if (contactDetails.website != null && contactDetails.website!.isNotEmpty)
+                _buildContactItem('Website', contactDetails.website!, regularFont,
+                    accentColor, isClassic),
+            ],
+          ),
 
         // Divider
         pw.SizedBox(height: isClassic ? 16 : 12),
@@ -289,7 +391,7 @@ class CvPdfService {
 
   /// Build work experience entry
   pw.Widget _buildWorkExperience(
-    WorkExperience exp,
+    Experience exp,
     pw.Font mediumFont,
     pw.Font regularFont,
     PdfColor accentColor,
@@ -299,13 +401,13 @@ class CvPdfService {
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          // Position and Company
+          // Position and Date Range
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               pw.Expanded(
                 child: pw.Text(
-                  exp.position,
+                  exp.title,
                   style: pw.TextStyle(
                     font: mediumFont,
                     fontSize: 12,
@@ -325,38 +427,14 @@ class CvPdfService {
           ),
           pw.SizedBox(height: 4),
 
-          // Company and Location
-          pw.Row(
-            children: [
-              pw.Text(
-                exp.company,
-                style: pw.TextStyle(
-                  font: mediumFont,
-                  fontSize: 10,
-                  color: PdfColors.grey700,
-                ),
-              ),
-              if (exp.location != null) ...[
-                pw.SizedBox(width: 8),
-                pw.Text(
-                  '|',
-                  style: pw.TextStyle(
-                    font: regularFont,
-                    fontSize: 10,
-                    color: PdfColors.grey500,
-                  ),
-                ),
-                pw.SizedBox(width: 8),
-                pw.Text(
-                  exp.location!,
-                  style: pw.TextStyle(
-                    font: regularFont,
-                    fontSize: 9,
-                    color: PdfColors.grey600,
-                  ),
-                ),
-              ],
-            ],
+          // Company
+          pw.Text(
+            exp.company,
+            style: pw.TextStyle(
+              font: mediumFont,
+              fontSize: 10,
+              color: PdfColors.grey700,
+            ),
           ),
           pw.SizedBox(height: 8),
 
@@ -375,13 +453,13 @@ class CvPdfService {
               ),
             ),
 
-          // Responsibilities
-          if (exp.responsibilities.isNotEmpty)
+          // Bullet points
+          if (exp.bullets.isNotEmpty)
             pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: exp.responsibilities
+              children: exp.bullets
                   .map(
-                    (resp) => pw.Padding(
+                    (bullet) => pw.Padding(
                       padding: const pw.EdgeInsets.only(left: 12, bottom: 3),
                       child: pw.Row(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -396,7 +474,7 @@ class CvPdfService {
                           ),
                           pw.Expanded(
                             child: pw.Text(
-                              resp,
+                              bullet,
                               style: pw.TextStyle(
                                 font: regularFont,
                                 fontSize: 9,
@@ -416,81 +494,111 @@ class CvPdfService {
     );
   }
 
-  /// Build skills section with categories
-  pw.Widget _buildSkills(
-    List<Skill> skills,
-    pw.Font font,
+  /// Build education entry
+  pw.Widget _buildEducation(
+    Education edu,
+    pw.Font mediumFont,
+    pw.Font regularFont,
     PdfColor accentColor,
   ) {
-    // Group skills by category
-    final skillsByCategory = <String, List<Skill>>{};
-    for (final skill in skills) {
-      final category = skill.category ?? 'Other';
-      skillsByCategory.putIfAbsent(category, () => []).add(skill);
-    }
-
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: skillsByCategory.entries.map((entry) {
-        return pw.Padding(
-          padding: const pw.EdgeInsets.only(bottom: 8),
-          child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 16),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          // Degree and Date Range
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.SizedBox(
-                width: 100,
+              pw.Expanded(
                 child: pw.Text(
-                  '${entry.key}:',
+                  edu.degree,
                   style: pw.TextStyle(
-                    font: font,
-                    fontSize: 10,
-                    color: accentColor,
-                    fontWeight: pw.FontWeight.bold,
+                    font: mediumFont,
+                    fontSize: 12,
+                    color: PdfColors.grey900,
                   ),
                 ),
               ),
-              pw.Expanded(
-                child: pw.Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: entry.value
-                      .map(
-                        (skill) => pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: pw.BoxDecoration(
-                            color: accentColor.flatten(),
-                            borderRadius: const pw.BorderRadius.all(
-                              pw.Radius.circular(4),
-                            ),
-                          ),
-                          child: pw.Text(
-                            skill.level != null
-                                ? '${skill.name} (${skill.level!.displayName})'
-                                : skill.name,
-                            style: pw.TextStyle(
-                              font: font,
-                              fontSize: 8,
-                              color: PdfColors.white,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
+              pw.Text(
+                edu.dateRange,
+                style: pw.TextStyle(
+                  font: regularFont,
+                  fontSize: 9,
+                  color: accentColor,
                 ),
               ),
             ],
           ),
-        );
-      }).toList(),
+          pw.SizedBox(height: 4),
+
+          // Institution
+          pw.Text(
+            edu.institution,
+            style: pw.TextStyle(
+              font: mediumFont,
+              fontSize: 10,
+              color: PdfColors.grey700,
+            ),
+          ),
+
+          // Description
+          if (edu.description != null && edu.description!.isNotEmpty) ...[
+            pw.SizedBox(height: 6),
+            pw.Text(
+              edu.description!,
+              style: pw.TextStyle(
+                font: regularFont,
+                fontSize: 9,
+                color: PdfColors.grey700,
+                lineSpacing: 1.3,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Build skills section
+  pw.Widget _buildSkills(
+    List<String> skills,
+    pw.Font font,
+    PdfColor accentColor,
+  ) {
+    return pw.Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      children: skills
+          .map(
+            (skill) => pw.Container(
+              padding: const pw.EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 4,
+              ),
+              decoration: pw.BoxDecoration(
+                color: accentColor.flatten(),
+                borderRadius: const pw.BorderRadius.all(
+                  pw.Radius.circular(4),
+                ),
+              ),
+              child: pw.Text(
+                skill,
+                style: pw.TextStyle(
+                  font: font,
+                  fontSize: 9,
+                  color: PdfColors.white,
+                ),
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 
   /// Build languages section
   pw.Widget _buildLanguages(
-    List<Language> languages,
+    List<LanguageSkill> languages,
     pw.Font font,
     PdfColor accentColor,
   ) {
@@ -503,7 +611,7 @@ class CvPdfService {
               mainAxisSize: pw.MainAxisSize.min,
               children: [
                 pw.Text(
-                  lang.name,
+                  lang.language,
                   style: pw.TextStyle(
                     font: font,
                     fontSize: 10,
@@ -523,7 +631,7 @@ class CvPdfService {
                     ),
                   ),
                   child: pw.Text(
-                    lang.proficiency.displayName,
+                    lang.level,
                     style: pw.TextStyle(
                       font: font,
                       fontSize: 7,

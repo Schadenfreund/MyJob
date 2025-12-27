@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
-import '../dialogs/yaml_import_dialog.dart';
+import '../dialogs/unified_import_dialog.dart';
 
-/// YAML Import Section - Prominent import buttons for CV and Cover Letter YAML files
+/// YAML Import Section - Unified import for CV and Cover Letter files
+///
+/// Features:
+/// - Single import button for all YAML types
+/// - Auto-detects file type (CV vs Cover Letter)
+/// - Beautiful, professional UI with hover states
 class YamlImportSection extends StatelessWidget {
   const YamlImportSection({super.key});
 
@@ -16,154 +21,147 @@ class YamlImportSection extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            theme.colorScheme.primary.withValues(alpha: 0.05),
+            theme.colorScheme.primary.withValues(alpha: 0.06),
             theme.colorScheme.primary.withValues(alpha: 0.02),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+          color: theme.colorScheme.primary.withValues(alpha: 0.15),
           width: 1,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Row(
             children: [
-              Icon(
-                Icons.upload_file,
-                color: theme.colorScheme.primary,
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Import Your Data',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Import YAML files to create professional CV and cover letter templates',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Import Buttons Row
-          Row(
-            children: [
-              Expanded(
-                child: _ImportButton(
-                  icon: Icons.description,
-                  label: 'Import CV YAML',
-                  description: 'cv_data.yaml',
+                child: Icon(
+                  Icons.upload_file,
                   color: theme.colorScheme.primary,
-                  onPressed: () => _importCvYaml(context),
+                  size: 24,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _ImportButton(
-                  icon: Icons.mail,
-                  label: 'Import Cover Letter YAML',
-                  description: 'cover_letter.yaml',
-                  color: theme.colorScheme.primary,
-                  onPressed: () => _importCoverLetterYaml(context),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Import from YAML',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Auto-detects CV or Cover Letter format',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 20),
+
+          // Import Button
+          _UnifiedImportButton(
+            onPressed: () => _showUnifiedImportDialog(context),
+          ),
 
           const SizedBox(height: 16),
 
-          // Help text
-          Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                size: 16,
-                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'YAML files should be in UserData/CV/ or UserData/CoverLetter/ directories',
+          // Supported formats
+          _buildSupportedFormats(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSupportedFormats(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: 18,
+            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Supported formats:',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color
-                        ?.withValues(alpha: 0.6),
-                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.8),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                const Wrap(
+                  spacing: 16,
+                  runSpacing: 4,
+                  children: [
+                    _FormatChip(label: 'cv_data_*.yaml', icon: Icons.description),
+                    _FormatChip(label: 'cover_letter_*.yaml', icon: Icons.mail),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _importCvYaml(BuildContext context) async {
+  void _showUnifiedImportDialog(BuildContext context) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => const YamlImportDialog(
-        importType: YamlImportType.cv,
-      ),
+      builder: (context) => const UnifiedImportDialog(),
     );
 
     if (result == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('CV data imported successfully!'),
+          content: const Text('Import completed successfully!'),
           backgroundColor: Theme.of(context).colorScheme.primary,
-        ),
-      );
-    }
-  }
-
-  void _importCoverLetterYaml(BuildContext context) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => const YamlImportDialog(
-        importType: YamlImportType.coverLetter,
-      ),
-    );
-
-    if (result == true && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Cover letter data imported successfully!'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }
   }
 }
 
-class _ImportButton extends StatefulWidget {
-  const _ImportButton({
-    required this.icon,
-    required this.label,
-    required this.description,
-    required this.color,
-    required this.onPressed,
-  });
+/// Unified import button with hover effects
+class _UnifiedImportButton extends StatefulWidget {
+  const _UnifiedImportButton({required this.onPressed});
 
-  final IconData icon;
-  final String label;
-  final String description;
-  final Color color;
   final VoidCallback onPressed;
 
   @override
-  State<_ImportButton> createState() => _ImportButtonState();
+  State<_UnifiedImportButton> createState() => _UnifiedImportButtonState();
 }
 
-class _ImportButtonState extends State<_ImportButton> {
+class _UnifiedImportButtonState extends State<_UnifiedImportButton> {
   bool _isHovered = false;
 
   @override
@@ -184,84 +182,93 @@ class _ImportButtonState extends State<_ImportButton> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: _isHovered
-                    ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                    ? theme.colorScheme.primary.withValues(alpha: 0.08)
                     : theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: _isHovered
-                      ? widget.color
+                      ? theme.colorScheme.primary
                       : theme.dividerColor.withValues(alpha: 0.5),
                   width: _isHovered ? 2 : 1,
                 ),
                 boxShadow: _isHovered
                     ? [
                         BoxShadow(
-                          color: widget.color.withValues(alpha: 0.1),
-                          blurRadius: 8,
+                          color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                          blurRadius: 12,
                           spreadRadius: 2,
                         ),
                       ]
                     : [],
               ),
-              child: Column(
+              child: Row(
                 children: [
-                  Container(
+                  // Icon
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: widget.color.withValues(alpha: 0.1),
+                      color: _isHovered
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
-                      widget.icon,
-                      color: widget.color,
+                      Icons.file_upload_outlined,
+                      color: _isHovered ? Colors.white : theme.colorScheme.primary,
                       size: 28,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    widget.label,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(width: 20),
+
+                  // Text
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Choose YAML File',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'CV data or Cover Letter template',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.description,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.bodySmall?.color
-                          ?.withValues(alpha: 0.6),
-                      fontFamily: 'monospace',
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
+
+                  // Arrow
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
-                      color: widget.color
-                          .withValues(alpha: _isHovered ? 1.0 : 0.1),
-                      borderRadius: BorderRadius.circular(6),
+                      color: _isHovered
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.upload,
-                          size: 16,
-                          color: _isHovered ? Colors.white : widget.color,
+                          size: 18,
+                          color: _isHovered ? Colors.white : theme.colorScheme.primary,
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Choose File',
+                          'Browse',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: _isHovered ? Colors.white : widget.color,
+                            color: _isHovered ? Colors.white : theme.colorScheme.primary,
                           ),
                         ),
                       ],
@@ -273,6 +280,40 @@ class _ImportButtonState extends State<_ImportButton> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Format chip showing supported file patterns
+@immutable
+class _FormatChip extends StatelessWidget {
+  const _FormatChip({required this.label, required this.icon});
+
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 14,
+          color: theme.colorScheme.primary.withValues(alpha: 0.7),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontFamily: 'monospace',
+            fontSize: 11,
+            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+          ),
+        ),
+      ],
     );
   }
 }

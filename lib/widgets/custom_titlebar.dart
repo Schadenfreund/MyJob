@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
+import '../models/tab_info.dart';
 import '../theme/app_theme.dart';
+
+// Re-export TabInfo for convenience
+export '../models/tab_info.dart';
 
 // Titlebar constants
 const double _iconBoxSize = 30;
 const double _iconPadding = 5;
 const double _iconBorderRadius = 7;
 const double _windowButtonWidth = 46;
-const double _titleFontSize = 16;
+const double _titleFontSize = 18;
 const double _windowButtonIconSize = 16;
 const double _themeToggleIconSize = 18;
 
@@ -18,17 +22,6 @@ Future<void> _toggleMaximize() async {
   } else {
     await windowManager.maximize();
   }
-}
-
-/// Tab information model
-class TabInfo {
-  const TabInfo({
-    required this.label,
-    required this.icon,
-  });
-
-  final String label;
-  final IconData icon;
 }
 
 /// Custom Windows titlebar with integrated tab navigation
@@ -42,12 +35,19 @@ class CustomTitleBar extends StatelessWidget {
     required this.onTabChanged,
     super.key,
     this.icon,
+    this.iconAssetPath,
     this.onThemeToggle,
     this.actions,
   });
 
   final String title;
+
+  /// Optional custom icon widget (displayed in accent-colored box)
   final Widget? icon;
+
+  /// Optional icon asset path (alternative to icon widget)
+  final String? iconAssetPath;
+
   final Color accentColor;
   final bool isDarkMode;
   final VoidCallback? onThemeToggle;
@@ -100,8 +100,7 @@ class CustomTitleBar extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: icon ??
-                        const Icon(Icons.work, size: 18, color: Colors.white),
+                    child: _buildIcon(),
                   ),
                   const SizedBox(width: 10),
                   Text(
@@ -133,10 +132,11 @@ class CustomTitleBar extends StatelessWidget {
               children: tabs.asMap().entries.map((entry) {
                 final index = entry.key;
                 final tab = entry.value;
+                final isSelected = index == currentTabIndex;
                 return _TabButton(
                   label: tab.label,
-                  icon: tab.icon,
-                  isSelected: index == currentTabIndex,
+                  icon: isSelected ? tab.activeIcon : tab.icon,
+                  isSelected: isSelected,
                   accentColor: accentColor,
                   textColor: textColor,
                   onTap: () => onTabChanged(index),
@@ -182,12 +182,29 @@ class CustomTitleBar extends StatelessWidget {
             icon: Icons.close,
             onPressed: windowManager.close,
             hoverColor: hoverColor,
-            iconColor: textColor,
+            iconColor: accentColor,
             isClose: true,
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildIcon() {
+    if (icon != null) {
+      return icon!;
+    } else if (iconAssetPath != null) {
+      return Image.asset(
+        iconAssetPath!,
+        fit: BoxFit.contain,
+      );
+    } else {
+      return const Icon(
+        Icons.work,
+        size: 18,
+        color: Colors.white,
+      );
+    }
   }
 }
 
@@ -298,16 +315,12 @@ class _WindowButtonState extends State<_WindowButton> {
             width: _windowButtonWidth,
             height: AppTheme.headerHeight,
             decoration: BoxDecoration(
-              color: _isHovered
-                  ? (widget.isClose ? Colors.red : widget.hoverColor)
-                  : Colors.transparent,
+              color: _isHovered ? widget.hoverColor : Colors.transparent,
             ),
             child: Icon(
               widget.icon,
               size: _windowButtonIconSize,
-              color: _isHovered && widget.isClose
-                  ? Colors.white
-                  : widget.iconColor,
+              color: widget.iconColor,
             ),
           ),
         ),
