@@ -25,6 +25,7 @@ class TemplateStyle {
     this.fontFamily = 'Helvetica',
     this.showPhoto = true,
     this.twoColumnLayout = false,
+    this.isDarkMode = false,
   });
 
   factory TemplateStyle.fromJson(Map<String, dynamic> json) {
@@ -37,6 +38,7 @@ class TemplateStyle {
       fontFamily: json['fontFamily'] as String? ?? 'Helvetica',
       showPhoto: json['showPhoto'] as bool? ?? true,
       twoColumnLayout: json['twoColumnLayout'] as bool? ?? false,
+      isDarkMode: json['isDarkMode'] as bool? ?? false,
     );
   }
 
@@ -46,6 +48,7 @@ class TemplateStyle {
   final String fontFamily;
   final bool showPhoto;
   final bool twoColumnLayout;
+  final bool isDarkMode;
 
   Map<String, dynamic> toJson() => {
         'type': type.name,
@@ -54,6 +57,7 @@ class TemplateStyle {
         'fontFamily': fontFamily,
         'showPhoto': showPhoto,
         'twoColumnLayout': twoColumnLayout,
+        'isDarkMode': isDarkMode,
       };
 
   TemplateStyle copyWith({
@@ -63,6 +67,7 @@ class TemplateStyle {
     String? fontFamily,
     bool? showPhoto,
     bool? twoColumnLayout,
+    bool? isDarkMode,
   }) {
     return TemplateStyle(
       type: type ?? this.type,
@@ -71,6 +76,7 @@ class TemplateStyle {
       fontFamily: fontFamily ?? this.fontFamily,
       showPhoto: showPhoto ?? this.showPhoto,
       twoColumnLayout: twoColumnLayout ?? this.twoColumnLayout,
+      isDarkMode: isDarkMode ?? this.isDarkMode,
     );
   }
 

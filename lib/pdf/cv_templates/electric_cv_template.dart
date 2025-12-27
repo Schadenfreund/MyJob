@@ -5,39 +5,26 @@ import '../../models/cv_data.dart';
 import '../../models/template_style.dart';
 import '../../models/template_customization.dart';
 import '../../constants/pdf_constants.dart';
+import '../core/pdf_icons.dart';
 
-/// Electric CV Template - Modern Magazine-Style Design
+/// Electric CV Template - Modern Magazine-Style Design with Dynamic Accent Colors
 ///
 /// Features:
 /// - Bold asymmetric magazine layout
-/// - Electric yellow (#FFFF00) accents on black backgrounds
-/// - Overlapping photo banner with geometric shapes
-/// - Professional icons using Unicode symbols
-/// - Checkbox bullets for achievements
-/// - Hexagonal accent shapes
-/// - Modern brutalist typography
-/// - High-contrast professional design
+/// - Dynamic accent colors (Electric Yellow, Cyan, Magenta, etc.)
+/// - Professional typography with ASCII-safe icons
+/// - High-contrast design
+/// - Fully customizable accent color support
 class ElectricCvTemplate {
   ElectricCvTemplate._();
 
-  // Professional Electric color palette
-  static const PdfColor _electricYellow = PdfColor.fromInt(0xFFFFFF00);
-  static const PdfColor _electricYellowFaded = PdfColor.fromInt(0x26FFFF00); // 15% opacity
+  // Base color palette (primary colors that don't change)
   static const PdfColor _black = PdfColors.black;
   static const PdfColor _mediumGray = PdfColor.fromInt(0xFF2D2D2D);
-  static const PdfColor _mediumGrayFaded = PdfColor.fromInt(0x332D2D2D); // 20% opacity
   static const PdfColor _lightGray = PdfColor.fromInt(0xFF666666);
+  static const PdfColor _darkGray = PdfColor.fromInt(0xFF1A1A1A);
   static const PdfColor _white = PdfColors.white;
-
-  // Professional Unicode icons
-  static const String _iconEmail = '✉';
-  static const String _iconPhone = '✆';
-  static const String _iconLocation = '⚲';
-  static const String _iconCheckbox = '☑';
-  static const String _iconSquare = '■';
-  static const String _iconHex = '⬢';
-  static const String _iconStar = '★';
-  static const String _iconArrow = '▸';
+  static const PdfColor _offWhite = PdfColor.fromInt(0xFFF5F5F5);
 
   /// Build the Electric CV PDF with stunning magazine-style design
   static void build(
@@ -51,6 +38,20 @@ class ElectricCvTemplate {
     TemplateCustomization? customization,
   }) {
     final fontFallback = [regularFont, boldFont, mediumFont];
+
+    // Dark mode flag
+    final isDarkMode = style.isDarkMode;
+
+    // Convert Flutter accent color to PDF color (this makes colors dynamic!)
+    final accentColor = PdfColor.fromInt(style.accentColor.toARGB32());
+    final accentFaded = PdfColor.fromHex('#${style.accentColor.toARGB32().toRadixString(16).substring(2)}26'); // 15% opacity
+
+    // Dynamic colors based on dark mode
+    final backgroundColor = isDarkMode ? _darkGray : _white;
+    final textColor = isDarkMode ? _white : _black;
+    final secondaryTextColor = isDarkMode ? _offWhite : _lightGray;
+    final headerBackground = isDarkMode ? _black : _black;
+    final pageBackground = isDarkMode ? _darkGray : _offWhite;
 
     // Create profile image if provided
     pw.ImageProvider? profileImage;
@@ -74,32 +75,35 @@ class ElectricCvTemplate {
         ),
         build: (context) => [
           // Hero header with overlapping photo banner
-          _buildHeroHeader(cv, profileImage),
+          _buildHeroHeader(cv, profileImage, accentColor, accentFaded, isDarkMode, headerBackground),
 
-          // Main content area
+          // Main content area with dynamic background
           pw.Container(
-            padding: const pw.EdgeInsets.symmetric(horizontal: 48, vertical: 32),
+            color: backgroundColor,
+            padding: const pw.EdgeInsets.symmetric(horizontal: 56, vertical: 40),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 // Two-column layout for professional summary and key skills
-                _buildTopSection(cv),
+                _buildTopSection(cv, accentColor, textColor, secondaryTextColor),
 
-                pw.SizedBox(height: 32),
+                pw.SizedBox(height: 40),
 
                 // Professional Experience
                 if (cv.experiences.isNotEmpty) ...[
-                  _buildSectionHeader('PROFESSIONAL EXPERIENCE', _iconHex),
-                  pw.SizedBox(height: 16),
-                  ...cv.experiences.map(_buildExperienceEntry),
-                  pw.SizedBox(height: 32),
+                  _buildSectionHeader('PROFESSIONAL EXPERIENCE', accentColor, textColor),
+                  pw.SizedBox(height: 20),
+                  ...cv.experiences.map((exp) => _buildExperienceEntry(exp, accentColor, textColor, secondaryTextColor)),
+                  pw.SizedBox(height: 40),
                 ],
 
                 // Education & Skills in two columns
-                _buildEducationSkillsSection(cv),
+                _buildEducationSkillsSection(cv, accentColor, textColor, secondaryTextColor),
+
+                pw.SizedBox(height: 40),
 
                 // Languages and Interests at bottom
-                _buildBottomSection(cv),
+                _buildBottomSection(cv, accentColor, textColor, secondaryTextColor),
               ],
             ),
           ),
@@ -109,28 +113,35 @@ class ElectricCvTemplate {
   }
 
   /// Build stunning hero header with overlapping photo and geometric shapes
-  static pw.Widget _buildHeroHeader(CvData cv, pw.ImageProvider? profileImage) {
+  static pw.Widget _buildHeroHeader(
+    CvData cv,
+    pw.ImageProvider? profileImage,
+    PdfColor accentColor,
+    PdfColor accentFaded,
+    bool isDarkMode,
+    PdfColor headerBackground,
+  ) {
     final contact = cv.contactDetails;
     final name = contact?.fullName ?? 'Your Name';
     final jobTitle = contact?.jobTitle ?? '';
 
     return pw.Stack(
       children: [
-        // Black background banner
+        // Header background banner (black in both modes for contrast)
         pw.Container(
           width: double.infinity,
           height: 220,
-          color: _black,
+          color: headerBackground,
         ),
 
-        // Electric yellow accent bar (top)
+        // Accent bar (top) - DYNAMIC COLOR
         pw.Container(
           width: double.infinity,
           height: 8,
-          color: _electricYellow,
+          color: accentColor,
         ),
 
-        // Electric yellow geometric accent (diagonal)
+        // Diagonal geometric accent shape - DYNAMIC COLOR
         pw.Positioned(
           right: 0,
           top: 0,
@@ -139,7 +150,7 @@ class ElectricCvTemplate {
             child: pw.Container(
               width: 300,
               height: 180,
-              color: _electricYellowFaded,
+              color: accentFaded,
             ),
           ),
         ),
@@ -151,19 +162,19 @@ class ElectricCvTemplate {
             children: [
               pw.SizedBox(width: 48),
 
-              // Profile photo with hexagonal border
+              // Profile photo with accent border - DYNAMIC COLOR
               if (profileImage != null) ...[
                 pw.Container(
                   width: 140,
                   height: 140,
                   decoration: pw.BoxDecoration(
-                    color: _electricYellow,
+                    color: accentColor,
                     shape: pw.BoxShape.circle,
                   ),
                   padding: const pw.EdgeInsets.all(6),
                   child: pw.ClipOval(
                     child: pw.Container(
-                      decoration: pw.BoxDecoration(
+                      decoration: const pw.BoxDecoration(
                         color: _mediumGray,
                         shape: pw.BoxShape.circle,
                       ),
@@ -196,10 +207,10 @@ class ElectricCvTemplate {
 
                     pw.SizedBox(height: 12),
 
-                    // Electric yellow title bar
+                    // Accent title bar - DYNAMIC COLOR
                     pw.Container(
                       decoration: pw.BoxDecoration(
-                        color: _electricYellow,
+                        color: accentColor,
                         borderRadius: pw.BorderRadius.circular(2),
                       ),
                       padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -216,19 +227,19 @@ class ElectricCvTemplate {
 
                     pw.SizedBox(height: 20),
 
-                    // Contact info with icons
+                    // Contact info with accent circles - DYNAMIC COLOR
                     pw.Row(
                       children: [
                         if (contact?.email != null) ...[
-                          _buildContactIcon(_iconEmail, contact!.email!),
+                          _buildContactIcon(IconSet.electric.email, contact!.email!, accentColor),
                           pw.SizedBox(width: 24),
                         ],
                         if (contact?.phone != null) ...[
-                          _buildContactIcon(_iconPhone, contact!.phone!),
+                          _buildContactIcon(IconSet.electric.phone, contact!.phone!, accentColor),
                           pw.SizedBox(width: 24),
                         ],
                         if (contact?.address != null) ...[
-                          _buildContactIcon(_iconLocation, contact!.address!.split(',').first),
+                          _buildContactIcon(IconSet.electric.location, contact!.address!.split(',').first, accentColor),
                         ],
                       ],
                     ),
@@ -244,15 +255,15 @@ class ElectricCvTemplate {
     );
   }
 
-  /// Build contact info icon with text
-  static pw.Widget _buildContactIcon(String icon, String text) {
+  /// Build contact info icon with text - DYNAMIC COLOR
+  static pw.Widget _buildContactIcon(String icon, String text, PdfColor accentColor) {
     return pw.Row(
       children: [
         pw.Container(
           width: 24,
           height: 24,
           decoration: pw.BoxDecoration(
-            color: _electricYellow,
+            color: accentColor,
             shape: pw.BoxShape.circle,
           ),
           child: pw.Center(
@@ -278,8 +289,8 @@ class ElectricCvTemplate {
     );
   }
 
-  /// Build top section with summary and key skills
-  static pw.Widget _buildTopSection(CvData cv) {
+  /// Build top section with summary and key skills - DYNAMIC COLOR
+  static pw.Widget _buildTopSection(CvData cv, PdfColor accentColor, PdfColor textColor, PdfColor secondaryTextColor) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -290,14 +301,14 @@ class ElectricCvTemplate {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('PROFESSIONAL SUMMARY', _iconStar),
+                _buildSectionHeader('PROFESSIONAL SUMMARY', accentColor, textColor),
                 pw.SizedBox(height: 12),
                 pw.Text(
                   cv.profile,
                   style: pw.TextStyle(
-                    fontSize: 11,
-                    lineSpacing: 1.6,
-                    color: _lightGray,
+                    fontSize: 11.5,
+                    lineSpacing: 1.8,
+                    color: secondaryTextColor,
                   ),
                   textAlign: pw.TextAlign.justify,
                 ),
@@ -315,7 +326,7 @@ class ElectricCvTemplate {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('KEY SKILLS', _iconArrow),
+                _buildSectionHeader('KEY SKILLS', accentColor, textColor),
                 pw.SizedBox(height: 12),
                 ...cv.skills.take(6).map((skill) {
                   final skillName = skill.split(' - ').first;
@@ -323,20 +334,18 @@ class ElectricCvTemplate {
                     padding: const pw.EdgeInsets.only(bottom: 6),
                     child: pw.Row(
                       children: [
-                        pw.Text(
-                          _iconSquare,
-                          style: const pw.TextStyle(
-                            fontSize: 8,
-                            color: _electricYellow,
-                          ),
+                        PdfIcons.bulletIcon(
+                          color: accentColor,
+                          size: 6,
+                          style: BulletStyle.circle,
                         ),
                         pw.SizedBox(width: 8),
                         pw.Expanded(
                           child: pw.Text(
                             skillName,
                             style: pw.TextStyle(
-                              fontSize: 10,
-                              color: _lightGray,
+                              fontSize: 10.5,
+                              color: secondaryTextColor,
                             ),
                           ),
                         ),
@@ -351,40 +360,41 @@ class ElectricCvTemplate {
     );
   }
 
-  /// Build section header with icon and yellow accent
-  static pw.Widget _buildSectionHeader(String title, String icon) {
+  /// Build section header with accent line - DYNAMIC COLOR
+  static pw.Widget _buildSectionHeader(String title, PdfColor accentColor, PdfColor textColor) {
     return pw.Row(
       children: [
-        pw.Text(
-          icon,
-          style: const pw.TextStyle(
-            fontSize: 18,
-            color: _electricYellow,
+        pw.Container(
+          width: 8,
+          height: 8,
+          decoration: pw.BoxDecoration(
+            color: accentColor,
+            shape: pw.BoxShape.circle,
           ),
         ),
         pw.SizedBox(width: 12),
         pw.Text(
           title,
           style: pw.TextStyle(
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: pw.FontWeight.bold,
-            color: _black,
-            letterSpacing: 1.5,
+            color: textColor,
+            letterSpacing: 2.0,
           ),
         ),
         pw.SizedBox(width: 12),
         pw.Expanded(
           child: pw.Container(
             height: 2,
-            color: _electricYellow,
+            color: accentColor,
           ),
         ),
       ],
     );
   }
 
-  /// Build experience entry with checkbox bullets
-  static pw.Widget _buildExperienceEntry(Experience exp) {
+  /// Build experience entry with accent badges - DYNAMIC COLOR
+  static pw.Widget _buildExperienceEntry(Experience exp, PdfColor accentColor, PdfColor textColor, PdfColor secondaryTextColor) {
     return pw.Container(
       margin: const pw.EdgeInsets.only(bottom: 24),
       child: pw.Column(
@@ -402,10 +412,10 @@ class ElectricCvTemplate {
                     pw.Text(
                       exp.title.toUpperCase(),
                       style: pw.TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: pw.FontWeight.bold,
-                        color: _black,
-                        letterSpacing: 0.8,
+                        color: textColor,
+                        letterSpacing: 1.0,
                       ),
                     ),
                     pw.SizedBox(height: 4),
@@ -414,7 +424,7 @@ class ElectricCvTemplate {
                         pw.Container(
                           padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: pw.BoxDecoration(
-                            color: _electricYellow,
+                            color: accentColor,
                             borderRadius: pw.BorderRadius.circular(2),
                           ),
                           child: pw.Text(
@@ -434,8 +444,8 @@ class ElectricCvTemplate {
               pw.Text(
                 exp.dateRange,
                 style: pw.TextStyle(
-                  fontSize: 10,
-                  color: _lightGray,
+                  fontSize: 10.5,
+                  color: secondaryTextColor,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
@@ -448,14 +458,14 @@ class ElectricCvTemplate {
             pw.Text(
               exp.description!,
               style: pw.TextStyle(
-                fontSize: 10,
-                lineSpacing: 1.5,
-                color: _lightGray,
+                fontSize: 10.5,
+                lineSpacing: 1.6,
+                color: secondaryTextColor,
               ),
             ),
           ],
 
-          // Checkbox bullets for achievements
+          // Bullets with accent color
           if (exp.bullets.isNotEmpty) ...[
             pw.SizedBox(height: 8),
             ...exp.bullets.map((bullet) => pw.Padding(
@@ -463,11 +473,12 @@ class ElectricCvTemplate {
                   child: pw.Row(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text(
-                        _iconCheckbox,
-                        style: const pw.TextStyle(
-                          fontSize: 12,
-                          color: _electricYellow,
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.only(top: 4),
+                        child: PdfIcons.bulletIcon(
+                          color: accentColor,
+                          size: 6,
+                          style: BulletStyle.diamond,
                         ),
                       ),
                       pw.SizedBox(width: 10),
@@ -475,9 +486,9 @@ class ElectricCvTemplate {
                         child: pw.Text(
                           bullet,
                           style: pw.TextStyle(
-                            fontSize: 10,
-                            lineSpacing: 1.4,
-                            color: _lightGray,
+                            fontSize: 10.5,
+                            lineSpacing: 1.5,
+                            color: secondaryTextColor,
                           ),
                         ),
                       ),
@@ -490,8 +501,8 @@ class ElectricCvTemplate {
     );
   }
 
-  /// Build education and skills section in two columns
-  static pw.Widget _buildEducationSkillsSection(CvData cv) {
+  /// Build education and skills section in two columns - DYNAMIC COLOR
+  static pw.Widget _buildEducationSkillsSection(CvData cv, PdfColor accentColor, PdfColor textColor, PdfColor secondaryTextColor) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -502,9 +513,9 @@ class ElectricCvTemplate {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('EDUCATION', _iconHex),
+                _buildSectionHeader('EDUCATION', accentColor, textColor),
                 pw.SizedBox(height: 16),
-                ...cv.education.map(_buildEducationEntry),
+                ...cv.education.map((edu) => _buildEducationEntry(edu, textColor, secondaryTextColor)),
               ],
             ),
           ),
@@ -519,9 +530,9 @@ class ElectricCvTemplate {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('TECHNICAL SKILLS', _iconStar),
+                _buildSectionHeader('TECHNICAL SKILLS', accentColor, textColor),
                 pw.SizedBox(height: 16),
-                _buildSkillBars(cv.skills),
+                _buildSkillBars(cv.skills, accentColor, textColor, secondaryTextColor),
               ],
             ),
           ),
@@ -530,7 +541,7 @@ class ElectricCvTemplate {
   }
 
   /// Build education entry
-  static pw.Widget _buildEducationEntry(Education edu) {
+  static pw.Widget _buildEducationEntry(Education edu, PdfColor textColor, PdfColor secondaryTextColor) {
     return pw.Container(
       margin: const pw.EdgeInsets.only(bottom: 16),
       child: pw.Row(
@@ -544,17 +555,17 @@ class ElectricCvTemplate {
                 pw.Text(
                   edu.degree,
                   style: pw.TextStyle(
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: pw.FontWeight.bold,
-                    color: _black,
+                    color: textColor,
                   ),
                 ),
                 pw.SizedBox(height: 4),
                 pw.Text(
                   edu.institution,
                   style: pw.TextStyle(
-                    fontSize: 10,
-                    color: _lightGray,
+                    fontSize: 10.5,
+                    color: secondaryTextColor,
                   ),
                 ),
                 if (edu.description != null && edu.description!.isNotEmpty) ...[
@@ -562,8 +573,8 @@ class ElectricCvTemplate {
                   pw.Text(
                     edu.description!,
                     style: pw.TextStyle(
-                      fontSize: 9,
-                      color: _lightGray,
+                      fontSize: 9.5,
+                      color: secondaryTextColor,
                     ),
                   ),
                 ],
@@ -574,8 +585,8 @@ class ElectricCvTemplate {
           pw.Text(
             edu.dateRange,
             style: pw.TextStyle(
-              fontSize: 10,
-              color: _lightGray,
+              fontSize: 10.5,
+              color: secondaryTextColor,
               fontWeight: pw.FontWeight.bold,
             ),
           ),
@@ -584,21 +595,20 @@ class ElectricCvTemplate {
     );
   }
 
-  /// Build skill bars with electric yellow fill
-  static pw.Widget _buildSkillBars(List<String> skills) {
+  /// Build skill bars with accent fill - DYNAMIC COLOR
+  static pw.Widget _buildSkillBars(List<String> skills, PdfColor accentColor, PdfColor textColor, PdfColor secondaryTextColor) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: skills.take(8).map((skillString) {
-        // Parse skill string (e.g., "JavaScript - Expert" or "Python - 90%")
+        // Parse skill string
         final parts = skillString.split(' - ');
         final skillName = parts.isNotEmpty ? parts[0] : skillString;
-        double proficiency = 0.8; // Default 80%
+        double proficiency = 0.8;
 
         if (parts.length > 1) {
           final level = parts[1].toLowerCase();
           if (level.contains('%')) {
-            proficiency = double.tryParse(level.replaceAll('%', '').trim()) ?? 80.0;
-            proficiency = proficiency / 100.0;
+            proficiency = (double.tryParse(level.replaceAll('%', '').trim()) ?? 80.0) / 100.0;
           } else if (level.contains('expert')) {
             proficiency = 0.95;
           } else if (level.contains('advanced')) {
@@ -621,16 +631,16 @@ class ElectricCvTemplate {
                   pw.Text(
                     skillName,
                     style: pw.TextStyle(
-                      fontSize: 10,
+                      fontSize: 10.5,
                       fontWeight: pw.FontWeight.bold,
-                      color: _black,
+                      color: textColor,
                     ),
                   ),
                   pw.Text(
                     '${(proficiency * 100).round()}%',
                     style: pw.TextStyle(
-                      fontSize: 9,
-                      color: _lightGray,
+                      fontSize: 9.5,
+                      color: secondaryTextColor,
                     ),
                   ),
                 ],
@@ -646,16 +656,16 @@ class ElectricCvTemplate {
                       width: double.infinity,
                       height: 8,
                       decoration: pw.BoxDecoration(
-                        color: _mediumGrayFaded,
+                        color: const PdfColor.fromInt(0x332D2D2D),
                         borderRadius: pw.BorderRadius.circular(4),
                       ),
                     ),
-                    // Filled bar (electric yellow) - calculated width
+                    // Filled bar with accent color - DYNAMIC COLOR
                     pw.Container(
-                      width: 150 * proficiency, // Max width ~150pt for skill bars
+                      width: 150 * proficiency,
                       height: 8,
                       decoration: pw.BoxDecoration(
-                        color: _electricYellow,
+                        color: accentColor,
                         borderRadius: pw.BorderRadius.circular(4),
                       ),
                     ),
@@ -669,8 +679,8 @@ class ElectricCvTemplate {
     );
   }
 
-  /// Build bottom section with languages and interests
-  static pw.Widget _buildBottomSection(CvData cv) {
+  /// Build bottom section with languages and interests - DYNAMIC COLOR
+  static pw.Widget _buildBottomSection(CvData cv, PdfColor accentColor, PdfColor textColor, PdfColor secondaryTextColor) {
     if (cv.languages.isEmpty && cv.interests.isEmpty) return pw.SizedBox();
 
     return pw.Column(
@@ -687,7 +697,7 @@ class ElectricCvTemplate {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    _buildSectionHeader('LANGUAGES', _iconStar),
+                    _buildSectionHeader('LANGUAGES', accentColor, textColor),
                     pw.SizedBox(height: 12),
                     pw.Wrap(
                       spacing: 12,
@@ -695,13 +705,13 @@ class ElectricCvTemplate {
                       children: cv.languages.map((lang) => pw.Container(
                         padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: pw.BoxDecoration(
-                          color: _electricYellow,
+                          color: accentColor,
                           borderRadius: pw.BorderRadius.circular(2),
                         ),
                         child: pw.Text(
-                          '${lang.language} • ${lang.level}',
+                          '${lang.language} - ${lang.level}',
                           style: pw.TextStyle(
-                            fontSize: 9,
+                            fontSize: 9.5,
                             fontWeight: pw.FontWeight.bold,
                             color: _black,
                           ),
@@ -721,7 +731,7 @@ class ElectricCvTemplate {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    _buildSectionHeader('INTERESTS', _iconStar),
+                    _buildSectionHeader('INTERESTS', accentColor, textColor),
                     pw.SizedBox(height: 12),
                     pw.Wrap(
                       spacing: 12,
@@ -729,19 +739,17 @@ class ElectricCvTemplate {
                       children: cv.interests.map((interest) => pw.Row(
                         mainAxisSize: pw.MainAxisSize.min,
                         children: [
-                          pw.Text(
-                            _iconSquare,
-                            style: const pw.TextStyle(
-                              fontSize: 8,
-                              color: _electricYellow,
-                            ),
+                          PdfIcons.bulletIcon(
+                            color: accentColor,
+                            size: 5,
+                            style: BulletStyle.square,
                           ),
                           pw.SizedBox(width: 6),
                           pw.Text(
                             interest,
                             style: pw.TextStyle(
-                              fontSize: 10,
-                              color: _lightGray,
+                              fontSize: 10.5,
+                              color: secondaryTextColor,
                             ),
                           ),
                         ],

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/cv_template.dart';
 import '../../providers/templates_provider.dart';
 import '../../widgets/tabbed_cv_editor.dart';
-import '../../dialogs/cv_template_pdf_preview_dialog.dart';
+import '../../dialogs/cv_template_pdf_preview_launcher.dart';
 
 /// CV Template Editor Screen - Streamlined content-focused editor
 ///
@@ -159,12 +159,10 @@ class _CvTemplateEditorScreenState extends State<CvTemplateEditorScreen> {
     final previewTemplate = _currentTemplate ?? _template!;
 
     if (mounted) {
-      await showDialog(
+      await CvTemplatePdfPreviewLauncher.openPreview(
         context: context,
-        builder: (context) => CvTemplatePdfPreviewDialog(
-          cvTemplate: previewTemplate,
-          templateStyle: previewTemplate.templateStyle,
-        ),
+        cvTemplate: previewTemplate,
+        templateStyle: previewTemplate.templateStyle,
       );
     }
   }

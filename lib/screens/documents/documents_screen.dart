@@ -6,7 +6,7 @@ import '../../providers/templates_provider.dart';
 import '../../widgets/collapsible_card.dart';
 import '../../widgets/yaml_import_section.dart';
 import '../../widgets/document_template_card.dart';
-import '../../dialogs/cv_template_pdf_preview_dialog.dart';
+import '../../dialogs/cv_template_pdf_preview_launcher.dart';
 import '../../dialogs/cover_letter_template_pdf_preview_dialog.dart';
 import '../../utils/ui_utils.dart';
 import '../../utils/dialog_utils.dart';
@@ -236,13 +236,12 @@ class DocumentsScreen extends StatelessWidget {
   /// STREAMLINED UX: Direct preview with integrated style selector
   /// Eliminates redundant style picker dialog - users can now change styles
   /// in real-time within the preview dialog
+  /// Opens a floating window that can exist outside the main app
   void _generateCvPdf(BuildContext context, CvTemplate template) {
-    showDialog(
+    CvTemplatePdfPreviewLauncher.openPreview(
       context: context,
-      builder: (context) => CvTemplatePdfPreviewDialog(
-        cvTemplate: template,
-        templateStyle: template.templateStyle, // Use saved style as default
-      ),
+      cvTemplate: template,
+      templateStyle: template.templateStyle, // Use saved style as default
     );
   }
 

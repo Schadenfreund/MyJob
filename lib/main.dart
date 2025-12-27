@@ -22,6 +22,7 @@ void main() async {
   const windowOptions = WindowOptions(
     size: Size(1200, 800),
     minimumSize: Size(800, 600),
+    maximumSize: Size(2560, 1440), // Allow large screens
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
@@ -31,6 +32,7 @@ void main() async {
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();
     await windowManager.focus();
+    await windowManager.setResizable(true); // Ensure window is resizable
   });
 
   runApp(const MyLifeApp());

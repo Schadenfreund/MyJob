@@ -1,21 +1,15 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:printing/printing.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
 import '../models/cv_template.dart';
 import '../models/template_style.dart';
 import '../models/template_customization.dart';
 import '../services/cv_template_pdf_service.dart';
+import '../widgets/multi_page_pdf_viewer.dart';
 
-/// Modern PDF preview dialog with floating preview window and streamlined controls
-///
-/// Features:
-/// - Floating/movable preview window for maximum workspace
-/// - Clean, minimal control panel on the left
-/// - Professional accent color picker with swatches
-/// - Live preview updates
+/// Modern PDF preview with floating, resizable window and live color updates
 class CvTemplatePdfPreviewDialog extends StatefulWidget {
   const CvTemplatePdfPreviewDialog({
     required this.cvTemplate,
@@ -37,12 +31,17 @@ class _CvTemplatePdfPreviewDialogState
   bool _isGenerating = false;
   late TemplateCustomization _customization;
 
-  // Floating preview window position
-  Offset _previewPosition = const Offset(400, 50);
-  Size _previewSize = const Size(500, 700);
-  bool _isPreviewMinimized = false;
+  // Preview state
+  Uint8List? _cachedPdf;
+  int _pdfGenerationVersion = 0; // Increment to trigger regeneration
 
-  // Professional accent color presets for Electric template
+  // Floating window state
+  Offset _previewPosition = const Offset(100, 80);
+  Size _previewSize = const Size(900, 650); // Wider for side-by-side pages
+  bool _isPreviewMinimized = false;
+  bool _isResizing = false;
+
+  // Electric accent color presets
   static const List<Color> _accentColorPresets = [
     Color(0xFFFFFF00), // Electric Yellow (default)
     Color(0xFF00FFFF), // Electric Cyan
@@ -61,28 +60,51 @@ class _CvTemplatePdfPreviewDialogState
         widget.cvTemplate.templateStyle ??
         TemplateStyle.electric;
     _customization = const TemplateCustomization();
+    _generatePdfAsync(); // Generate initial PDF
   }
 
   void _updateAccentColor(Color color) {
     setState(() {
       _selectedStyle = _selectedStyle.copyWith(accentColor: color);
-      _isGenerating = true;
+      _pdfGenerationVersion++; // Trigger regeneration
+      _cachedPdf = null; // Clear cache
     });
-    Future.delayed(
-      const Duration(milliseconds: 300),
-      () {
-        if (mounted) {
-          setState(() => _isGenerating = false);
-        }
-      },
-    );
+    _generatePdfAsync();
+  }
+
+  void _toggleDarkMode() {
+    setState(() {
+      _selectedStyle = _selectedStyle.copyWith(isDarkMode: !_selectedStyle.isDarkMode);
+      _pdfGenerationVersion++; // Trigger regeneration
+      _cachedPdf = null; // Clear cache
+    });
+    _generatePdfAsync();
+  }
+
+  Future<void> _generatePdfAsync() async {
+    if (_isGenerating) return;
+
+    setState(() => _isGenerating = true);
+
+    try {
+      final pdf = await _generatePdf();
+      if (mounted) {
+        setState(() {
+          _cachedPdf = pdf;
+          _isGenerating = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isGenerating = false);
+      }
+    }
   }
 
   Future<Uint8List> _generatePdf() async {
     final service = CvTemplatePdfService();
     final cvData = widget.cvTemplate.toCvData();
 
-    // Create temporary file for PDF generation
     final tempDir = await Directory.systemTemp.createTemp();
     final tempFile = File('${tempDir.path}/preview.pdf');
 
@@ -97,7 +119,6 @@ class _CvTemplatePdfPreviewDialogState
 
       return await file.readAsBytes();
     } finally {
-      // Clean up
       if (tempDir.existsSync()) {
         tempDir.deleteSync(recursive: true);
       }
@@ -106,7 +127,6 @@ class _CvTemplatePdfPreviewDialogState
 
   Future<void> _exportPdf(BuildContext context) async {
     try {
-      // Show save file dialog
       final result = await FilePicker.platform.saveFile(
         dialogTitle: 'Export PDF',
         fileName: '${widget.cvTemplate.name}.pdf',
@@ -168,17 +188,22 @@ class _CvTemplatePdfPreviewDialogState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final screenSize = MediaQuery.of(context).size;
 
-    return Dialog.fullscreen(
-      child: Scaffold(
-        backgroundColor: const Color(0xFF1A1A1A), // Dark background
-        body: Stack(
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.zero,
+      child: Container(
+        width: screenSize.width,
+        height: screenSize.height,
+        color: const Color(0xFF1A1A1A), // Dark background
+        child: Stack(
           children: [
             // Left control panel
             _buildControlPanel(theme),
 
-            // Floating preview window
-            _buildFloatingPreview(theme),
+            // Floating resizable preview window
+            _buildFloatingPreview(theme, screenSize),
 
             // Top app bar overlay
             _buildTopBar(theme),
@@ -188,7 +213,6 @@ class _CvTemplatePdfPreviewDialogState
     );
   }
 
-  /// Build top app bar with title and close button
   Widget _buildTopBar(ThemeData theme) {
     return Positioned(
       top: 0,
@@ -197,10 +221,10 @@ class _CvTemplatePdfPreviewDialogState
       child: Container(
         height: 60,
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.8),
+          color: Colors.black.withOpacity(0.9),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFFFF00).withOpacity(0.2),
+              color: _selectedStyle.accentColor.withOpacity(0.3),
               blurRadius: 20,
               offset: const Offset(0, 2),
             ),
@@ -209,18 +233,16 @@ class _CvTemplatePdfPreviewDialogState
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Row(
           children: [
-            // Electric accent indicator
             Container(
               width: 4,
               height: 30,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFF00),
+                color: _selectedStyle.accentColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(width: 16),
 
-            // Title
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -254,12 +276,15 @@ class _CvTemplatePdfPreviewDialogState
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.black,
+                      ),
                     )
                   : const Icon(Icons.download, size: 18),
               label: Text(_isGenerating ? 'Exporting...' : 'Export PDF'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFFFF00),
+                backgroundColor: _selectedStyle.accentColor,
                 foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
@@ -268,7 +293,6 @@ class _CvTemplatePdfPreviewDialogState
 
             const SizedBox(width: 16),
 
-            // Close button
             IconButton(
               onPressed: () => Navigator.pop(context),
               icon: const Icon(Icons.close, color: Colors.white),
@@ -283,7 +307,6 @@ class _CvTemplatePdfPreviewDialogState
     );
   }
 
-  /// Build left control panel with color picker
   Widget _buildControlPanel(ThemeData theme) {
     return Positioned(
       left: 0,
@@ -304,7 +327,7 @@ class _CvTemplatePdfPreviewDialogState
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            // Section: Accent Color
+            // Accent Color Section
             _buildSection(
               title: 'ACCENT COLOR',
               icon: Icons.palette,
@@ -312,10 +335,10 @@ class _CvTemplatePdfPreviewDialogState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  const Text(
-                    'Choose your electric accent:',
+                  Text(
+                    'Choose your electric accent (live preview):',
                     style: TextStyle(
-                      color: Colors.white70,
+                      color: Colors.white.withOpacity(0.7),
                       fontSize: 12,
                     ),
                   ),
@@ -327,7 +350,8 @@ class _CvTemplatePdfPreviewDialogState
                       final isSelected = _selectedStyle.accentColor.value == color.value;
                       return GestureDetector(
                         onTap: () => _updateAccentColor(color),
-                        child: Container(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
                           width: 56,
                           height: 56,
                           decoration: BoxDecoration(
@@ -364,7 +388,87 @@ class _CvTemplatePdfPreviewDialogState
 
             const SizedBox(height: 32),
 
-            // Section: Template Info
+            // Dark Mode Toggle
+            _buildSection(
+              title: 'COLOR MODE',
+              icon: Icons.brightness_6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _selectedStyle.accentColor.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _toggleDarkMode,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _selectedStyle.isDarkMode
+                                    ? Icons.dark_mode
+                                    : Icons.light_mode,
+                                color: _selectedStyle.accentColor,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _selectedStyle.isDarkMode
+                                          ? 'Dark Mode'
+                                          : 'Light Mode',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _selectedStyle.isDarkMode
+                                          ? 'Black background, white text'
+                                          : 'White background, black text',
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.6),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch(
+                                value: _selectedStyle.isDarkMode,
+                                onChanged: (value) => _toggleDarkMode(),
+                                activeColor: _selectedStyle.accentColor,
+                                activeTrackColor:
+                                    _selectedStyle.accentColor.withOpacity(0.5),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            // Template Info
             _buildSection(
               title: 'TEMPLATE INFO',
               icon: Icons.info_outline,
@@ -375,46 +479,86 @@ class _CvTemplatePdfPreviewDialogState
                   _buildInfoRow('Style', 'Electric Magazine'),
                   _buildInfoRow('Layout', 'Asymmetric Single-Column'),
                   _buildInfoRow('Design', 'Modern Brutalist'),
+                  _buildInfoRow('Mode', _selectedStyle.isDarkMode ? 'Dark' : 'Light'),
                   _buildInfoRow('Accent', _getColorName(_selectedStyle.accentColor)),
+                  _buildInfoRow('Status', _isGenerating ? 'Generating...' : 'Ready'),
                 ],
               ),
             ),
 
             const SizedBox(height: 32),
 
-            // Tip box
+            // Tips
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFF00).withOpacity(0.1),
+                color: _selectedStyle.accentColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: const Color(0xFFFFFF00).withOpacity(0.3),
+                  color: _selectedStyle.accentColor.withOpacity(0.3),
                   width: 1,
                 ),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.tips_and_updates,
-                    color: Color(0xFFFFFF00),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Drag the preview window to reposition it',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 12,
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.tips_and_updates,
+                        color: _selectedStyle.accentColor,
+                        size: 20,
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Pro Tips:',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 8),
+                  _buildTipItem('Toggle dark/light mode above'),
+                  _buildTipItem('Drag the window to reposition'),
+                  _buildTipItem('Drag corners to resize'),
+                  _buildTipItem('All changes update in real-time'),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTipItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, left: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '• ',
+            style: TextStyle(
+              color: _selectedStyle.accentColor,
+              fontSize: 12,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 11,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -429,7 +573,7 @@ class _CvTemplatePdfPreviewDialogState
       children: [
         Row(
           children: [
-            Icon(icon, color: const Color(0xFFFFFF00), size: 18),
+            Icon(icon, color: _selectedStyle.accentColor, size: 18),
             const SizedBox(width: 8),
             Text(
               title,
@@ -485,10 +629,8 @@ class _CvTemplatePdfPreviewDialogState
     return 'Custom';
   }
 
-  /// Build floating/draggable preview window
-  Widget _buildFloatingPreview(ThemeData theme) {
+  Widget _buildFloatingPreview(ThemeData theme, Size screenSize) {
     if (_isPreviewMinimized) {
-      // Minimized state - show small floating button
       return Positioned(
         left: _previewPosition.dx,
         top: _previewPosition.dy,
@@ -504,10 +646,10 @@ class _CvTemplatePdfPreviewDialogState
             decoration: BoxDecoration(
               color: Colors.black,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFFFFF00), width: 2),
+              border: Border.all(color: _selectedStyle.accentColor, width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFFF00).withOpacity(0.4),
+                  color: _selectedStyle.accentColor.withOpacity(0.4),
                   blurRadius: 20,
                 ),
               ],
@@ -515,7 +657,7 @@ class _CvTemplatePdfPreviewDialogState
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.picture_as_pdf, color: Color(0xFFFFFF00)),
+                Icon(Icons.picture_as_pdf, color: _selectedStyle.accentColor),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
@@ -542,156 +684,216 @@ class _CvTemplatePdfPreviewDialogState
       left: _previewPosition.dx,
       top: _previewPosition.dy,
       child: GestureDetector(
-        onPanUpdate: (details) {
-          setState(() {
-            _previewPosition += details.delta;
-          });
-        },
-        child: Container(
-          width: _previewSize.width,
-          height: _previewSize.height,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFFFFF00),
-              width: 3,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFFFFF00).withOpacity(0.3),
-                blurRadius: 30,
-                spreadRadius: 5,
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              // Window title bar
-              Container(
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFFFF00),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(9),
-                    topRight: Radius.circular(9),
-                  ),
+        onPanUpdate: !_isResizing
+            ? (details) {
+                setState(() {
+                  _previewPosition += details.delta;
+                  // Keep window on screen
+                  _previewPosition = Offset(
+                    _previewPosition.dx.clamp(0, screenSize.width - 200),
+                    _previewPosition.dy.clamp(60, screenSize.height - 100),
+                  );
+                });
+              }
+            : null,
+        child: Stack(
+          children: [
+            // Main preview window
+            Container(
+              width: _previewSize.width,
+              height: _previewSize.height,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _selectedStyle.accentColor,
+                  width: 3,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    const Icon(Icons.drag_indicator, color: Colors.black, size: 18),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'PDF Preview',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _selectedStyle.accentColor.withOpacity(0.3),
+                    blurRadius: 30,
+                    spreadRadius: 5,
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Title bar
+                  Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: _selectedStyle.accentColor,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(9),
+                        topRight: Radius.circular(9),
                       ),
                     ),
-                    IconButton(
-                      onPressed: () {
-                        setState(() => _isPreviewMinimized = true);
-                      },
-                      icon: const Icon(Icons.minimize, color: Colors.black, size: 16),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      tooltip: 'Minimize',
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.drag_indicator, color: Colors.black, size: 18),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'PDF Preview - Drag to move, resize corners',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        if (_isGenerating)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 8),
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        IconButton(
+                          onPressed: () {
+                            setState(() => _isPreviewMinimized = true);
+                          },
+                          icon: const Icon(Icons.minimize, color: Colors.black, size: 16),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          tooltip: 'Minimize',
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-
-              // PDF preview content
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(9),
-                    bottomRight: Radius.circular(9),
                   ),
-                  child: FutureBuilder<Uint8List>(
-                    future: _generatePdf(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting ||
-                          _isGenerating) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(
-                                width: 40,
-                                height: 40,
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFFFFFF00),
-                                  strokeWidth: 3,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Generating Electric PDF...',
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
 
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.error_outline,
-                                  color: Colors.red.shade400, size: 48),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Error generating PDF',
-                                style: TextStyle(color: Colors.grey.shade600),
+                  // PDF preview content
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(9),
+                        bottomRight: Radius.circular(9),
+                      ),
+                      child: _cachedPdf != null
+                          ? MultiPagePdfViewer(
+                              key: ValueKey(_pdfGenerationVersion),
+                              pdfBytes: _cachedPdf!,
+                              accentColor: _selectedStyle.accentColor,
+                              fileName: '${widget.cvTemplate.name}.pdf',
+                              showSideBySide: true,
+                            )
+                          : Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 40,
+                                    height: 40,
+                                    child: CircularProgressIndicator(
+                                      color: _selectedStyle.accentColor,
+                                      strokeWidth: 3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Generating Electric PDF...',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                snapshot.error.toString(),
-                                style: TextStyle(
-                                  color: Colors.grey.shade500,
-                                  fontSize: 11,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        );
-                      }
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-                      if (!snapshot.hasData) {
-                        return const Center(child: Text('No data'));
-                      }
-
-                      return PdfPreview(
-                        build: (format) => snapshot.data!,
-                        allowPrinting: false,
-                        allowSharing: false,
-                        canChangeOrientation: false,
-                        canChangePageFormat: false,
-                        canDebug: false,
-                        pdfFileName: '${widget.cvTemplate.name}.pdf',
-                      );
-                    },
+            // Resize handles (bottom-right corner)
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: GestureDetector(
+                onPanStart: (_) => setState(() => _isResizing = true),
+                onPanUpdate: (details) {
+                  setState(() {
+                    _previewSize = Size(
+                      (_previewSize.width + details.delta.dx).clamp(600, screenSize.width - _previewPosition.dx - 50),
+                      (_previewSize.height + details.delta.dy).clamp(400, screenSize.height - _previewPosition.dy - 50),
+                    );
+                  });
+                },
+                onPanEnd: (_) => setState(() => _isResizing = false),
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: _selectedStyle.accentColor,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      bottomRight: Radius.circular(9),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.drag_handle,
+                    color: Colors.black,
+                    size: 16,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+
+            // Bottom-left resize handle
+            Positioned(
+              left: 0,
+              bottom: 0,
+              child: GestureDetector(
+                onPanStart: (_) => setState(() => _isResizing = true),
+                onPanUpdate: (details) {
+                  setState(() {
+                    final newWidth = _previewSize.width - details.delta.dx;
+                    final newHeight = _previewSize.height + details.delta.dy;
+
+                    if (newWidth >= 600 && newWidth <= screenSize.width - _previewPosition.dx - 50) {
+                      _previewSize = Size(newWidth, _previewSize.height);
+                      _previewPosition = Offset(_previewPosition.dx + details.delta.dx, _previewPosition.dy);
+                    }
+
+                    _previewSize = Size(
+                      _previewSize.width,
+                      newHeight.clamp(400, screenSize.height - _previewPosition.dy - 50),
+                    );
+                  });
+                },
+                onPanEnd: (_) => setState(() => _isResizing = false),
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: _selectedStyle.accentColor.withOpacity(0.8),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(8),
+                      bottomLeft: Radius.circular(9),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.drag_handle,
+                    color: Colors.black,
+                    size: 16,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

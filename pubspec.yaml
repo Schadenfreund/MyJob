@@ -28,6 +28,9 @@ dependencies:
   # Windows custom titlebar
   window_manager: ^0.3.5
 
+  # Multi-window support for floating preview
+  desktop_multi_window: ^0.2.0
+
   # PDF generation
   pdf: ^3.10.0
   printing: ^5.12.0
@@ -50,3 +53,4 @@ flutter:
 
   assets:
     - assets/
+    - assets/fonts/
