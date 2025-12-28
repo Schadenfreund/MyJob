@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'pdf_font_family.dart';
 
 /// Template styles for PDF generation - Magazine-inspired layouts
 enum TemplateType {
@@ -22,7 +23,7 @@ class TemplateStyle {
     required this.type,
     this.primaryColor = const Color(0xFF000000), // Black
     this.accentColor = const Color(0xFFFFFF00), // Electric Yellow
-    this.fontFamily = 'Helvetica',
+    this.fontFamily = PdfFontFamily.roboto,
     this.showPhoto = true,
     this.twoColumnLayout = false,
     this.isDarkMode = false,
@@ -31,11 +32,26 @@ class TemplateStyle {
   factory TemplateStyle.fromJson(Map<String, dynamic> json) {
     // Use TemplateType.fromName for backwards compatibility with old enum values
     final typeName = json['type'] as String? ?? 'electric';
+
+    // Parse font family from string (backwards compatible)
+    PdfFontFamily fontFamily = PdfFontFamily.roboto;
+    final fontFamilyStr = json['fontFamily'] as String?;
+    if (fontFamilyStr != null) {
+      try {
+        fontFamily = PdfFontFamily.values.firstWhere(
+          (e) => e.name == fontFamilyStr.toLowerCase(),
+          orElse: () => PdfFontFamily.roboto,
+        );
+      } catch (_) {
+        fontFamily = PdfFontFamily.roboto;
+      }
+    }
+
     return TemplateStyle(
       type: TemplateType.fromName(typeName),
       primaryColor: Color(json['primaryColor'] as int? ?? 0xFF000000),
       accentColor: Color(json['accentColor'] as int? ?? 0xFFFFFF00),
-      fontFamily: json['fontFamily'] as String? ?? 'Helvetica',
+      fontFamily: fontFamily,
       showPhoto: json['showPhoto'] as bool? ?? true,
       twoColumnLayout: json['twoColumnLayout'] as bool? ?? false,
       isDarkMode: json['isDarkMode'] as bool? ?? false,
@@ -45,7 +61,7 @@ class TemplateStyle {
   final TemplateType type;
   final Color primaryColor;
   final Color accentColor;
-  final String fontFamily;
+  final PdfFontFamily fontFamily;
   final bool showPhoto;
   final bool twoColumnLayout;
   final bool isDarkMode;
@@ -54,7 +70,7 @@ class TemplateStyle {
         'type': type.name,
         'primaryColor': primaryColor.toARGB32(),
         'accentColor': accentColor.toARGB32(),
-        'fontFamily': fontFamily,
+        'fontFamily': fontFamily.name,
         'showPhoto': showPhoto,
         'twoColumnLayout': twoColumnLayout,
         'isDarkMode': isDarkMode,
@@ -64,7 +80,7 @@ class TemplateStyle {
     TemplateType? type,
     Color? primaryColor,
     Color? accentColor,
-    String? fontFamily,
+    PdfFontFamily? fontFamily,
     bool? showPhoto,
     bool? twoColumnLayout,
     bool? isDarkMode,
@@ -85,6 +101,7 @@ class TemplateStyle {
         type: TemplateType.electric,
         primaryColor: const Color(0xFF000000), // Black
         accentColor: const Color(0xFFFFFF00), // Electric Yellow
+        fontFamily: PdfFontFamily.roboto,
         twoColumnLayout: false,
         showPhoto: true,
       );

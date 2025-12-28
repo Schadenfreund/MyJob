@@ -24,11 +24,11 @@ class ElectricCoverLetterTemplate {
   static const PdfColor _lightGray = PdfColor.fromInt(0xFF666666);
   static const PdfColor _white = PdfColors.white;
 
-  // Professional Unicode icons
-  static const String _iconEmail = '✉';
-  static const String _iconPhone = '✆';
-  static const String _iconLocation = '⚲';
-  static const String _iconSquare = '■';
+  // Professional ASCII-safe icons (works with Helvetica)
+  static const String _iconEmail = '@';
+  static const String _iconPhone = '#';
+  static const String _iconLocation = '*';
+  static const String _iconSquare = '-';
 
   /// Build the Electric Cover Letter PDF with stunning magazine-style design
   static void build(
@@ -40,8 +40,7 @@ class ElectricCoverLetterTemplate {
     required pw.Font boldFont,
     required pw.Font mediumFont,
   }) {
-    final fontFallback = [regularFont, boldFont, mediumFont];
-
+    // Build page with custom theme
     pdf.addPage(
       pw.Page(
         pageFormat: PdfConstants.pageFormat,
@@ -49,7 +48,7 @@ class ElectricCoverLetterTemplate {
         theme: pw.ThemeData.withFont(
           base: regularFont,
           bold: boldFont,
-          fontFallback: fontFallback,
+          fontFallback: [regularFont, boldFont, mediumFont],
         ),
         build: (context) => pw.Column(
           children: [
@@ -306,15 +305,15 @@ class ElectricCoverLetterTemplate {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: paragraphs.map((paragraph) {
-        // Check if paragraph is a bullet point list
-        if (paragraph.trim().startsWith('•') || paragraph.trim().startsWith('-')) {
+        // Check if paragraph is a bullet point list (ASCII-safe)
+        if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
           final bullets = paragraph.split('\n').where((l) => l.trim().isNotEmpty).toList();
           return pw.Container(
             margin: const pw.EdgeInsets.only(bottom: 12),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: bullets.map((bullet) {
-                final cleanBullet = bullet.trim().replaceFirst(RegExp(r'^[•\-]\s*'), '');
+                final cleanBullet = bullet.trim().replaceFirst(RegExp(r'^[\-\*]\s*'), '');
                 return pw.Padding(
                   padding: const pw.EdgeInsets.only(bottom: 6, left: 0),
                   child: pw.Row(

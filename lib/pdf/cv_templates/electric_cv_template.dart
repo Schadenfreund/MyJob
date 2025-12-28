@@ -5,28 +5,32 @@ import '../../models/cv_data.dart';
 import '../../models/template_style.dart';
 import '../../models/template_customization.dart';
 import '../../constants/pdf_constants.dart';
-import '../core/pdf_icons.dart';
+import '../../services/pdf_special_characters.dart';
 
-/// Electric CV Template - Modern Magazine-Style Design with Dynamic Accent Colors
+/// Electric CV Template - Professional Modern Design
 ///
 /// Features:
-/// - Bold asymmetric magazine layout
-/// - Dynamic accent colors (Electric Yellow, Cyan, Magenta, etc.)
-/// - Professional typography with ASCII-safe icons
-/// - High-contrast design
-/// - Fully customizable accent color support
+/// - Bold asymmetric magazine layout with professional design
+/// - Dynamic accent colors with proper contrast (visible elements)
+/// - Professional typography with optimal hierarchy
+/// - ASCII-safe characters (Helvetica compatible)
+/// - Clean, DRY, centralized code
+/// - Proper page breaks and spacing
+/// - Visual interest with icons, badges, and geometric elements
+/// - Skill percentage parsing from multiple formats
 class ElectricCvTemplate {
   ElectricCvTemplate._();
 
-  // Base color palette (primary colors that don't change)
+  // Color palette - professional and accessible
   static const PdfColor _black = PdfColors.black;
-  static const PdfColor _mediumGray = PdfColor.fromInt(0xFF2D2D2D);
-  static const PdfColor _lightGray = PdfColor.fromInt(0xFF666666);
   static const PdfColor _darkGray = PdfColor.fromInt(0xFF1A1A1A);
+  static const PdfColor _mediumGray = PdfColor.fromInt(0xFF4A4A4A);
+  static const PdfColor _lightGray = PdfColor.fromInt(0xFF757575);
+  static const PdfColor _paleGray = PdfColor.fromInt(0xFFE8E8E8);
   static const PdfColor _white = PdfColors.white;
-  static const PdfColor _offWhite = PdfColor.fromInt(0xFFF5F5F5);
+  static const PdfColor _offWhite = PdfColor.fromInt(0xFFF8F8F8);
 
-  /// Build the Electric CV PDF with stunning magazine-style design
+  /// Build the Electric CV PDF with professional magazine-style design
   static void build(
     pw.Document pdf,
     CvData cv,
@@ -37,73 +41,144 @@ class ElectricCvTemplate {
     Uint8List? profileImageBytes,
     TemplateCustomization? customization,
   }) {
-    final fontFallback = [regularFont, boldFont, mediumFont];
+    // Initialize special characters service (ASCII-safe)
+    final chars = PdfSpecialCharacters();
+    PdfSpecialCharacters.enableAsciiFallback();
 
-    // Dark mode flag
+    // Theme configuration
     final isDarkMode = style.isDarkMode;
-
-    // Convert Flutter accent color to PDF color (this makes colors dynamic!)
     final accentColor = PdfColor.fromInt(style.accentColor.toARGB32());
-    final accentFaded = PdfColor.fromHex('#${style.accentColor.toARGB32().toRadixString(16).substring(2)}26'); // 15% opacity
 
-    // Dynamic colors based on dark mode
-    final backgroundColor = isDarkMode ? _darkGray : _white;
+    // Create color variations with BETTER contrast
+    final accentDark = _darkenColor(accentColor, 0.2); // Subtle darkening
+    final accentLight = _adjustBrightness(accentColor, 1.3); // Visible but light
+    final accentPale = _mixWithWhite(accentColor, 0.9); // Very pale background
+
+    // Dynamic theme colors
+    final bgColor = isDarkMode ? _darkGray : _white;
     final textColor = isDarkMode ? _white : _black;
-    final secondaryTextColor = isDarkMode ? _offWhite : _lightGray;
-    final headerBackground = isDarkMode ? _black : _black;
-    final pageBackground = isDarkMode ? _darkGray : _offWhite;
+    final textSecondary = isDarkMode ? _offWhite : _mediumGray;
+    final textTertiary = isDarkMode ? _paleGray : _lightGray;
+    final headerBg = isDarkMode ? _black : _black;
 
-    // Create profile image if provided
+    // Profile image setup
     pw.ImageProvider? profileImage;
-    final showPhoto = customization?.showProfilePhoto ?? true;
-    if (profileImageBytes != null && showPhoto) {
+    if (profileImageBytes != null && (customization?.showProfilePhoto ?? true)) {
       try {
         profileImage = pw.MemoryImage(profileImageBytes);
-      } catch (_) {
-        // Ignore image loading errors
-      }
+      } catch (_) {}
     }
 
+    // Build the PDF with custom fonts
     pdf.addPage(
       pw.MultiPage(
-        pageFormat: PdfConstants.pageFormat,
-        margin: pw.EdgeInsets.zero,
-        theme: pw.ThemeData.withFont(
-          base: regularFont,
-          bold: boldFont,
-          fontFallback: fontFallback,
+        pageTheme: pw.PageTheme(
+          pageFormat: PdfConstants.pageFormat,
+          margin: pw.EdgeInsets.zero,
+          theme: pw.ThemeData.withFont(
+            base: regularFont,
+            bold: boldFont,
+            fontFallback: [
+              regularFont,
+              boldFont,
+              mediumFont,
+            ],
+          ),
+          buildBackground: (context) => pw.FullPage(
+            ignoreMargins: true,
+            child: pw.Container(color: bgColor),
+          ),
         ),
         build: (context) => [
-          // Hero header with overlapping photo banner
-          _buildHeroHeader(cv, profileImage, accentColor, accentFaded, isDarkMode, headerBackground),
+          // HEADER SECTION - Eye-catching hero
+          _buildHeader(
+            cv,
+            profileImage,
+            accentColor,
+            accentDark,
+            accentLight,
+            headerBg,
+            chars,
+          ),
 
-          // Main content area with dynamic background
-          pw.Container(
-            color: backgroundColor,
-            padding: const pw.EdgeInsets.symmetric(horizontal: 56, vertical: 40),
+          // MAIN CONTENT with optimal spacing
+          pw.Padding(
+            padding: const pw.EdgeInsets.fromLTRB(48, 36, 48, 48),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                // Two-column layout for professional summary and key skills
-                _buildTopSection(cv, accentColor, textColor, secondaryTextColor),
+                // Summary + Key Skills (two-column)
+                if (cv.profile.isNotEmpty || cv.skills.isNotEmpty)
+                  _buildSummaryAndSkills(
+                    cv,
+                    accentColor,
+                    accentDark,
+                    accentPale,
+                    textColor,
+                    textSecondary,
+                    chars,
+                  ),
 
-                pw.SizedBox(height: 40),
+                if (cv.profile.isNotEmpty || cv.skills.isNotEmpty)
+                  pw.SizedBox(height: 40),
 
                 // Professional Experience
                 if (cv.experiences.isNotEmpty) ...[
-                  _buildSectionHeader('PROFESSIONAL EXPERIENCE', accentColor, textColor),
+                  _buildSectionHeader(
+                    'PROFESSIONAL EXPERIENCE',
+                    accentColor,
+                    accentDark,
+                    textColor,
+                  ),
                   pw.SizedBox(height: 20),
-                  ...cv.experiences.map((exp) => _buildExperienceEntry(exp, accentColor, textColor, secondaryTextColor)),
+                  ...cv.experiences.asMap().entries.map((entry) {
+                    return pw.Column(
+                      children: [
+                        _buildExperienceItem(
+                          entry.value,
+                          accentColor,
+                          accentLight,
+                          accentPale,
+                          textColor,
+                          textSecondary,
+                          textTertiary,
+                          chars,
+                        ),
+                        if (entry.key < cv.experiences.length - 1)
+                          pw.SizedBox(height: 28),
+                      ],
+                    );
+                  }),
                   pw.SizedBox(height: 40),
                 ],
 
-                // Education & Skills in two columns
-                _buildEducationSkillsSection(cv, accentColor, textColor, secondaryTextColor),
+                // Education + Skills (two-column)
+                if (cv.education.isNotEmpty || cv.skills.isNotEmpty)
+                  _buildEducationAndSkills(
+                    cv,
+                    accentColor,
+                    accentDark,
+                    accentLight,
+                    accentPale,
+                    textColor,
+                    textSecondary,
+                    textTertiary,
+                    chars,
+                  ),
 
-                pw.SizedBox(height: 40),
+                if (cv.education.isNotEmpty || cv.skills.isNotEmpty)
+                  pw.SizedBox(height: 40),
 
-                // Languages and Interests at bottom
-                _buildBottomSection(cv, accentColor, textColor, secondaryTextColor),
+                // Languages + Interests
+                if (cv.languages.isNotEmpty || cv.interests.isNotEmpty)
+                  _buildLanguagesAndInterests(
+                    cv,
+                    accentColor,
+                    accentDark,
+                    textColor,
+                    textSecondary,
+                    chars,
+                  ),
               ],
             ),
           ),
@@ -112,156 +187,196 @@ class ElectricCvTemplate {
     );
   }
 
-  /// Build stunning hero header with overlapping photo and geometric shapes
-  static pw.Widget _buildHeroHeader(
+  // ============================================================================
+  // COLOR UTILITIES - Professional color manipulation
+  // ============================================================================
+
+  /// Darken a color by reducing brightness
+  static PdfColor _darkenColor(PdfColor color, double amount) {
+    return PdfColor(
+      color.red * (1 - amount),
+      color.green * (1 - amount),
+      color.blue * (1 - amount),
+    );
+  }
+
+  /// Adjust brightness while preserving hue
+  static PdfColor _adjustBrightness(PdfColor color, double factor) {
+    return PdfColor(
+      (color.red * factor).clamp(0.0, 1.0),
+      (color.green * factor).clamp(0.0, 1.0),
+      (color.blue * factor).clamp(0.0, 1.0),
+    );
+  }
+
+  /// Mix color with white for pale variations
+  static PdfColor _mixWithWhite(PdfColor color, double whiteness) {
+    return PdfColor(
+      color.red + (1 - color.red) * whiteness,
+      color.green + (1 - color.green) * whiteness,
+      color.blue + (1 - color.blue) * whiteness,
+    );
+  }
+
+  // ============================================================================
+  // HEADER SECTION - Hero design
+  // ============================================================================
+
+  static pw.Widget _buildHeader(
     CvData cv,
     pw.ImageProvider? profileImage,
     PdfColor accentColor,
-    PdfColor accentFaded,
-    bool isDarkMode,
-    PdfColor headerBackground,
+    PdfColor accentDark,
+    PdfColor accentLight,
+    PdfColor headerBg,
+    PdfSpecialCharacters chars,
   ) {
     final contact = cv.contactDetails;
     final name = contact?.fullName ?? 'Your Name';
-    final jobTitle = contact?.jobTitle ?? '';
+    final title = contact?.jobTitle ?? '';
 
     return pw.Stack(
       children: [
-        // Header background banner (black in both modes for contrast)
+        // Background
         pw.Container(
           width: double.infinity,
-          height: 220,
-          color: headerBackground,
+          height: 200,
+          color: headerBg,
         ),
 
-        // Accent bar (top) - DYNAMIC COLOR
+        // Accent bar - STRONG and visible
         pw.Container(
           width: double.infinity,
-          height: 8,
+          height: 12,
           color: accentColor,
         ),
 
-        // Diagonal geometric accent shape - DYNAMIC COLOR
+        // Decorative geometric shape - VISIBLE with better contrast
         pw.Positioned(
           right: 0,
           top: 0,
-          child: pw.Transform.rotate(
-            angle: 0.15,
-            child: pw.Container(
-              width: 300,
-              height: 180,
-              color: accentFaded,
+          child: pw.ClipRect(
+            child: pw.Transform.rotate(
+              angle: 0.12,
+              child: pw.Container(
+                width: 280,
+                height: 280,
+                color: accentLight, // More visible now
+              ),
             ),
           ),
         ),
 
-        // Main content
+        // Content
         pw.Positioned.fill(
-          child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
-            children: [
-              pw.SizedBox(width: 48),
-
-              // Profile photo with accent border - DYNAMIC COLOR
-              if (profileImage != null) ...[
-                pw.Container(
-                  width: 140,
-                  height: 140,
-                  decoration: pw.BoxDecoration(
-                    color: accentColor,
-                    shape: pw.BoxShape.circle,
-                  ),
-                  padding: const pw.EdgeInsets.all(6),
-                  child: pw.ClipOval(
-                    child: pw.Container(
-                      decoration: const pw.BoxDecoration(
+          child: pw.Padding(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 48),
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                // Profile photo with accent border
+                if (profileImage != null) ...[
+                  pw.Container(
+                    width: 120,
+                    height: 120,
+                    decoration: pw.BoxDecoration(
+                      shape: pw.BoxShape.circle,
+                      color: accentColor,
+                    ),
+                    padding: const pw.EdgeInsets.all(5),
+                    child: pw.ClipOval(
+                      child: pw.Container(
                         color: _mediumGray,
-                        shape: pw.BoxShape.circle,
-                      ),
-                      child: pw.ClipOval(
-                        child: pw.Image(profileImage, fit: pw.BoxFit.cover),
-                      ),
-                    ),
-                  ),
-                ),
-                pw.SizedBox(width: 32),
-              ],
-
-              // Name and title
-              pw.Expanded(
-                child: pw.Column(
-                  mainAxisAlignment: pw.MainAxisAlignment.center,
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    // Name in huge bold letters
-                    pw.Text(
-                      name.toUpperCase(),
-                      style: pw.TextStyle(
-                        fontSize: 42,
-                        fontWeight: pw.FontWeight.bold,
-                        color: _white,
-                        letterSpacing: 2,
-                        height: 1.1,
-                      ),
-                    ),
-
-                    pw.SizedBox(height: 12),
-
-                    // Accent title bar - DYNAMIC COLOR
-                    pw.Container(
-                      decoration: pw.BoxDecoration(
-                        color: accentColor,
-                        borderRadius: pw.BorderRadius.circular(2),
-                      ),
-                      padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: pw.Text(
-                        jobTitle.toUpperCase(),
-                        style: pw.TextStyle(
-                          fontSize: 14,
-                          fontWeight: pw.FontWeight.bold,
-                          color: _black,
-                          letterSpacing: 1.5,
+                        child: pw.ClipOval(
+                          child: pw.Image(profileImage, fit: pw.BoxFit.cover),
                         ),
                       ),
                     ),
+                  ),
+                  pw.SizedBox(width: 28),
+                ],
 
-                    pw.SizedBox(height: 20),
+                // Name and info
+                pw.Expanded(
+                  child: pw.Column(
+                    mainAxisAlignment: pw.MainAxisAlignment.center,
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      // Name - BOLD and impactful
+                      pw.Text(
+                        name.toUpperCase(),
+                        style: pw.TextStyle(
+                          fontSize: 38,
+                          fontWeight: pw.FontWeight.bold,
+                          color: _white,
+                          letterSpacing: 3.0,
+                          height: 1.1,
+                        ),
+                      ),
 
-                    // Contact info with accent circles - DYNAMIC COLOR
-                    pw.Row(
-                      children: [
-                        if (contact?.email != null) ...[
-                          _buildContactIcon(IconSet.electric.email, contact!.email!, accentColor),
-                          pw.SizedBox(width: 24),
+                      pw.SizedBox(height: 10),
+
+                      // Title badge - STRONG accent color
+                      pw.Container(
+                        padding: const pw.EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        decoration: pw.BoxDecoration(
+                          color: accentColor,
+                          borderRadius: pw.BorderRadius.circular(3),
+                        ),
+                        child: pw.Text(
+                          title.toUpperCase(),
+                          style: pw.TextStyle(
+                            fontSize: 13,
+                            fontWeight: pw.FontWeight.bold,
+                            color: _black,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
+
+                      pw.SizedBox(height: 16),
+
+                      // Contact info - Clean icons
+                      pw.Wrap(
+                        spacing: 20,
+                        runSpacing: 8,
+                        children: [
+                          if (contact?.email != null)
+                            _buildContactBadge('@', contact!.email!, accentColor),
+                          if (contact?.phone != null)
+                            _buildContactBadge('#', contact!.phone!, accentColor),
+                          if (contact?.address != null)
+                            _buildContactBadge(
+                              '*',
+                              contact!.address!.split(',').first,
+                              accentColor,
+                            ),
+                          if (contact?.website != null)
+                            _buildContactBadge('W', contact!.website!, accentColor),
                         ],
-                        if (contact?.phone != null) ...[
-                          _buildContactIcon(IconSet.electric.phone, contact!.phone!, accentColor),
-                          pw.SizedBox(width: 24),
-                        ],
-                        if (contact?.address != null) ...[
-                          _buildContactIcon(IconSet.electric.location, contact!.address!.split(',').first, accentColor),
-                        ],
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-
-              pw.SizedBox(width: 48),
-            ],
+              ],
+            ),
           ),
         ),
       ],
     );
   }
 
-  /// Build contact info icon with text - DYNAMIC COLOR
-  static pw.Widget _buildContactIcon(String icon, String text, PdfColor accentColor) {
+  /// Contact badge - Clean professional design
+  static pw.Widget _buildContactBadge(String icon, String text, PdfColor accentColor) {
     return pw.Row(
+      mainAxisSize: pw.MainAxisSize.min,
       children: [
         pw.Container(
-          width: 24,
-          height: 24,
+          width: 22,
+          height: 22,
           decoration: pw.BoxDecoration(
             color: accentColor,
             shape: pw.BoxShape.circle,
@@ -270,18 +385,18 @@ class ElectricCvTemplate {
             child: pw.Text(
               icon,
               style: pw.TextStyle(
-                fontSize: 12,
-                color: _black,
+                fontSize: 11,
                 fontWeight: pw.FontWeight.bold,
+                color: _black,
               ),
             ),
           ),
         ),
-        pw.SizedBox(width: 8),
+        pw.SizedBox(width: 7),
         pw.Text(
           text,
           style: const pw.TextStyle(
-            fontSize: 10,
+            fontSize: 9.5,
             color: _white,
           ),
         ),
@@ -289,28 +404,107 @@ class ElectricCvTemplate {
     );
   }
 
-  /// Build top section with summary and key skills - DYNAMIC COLOR
-  static pw.Widget _buildTopSection(CvData cv, PdfColor accentColor, PdfColor textColor, PdfColor secondaryTextColor) {
+  // ============================================================================
+  // SECTION HEADER - Professional and clean
+  // ============================================================================
+
+  static pw.Widget _buildSectionHeader(
+    String title,
+    PdfColor accentColor,
+    PdfColor accentDark,
+    PdfColor textColor,
+  ) {
+    return pw.Row(
+      children: [
+        // Accent square
+        pw.Container(
+          width: 8,
+          height: 8,
+          decoration: pw.BoxDecoration(
+            color: accentDark,
+            borderRadius: pw.BorderRadius.circular(1),
+          ),
+        ),
+        pw.SizedBox(width: 12),
+        // Title
+        pw.Text(
+          title,
+          style: pw.TextStyle(
+            fontSize: 16,
+            fontWeight: pw.FontWeight.bold,
+            color: textColor,
+            letterSpacing: 2.0,
+          ),
+        ),
+        pw.SizedBox(width: 12),
+        // Extending line
+        pw.Expanded(
+          child: pw.Container(
+            height: 2.5,
+            decoration: pw.BoxDecoration(
+              color: accentColor,
+              borderRadius: pw.BorderRadius.circular(1.25),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ============================================================================
+  // SUMMARY + KEY SKILLS - Two column layout
+  // ============================================================================
+
+  static pw.Widget _buildSummaryAndSkills(
+    CvData cv,
+    PdfColor accentColor,
+    PdfColor accentDark,
+    PdfColor accentPale,
+    PdfColor textColor,
+    PdfColor textSecondary,
+    PdfSpecialCharacters chars,
+  ) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // Professional Summary (2/3 width)
+        // Summary - 65%
         if (cv.profile.isNotEmpty)
           pw.Expanded(
-            flex: 2,
+            flex: 65,
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('PROFESSIONAL SUMMARY', accentColor, textColor),
-                pw.SizedBox(height: 12),
-                pw.Text(
-                  cv.profile,
-                  style: pw.TextStyle(
-                    fontSize: 11.5,
-                    lineSpacing: 1.8,
-                    color: secondaryTextColor,
-                  ),
-                  textAlign: pw.TextAlign.justify,
+                _buildSectionHeader(
+                  'PROFESSIONAL SUMMARY',
+                  accentColor,
+                  accentDark,
+                  textColor,
+                ),
+                pw.SizedBox(height: 14),
+                pw.Row(
+                  children: [
+                    pw.Container(width: 3, color: accentColor),
+                    pw.SizedBox(width: 2),
+                    pw.Expanded(
+                      child: pw.Container(
+                        padding: const pw.EdgeInsets.all(14),
+                        decoration: pw.BoxDecoration(
+                          color: accentPale,
+                          borderRadius: pw.BorderRadius.circular(4),
+                        ),
+                        child: pw.Text(
+                          cv.profile,
+                          style: pw.TextStyle(
+                            fontSize: 10.5,
+                            lineSpacing: 1.6,
+                            color: textSecondary,
+                            height: 1.4,
+                          ),
+                          textAlign: pw.TextAlign.justify,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -319,33 +513,46 @@ class ElectricCvTemplate {
         if (cv.profile.isNotEmpty && cv.skills.isNotEmpty)
           pw.SizedBox(width: 32),
 
-        // Key Skills (1/3 width)
+        // Key Skills - 35%
         if (cv.skills.isNotEmpty)
           pw.Expanded(
-            flex: 1,
+            flex: 35,
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('KEY SKILLS', accentColor, textColor),
-                pw.SizedBox(height: 12),
+                _buildSectionHeader(
+                  'KEY SKILLS',
+                  accentColor,
+                  accentDark,
+                  textColor,
+                ),
+                pw.SizedBox(height: 14),
                 ...cv.skills.take(6).map((skill) {
-                  final skillName = skill.split(' - ').first;
+                  final skillName = skill.split(' - ').first.trim();
                   return pw.Padding(
-                    padding: const pw.EdgeInsets.only(bottom: 6),
+                    padding: const pw.EdgeInsets.only(bottom: 7),
                     child: pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        PdfIcons.bulletIcon(
-                          color: accentColor,
-                          size: 6,
-                          style: BulletStyle.circle,
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.only(top: 3),
+                          child: pw.Container(
+                            width: 5,
+                            height: 5,
+                            decoration: pw.BoxDecoration(
+                              color: accentDark,
+                              shape: pw.BoxShape.circle,
+                            ),
+                          ),
                         ),
                         pw.SizedBox(width: 8),
                         pw.Expanded(
                           child: pw.Text(
                             skillName,
                             style: pw.TextStyle(
-                              fontSize: 10.5,
-                              color: secondaryTextColor,
+                              fontSize: 10,
+                              color: textSecondary,
+                              height: 1.3,
                             ),
                           ),
                         ),
@@ -360,162 +567,285 @@ class ElectricCvTemplate {
     );
   }
 
-  /// Build section header with accent line - DYNAMIC COLOR
-  static pw.Widget _buildSectionHeader(String title, PdfColor accentColor, PdfColor textColor) {
-    return pw.Row(
+  // ============================================================================
+  // EXPERIENCE ITEM - Professional and detailed
+  // ============================================================================
+
+  static pw.Widget _buildExperienceItem(
+    Experience exp,
+    PdfColor accentColor,
+    PdfColor accentLight,
+    PdfColor accentPale,
+    PdfColor textColor,
+    PdfColor textSecondary,
+    PdfColor textTertiary,
+    PdfSpecialCharacters chars,
+  ) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Container(
-          width: 8,
-          height: 8,
-          decoration: pw.BoxDecoration(
-            color: accentColor,
-            shape: pw.BoxShape.circle,
-          ),
-        ),
-        pw.SizedBox(width: 12),
-        pw.Text(
-          title,
-          style: pw.TextStyle(
-            fontSize: 18,
-            fontWeight: pw.FontWeight.bold,
-            color: textColor,
-            letterSpacing: 2.0,
-          ),
-        ),
-        pw.SizedBox(width: 12),
-        pw.Expanded(
-          child: pw.Container(
-            height: 2,
-            color: accentColor,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Build experience entry with accent badges - DYNAMIC COLOR
-  static pw.Widget _buildExperienceEntry(Experience exp, PdfColor accentColor, PdfColor textColor, PdfColor secondaryTextColor) {
-    return pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 24),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          // Title, company, and date in header row
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      exp.title.toUpperCase(),
-                      style: pw.TextStyle(
-                        fontSize: 14,
-                        fontWeight: pw.FontWeight.bold,
-                        color: textColor,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                    pw.SizedBox(height: 4),
-                    pw.Row(
-                      children: [
-                        pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: pw.BoxDecoration(
-                            color: accentColor,
-                            borderRadius: pw.BorderRadius.circular(2),
-                          ),
-                          child: pw.Text(
-                            exp.company,
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                              color: _black,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              pw.Text(
-                exp.dateRange,
-                style: pw.TextStyle(
-                  fontSize: 10.5,
-                  color: secondaryTextColor,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-
-          // Description
-          if (exp.description != null && exp.description!.isNotEmpty) ...[
-            pw.SizedBox(height: 8),
-            pw.Text(
-              exp.description!,
-              style: pw.TextStyle(
-                fontSize: 10.5,
-                lineSpacing: 1.6,
-                color: secondaryTextColor,
-              ),
-            ),
-          ],
-
-          // Bullets with accent color
-          if (exp.bullets.isNotEmpty) ...[
-            pw.SizedBox(height: 8),
-            ...exp.bullets.map((bullet) => pw.Padding(
-                  padding: const pw.EdgeInsets.only(bottom: 6, left: 0),
-                  child: pw.Row(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+        // Header row
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  // Job title with accent dot
+                  pw.Row(
                     children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.only(top: 4),
-                        child: PdfIcons.bulletIcon(
+                      pw.Container(
+                        width: 5,
+                        height: 5,
+                        decoration: pw.BoxDecoration(
                           color: accentColor,
-                          size: 6,
-                          style: BulletStyle.diamond,
+                          shape: pw.BoxShape.circle,
                         ),
                       ),
-                      pw.SizedBox(width: 10),
+                      pw.SizedBox(width: 8),
                       pw.Expanded(
                         child: pw.Text(
-                          bullet,
+                          exp.title.toUpperCase(),
                           style: pw.TextStyle(
-                            fontSize: 10.5,
-                            lineSpacing: 1.5,
-                            color: secondaryTextColor,
+                            fontSize: 13,
+                            fontWeight: pw.FontWeight.bold,
+                            color: textColor,
+                            letterSpacing: 0.8,
                           ),
                         ),
                       ),
                     ],
                   ),
-                )),
+                  pw.SizedBox(height: 6),
+                  // Company badge
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.only(left: 13),
+                    child: pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 3,
+                      ),
+                      decoration: pw.BoxDecoration(
+                        color: accentColor,
+                        borderRadius: pw.BorderRadius.circular(2),
+                      ),
+                      child: pw.Text(
+                        exp.company,
+                        style: pw.TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: pw.FontWeight.bold,
+                          color: _black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(width: 12),
+            // Date in bordered box
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: accentColor, width: 1.5),
+              ),
+              child: pw.Text(
+                exp.dateRange,
+                style: pw.TextStyle(
+                  fontSize: 9,
+                  fontWeight: pw.FontWeight.bold,
+                  color: textSecondary,
+                ),
+              ),
+            ),
           ],
+        ),
+
+        // Description with left border
+        if (exp.description != null && exp.description!.isNotEmpty) ...[
+          pw.SizedBox(height: 10),
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(left: 13),
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Container(width: 2, color: accentLight),
+                pw.SizedBox(width: 10),
+                pw.Expanded(
+                  child: pw.Text(
+                    exp.description!,
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      lineSpacing: 1.5,
+                      color: textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
-      ),
+
+        // Bullet points with diamonds
+        if (exp.bullets.isNotEmpty) ...[
+          pw.SizedBox(height: 10),
+          ...exp.bullets.map((bullet) {
+            return pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 6, left: 13),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.only(top: 4),
+                    child: pw.Transform.rotate(
+                      angle: 0.785398, // 45 degrees
+                      child: pw.Container(
+                        width: 4,
+                        height: 4,
+                        decoration: pw.BoxDecoration(
+                          color: accentColor,
+                          borderRadius: pw.BorderRadius.circular(0.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(width: 10),
+                  pw.Expanded(
+                    child: pw.Text(
+                      bullet,
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        lineSpacing: 1.4,
+                        color: textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ],
     );
   }
 
-  /// Build education and skills section in two columns - DYNAMIC COLOR
-  static pw.Widget _buildEducationSkillsSection(CvData cv, PdfColor accentColor, PdfColor textColor, PdfColor secondaryTextColor) {
+  // ============================================================================
+  // EDUCATION + TECHNICAL SKILLS - Two column layout
+  // ============================================================================
+
+  static pw.Widget _buildEducationAndSkills(
+    CvData cv,
+    PdfColor accentColor,
+    PdfColor accentDark,
+    PdfColor accentLight,
+    PdfColor accentPale,
+    PdfColor textColor,
+    PdfColor textSecondary,
+    PdfColor textTertiary,
+    PdfSpecialCharacters chars,
+  ) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // Education (60% width)
+        // Education - 50%
         if (cv.education.isNotEmpty)
           pw.Expanded(
-            flex: 3,
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('EDUCATION', accentColor, textColor),
+                _buildSectionHeader('EDUCATION', accentColor, accentDark, textColor),
                 pw.SizedBox(height: 16),
-                ...cv.education.map((edu) => _buildEducationEntry(edu, textColor, secondaryTextColor)),
+                ...cv.education.map((edu) {
+                  return pw.Container(
+                    margin: const pw.EdgeInsets.only(bottom: 16),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Row(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Expanded(
+                              child: pw.Row(
+                                children: [
+                                  // E badge
+                                  pw.Container(
+                                    width: 16,
+                                    height: 16,
+                                    decoration: pw.BoxDecoration(
+                                      color: accentColor,
+                                      borderRadius: pw.BorderRadius.circular(2),
+                                    ),
+                                    child: pw.Center(
+                                      child: pw.Text(
+                                        'E',
+                                        style: pw.TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: pw.FontWeight.bold,
+                                          color: _black,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  pw.SizedBox(width: 8),
+                                  pw.Expanded(
+                                    child: pw.Text(
+                                      edu.degree,
+                                      style: pw.TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: pw.FontWeight.bold,
+                                        color: textColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            pw.SizedBox(width: 8),
+                            pw.Text(
+                              edu.dateRange,
+                              style: pw.TextStyle(
+                                fontSize: 9,
+                                fontWeight: pw.FontWeight.bold,
+                                color: textTertiary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        pw.SizedBox(height: 4),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.only(left: 24),
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                edu.institution,
+                                style: pw.TextStyle(
+                                  fontSize: 10,
+                                  color: textSecondary,
+                                ),
+                              ),
+                              if (edu.description != null && edu.description!.isNotEmpty) ...[
+                                pw.SizedBox(height: 3),
+                                pw.Text(
+                                  edu.description!,
+                                  style: pw.TextStyle(
+                                    fontSize: 9,
+                                    color: textTertiary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               ],
             ),
           ),
@@ -523,16 +853,27 @@ class ElectricCvTemplate {
         if (cv.education.isNotEmpty && cv.skills.isNotEmpty)
           pw.SizedBox(width: 32),
 
-        // Technical Skills (40% width)
+        // Technical Skills - 50%
         if (cv.skills.isNotEmpty)
           pw.Expanded(
-            flex: 2,
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('TECHNICAL SKILLS', accentColor, textColor),
+                _buildSectionHeader(
+                  'TECHNICAL SKILLS',
+                  accentColor,
+                  accentDark,
+                  textColor,
+                ),
                 pw.SizedBox(height: 16),
-                _buildSkillBars(cv.skills, accentColor, textColor, secondaryTextColor),
+                _buildSkillBars(
+                  cv.skills,
+                  accentColor,
+                  accentPale,
+                  textColor,
+                  textSecondary,
+                  textTertiary,
+                ),
               ],
             ),
           ),
@@ -540,137 +881,111 @@ class ElectricCvTemplate {
     );
   }
 
-  /// Build education entry
-  static pw.Widget _buildEducationEntry(Education edu, PdfColor textColor, PdfColor secondaryTextColor) {
-    return pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 16),
-      child: pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Expanded(
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  edu.degree,
-                  style: pw.TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: pw.FontWeight.bold,
-                    color: textColor,
-                  ),
-                ),
-                pw.SizedBox(height: 4),
-                pw.Text(
-                  edu.institution,
-                  style: pw.TextStyle(
-                    fontSize: 10.5,
-                    color: secondaryTextColor,
-                  ),
-                ),
-                if (edu.description != null && edu.description!.isNotEmpty) ...[
-                  pw.SizedBox(height: 4),
-                  pw.Text(
-                    edu.description!,
-                    style: pw.TextStyle(
-                      fontSize: 9.5,
-                      color: secondaryTextColor,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          pw.SizedBox(width: 16),
-          pw.Text(
-            edu.dateRange,
-            style: pw.TextStyle(
-              fontSize: 10.5,
-              color: secondaryTextColor,
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // ============================================================================
+  // SKILL BARS - With proper percentage parsing
+  // ============================================================================
 
-  /// Build skill bars with accent fill - DYNAMIC COLOR
-  static pw.Widget _buildSkillBars(List<String> skills, PdfColor accentColor, PdfColor textColor, PdfColor secondaryTextColor) {
+  static pw.Widget _buildSkillBars(
+    List<String> skills,
+    PdfColor accentColor,
+    PdfColor accentPale,
+    PdfColor textColor,
+    PdfColor textSecondary,
+    PdfColor textTertiary,
+  ) {
     return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: skills.take(8).map((skillString) {
-        // Parse skill string
+        // Parse skill with ROBUST percentage handling
         final parts = skillString.split(' - ');
-        final skillName = parts.isNotEmpty ? parts[0] : skillString;
+        final skillName = parts.isNotEmpty ? parts[0].trim() : skillString;
         double proficiency = 0.8;
 
         if (parts.length > 1) {
-          final level = parts[1].toLowerCase();
+          final level = parts[1].toLowerCase().trim();
+
+          // Percentage: "90%", "85%"
           if (level.contains('%')) {
-            proficiency = (double.tryParse(level.replaceAll('%', '').trim()) ?? 80.0) / 100.0;
-          } else if (level.contains('expert')) {
+            final numStr = level.replaceAll(RegExp(r'[^0-9.]'), '');
+            proficiency = (double.tryParse(numStr) ?? 80.0) / 100.0;
+          }
+          // Numeric: "90", "85", "0.9"
+          else if (RegExp(r'^\d+\.?\d*$').hasMatch(level)) {
+            final num = double.tryParse(level) ?? 80.0;
+            proficiency = num <= 1.0 ? num : num / 100.0;
+          }
+          // Text levels
+          else if (level.contains('expert') || level.contains('mastery')) {
             proficiency = 0.95;
-          } else if (level.contains('advanced')) {
+          } else if (level.contains('advanced') || level.contains('proficient')) {
             proficiency = 0.85;
-          } else if (level.contains('intermediate')) {
+          } else if (level.contains('intermediate') || level.contains('competent')) {
             proficiency = 0.70;
-          } else if (level.contains('beginner')) {
+          } else if (level.contains('basic') || level.contains('beginner')) {
             proficiency = 0.50;
           }
         }
 
+        proficiency = proficiency.clamp(0.0, 1.0);
+
         return pw.Container(
-          margin: const pw.EdgeInsets.only(bottom: 12),
+          margin: const pw.EdgeInsets.only(bottom: 11),
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text(
-                    skillName,
-                    style: pw.TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: pw.FontWeight.bold,
-                      color: textColor,
+                  pw.Expanded(
+                    child: pw.Text(
+                      skillName,
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                        color: textColor,
+                      ),
                     ),
                   ),
+                  pw.SizedBox(width: 6),
                   pw.Text(
                     '${(proficiency * 100).round()}%',
                     style: pw.TextStyle(
-                      fontSize: 9.5,
-                      color: secondaryTextColor,
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                      color: textTertiary,
                     ),
                   ),
                 ],
               ),
               pw.SizedBox(height: 4),
-              pw.Container(
-                width: double.infinity,
-                height: 8,
-                child: pw.Stack(
-                  children: [
-                    // Background bar
-                    pw.Container(
-                      width: double.infinity,
-                      height: 8,
-                      decoration: pw.BoxDecoration(
-                        color: const PdfColor.fromInt(0x332D2D2D),
-                        borderRadius: pw.BorderRadius.circular(4),
-                      ),
+              // Skill bar with better design
+              pw.LayoutBuilder(
+                builder: (context, constraints) {
+                  return pw.Container(
+                    height: 8,
+                    child: pw.Stack(
+                      children: [
+                        // Background
+                        pw.Container(
+                          width: double.infinity,
+                          height: 8,
+                          decoration: pw.BoxDecoration(
+                            color: accentPale,
+                            border: pw.Border.all(color: _paleGray, width: 0.5),
+                          ),
+                        ),
+                        // Fill
+                        pw.Container(
+                          width: constraints!.maxWidth * proficiency,
+                          height: 8,
+                          decoration: pw.BoxDecoration(
+                            color: accentColor,
+                            borderRadius: pw.BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
                     ),
-                    // Filled bar with accent color - DYNAMIC COLOR
-                    pw.Container(
-                      width: 150 * proficiency,
-                      height: 8,
-                      decoration: pw.BoxDecoration(
-                        color: accentColor,
-                        borderRadius: pw.BorderRadius.circular(4),
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
             ],
           ),
@@ -679,87 +994,98 @@ class ElectricCvTemplate {
     );
   }
 
-  /// Build bottom section with languages and interests - DYNAMIC COLOR
-  static pw.Widget _buildBottomSection(CvData cv, PdfColor accentColor, PdfColor textColor, PdfColor secondaryTextColor) {
-    if (cv.languages.isEmpty && cv.interests.isEmpty) return pw.SizedBox();
+  // ============================================================================
+  // LANGUAGES + INTERESTS - Bottom section
+  // ============================================================================
 
-    return pw.Column(
+  static pw.Widget _buildLanguagesAndInterests(
+    CvData cv,
+    PdfColor accentColor,
+    PdfColor accentDark,
+    PdfColor textColor,
+    PdfColor textSecondary,
+    PdfSpecialCharacters chars,
+  ) {
+    return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.SizedBox(height: 32),
-
-        pw.Row(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            // Languages
-            if (cv.languages.isNotEmpty)
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionHeader('LANGUAGES', accentColor, textColor),
-                    pw.SizedBox(height: 12),
-                    pw.Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: cv.languages.map((lang) => pw.Container(
-                        padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: pw.BoxDecoration(
-                          color: accentColor,
-                          borderRadius: pw.BorderRadius.circular(2),
+        // Languages
+        if (cv.languages.isNotEmpty)
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader('LANGUAGES', accentColor, accentDark, textColor),
+                pw.SizedBox(height: 14),
+                pw.Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  children: cv.languages.map((lang) {
+                    return pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: pw.BoxDecoration(
+                        color: accentColor,
+                        borderRadius: pw.BorderRadius.circular(3),
+                      ),
+                      child: pw.Text(
+                        '${lang.language} - ${lang.level}',
+                        style: pw.TextStyle(
+                          fontSize: 9,
+                          fontWeight: pw.FontWeight.bold,
+                          color: _black,
                         ),
-                        child: pw.Text(
-                          '${lang.language} - ${lang.level}',
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+
+        if (cv.languages.isNotEmpty && cv.interests.isNotEmpty)
+          pw.SizedBox(width: 32),
+
+        // Interests
+        if (cv.interests.isNotEmpty)
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader('INTERESTS', accentColor, accentDark, textColor),
+                pw.SizedBox(height: 14),
+                pw.Wrap(
+                  spacing: 16,
+                  runSpacing: 10,
+                  children: cv.interests.map((interest) {
+                    return pw.Row(
+                      mainAxisSize: pw.MainAxisSize.min,
+                      children: [
+                        pw.Container(
+                          width: 5,
+                          height: 5,
+                          decoration: pw.BoxDecoration(
+                            color: accentDark,
+                            borderRadius: pw.BorderRadius.circular(1),
+                          ),
+                        ),
+                        pw.SizedBox(width: 6),
+                        pw.Text(
+                          interest,
                           style: pw.TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: pw.FontWeight.bold,
-                            color: _black,
+                            fontSize: 10,
+                            color: textSecondary,
                           ),
                         ),
-                      )).toList(),
-                    ),
-                  ],
+                      ],
+                    );
+                  }).toList(),
                 ),
-              ),
-
-            if (cv.languages.isNotEmpty && cv.interests.isNotEmpty)
-              pw.SizedBox(width: 32),
-
-            // Interests
-            if (cv.interests.isNotEmpty)
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionHeader('INTERESTS', accentColor, textColor),
-                    pw.SizedBox(height: 12),
-                    pw.Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: cv.interests.map((interest) => pw.Row(
-                        mainAxisSize: pw.MainAxisSize.min,
-                        children: [
-                          PdfIcons.bulletIcon(
-                            color: accentColor,
-                            size: 5,
-                            style: BulletStyle.square,
-                          ),
-                          pw.SizedBox(width: 6),
-                          pw.Text(
-                            interest,
-                            style: pw.TextStyle(
-                              fontSize: 10.5,
-                              color: secondaryTextColor,
-                            ),
-                          ),
-                        ],
-                      )).toList(),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
+              ],
+            ),
+          ),
       ],
     );
   }

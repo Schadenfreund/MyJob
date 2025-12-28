@@ -132,7 +132,7 @@ class PdfIcons {
           height: size,
           child: pw.Center(
             child: pw.Text(
-              '›',
+              '>',  // ASCII-safe chevron
               style: pw.TextStyle(
                 fontSize: size * 1.2,
                 color: color,
@@ -192,37 +192,37 @@ class PdfIcons {
     return pw.Row(
       mainAxisSize: pw.MainAxisSize.min,
       children: [
-        // Full stars
+        // Full stars (ASCII-safe)
         ...List.generate(
           fullStars,
           (_) => pw.Padding(
             padding: pw.EdgeInsets.only(right: spacing),
             child: textIcon(
-              symbol: '★',
+              symbol: '*',  // ASCII star
               font: font,
               color: activeColor,
               size: size,
             ),
           ),
         ),
-        // Half star (using a slightly different symbol)
+        // Half star (ASCII-safe)
         if (hasHalfStar)
           pw.Padding(
             padding: pw.EdgeInsets.only(right: spacing),
             child: textIcon(
-              symbol: '⯨',
+              symbol: '+',  // ASCII plus for half
               font: font,
               color: activeColor,
               size: size,
             ),
           ),
-        // Empty stars
+        // Empty stars (ASCII-safe)
         ...List.generate(
           emptyStars,
           (_) => pw.Padding(
             padding: pw.EdgeInsets.only(right: spacing),
             child: textIcon(
-              symbol: '☆',
+              symbol: 'o',  // ASCII circle for empty
               font: font,
               color: inactiveColor,
               size: size,
@@ -374,7 +374,7 @@ enum HeaderStyle {
   badge,
 }
 
-/// Simple text-based icon set (ASCII safe, always renders)
+/// Simple text-based icon set (ASCII safe for Helvetica font - always renders)
 class SimpleIcons {
   // Contact icons using symbols
   static const String email = '@';
@@ -387,27 +387,27 @@ class SimpleIcons {
   static const String work = '^';
   static const String education = '=';
   static const String certificate = '+';
-  static const String skills = '◆';
-  static const String language = '◊';
+  static const String skills = '*';
+  static const String language = '>';
 
-  // General purpose
-  static const String bullet = '•';
-  static const String chevron = '›';
-  static const String arrow = '→';
-  static const String check = '✓';
-  static const String star = '★';
-  static const String starEmpty = '☆';
-  static const String circle = '○';
-  static const String circleFilled = '●';
-  static const String dot = '·';
-  static const String square = '□';
-  static const String squareFilled = '■';
+  // General purpose (ASCII-safe - works with Helvetica)
+  static const String bullet = '-';
+  static const String chevron = '>';
+  static const String arrow = '->';
+  static const String check = 'x';
+  static const String star = '*';
+  static const String starEmpty = 'o';
+  static const String circle = 'o';
+  static const String circleFilled = 'O';
+  static const String dot = '.';
+  static const String square = '[ ]';
+  static const String squareFilled = '[X]';
 
   // Decorative
-  static const String diamond = '◆';
-  static const String triangleRight = '▸';
-  static const String triangleUp = '▴';
-  static const String hexagon = '⬢';
+  static const String diamond = '*';
+  static const String triangleRight = '>';
+  static const String triangleUp = '^';
+  static const String hexagon = 'O';
 }
 
 /// Icon set configuration for templates

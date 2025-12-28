@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import '../models/user_data/personal_info.dart';
 import '../models/user_data/skill.dart';
 import '../models/user_data/work_experience.dart';
 import '../models/user_data/language.dart';
 import '../models/user_data/interest.dart';
 import '../models/template_style.dart';
+import 'pdf_font_service.dart';
 
 /// Service for generating professional CV PDFs
 class CvPdfService {
@@ -24,10 +24,11 @@ class CvPdfService {
   }) async {
     final pdf = pw.Document();
 
-    // Load fonts for better typography
-    final boldFont = await PdfGoogleFonts.interBold();
-    final regularFont = await PdfGoogleFonts.interRegular();
-    final mediumFont = await PdfGoogleFonts.interMedium();
+    // Get fonts from centralized font service (DRY principle)
+    final fonts = PdfFontService.getFonts();
+    final boldFont = fonts.bold;
+    final regularFont = fonts.regular;
+    final mediumFont = fonts.medium;
 
     // Adjust margins based on template type
     final margins = _getMargins(templateType);

@@ -75,7 +75,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'This is your master profile. All CVs and Cover Letters pull data from here.',
+                'Master profile data for all CVs and Cover Letters • Import YAML files here',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                 ),
@@ -112,14 +112,14 @@ class ProfileScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Quick Start with YAML',
+                  'Import YAML Files',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Import your profile data from a YAML file for bulk entry, or edit manually below.',
+                  'All YAML imports happen here • Auto-detects CV data or Cover Letter templates',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.8),
                   ),

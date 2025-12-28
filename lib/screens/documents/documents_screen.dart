@@ -4,7 +4,6 @@ import '../../models/cv_template.dart';
 import '../../models/cover_letter_template.dart';
 import '../../providers/templates_provider.dart';
 import '../../widgets/collapsible_card.dart';
-import '../../widgets/yaml_import_section.dart';
 import '../../widgets/document_template_card.dart';
 import '../../dialogs/cv_template_pdf_preview_launcher.dart';
 import '../../dialogs/cover_letter_template_pdf_preview_dialog.dart';
@@ -23,9 +22,6 @@ class DocumentsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final templatesProvider = context.watch<TemplatesProvider>();
 
-    final hasTemplates = templatesProvider.cvTemplates.isNotEmpty ||
-        templatesProvider.coverLetterTemplates.isNotEmpty;
-
     return Container(
       color: theme.colorScheme.surface,
       child: SingleChildScrollView(
@@ -37,32 +33,10 @@ class DocumentsScreen extends StatelessWidget {
             UIUtils.buildSectionHeader(
               context,
               title: 'Documents',
-              subtitle: 'Import YAML templates and generate beautiful PDFs',
+              subtitle: 'Manage CV and Cover Letter templates • Import data in Profile',
               icon: Icons.description,
             ),
             SizedBox(height: UIUtils.spacingXl),
-
-            // YAML Import Section - CollapsibleCard
-            CollapsibleCard(
-              cardDecoration: UIUtils.getCardDecoration(context),
-              title: 'Import from YAML',
-              subtitle: 'Quick setup from UserData folder',
-              status: hasTemplates
-                  ? CollapsibleCardStatus.configured
-                  : CollapsibleCardStatus.unconfigured,
-              initiallyCollapsed: hasTemplates, // Collapse after first import
-              collapsedSummary: Text(
-                hasTemplates
-                    ? 'Import additional CV or Cover Letter templates'
-                    : 'Click to import your first template',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                ),
-              ),
-              expandedContent: const YamlImportSection(),
-            ),
-
-            SizedBox(height: UIUtils.spacingMd),
 
             // CV Templates Section - CollapsibleCard
             CollapsibleCard(

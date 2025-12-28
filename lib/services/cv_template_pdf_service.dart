@@ -2,11 +2,11 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import '../models/cv_data.dart';
 import '../models/template_style.dart';
 import '../models/template_customization.dart';
 import '../pdf/cv_templates/electric_cv_template.dart';
+import 'pdf_font_service.dart';
 
 /// Service for generating professional CV PDFs using the Electric magazine-style template
 class CvTemplatePdfService {
@@ -24,10 +24,8 @@ class CvTemplatePdfService {
     final style = templateStyle ?? TemplateStyle.electric;
     final pdf = pw.Document();
 
-    // Load fonts for Unicode support (special characters like ć, –, etc.)
-    final boldFont = await PdfGoogleFonts.interBold();
-    final regularFont = await PdfGoogleFonts.interRegular();
-    final mediumFont = await PdfGoogleFonts.interMedium();
+    // Get fonts from centralized font service (DRY principle)
+    final fonts = await PdfFontService.getFonts(style.fontFamily);
 
     // Load profile picture if path is provided
     Uint8List? profileImageBytes;
@@ -42,9 +40,9 @@ class CvTemplatePdfService {
       pdf,
       cvData,
       style,
-      regularFont: regularFont,
-      boldFont: boldFont,
-      mediumFont: mediumFont,
+      regularFont: fonts.regular,
+      boldFont: fonts.bold,
+      mediumFont: fonts.medium,
       profileImageBytes: profileImageBytes,
       customization: customization,
     );
@@ -78,10 +76,11 @@ class CvTemplatePdfService {
     final style = templateStyle ?? TemplateStyle.electric;
     final pdf = pw.Document();
 
-    // Load fonts for better typography
-    final boldFont = await PdfGoogleFonts.interBold();
-    final regularFont = await PdfGoogleFonts.interRegular();
-    final mediumFont = await PdfGoogleFonts.interMedium();
+    // Get fonts from centralized font service (DRY principle)
+    final fonts = await PdfFontService.getFonts(style.fontFamily);
+    final boldFont = fonts.bold;
+    final regularFont = fonts.regular;
+    final mediumFont = fonts.medium;
 
     // Convert Flutter Color to PdfColor
     final color = style.primaryColor;

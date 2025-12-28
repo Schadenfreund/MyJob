@@ -40,7 +40,13 @@
       "Bash(cmd /c \"del c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\cv_templates\\\\yellow_cv_template.dart && del c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\cv_templates\\\\professional_cv_template.dart && del c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\cv_templates\\\\modern_cv_template.dart\")",
       "Bash(cmd /c \"del c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\cover_letter_templates\\\\professional_cover_letter_template.dart && del c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\cover_letter_templates\\\\modern_cover_letter_template.dart && del c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\cover_letter_templates\\\\yellow_cover_letter_template.dart\")",
       "Bash(cmd /c \"if exist c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\core rmdir /s /q c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\lib\\\\pdf\\\\core\")",
-      "Bash(cmd /c:*)"
+      "Bash(cmd /c:*)",
+      "Bash(flutter pub upgrade:*)",
+      "Bash(powershell.exe -Command \"Invoke-WebRequest -Uri ''https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Regular.ttf'' -OutFile ''c:\\\\Users\\\\iBuri\\\\Desktop\\\\MyLife\\\\assets\\\\fonts\\\\roboto\\\\Roboto-Regular.ttf''\")",
+      "Bash(curl:*)",
+      "Bash(dart download_fonts.dart:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(dart update_font_assets.dart:*)"
     ]
   }
 }

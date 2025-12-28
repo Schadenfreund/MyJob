@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import '../models/cover_letter.dart';
 import '../models/cv_data.dart';
 import '../models/template_style.dart';
 import '../pdf/cover_letter_templates/electric_cover_letter_template.dart';
+import 'pdf_font_service.dart';
 
 /// Service for generating professional cover letter PDFs using the Electric magazine-style template
 class CoverLetterTemplatePdfService {
@@ -18,10 +18,8 @@ class CoverLetterTemplatePdfService {
     final style = templateStyle ?? TemplateStyle.electric;
     final pdf = pw.Document();
 
-    // Load fonts (Inter for professional typography)
-    final boldFont = await PdfGoogleFonts.interBold();
-    final regularFont = await PdfGoogleFonts.interRegular();
-    final mediumFont = await PdfGoogleFonts.interMedium();
+    // Get fonts from centralized font service (DRY principle)
+    final fonts = await PdfFontService.getFonts(style.fontFamily);
 
     // Generate PDF using Electric template
     ElectricCoverLetterTemplate.build(
@@ -29,9 +27,9 @@ class CoverLetterTemplatePdfService {
       coverLetter,
       style,
       contactDetails,
-      regularFont: regularFont,
-      boldFont: boldFont,
-      mediumFont: mediumFont,
+      regularFont: fonts.regular,
+      boldFont: fonts.bold,
+      mediumFont: fonts.medium,
     );
 
     // Save the PDF
