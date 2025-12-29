@@ -202,7 +202,8 @@ class PdfSpecialCharacters {
   }
 
   /// Create a checkmark list item
-  pw.Widget checklistItem(String text, {bool checked = true, pw.TextStyle? style}) {
+  pw.Widget checklistItem(String text,
+      {bool checked = true, pw.TextStyle? style}) {
     final icon = checked ? checkmark : cross;
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,

@@ -1,5 +1,6 @@
 /// Automatically detects fonts and updates pubspec.yaml
 /// Run: dart update_font_assets.dart
+library;
 
 import 'dart:io';
 

@@ -118,45 +118,45 @@ class _InterestChipEditorState extends State<InterestChipEditor> {
                 ),
               ),
               SizedBox(height: UIUtils.cardInternalGap),
-                Row(
-                  children: [
-                    // Interest name input
-                    Expanded(
-                      flex: widget.showLevels ? 2 : 1,
-                      child: TextField(
-                        controller: _nameController,
-                        decoration: InputDecoration(
-                          labelText: 'Interest Name',
-                          hintText: 'e.g., Photography, Hiking',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          filled: true,
-                          fillColor: theme.colorScheme.surface,
+              Row(
+                children: [
+                  // Interest name input
+                  Expanded(
+                    flex: widget.showLevels ? 2 : 1,
+                    child: TextField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Interest Name',
+                        hintText: 'e.g., Photography, Hiking',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        onSubmitted: (_) => _addInterest(),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        filled: true,
+                        fillColor: theme.colorScheme.surface,
+                      ),
+                      onSubmitted: (_) => _addInterest(),
+                    ),
+                  ),
+
+                  // Level dropdown (optional)
+                  if (widget.showLevels) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InterestLevelDropdown(
+                        value: _selectedLevel,
+                        onChanged: (level) {
+                          setState(() => _selectedLevel = level);
+                        },
+                        label: 'Level (Optional)',
                       ),
                     ),
-
-                    // Level dropdown (optional)
-                    if (widget.showLevels) ...[
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: InterestLevelDropdown(
-                          value: _selectedLevel,
-                          onChanged: (level) {
-                            setState(() => _selectedLevel = level);
-                          },
-                          label: 'Level (Optional)',
-                        ),
-                      ),
-                    ],
                   ],
-                ),
+                ],
+              ),
 
               SizedBox(height: UIUtils.cardInternalGap),
 

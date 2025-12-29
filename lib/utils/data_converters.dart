@@ -16,7 +16,8 @@ class DataConverters {
       final parts = <String>[];
       if (info.address!.isNotEmpty) parts.add(info.address!);
       if (info.city != null && info.city!.isNotEmpty) parts.add(info.city!);
-      if (info.country != null && info.country!.isNotEmpty) parts.add(info.country!);
+      if (info.country != null && info.country!.isNotEmpty)
+        parts.add(info.country!);
       fullAddress = parts.isNotEmpty ? parts.join(', ') : null;
     }
 
@@ -26,7 +27,7 @@ class DataConverters {
       phone: info.phone,
       address: fullAddress,
       linkedin: null, // PersonalInfo doesn't have LinkedIn, can be added later
-      website: null,  // PersonalInfo doesn't have website, can be added later
+      website: null, // PersonalInfo doesn't have website, can be added later
     );
   }
 
@@ -81,33 +82,36 @@ class DataConverters {
   /// Parse skill strings back to Skill objects
   /// Handles both "Skill Name" and "Skill Name (Level)" formats
   static List<Skill> parseSkillStrings(List<String> skillStrings) {
-    return skillStrings.map((str) {
-      str = str.trim();
-      if (str.isEmpty) return null;
+    return skillStrings
+        .map((str) {
+          str = str.trim();
+          if (str.isEmpty) return null;
 
-      // Check if string contains level info in parentheses
-      final match = RegExp(r'^(.+)\s*\((.+)\)$').firstMatch(str);
-      if (match != null) {
-        final name = match.group(1)!.trim();
-        final levelStr = match.group(2)!.trim().toLowerCase();
+          // Check if string contains level info in parentheses
+          final match = RegExp(r'^(.+)\s*\((.+)\)$').firstMatch(str);
+          if (match != null) {
+            final name = match.group(1)!.trim();
+            final levelStr = match.group(2)!.trim().toLowerCase();
 
-        SkillLevel? level;
-        for (final lvl in SkillLevel.values) {
-          if (lvl.displayName.toLowerCase() == levelStr) {
-            level = lvl;
-            break;
+            SkillLevel? level;
+            for (final lvl in SkillLevel.values) {
+              if (lvl.displayName.toLowerCase() == levelStr) {
+                level = lvl;
+                break;
+              }
+            }
+
+            return Skill(
+              name: name,
+              level: level ?? SkillLevel.intermediate,
+            );
           }
-        }
 
-        return Skill(
-          name: name,
-          level: level ?? SkillLevel.intermediate,
-        );
-      }
-
-      // Plain skill name without level
-      return Skill(name: str);
-    }).whereType<Skill>().toList();
+          // Plain skill name without level
+          return Skill(name: str);
+        })
+        .whereType<Skill>()
+        .toList();
   }
 
   /// Convert List<Interest> to List<String> for backward compatibility
@@ -125,7 +129,8 @@ class DataConverters {
   }
 
   /// Convert user_data Language list to cv_data LanguageSkill list
-  static List<LanguageSkill> languagesToLanguageSkills(List<Language> languages) {
+  static List<LanguageSkill> languagesToLanguageSkills(
+      List<Language> languages) {
     return languages.map((lang) {
       return LanguageSkill(
         language: lang.name,
@@ -135,7 +140,8 @@ class DataConverters {
   }
 
   /// Convert cv_data LanguageSkill list to user_data Language list
-  static List<Language> languageSkillsToLanguages(List<LanguageSkill> languageSkills) {
+  static List<Language> languageSkillsToLanguages(
+      List<LanguageSkill> languageSkills) {
     return languageSkills.map((skill) {
       // Try to map level string to LanguageProficiency enum
       LanguageProficiency? proficiency;

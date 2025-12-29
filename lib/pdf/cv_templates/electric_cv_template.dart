@@ -51,7 +51,8 @@ class ElectricCvTemplate {
 
     // Create color variations with BETTER contrast
     final accentDark = _darkenColor(accentColor, 0.2); // Subtle darkening
-    final accentLight = _adjustBrightness(accentColor, 1.3); // Visible but light
+    final accentLight =
+        _adjustBrightness(accentColor, 1.3); // Visible but light
     final accentPale = _mixWithWhite(accentColor, 0.9); // Very pale background
 
     // Dynamic theme colors
@@ -63,7 +64,8 @@ class ElectricCvTemplate {
 
     // Profile image setup
     pw.ImageProvider? profileImage;
-    if (profileImageBytes != null && (customization?.showProfilePhoto ?? true)) {
+    if (profileImageBytes != null &&
+        (customization?.showProfilePhoto ?? true)) {
       try {
         profileImage = pw.MemoryImage(profileImageBytes);
       } catch (_) {}
@@ -345,9 +347,11 @@ class ElectricCvTemplate {
                         runSpacing: 8,
                         children: [
                           if (contact?.email != null)
-                            _buildContactBadge('@', contact!.email!, accentColor),
+                            _buildContactBadge(
+                                '@', contact!.email!, accentColor),
                           if (contact?.phone != null)
-                            _buildContactBadge('#', contact!.phone!, accentColor),
+                            _buildContactBadge(
+                                '#', contact!.phone!, accentColor),
                           if (contact?.address != null)
                             _buildContactBadge(
                               '*',
@@ -355,7 +359,8 @@ class ElectricCvTemplate {
                               accentColor,
                             ),
                           if (contact?.website != null)
-                            _buildContactBadge('W', contact!.website!, accentColor),
+                            _buildContactBadge(
+                                'W', contact!.website!, accentColor),
                         ],
                       ),
                     ],
@@ -370,7 +375,8 @@ class ElectricCvTemplate {
   }
 
   /// Contact badge - Clean professional design
-  static pw.Widget _buildContactBadge(String icon, String text, PdfColor accentColor) {
+  static pw.Widget _buildContactBadge(
+      String icon, String text, PdfColor accentColor) {
     return pw.Row(
       mainAxisSize: pw.MainAxisSize.min,
       children: [
@@ -647,7 +653,8 @@ class ElectricCvTemplate {
             pw.SizedBox(width: 12),
             // Date in bordered box
             pw.Container(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: pw.BoxDecoration(
                 border: pw.Border.all(color: accentColor, width: 1.5),
               ),
@@ -757,7 +764,8 @@ class ElectricCvTemplate {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('EDUCATION', accentColor, accentDark, textColor),
+                _buildSectionHeader(
+                    'EDUCATION', accentColor, accentDark, textColor),
                 pw.SizedBox(height: 16),
                 ...cv.education.map((edu) {
                   return pw.Container(
@@ -829,7 +837,8 @@ class ElectricCvTemplate {
                                   color: textSecondary,
                                 ),
                               ),
-                              if (edu.description != null && edu.description!.isNotEmpty) ...[
+                              if (edu.description != null &&
+                                  edu.description!.isNotEmpty) ...[
                                 pw.SizedBox(height: 3),
                                 pw.Text(
                                   edu.description!,
@@ -916,9 +925,11 @@ class ElectricCvTemplate {
           // Text levels
           else if (level.contains('expert') || level.contains('mastery')) {
             proficiency = 0.95;
-          } else if (level.contains('advanced') || level.contains('proficient')) {
+          } else if (level.contains('advanced') ||
+              level.contains('proficient')) {
             proficiency = 0.85;
-          } else if (level.contains('intermediate') || level.contains('competent')) {
+          } else if (level.contains('intermediate') ||
+              level.contains('competent')) {
             proficiency = 0.70;
           } else if (level.contains('basic') || level.contains('beginner')) {
             proficiency = 0.50;
@@ -1015,7 +1026,8 @@ class ElectricCvTemplate {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('LANGUAGES', accentColor, accentDark, textColor),
+                _buildSectionHeader(
+                    'LANGUAGES', accentColor, accentDark, textColor),
                 pw.SizedBox(height: 14),
                 pw.Wrap(
                   spacing: 10,
@@ -1054,7 +1066,8 @@ class ElectricCvTemplate {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('INTERESTS', accentColor, accentDark, textColor),
+                _buildSectionHeader(
+                    'INTERESTS', accentColor, accentDark, textColor),
                 pw.SizedBox(height: 14),
                 pw.Wrap(
                   spacing: 16,

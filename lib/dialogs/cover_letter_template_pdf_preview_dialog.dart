@@ -1,10 +1,9 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../models/cover_letter_template.dart';
 import '../models/cv_data.dart';
 import '../models/template_style.dart';
-import '../services/cover_letter_template_pdf_service.dart';
+import '../services/pdf_service.dart';
 import 'base_template_pdf_preview_dialog.dart';
 
 /// Full-screen PDF preview dialog for cover letter templates
@@ -29,8 +28,8 @@ class CoverLetterTemplatePdfPreviewDialog extends BaseTemplatePdfPreviewDialog {
 }
 
 class _CoverLetterTemplatePdfPreviewDialogState
-    extends BaseTemplatePdfPreviewDialogState<CoverLetterTemplatePdfPreviewDialog> {
-
+    extends BaseTemplatePdfPreviewDialogState<
+        CoverLetterTemplatePdfPreviewDialog> {
   @override
   bool get useSidebarLayout => false;
 
@@ -39,30 +38,18 @@ class _CoverLetterTemplatePdfPreviewDialogState
 
   @override
   Future<Uint8List> generatePdfBytes() async {
-    final service = CoverLetterTemplatePdfService();
     final coverLetter = widget.coverLetterTemplate.toCoverLetter();
-
-    final tempDir = Directory.systemTemp;
-    final tempPath = '${tempDir.path}/temp_cover_letter_preview.pdf';
-
-    final file = await service.generatePdfFromCoverLetter(
-      coverLetter: coverLetter,
+    return PdfService.instance.generateCoverLetterPdf(
+      coverLetter,
+      selectedStyle,
       contactDetails: widget.contactDetails,
-      templateStyle: selectedStyle,
-      outputPath: tempPath,
     );
-
-    final bytes = await file.readAsBytes();
-    await file.delete();
-    return bytes;
   }
 
   @override
   Future<void> exportPdf(BuildContext context, String outputPath) async {
-    final service = CoverLetterTemplatePdfService();
     final coverLetter = widget.coverLetterTemplate.toCoverLetter();
-
-    await service.generatePdfFromCoverLetter(
+    await PdfService.instance.generateCoverLetterToFile(
       coverLetter: coverLetter,
       outputPath: outputPath,
       contactDetails: widget.contactDetails,

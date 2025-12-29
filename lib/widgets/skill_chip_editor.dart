@@ -40,9 +40,10 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
 
     final newSkill = Skill(
       name: _nameController.text.trim(),
-      category: widget.showCategories && _categoryController.text.trim().isNotEmpty
-          ? _categoryController.text.trim()
-          : null,
+      category:
+          widget.showCategories && _categoryController.text.trim().isNotEmpty
+              ? _categoryController.text.trim()
+              : null,
       level: _selectedLevel,
     );
 
@@ -122,67 +123,67 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
                 ),
               ),
               SizedBox(height: UIUtils.cardInternalGap),
-                Row(
-                  children: [
-                    // Skill name input
-                    Expanded(
-                      flex: 2,
-                      child: TextField(
-                        controller: _nameController,
-                        decoration: InputDecoration(
-                          labelText: 'Skill Name',
-                          hintText: 'e.g., Flutter, Python',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          filled: true,
-                          fillColor: theme.colorScheme.surface,
+              Row(
+                children: [
+                  // Skill name input
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Skill Name',
+                        hintText: 'e.g., Flutter, Python',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        onSubmitted: (_) => _addSkill(),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        filled: true,
+                        fillColor: theme.colorScheme.surface,
                       ),
+                      onSubmitted: (_) => _addSkill(),
                     ),
-                    const SizedBox(width: 12),
+                  ),
+                  const SizedBox(width: 12),
 
-                    // Level dropdown
-                    Expanded(
-                      child: SkillLevelDropdown(
-                        value: _selectedLevel,
-                        onChanged: (level) {
-                          if (level != null) {
-                            setState(() => _selectedLevel = level);
-                          }
-                        },
-                        label: 'Level',
-                      ),
+                  // Level dropdown
+                  Expanded(
+                    child: SkillLevelDropdown(
+                      value: _selectedLevel,
+                      onChanged: (level) {
+                        if (level != null) {
+                          setState(() => _selectedLevel = level);
+                        }
+                      },
+                      label: 'Level',
                     ),
-                  ],
-                ),
-
-                // Category input (optional)
-                if (widget.showCategories) ...[
-                  SizedBox(height: UIUtils.cardInternalGap),
-                  TextField(
-                    controller: _categoryController,
-                    decoration: InputDecoration(
-                      labelText: 'Category (Optional)',
-                      hintText: 'e.g., Programming, Design',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      filled: true,
-                      fillColor: theme.colorScheme.surface,
-                    ),
-                    onSubmitted: (_) => _addSkill(),
                   ),
                 ],
+              ),
+
+              // Category input (optional)
+              if (widget.showCategories) ...[
+                SizedBox(height: UIUtils.cardInternalGap),
+                TextField(
+                  controller: _categoryController,
+                  decoration: InputDecoration(
+                    labelText: 'Category (Optional)',
+                    hintText: 'e.g., Programming, Design',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    filled: true,
+                    fillColor: theme.colorScheme.surface,
+                  ),
+                  onSubmitted: (_) => _addSkill(),
+                ),
+              ],
 
               SizedBox(height: UIUtils.cardInternalGap),
 
@@ -298,53 +299,54 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
         onTap: () => setState(() => _editingSkillId = skill.id),
         borderRadius: BorderRadius.circular(20),
         child: Chip(
-        avatar: Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: levelColor,
-          ),
-        ),
-        label: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                skill.name,
-                overflow: TextOverflow.ellipsis,
-              ),
+          avatar: Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: levelColor,
             ),
-            if (skill.level != null) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: levelColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(4),
-                ),
+          ),
+          label: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
                 child: Text(
-                  skill.level!.displayName,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: levelColor,
+                  skill.name,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (skill.level != null) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: levelColor.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    skill.level!.displayName,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: levelColor,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
-        ),
-        deleteIcon: const Icon(Icons.close, size: 18),
-        onDeleted: () => _deleteSkill(skill.id),
-        backgroundColor: theme.colorScheme.surfaceContainerHighest,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: theme.colorScheme.outline.withValues(alpha: 0.2),
           ),
-        ),
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          deleteIcon: const Icon(Icons.close, size: 18),
+          onDeleted: () => _deleteSkill(skill.id),
+          backgroundColor: theme.colorScheme.surfaceContainerHighest,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: theme.colorScheme.outline.withValues(alpha: 0.2),
+            ),
+          ),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ),
     );

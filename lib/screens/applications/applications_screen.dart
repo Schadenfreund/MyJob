@@ -10,8 +10,7 @@ import '../../widgets/collapsible_card.dart';
 import '../../utils/ui_utils.dart';
 import '../../utils/dialog_utils.dart';
 import '../../utils/app_date_utils.dart';
-import '../../services/cv_template_pdf_service.dart';
-import '../../services/cover_letter_template_pdf_service.dart';
+import '../../services/pdf_service.dart';
 import 'application_editor_dialog.dart';
 
 /// Applications screen - Organized with CollapsibleCard sections by status
@@ -131,12 +130,10 @@ class ApplicationsScreen extends StatelessWidget {
                     : Column(
                         children: activeApps
                             .map((app) => Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.only(bottom: 12),
                                   child: _ApplicationCard(
                                     application: app,
-                                    onEdit: () =>
-                                        _showEditDialog(context, app),
+                                    onEdit: () => _showEditDialog(context, app),
                                     onDelete: () =>
                                         _deleteApplication(context, app.id),
                                   ),
@@ -193,12 +190,10 @@ class ApplicationsScreen extends StatelessWidget {
                     : Column(
                         children: successfulApps
                             .map((app) => Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.only(bottom: 12),
                                   child: _ApplicationCard(
                                     application: app,
-                                    onEdit: () =>
-                                        _showEditDialog(context, app),
+                                    onEdit: () => _showEditDialog(context, app),
                                     onDelete: () =>
                                         _deleteApplication(context, app.id),
                                   ),
@@ -255,12 +250,10 @@ class ApplicationsScreen extends StatelessWidget {
                     : Column(
                         children: closedApps
                             .map((app) => Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.only(bottom: 12),
                                   child: _ApplicationCard(
                                     application: app,
-                                    onEdit: () =>
-                                        _showEditDialog(context, app),
+                                    onEdit: () => _showEditDialog(context, app),
                                     onDelete: () =>
                                         _deleteApplication(context, app.id),
                                   ),
@@ -294,7 +287,8 @@ class ApplicationsScreen extends StatelessWidget {
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
       title: 'Delete Application',
-      message: 'Are you sure you want to delete this application?\n\nThis action cannot be undone.',
+      message:
+          'Are you sure you want to delete this application?\n\nThis action cannot be undone.',
     );
 
     if (confirmed && context.mounted) {
@@ -465,7 +459,8 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                   ),
                   const Spacer(),
                   OutlinedButton.icon(
-                    onPressed: () => _regeneratePdfs(context, widget.application, templatesProvider),
+                    onPressed: () => _regeneratePdfs(
+                        context, widget.application, templatesProvider),
                     icon: const Icon(Icons.refresh, size: 16),
                     label: const Text('Regenerate PDFs'),
                   ),
@@ -514,18 +509,18 @@ class _ApplicationCardState extends State<_ApplicationCard> {
       // Generate CV PDF if instance exists
       if (application.cvInstanceId != null) {
         try {
-          final cvInstance = templatesProvider.getCvInstanceById(application.cvInstanceId!);
+          final cvInstance =
+              templatesProvider.getCvInstanceById(application.cvInstanceId!);
           if (cvInstance != null) {
-            final cvService = CvTemplatePdfService();
             final cvData = cvInstance.toCvData();
-            final fileName = '${application.company}_${application.position}_CV.pdf'
-                .replaceAll(' ', '_')
-                .replaceAll(RegExp(r'[^\w\-\.]'), '');
+            final fileName =
+                '${application.company}_${application.position}_CV.pdf'
+                    .replaceAll(' ', '_')
+                    .replaceAll(RegExp(r'[^\w\-\.]'), '');
 
-            await cvService.generatePdfFromCvData(
+            await PdfService.instance.generateCvToFile(
               cvData: cvData,
               outputPath: path.join(outputPath, fileName),
-              templateStyle: null, // Use default or stored style
             );
             generatedCount++;
           } else {
@@ -543,17 +538,15 @@ class _ApplicationCardState extends State<_ApplicationCard> {
             application.coverLetterInstanceId!,
           );
           if (clInstance != null) {
-            final clService = CoverLetterTemplatePdfService();
             final coverLetter = clInstance.toCoverLetter();
-            final fileName = '${application.company}_${application.position}_CoverLetter.pdf'
-                .replaceAll(' ', '_')
-                .replaceAll(RegExp(r'[^\w\-\.]'), '');
+            final fileName =
+                '${application.company}_${application.position}_CoverLetter.pdf'
+                    .replaceAll(' ', '_')
+                    .replaceAll(RegExp(r'[^\w\-\.]'), '');
 
-            await clService.generatePdfFromCoverLetter(
+            await PdfService.instance.generateCoverLetterToFile(
               coverLetter: coverLetter,
               outputPath: path.join(outputPath, fileName),
-              contactDetails: null, // Could extract from instance if available
-              templateStyle: null, // Use default or stored style
             );
             generatedCount++;
           } else {
@@ -566,7 +559,8 @@ class _ApplicationCardState extends State<_ApplicationCard> {
 
       if (context.mounted) {
         if (generatedCount > 0) {
-          final message = 'Generated $generatedCount PDF${generatedCount > 1 ? 's' : ''} successfully'
+          final message =
+              'Generated $generatedCount PDF${generatedCount > 1 ? 's' : ''} successfully'
               '${errors.isNotEmpty ? ' (${errors.length} error${errors.length > 1 ? 's' : ''})' : ''}';
           if (errors.isEmpty) {
             context.showSuccessSnackBar(message);

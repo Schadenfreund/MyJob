@@ -77,8 +77,8 @@ class DialogUtils {
             ? Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color:
-                      (iconColor ?? theme.colorScheme.primary).withValues(alpha: 0.1),
+                  color: (iconColor ?? theme.colorScheme.primary)
+                      .withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -416,7 +416,8 @@ extension SnackBarExtension on BuildContext {
             const Icon(Icons.warning_amber, color: Colors.black87, size: 20),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(message, style: const TextStyle(color: Colors.black87)),
+              child:
+                  Text(message, style: const TextStyle(color: Colors.black87)),
             ),
           ],
         ),

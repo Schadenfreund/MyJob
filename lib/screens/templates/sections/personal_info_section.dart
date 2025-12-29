@@ -124,7 +124,9 @@ class PersonalInfoSection extends StatelessWidget {
                   color: theme.colorScheme.primary,
                   child: Center(
                     child: Text(
-                      info.fullName.isNotEmpty ? info.fullName[0].toUpperCase() : '?',
+                      info.fullName.isNotEmpty
+                          ? info.fullName[0].toUpperCase()
+                          : '?',
                       style: const TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -176,9 +178,11 @@ class PersonalInfoSection extends StatelessWidget {
               ],
               if (info.website != null && info.website!.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                _buildInfoRow(context, Icons.language, 'Website', info.website!),
+                _buildInfoRow(
+                    context, Icons.language, 'Website', info.website!),
               ],
-              if (info.profileSummary != null && info.profileSummary!.isNotEmpty) ...[
+              if (info.profileSummary != null &&
+                  info.profileSummary!.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -288,7 +292,8 @@ class _PersonalInfoEditDialog extends StatefulWidget {
   final Future<void> Function(PersonalInfo) onSave;
 
   @override
-  State<_PersonalInfoEditDialog> createState() => _PersonalInfoEditDialogState();
+  State<_PersonalInfoEditDialog> createState() =>
+      _PersonalInfoEditDialogState();
 }
 
 class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
@@ -317,7 +322,8 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
     _countryController = TextEditingController(text: info?.country ?? '');
     _linkedinController = TextEditingController(text: info?.linkedin ?? '');
     _websiteController = TextEditingController(text: info?.website ?? '');
-    _summaryController = TextEditingController(text: info?.profileSummary ?? '');
+    _summaryController =
+        TextEditingController(text: info?.profileSummary ?? '');
     _profilePicturePath = info?.profilePicturePath;
   }
 
@@ -342,7 +348,9 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
 
     return AlertDialog(
       title: Text(
-        widget.existingInfo == null ? 'Add Personal Info' : 'Edit Personal Info',
+        widget.existingInfo == null
+            ? 'Add Personal Info'
+            : 'Edit Personal Info',
       ),
       content: SizedBox(
         width: 550,

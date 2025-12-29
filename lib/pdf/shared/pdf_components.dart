@@ -23,6 +23,22 @@ class PdfComponents {
   PdfComponents._();
 
   // ============================================================================
+  // FONT UTILITIES
+  // ============================================================================
+
+  /// Get font fallback list for Unicode support in PDF documents
+  ///
+  /// Used by cover letter templates to ensure proper font fallback for special
+  /// characters. Returns a list of fonts that can be used as fallbacks.
+  static List<pw.Font> getFontFallback({
+    required pw.Font regularFont,
+    required pw.Font boldFont,
+    required pw.Font mediumFont,
+  }) {
+    return [regularFont, boldFont, mediumFont];
+  }
+
+  // ============================================================================
   // SKILL PARSING UTILITIES
   // ============================================================================
 
@@ -281,7 +297,8 @@ class PdfComponents {
     final parsed = parseSkillString(skillString);
 
     return pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: PdfConstants.skillBarSpacing + 2),
+      margin:
+          const pw.EdgeInsets.only(bottom: PdfConstants.skillBarSpacing + 2),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
@@ -303,7 +320,8 @@ class PdfComponents {
                   parsed.level,
                   style: pw.TextStyle(
                     fontSize: PdfConstants.fontSizeTiny,
-                    color: PdfConstants.withOpacity(textColor ?? PdfConstants.textMuted, 0.7),
+                    color: PdfConstants.withOpacity(
+                        textColor ?? PdfConstants.textMuted, 0.7),
                   ),
                 ),
             ],
@@ -317,7 +335,8 @@ class PdfComponents {
                 height: PdfConstants.skillBarHeight,
                 decoration: pw.BoxDecoration(
                   color: bgColor ?? PdfConstants.bgMediumGray,
-                  borderRadius: pw.BorderRadius.circular(PdfConstants.skillBarRadius),
+                  borderRadius:
+                      pw.BorderRadius.circular(PdfConstants.skillBarRadius),
                 ),
               ),
               // Filled bar
@@ -326,7 +345,8 @@ class PdfComponents {
                 height: PdfConstants.skillBarHeight,
                 decoration: pw.BoxDecoration(
                   color: accentColor,
-                  borderRadius: pw.BorderRadius.circular(PdfConstants.skillBarRadius),
+                  borderRadius:
+                      pw.BorderRadius.circular(PdfConstants.skillBarRadius),
                 ),
               ),
             ],
@@ -475,7 +495,8 @@ class PdfComponents {
               ),
               pw.SizedBox(width: 6),
               pw.Container(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                padding:
+                    const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: pw.BoxDecoration(
                   color: accentColor,
                   borderRadius: pw.BorderRadius.circular(4),
@@ -520,7 +541,9 @@ class PdfComponents {
         pw.Text(
           name,
           style: pw.TextStyle(
-            fontSize: largeHeader ? PdfConstants.fontSizeName : PdfConstants.fontSizeH2,
+            fontSize: largeHeader
+                ? PdfConstants.fontSizeName
+                : PdfConstants.fontSizeH2,
             fontWeight: pw.FontWeight.bold,
             color: primaryColor,
             letterSpacing: PdfConstants.letterSpacingTight,
@@ -761,7 +784,7 @@ class PdfComponents {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text(
-            PdfConstants.bulletCharacter + ' ',
+            '${PdfConstants.bulletCharacter} ',
             style: pw.TextStyle(
               fontSize: PdfConstants.fontSizeBody,
               color: PdfConstants.textBody,
@@ -874,7 +897,8 @@ class PdfComponents {
                 height: PdfConstants.skillBarHeight,
                 decoration: pw.BoxDecoration(
                   color: PdfConstants.bgMediumGray,
-                  borderRadius: pw.BorderRadius.circular(PdfConstants.skillBarRadius),
+                  borderRadius:
+                      pw.BorderRadius.circular(PdfConstants.skillBarRadius),
                 ),
               ),
               // Filled bar
@@ -883,7 +907,8 @@ class PdfComponents {
                 height: PdfConstants.skillBarHeight,
                 decoration: pw.BoxDecoration(
                   color: accentColor,
-                  borderRadius: pw.BorderRadius.circular(PdfConstants.skillBarRadius),
+                  borderRadius:
+                      pw.BorderRadius.circular(PdfConstants.skillBarRadius),
                 ),
               ),
             ],
@@ -963,8 +988,18 @@ class PdfComponents {
   /// Cover letter date formatting
   static String formatLetterDate(DateTime date) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -975,9 +1010,8 @@ class PdfComponents {
     String? recipientTitle,
     String? companyName,
   }) {
-    final hasAnyInfo = recipientName != null ||
-                       recipientTitle != null ||
-                       companyName != null;
+    final hasAnyInfo =
+        recipientName != null || recipientTitle != null || companyName != null;
 
     if (!hasAnyInfo) return pw.SizedBox();
 
@@ -1061,7 +1095,8 @@ class PdfComponents {
       children: [
         line,
         pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(horizontal: PdfConstants.spaceMd),
+          padding:
+              const pw.EdgeInsets.symmetric(horizontal: PdfConstants.spaceMd),
           child: pw.Text(
             centerText,
             style: pw.TextStyle(
@@ -1102,7 +1137,8 @@ class PdfComponents {
     return pw.Text(
       items.join(separator),
       style: pw.TextStyle(
-        fontSize: compact ? PdfConstants.fontSizeTiny : PdfConstants.fontSizeSmall,
+        fontSize:
+            compact ? PdfConstants.fontSizeTiny : PdfConstants.fontSizeSmall,
         color: PdfConstants.textMuted,
       ),
       textAlign: pw.TextAlign.center,

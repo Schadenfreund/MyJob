@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/cv_data.dart';
 import '../models/cv_template.dart';
 import '../models/cover_letter_template.dart';
-import '../models/user_data/personal_info.dart';
 import '../models/user_data/skill.dart';
 import '../models/user_data/interest.dart';
 import '../models/user_data/language.dart';
@@ -83,12 +82,14 @@ class ProfileAutofillService {
     if (info == null) return template;
 
     return template.copyWith(
-      senderName: info.fullName.isNotEmpty ? info.fullName : template.senderName,
+      senderName:
+          info.fullName.isNotEmpty ? info.fullName : template.senderName,
     );
   }
 
   /// Show confirmation dialog before auto-filling
-  Future<bool> showAutofillDialog(BuildContext context, {
+  Future<bool> showAutofillDialog(
+    BuildContext context, {
     required String title,
     required List<String> fieldsToFill,
   }) async {
@@ -208,8 +209,8 @@ class ProfileAutofillService {
       'email': info?.email != null && info!.email!.isNotEmpty,
       'phone': info?.phone != null && info!.phone!.isNotEmpty,
       'address': info?.address != null && info!.address!.isNotEmpty,
-      'profileSummary': info?.profileSummary != null &&
-          info!.profileSummary!.isNotEmpty,
+      'profileSummary':
+          info?.profileSummary != null && info!.profileSummary!.isNotEmpty,
       'skills': userDataProvider.skills.isNotEmpty,
       'interests': userDataProvider.interests.isNotEmpty,
       'languages': userDataProvider.languages.isNotEmpty,

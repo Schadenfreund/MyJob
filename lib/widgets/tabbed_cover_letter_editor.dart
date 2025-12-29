@@ -54,11 +54,9 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
     _recipientTitleController = TextEditingController();
     _companyNameController = TextEditingController();
     _jobTitleController = TextEditingController();
-    _greetingController =
-        TextEditingController(text: widget.template.greeting);
+    _greetingController = TextEditingController(text: widget.template.greeting);
     _bodyController = TextEditingController(text: widget.template.body);
-    _closingController =
-        TextEditingController(text: widget.template.closing);
+    _closingController = TextEditingController(text: widget.template.closing);
 
     // Add listeners (recipient fields are read-only in template mode)
     _senderNameController.addListener(_updateTemplate);
@@ -314,8 +312,8 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
           Text(
             'Letter Content',
             style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -401,10 +399,10 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
               Text(
                 '${_bodyController.text.length} characters • ${_bodyController.text.trim().split(RegExp(r'\s+')).where((word) => word.isNotEmpty).length} words',
                 style: theme.textTheme.bodySmall?.copyWith(
-                      fontSize: 12,
-                      color: theme.textTheme.bodySmall?.color
-                          ?.withValues(alpha: 0.6),
-                    ),
+                  fontSize: 12,
+                  color:
+                      theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                ),
               ),
             ],
           ),

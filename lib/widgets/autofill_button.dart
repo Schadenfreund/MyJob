@@ -178,77 +178,77 @@ class AutofillSection extends StatelessWidget {
       decoration: UIUtils.getInfoCard(context),
       padding: const EdgeInsets.all(UIUtils.cardPadding),
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                Icon(
-                  Icons.auto_fix_high,
-                  color: theme.colorScheme.primary,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Icon(
+                Icons.auto_fix_high,
+                color: theme.colorScheme.primary,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (description != null) ...[
+                      const SizedBox(height: 4),
                       Text(
-                        title,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
+                        description!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.textTheme.bodySmall?.color
+                              ?.withValues(alpha: 0.7),
                         ),
                       ),
-                      if (description != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          description!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.textTheme.bodySmall?.color
-                                ?.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
                     ],
-                  ),
+                  ],
                 ),
-              ],
-            ),
-
-            SizedBox(height: UIUtils.cardInternalGap),
-
-            // Available data indicators
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (availability['name'] == true)
-                  _buildAvailabilityChip(context, 'Name', true),
-                if (availability['email'] == true)
-                  _buildAvailabilityChip(context, 'Email', true),
-                if (availability['phone'] == true)
-                  _buildAvailabilityChip(context, 'Phone', true),
-                if (availability['skills'] == true)
-                  _buildAvailabilityChip(context, 'Skills', true),
-                if (availability['interests'] == true)
-                  _buildAvailabilityChip(context, 'Interests', true),
-                if (availability['languages'] == true)
-                  _buildAvailabilityChip(context, 'Languages', true),
-              ],
-            ),
-
-            SizedBox(height: UIUtils.cardInternalGap),
-
-            // Auto-fill button
-            SizedBox(
-              width: double.infinity,
-              child: AutofillButton(
-                onAutofill: onAutofill,
-                fieldsToFill: fieldsToFill,
-                variant: AutofillButtonVariant.elevated,
               ),
+            ],
+          ),
+
+          SizedBox(height: UIUtils.cardInternalGap),
+
+          // Available data indicators
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (availability['name'] == true)
+                _buildAvailabilityChip(context, 'Name', true),
+              if (availability['email'] == true)
+                _buildAvailabilityChip(context, 'Email', true),
+              if (availability['phone'] == true)
+                _buildAvailabilityChip(context, 'Phone', true),
+              if (availability['skills'] == true)
+                _buildAvailabilityChip(context, 'Skills', true),
+              if (availability['interests'] == true)
+                _buildAvailabilityChip(context, 'Interests', true),
+              if (availability['languages'] == true)
+                _buildAvailabilityChip(context, 'Languages', true),
+            ],
+          ),
+
+          SizedBox(height: UIUtils.cardInternalGap),
+
+          // Auto-fill button
+          SizedBox(
+            width: double.infinity,
+            child: AutofillButton(
+              onAutofill: onAutofill,
+              fieldsToFill: fieldsToFill,
+              variant: AutofillButtonVariant.elevated,
             ),
-          ],
+          ),
+        ],
       ),
     );
   }

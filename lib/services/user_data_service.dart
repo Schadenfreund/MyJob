@@ -69,8 +69,8 @@ class UserDataService {
             .map((e) => Interest.fromJson(e as Map<String, dynamic>))
             .toList();
       }
-    } catch (e) {
-      print('Error loading user data: $e');
+    } catch (_) {
+      // Silently fail - default empty data will be used
     }
   }
 
@@ -87,8 +87,8 @@ class UserDataService {
 
       final file = await _getUserDataFile();
       await file.writeAsString(jsonEncode(json));
-    } catch (e) {
-      print('Error saving user data: $e');
+    } catch (_) {
+      // Silently fail - save will be retried on next update
     }
   }
 

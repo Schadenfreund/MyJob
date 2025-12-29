@@ -139,7 +139,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
       children: [
         if (widget.label != null)
           Padding(
-            padding: const EdgeInsets.only(bottom: 12), // Increased from 8 to 12
+            padding:
+                const EdgeInsets.only(bottom: 12), // Increased from 8 to 12
             child: Row(
               children: [
                 Text(

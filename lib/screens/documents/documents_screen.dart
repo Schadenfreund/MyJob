@@ -33,7 +33,8 @@ class DocumentsScreen extends StatelessWidget {
             UIUtils.buildSectionHeader(
               context,
               title: 'Documents',
-              subtitle: 'Manage CV and Cover Letter templates • Import data in Profile',
+              subtitle:
+                  'Manage CV and Cover Letter templates • Import data in Profile',
               icon: Icons.description,
             ),
             SizedBox(height: UIUtils.spacingXl),
@@ -42,7 +43,8 @@ class DocumentsScreen extends StatelessWidget {
             CollapsibleCard(
               cardDecoration: UIUtils.getCardDecoration(context),
               title: 'CV Templates',
-              subtitle: '${templatesProvider.cvTemplates.length} template${templatesProvider.cvTemplates.length == 1 ? '' : 's'}',
+              subtitle:
+                  '${templatesProvider.cvTemplates.length} template${templatesProvider.cvTemplates.length == 1 ? '' : 's'}',
               status: templatesProvider.cvTemplates.isNotEmpty
                   ? CollapsibleCardStatus.configured
                   : CollapsibleCardStatus.unconfigured,
@@ -61,8 +63,8 @@ class DocumentsScreen extends StatelessWidget {
                           ? 'No CV templates yet. Import or create one to get started.'
                           : '${templatesProvider.cvTemplates.length} ${templatesProvider.cvTemplates.length == 1 ? 'template' : 'templates'} ready to use',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color:
-                            theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                        color: theme.textTheme.bodySmall?.color
+                            ?.withValues(alpha: 0.7),
                       ),
                     ),
                   ),
@@ -88,7 +90,8 @@ class DocumentsScreen extends StatelessWidget {
                           language: 'English',
                           lastModified: template.lastModified ?? DateTime.now(),
                           type: DocumentType.cv,
-                          onGeneratePdf: () => _generateCvPdf(context, template),
+                          onGeneratePdf: () =>
+                              _generateCvPdf(context, template),
                           onEdit: () => _editCvTemplate(context, template),
                           onDuplicate: () =>
                               _duplicateCvTemplate(context, template),
@@ -136,8 +139,8 @@ class DocumentsScreen extends StatelessWidget {
                           ? 'No cover letter templates yet. Import or create one to get started.'
                           : '${templatesProvider.coverLetterTemplates.length} ${templatesProvider.coverLetterTemplates.length == 1 ? 'template' : 'templates'} ready to use',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color:
-                            theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                        color: theme.textTheme.bodySmall?.color
+                            ?.withValues(alpha: 0.7),
                       ),
                     ),
                   ),
@@ -263,7 +266,8 @@ class DocumentsScreen extends StatelessWidget {
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
       title: 'Delete CV Template',
-      message: 'Are you sure you want to delete "${template.name}"?\n\nThis action cannot be undone.',
+      message:
+          'Are you sure you want to delete "${template.name}"?\n\nThis action cannot be undone.',
     );
 
     if (confirmed && context.mounted) {
@@ -355,7 +359,8 @@ class DocumentsScreen extends StatelessWidget {
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
       title: 'Delete Cover Letter Template',
-      message: 'Are you sure you want to delete "${template.name}"?\n\nThis action cannot be undone.',
+      message:
+          'Are you sure you want to delete "${template.name}"?\n\nThis action cannot be undone.',
     );
 
     if (confirmed && context.mounted) {

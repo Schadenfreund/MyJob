@@ -37,7 +37,8 @@ class PdfFontService {
     return available.toList();
   }
 
-  static Future<PdfFonts> getFonts([PdfFontFamily family = PdfFontFamily.roboto]) async {
+  static Future<PdfFonts> getFonts(
+      [PdfFontFamily family = PdfFontFamily.roboto]) async {
     final regular = await _load(family, _Weight.regular);
     final bold = await _load(family, _Weight.bold);
     final italic = await _load(family, _Weight.italic);
@@ -81,11 +82,13 @@ class PdfFontService {
     }
 
     // If no font found, throw descriptive error
-    throw Exception('Could not load font: $family $weight. Tried: $possiblePaths');
+    throw Exception(
+        'Could not load font: $family $weight. Tried: $possiblePaths');
   }
 
   /// Get all possible paths where this font might be located
-  static List<String> _getAllPossiblePaths(PdfFontFamily family, _Weight weight) {
+  static List<String> _getAllPossiblePaths(
+      PdfFontFamily family, _Weight weight) {
     final paths = <String>[];
 
     // Different possible family names
@@ -106,7 +109,8 @@ class PdfFontService {
         // With underscore (e.g., Open_Sans)
         final familyUnderscore = familyName.replaceAll(' ', '_');
         paths.add('assets/fonts/$familyUnderscore/$familyName-$weightName.ttf');
-        paths.add('assets/fonts/$familyUnderscore/$familyUnderscore-$weightName.ttf');
+        paths.add(
+            'assets/fonts/$familyUnderscore/$familyUnderscore-$weightName.ttf');
       }
     }
 

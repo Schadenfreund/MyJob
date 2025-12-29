@@ -101,7 +101,8 @@ class UnifiedYamlImportService {
       for (final langData in langList) {
         languages.add(Language(
           name: langData['name'] as String,
-          proficiency: _parseLanguageProficiency(langData['proficiency'] as String?),
+          proficiency:
+              _parseLanguageProficiency(langData['proficiency'] as String?),
         ));
       }
     }
@@ -158,11 +159,13 @@ class UnifiedYamlImportService {
     final version = yamlData['version'] as String? ?? 'current';
 
     // Determine which template to use
-    final templateKey = version == 'past_tense' ? 'template_past_tense' : 'template';
+    final templateKey =
+        version == 'past_tense' ? 'template_past_tense' : 'template';
     final template = yamlData[templateKey] as YamlMap?;
 
     if (template == null) {
-      return UnifiedImportResult.error('Template section not found in YAML file');
+      return UnifiedImportResult.error(
+          'Template section not found in YAML file');
     }
 
     final greeting = template['greeting'] as String? ?? '';
@@ -405,21 +408,24 @@ class UnifiedImportResult {
         items.add(ImportSummaryItem(
           icon: 'language',
           label: 'Languages',
-          detail: '${languages.length} language${languages.length == 1 ? '' : 's'}',
+          detail:
+              '${languages.length} language${languages.length == 1 ? '' : 's'}',
         ));
       }
       if (interests.isNotEmpty) {
         items.add(ImportSummaryItem(
           icon: 'interests',
           label: 'Interests',
-          detail: '${interests.length} interest${interests.length == 1 ? '' : 's'}',
+          detail:
+              '${interests.length} interest${interests.length == 1 ? '' : 's'}',
         ));
       }
       if (workExperiences.isNotEmpty) {
         items.add(ImportSummaryItem(
           icon: 'work',
           label: 'Work Experience',
-          detail: '${workExperiences.length} position${workExperiences.length == 1 ? '' : 's'}',
+          detail:
+              '${workExperiences.length} position${workExperiences.length == 1 ? '' : 's'}',
         ));
       }
     } else if (isCoverLetter) {

@@ -18,7 +18,8 @@ class ElectricCoverLetterTemplate {
 
   // Professional Electric color palette (matching CV template)
   static const PdfColor _electricYellow = PdfColor.fromInt(0xFFFFFF00);
-  static const PdfColor _electricYellowFaded = PdfColor.fromInt(0x26FFFF00); // 15% opacity
+  static const PdfColor _electricYellowFaded =
+      PdfColor.fromInt(0x26FFFF00); // 15% opacity
   static const PdfColor _black = PdfColors.black;
   static const PdfColor _mediumGray = PdfColor.fromInt(0xFF2D2D2D);
   static const PdfColor _lightGray = PdfColor.fromInt(0xFF666666);
@@ -58,7 +59,8 @@ class ElectricCoverLetterTemplate {
             // Main letter content
             pw.Expanded(
               child: pw.Container(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 48, vertical: 32),
+                padding:
+                    const pw.EdgeInsets.symmetric(horizontal: 48, vertical: 32),
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
@@ -182,7 +184,8 @@ class ElectricCoverLetterTemplate {
                       pw.SizedBox(width: 24),
                     ],
                     if (contactDetails?.address != null) ...[
-                      _buildContactIcon(_iconLocation, contactDetails!.address!.split(',').first),
+                      _buildContactIcon(_iconLocation,
+                          contactDetails!.address!.split(',').first),
                     ],
                   ],
                 ),
@@ -300,20 +303,24 @@ class ElectricCoverLetterTemplate {
 
   /// Build letter body with paragraph styling and bullet points
   static pw.Widget _buildLetterBody(String body) {
-    final paragraphs = body.split('\n\n').where((p) => p.trim().isNotEmpty).toList();
+    final paragraphs =
+        body.split('\n\n').where((p) => p.trim().isNotEmpty).toList();
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: paragraphs.map((paragraph) {
         // Check if paragraph is a bullet point list (ASCII-safe)
-        if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
-          final bullets = paragraph.split('\n').where((l) => l.trim().isNotEmpty).toList();
+        if (paragraph.trim().startsWith('-') ||
+            paragraph.trim().startsWith('*')) {
+          final bullets =
+              paragraph.split('\n').where((l) => l.trim().isNotEmpty).toList();
           return pw.Container(
             margin: const pw.EdgeInsets.only(bottom: 12),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: bullets.map((bullet) {
-                final cleanBullet = bullet.trim().replaceFirst(RegExp(r'^[\-\*]\s*'), '');
+                final cleanBullet =
+                    bullet.trim().replaceFirst(RegExp(r'^[\-\*]\s*'), '');
                 return pw.Padding(
                   padding: const pw.EdgeInsets.only(bottom: 6, left: 0),
                   child: pw.Row(
@@ -390,8 +397,18 @@ class ElectricCoverLetterTemplate {
   /// Format date in professional style
   static String _formatDate(DateTime date) {
     final months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
 
     return '${months[date.month - 1]} ${date.day}, ${date.year}';

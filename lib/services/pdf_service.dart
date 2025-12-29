@@ -1,74 +1,196 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' show Color;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../models/cv_data.dart';
 import '../models/cover_letter.dart';
 import '../models/template_style.dart';
-import '../pdf/cv_templates/professional_cv_template.dart';
-import '../pdf/cv_templates/modern_cv_template.dart';
-import '../pdf/cover_letter_templates/professional_cover_letter_template.dart';
-import '../pdf/cover_letter_templates/modern_cover_letter_template.dart';
+import '../models/template_customization.dart';
+import '../models/user_data/personal_info.dart';
+import '../models/user_data/skill.dart';
+import '../models/user_data/work_experience.dart';
+import '../models/user_data/language.dart';
+import '../models/user_data/interest.dart';
+import '../pdf/cv_templates/electric_cv_template.dart';
+import '../pdf/cover_letter_templates/electric_cover_letter_template.dart';
+import 'pdf_font_service.dart';
 
-/// Service for generating PDF documents
+/// Unified PDF Service for all document generation operations
+///
+/// This centralized service handles:
+/// - CV PDF generation (from CvData or user profile data)
+/// - Cover Letter PDF generation
+/// - PDF utilities (save, print, share)
+///
+/// All PDF generation uses the Electric template system for a consistent,
+/// professional look across all documents.
+///
+/// Usage:
+/// ```dart
+/// final service = PdfService.instance;
+///
+/// // Generate CV PDF
+/// final cvBytes = await service.generateCvPdf(cvData, style);
+///
+/// // Save to file
+/// await service.savePdfToFile(cvBytes, '/path/to/cv.pdf');
+///
+/// // Or generate and save in one step
+/// final file = await service.generateCvToFile(
+///   cvData: cvData,
+///   outputPath: '/path/to/cv.pdf',
+///   style: style,
+/// );
+/// ```
 class PdfService {
   PdfService._();
   static final PdfService instance = PdfService._();
 
-  /// Generate CV PDF bytes
-  Future<Uint8List> generateCvPdf(CvData cv, TemplateStyle style) async {
-    final pdf = pw.Document();
+  // ============================================================================
+  // CV PDF GENERATION
+  // ============================================================================
 
-    switch (style.type) {
-      case TemplateType.professional:
-        ProfessionalCvTemplate.build(pdf, cv, style);
-      case TemplateType.modern:
-        ModernCvTemplate.build(pdf, cv, style);
-      case TemplateType.creative:
-        // Creative uses modern template with different styling
-        ModernCvTemplate.build(pdf, cv, style);
-    }
+  /// Generate CV PDF bytes using the Electric template
+  Future<Uint8List> generateCvPdf(
+    CvData cv,
+    TemplateStyle style, {
+    TemplateCustomization? customization,
+    Uint8List? profileImageBytes,
+  }) async {
+    final pdf = pw.Document();
+    final fonts = await PdfFontService.getFonts(style.fontFamily);
+
+    ElectricCvTemplate.build(
+      pdf,
+      cv,
+      style,
+      regularFont: fonts.regular,
+      boldFont: fonts.bold,
+      mediumFont: fonts.medium,
+      profileImageBytes: profileImageBytes,
+      customization: customization,
+    );
 
     return pdf.save();
   }
 
-  /// Generate Cover Letter PDF bytes
+  /// Generate CV PDF and save to file
+  ///
+  /// Convenience method that combines generation and file saving.
+  /// Automatically loads profile picture if path is provided in cvData.
+  Future<File> generateCvToFile({
+    required CvData cvData,
+    required String outputPath,
+    TemplateStyle? templateStyle,
+    TemplateCustomization? customization,
+    bool includeProfilePicture = true,
+  }) async {
+    final style = templateStyle ?? TemplateStyle.electric;
+
+    // Load profile picture if path is provided
+    Uint8List? profileImageBytes;
+    if (includeProfilePicture) {
+      profileImageBytes = await _loadImage(
+        cvData.contactDetails?.profilePicturePath,
+      );
+    }
+
+    final bytes = await generateCvPdf(
+      cvData,
+      style,
+      customization: customization,
+      profileImageBytes: profileImageBytes,
+    );
+
+    return savePdfToFile(bytes, outputPath);
+  }
+
+  /// Generate CV PDF from user profile data
+  ///
+  /// Converts user profile data (PersonalInfo, Skills, etc.) to CvData format
+  /// and generates a professional PDF.
+  Future<File> generateCvFromUserData({
+    required PersonalInfo personalInfo,
+    required List<Skill> skills,
+    required List<WorkExperience> workExperiences,
+    required List<Language> languages,
+    required List<Interest> interests,
+    required String outputPath,
+    Color? accentColor,
+  }) async {
+    // Convert user data to CvData format
+    final cvData = _convertUserDataToCvData(
+      personalInfo: personalInfo,
+      skills: skills,
+      workExperiences: workExperiences,
+      languages: languages,
+      interests: interests,
+    );
+
+    // Create template style with the accent color
+    final style = TemplateStyle(
+      type: TemplateType.electric,
+      accentColor: accentColor ?? const Color(0xFFFFFF00),
+    );
+
+    return generateCvToFile(
+      cvData: cvData,
+      outputPath: outputPath,
+      templateStyle: style,
+    );
+  }
+
+  // ============================================================================
+  // COVER LETTER PDF GENERATION
+  // ============================================================================
+
+  /// Generate Cover Letter PDF bytes using the Electric template
   Future<Uint8List> generateCoverLetterPdf(
     CoverLetter letter,
     TemplateStyle style, {
-    String? senderAddress,
-    String? senderPhone,
-    String? senderEmail,
+    ContactDetails? contactDetails,
   }) async {
     final pdf = pw.Document();
+    final fonts = await PdfFontService.getFonts(style.fontFamily);
 
-    switch (style.type) {
-      case TemplateType.professional:
-        ProfessionalCoverLetterTemplate.build(
-          pdf,
-          letter,
-          style,
-          senderAddress: senderAddress,
-          senderPhone: senderPhone,
-          senderEmail: senderEmail,
-        );
-      case TemplateType.modern:
-      case TemplateType.creative:
-        ModernCoverLetterTemplate.build(
-          pdf,
-          letter,
-          style,
-          senderAddress: senderAddress,
-          senderPhone: senderPhone,
-          senderEmail: senderEmail,
-        );
-    }
+    ElectricCoverLetterTemplate.build(
+      pdf,
+      letter,
+      style,
+      contactDetails,
+      regularFont: fonts.regular,
+      boldFont: fonts.bold,
+      mediumFont: fonts.medium,
+    );
 
     return pdf.save();
   }
 
-  /// Save PDF to file
+  /// Generate Cover Letter PDF and save to file
+  Future<File> generateCoverLetterToFile({
+    required CoverLetter coverLetter,
+    required String outputPath,
+    TemplateStyle? templateStyle,
+    ContactDetails? contactDetails,
+  }) async {
+    final style = templateStyle ?? TemplateStyle.electric;
+
+    final bytes = await generateCoverLetterPdf(
+      coverLetter,
+      style,
+      contactDetails: contactDetails,
+    );
+
+    return savePdfToFile(bytes, outputPath);
+  }
+
+  // ============================================================================
+  // PDF UTILITIES
+  // ============================================================================
+
+  /// Save PDF bytes to file
   Future<File> savePdfToFile(Uint8List bytes, String filePath) async {
     final file = File(filePath);
     await file.writeAsBytes(bytes);
@@ -100,4 +222,87 @@ class PdfService {
 
   /// Get PDF page format
   PdfPageFormat get pageFormat => PdfPageFormat.a4;
+
+  // ============================================================================
+  // PRIVATE HELPERS
+  // ============================================================================
+
+  /// Load image bytes from file path
+  Future<Uint8List?> _loadImage(String? imagePath) async {
+    if (imagePath == null || imagePath.isEmpty) return null;
+    try {
+      final file = File(imagePath);
+      if (await file.exists()) {
+        return await file.readAsBytes();
+      }
+    } catch (_) {
+      // Ignore file read errors - return null for no image
+    }
+    return null;
+  }
+
+  /// Convert user profile data to CvData format
+  CvData _convertUserDataToCvData({
+    required PersonalInfo personalInfo,
+    required List<Skill> skills,
+    required List<WorkExperience> workExperiences,
+    required List<Language> languages,
+    required List<Interest> interests,
+  }) {
+    return CvData(
+      id: 'export-${DateTime.now().millisecondsSinceEpoch}',
+      name: '${personalInfo.fullName} CV',
+      profile: '',
+      skills: skills
+          .map((s) =>
+              s.level != null ? '${s.name} (${s.level!.displayName})' : s.name)
+          .toList(),
+      contactDetails: ContactDetails(
+        fullName: personalInfo.fullName,
+        email: personalInfo.email,
+        phone: personalInfo.phone,
+        address: personalInfo.address,
+        linkedin: personalInfo.linkedin,
+        website: personalInfo.website,
+      ),
+      experiences: workExperiences
+          .map((exp) => Experience(
+                title: exp.position,
+                company: exp.company,
+                startDate: _formatDate(exp.startDate),
+                endDate: exp.endDate != null ? _formatDate(exp.endDate!) : null,
+                description: exp.description,
+                bullets: exp.responsibilities,
+              ))
+          .toList(),
+      education: [],
+      languages: languages
+          .map((lang) => LanguageSkill(
+                language: lang.name,
+                level: lang.proficiency.displayName,
+              ))
+          .toList(),
+      interests: interests.map((i) => i.name).toList(),
+      lastModified: DateTime.now(),
+    );
+  }
+
+  /// Format a single date (MMM yyyy)
+  String _formatDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
+    return '${months[date.month - 1]} ${date.year}';
+  }
 }

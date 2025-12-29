@@ -8,12 +8,15 @@ class CustomizedConstants {
   const CustomizedConstants(this.customization);
 
   // Typography - Auto-scaled
-  double get fontSizeBody => PdfConstants.fontSizeBody * customization.fontSizeScale;
-  double get fontSizeH2 => PdfConstants.fontSizeH2 * customization.fontSizeScale;
+  double get fontSizeBody =>
+      PdfConstants.fontSizeBody * customization.fontSizeScale;
+  double get fontSizeH2 =>
+      PdfConstants.fontSizeH2 * customization.fontSizeScale;
 
   // Spacing - Auto-scaled
   double get spaceMd => PdfConstants.spaceMd * customization.spacingScale;
-  double get sectionSpacing => PdfConstants.sectionSpacing * customization.spacingScale;
+  double get sectionSpacing =>
+      PdfConstants.sectionSpacing * customization.spacingScale;
 
   // Layout
   double get sidebarWidthRatio => customization.sidebarWidthRatio;

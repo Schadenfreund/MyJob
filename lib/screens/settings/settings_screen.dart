@@ -114,7 +114,8 @@ class SettingsScreen extends StatelessWidget {
                           ),
                           SegmentedButton<ThemeMode>(
                             style: SegmentedButton.styleFrom(
-                              selectedBackgroundColor: theme.colorScheme.primary,
+                              selectedBackgroundColor:
+                                  theme.colorScheme.primary,
                               selectedForegroundColor: Colors.white,
                             ),
                             segments: const [
@@ -187,15 +188,15 @@ class SettingsScreen extends StatelessWidget {
                                 color: AppTheme.lightPrimary,
                                 isSelected: settings.accentColor.toARGB32() ==
                                     AppTheme.lightPrimary.toARGB32(),
-                                onTap: () =>
-                                    settings.setAccentColor(AppTheme.lightPrimary),
+                                onTap: () => settings
+                                    .setAccentColor(AppTheme.lightPrimary),
                               ),
                               _ColorButton(
                                 color: AppTheme.lightSuccess,
                                 isSelected: settings.accentColor.toARGB32() ==
                                     AppTheme.lightSuccess.toARGB32(),
-                                onTap: () =>
-                                    settings.setAccentColor(AppTheme.lightSuccess),
+                                onTap: () => settings
+                                    .setAccentColor(AppTheme.lightSuccess),
                               ),
                               _ColorButton(
                                 color: AppTheme.lightInfo,
@@ -208,15 +209,15 @@ class SettingsScreen extends StatelessWidget {
                                 color: AppTheme.lightWarning,
                                 isSelected: settings.accentColor.toARGB32() ==
                                     AppTheme.lightWarning.toARGB32(),
-                                onTap: () =>
-                                    settings.setAccentColor(AppTheme.lightWarning),
+                                onTap: () => settings
+                                    .setAccentColor(AppTheme.lightWarning),
                               ),
                               _ColorButton(
                                 color: AppTheme.lightDanger,
                                 isSelected: settings.accentColor.toARGB32() ==
                                     AppTheme.lightDanger.toARGB32(),
-                                onTap: () =>
-                                    settings.setAccentColor(AppTheme.lightDanger),
+                                onTap: () => settings
+                                    .setAccentColor(AppTheme.lightDanger),
                               ),
                             ],
                           ),
@@ -444,8 +445,8 @@ class _SettingsTile extends StatelessWidget {
               Text(
                 subtitle,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.textTheme.bodySmall?.color
-                      ?.withValues(alpha: 0.7),
+                  color:
+                      theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                 ),
               ),
             ],

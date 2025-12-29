@@ -77,7 +77,8 @@ class ProfileScreen extends StatelessWidget {
               Text(
                 'Master profile data for all CVs and Cover Letters • Import YAML files here',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                  color:
+                      theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -121,7 +122,8 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   'All YAML imports happen here • Auto-detects CV data or Cover Letter templates',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.8),
+                    color: theme.textTheme.bodySmall?.color
+                        ?.withValues(alpha: 0.8),
                   ),
                 ),
               ],
@@ -137,7 +139,8 @@ class ProfileScreen extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: theme.colorScheme.primary,
                   side: BorderSide(color: theme.colorScheme.primary),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
               const SizedBox(width: 12),
@@ -146,7 +149,8 @@ class ProfileScreen extends StatelessWidget {
                 icon: const Icon(Icons.upload_file, size: 18),
                 label: const Text('Import YAML'),
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
             ],
@@ -249,10 +253,14 @@ class _ProfileSections extends StatelessWidget {
             )
           : Wrap(
               spacing: 6,
-              children: interests.take(3).map((i) => Chip(
-                label: Text(i.name, style: const TextStyle(fontSize: 12)),
-                visualDensity: VisualDensity.compact,
-              )).toList(),
+              children: interests
+                  .take(3)
+                  .map((i) => Chip(
+                        label:
+                            Text(i.name, style: const TextStyle(fontSize: 12)),
+                        visualDensity: VisualDensity.compact,
+                      ))
+                  .toList(),
             ),
       expandedContent: interests.isEmpty
           ? UIUtils.buildEmptyState(

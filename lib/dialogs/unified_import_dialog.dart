@@ -6,6 +6,7 @@ import '../services/unified_yaml_import_service.dart';
 import '../providers/user_data_provider.dart';
 import '../providers/templates_provider.dart';
 import '../models/cv_data.dart';
+
 /// Unified YAML import dialog with auto-detection and smart UI
 ///
 /// Features:
@@ -137,7 +138,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                 Text(
                   'Auto-detects CV or Cover Letter format',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                    color: theme.textTheme.bodySmall?.color
+                        ?.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -169,15 +171,14 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             border: Border.all(
-              color: hasFile
-                  ? theme.colorScheme.primary
-                  : theme.dividerColor,
+              color: hasFile ? theme.colorScheme.primary : theme.dividerColor,
               width: hasFile ? 2 : 1,
             ),
             borderRadius: BorderRadius.circular(12),
             color: hasFile
                 ? theme.colorScheme.primary.withValues(alpha: 0.03)
-                : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                : theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.3),
           ),
           child: Row(
             children: [
@@ -204,7 +205,9 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                   children: [
                     Text(
                       hasFile
-                          ? _selectedFile!.path.split(Platform.pathSeparator).last
+                          ? _selectedFile!.path
+                              .split(Platform.pathSeparator)
+                              .last
                           : 'Choose YAML File',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
@@ -216,7 +219,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                           ? _truncatePath(_selectedFile!.path)
                           : 'Supports CV data and Cover Letter templates',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                        color: theme.textTheme.bodySmall?.color
+                            ?.withValues(alpha: 0.7),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -235,7 +239,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                   hasFile ? Icons.check_circle : Icons.chevron_right,
                   color: hasFile
                       ? theme.colorScheme.primary
-                      : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+                      : theme.textTheme.bodySmall?.color
+                          ?.withValues(alpha: 0.5),
                 ),
             ],
           ),
@@ -294,7 +299,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                       ? 'Will update your Profile and optionally create a template'
                       : 'Will create a new Cover Letter template',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                    color: theme.textTheme.bodySmall?.color
+                        ?.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -327,7 +333,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
         Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: items.map((item) => _buildPreviewChip(context, item)).toList(),
+          children:
+              items.map((item) => _buildPreviewChip(context, item)).toList(),
         ),
       ],
     );
@@ -391,7 +398,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                 item.detail,
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontSize: 11,
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                  color:
+                      theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -562,9 +570,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected
-                  ? theme.colorScheme.primary
-                  : theme.dividerColor,
+              color:
+                  isSelected ? theme.colorScheme.primary : theme.dividerColor,
               width: isSelected ? 2 : 1,
             ),
           ),
@@ -593,7 +600,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                       subtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontSize: 11,
-                        color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                        color: theme.textTheme.bodySmall?.color
+                            ?.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -620,7 +628,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
       decoration: BoxDecoration(
         color: theme.colorScheme.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.3)),
+        border:
+            Border.all(color: theme.colorScheme.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -697,9 +706,10 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
             ),
             const SizedBox(width: 12),
             FilledButton.icon(
-              onPressed: (_parseResult != null && _parseResult!.success && !_isLoading)
-                  ? _performImport
-                  : null,
+              onPressed:
+                  (_parseResult != null && _parseResult!.success && !_isLoading)
+                      ? _performImport
+                      : null,
               icon: _isLoading
                   ? SizedBox(
                       width: 16,
@@ -924,12 +934,26 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
   }
 
   String? _buildAddress(String? address, String? city, String? country) {
-    final parts = [address, city, country].where((p) => p != null && p.isNotEmpty);
+    final parts =
+        [address, city, country].where((p) => p != null && p.isNotEmpty);
     return parts.isNotEmpty ? parts.join(', ') : null;
   }
 
   String _formatDate(DateTime date) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${months[date.month - 1]} ${date.year}';
   }
 

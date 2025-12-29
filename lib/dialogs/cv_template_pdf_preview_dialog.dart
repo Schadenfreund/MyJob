@@ -1,10 +1,9 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../models/cv_template.dart';
 import '../models/template_style.dart';
 import '../models/template_customization.dart';
-import '../services/cv_template_pdf_service.dart';
+import '../services/pdf_service.dart';
 import 'base_template_pdf_preview_dialog.dart';
 
 /// Clean, professional PDF preview with sidebar controls for CV templates
@@ -44,40 +43,22 @@ class _CvTemplatePdfPreviewDialogState
 
   @override
   Future<Uint8List> generatePdfBytes() async {
-    final service = CvTemplatePdfService();
     final cvData = widget.cvTemplate.toCvData();
-
-    final tempDir = await Directory.systemTemp.createTemp();
-    final tempFile = File('${tempDir.path}/preview.pdf');
-
-    try {
-      final file = await service.generatePdfFromCvData(
-        cvData: cvData,
-        outputPath: tempFile.path,
-        templateStyle: selectedStyle,
-        customization: _customization,
-        includeProfilePicture: true,
-      );
-
-      return await file.readAsBytes();
-    } finally {
-      if (tempDir.existsSync()) {
-        tempDir.deleteSync(recursive: true);
-      }
-    }
+    return PdfService.instance.generateCvPdf(
+      cvData,
+      selectedStyle,
+      customization: _customization,
+    );
   }
 
   @override
   Future<void> exportPdf(BuildContext context, String outputPath) async {
-    final service = CvTemplatePdfService();
     final cvData = widget.cvTemplate.toCvData();
-
-    await service.generatePdfFromCvData(
+    await PdfService.instance.generateCvToFile(
       cvData: cvData,
       outputPath: outputPath,
       templateStyle: selectedStyle,
       customization: _customization,
-      includeProfilePicture: true,
     );
   }
 
@@ -96,7 +77,8 @@ class _CvTemplatePdfPreviewDialogState
       children: [
         Row(
           children: [
-            Icon(Icons.brightness_6, color: selectedStyle.accentColor, size: 18),
+            Icon(Icons.brightness_6,
+                color: selectedStyle.accentColor, size: 18),
             const SizedBox(width: 8),
             const Text(
               'COLOR MODE',
@@ -129,7 +111,9 @@ class _CvTemplatePdfPreviewDialogState
                 child: Row(
                   children: [
                     Icon(
-                      selectedStyle.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                      selectedStyle.isDarkMode
+                          ? Icons.dark_mode
+                          : Icons.light_mode,
                       color: selectedStyle.accentColor,
                       size: 20,
                     ),
@@ -139,7 +123,9 @@ class _CvTemplatePdfPreviewDialogState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            selectedStyle.isDarkMode ? 'Dark Mode' : 'Light Mode',
+                            selectedStyle.isDarkMode
+                                ? 'Dark Mode'
+                                : 'Light Mode',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 13,
@@ -180,7 +166,8 @@ class _CvTemplatePdfPreviewDialogState
       children: [
         Row(
           children: [
-            Icon(Icons.info_outline, color: selectedStyle.accentColor, size: 18),
+            Icon(Icons.info_outline,
+                color: selectedStyle.accentColor, size: 18),
             const SizedBox(width: 8),
             const Text(
               'TEMPLATE INFO',

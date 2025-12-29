@@ -1,10 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:pdf/pdf.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../providers/user_data_provider.dart';
-import '../../../services/cv_pdf_service.dart';
+import '../../../services/pdf_service.dart';
 import '../../../services/settings_service.dart';
 
 /// Dialog for exporting CV as PDF
@@ -145,20 +144,15 @@ class _CvExportDialogState extends State<CvExportDialog> {
       final userDataProvider = context.read<UserDataProvider>();
       final settings = context.read<SettingsService>();
 
-      // Convert accent color to PDF color
-      final color = settings.accentColor;
-      final accentColor = PdfColor(color.r, color.g, color.b, color.a);
-
-      // Generate PDF
-      final service = CvPdfService();
-      await service.generateCvPdf(
+      // Generate PDF using unified PdfService
+      await PdfService.instance.generateCvFromUserData(
         personalInfo: userDataProvider.personalInfo!,
         skills: userDataProvider.skills,
         workExperiences: userDataProvider.workExperiences,
         languages: userDataProvider.languages,
         interests: userDataProvider.interests,
         outputPath: result,
-        accentColor: accentColor,
+        accentColor: settings.accentColor,
       );
 
       if (mounted) {

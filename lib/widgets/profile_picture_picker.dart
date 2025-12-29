@@ -119,7 +119,8 @@ class ProfilePicturePicker extends StatelessWidget {
     );
   }
 
-  Widget _buildEditButton(BuildContext context, ThemeData theme, bool hasImage) {
+  Widget _buildEditButton(
+      BuildContext context, ThemeData theme, bool hasImage) {
     return Material(
       elevation: 2,
       shape: const CircleBorder(),

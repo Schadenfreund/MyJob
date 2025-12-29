@@ -31,8 +31,8 @@ abstract class BaseTemplatePdfPreviewDialog extends StatefulWidget {
   TemplateStyle getDefaultStyle() => TemplateStyle.electric;
 }
 
-abstract class BaseTemplatePdfPreviewDialogState<T extends BaseTemplatePdfPreviewDialog>
-    extends State<T> {
+abstract class BaseTemplatePdfPreviewDialogState<
+    T extends BaseTemplatePdfPreviewDialog> extends State<T> {
   late TemplateStyle _selectedStyle;
   bool _isGenerating = false;
 
@@ -74,8 +74,10 @@ abstract class BaseTemplatePdfPreviewDialogState<T extends BaseTemplatePdfPrevie
         _availableFonts = fonts;
 
         // Validate selected font is available, switch to first available if not
-        if (_availableFonts.isNotEmpty && !_availableFonts.contains(_selectedStyle.fontFamily)) {
-          _selectedStyle = _selectedStyle.copyWith(fontFamily: _availableFonts.first);
+        if (_availableFonts.isNotEmpty &&
+            !_availableFonts.contains(_selectedStyle.fontFamily)) {
+          _selectedStyle =
+              _selectedStyle.copyWith(fontFamily: _availableFonts.first);
         }
       });
 
@@ -132,7 +134,8 @@ abstract class BaseTemplatePdfPreviewDialogState<T extends BaseTemplatePdfPrevie
 
   void toggleDarkMode() {
     setState(() {
-      _selectedStyle = _selectedStyle.copyWith(isDarkMode: !_selectedStyle.isDarkMode);
+      _selectedStyle =
+          _selectedStyle.copyWith(isDarkMode: !_selectedStyle.isDarkMode);
       _pdfGenerationVersion++;
       _cachedPdf = null;
     });
@@ -152,9 +155,7 @@ abstract class BaseTemplatePdfPreviewDialogState<T extends BaseTemplatePdfPrevie
           _isGenerating = false;
         });
       }
-    } catch (e, stackTrace) {
-      print('ERROR generating PDF: $e');
-      print('Stack trace: $stackTrace');
+    } catch (e, _) {
       if (mounted) {
         setState(() => _isGenerating = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -314,7 +315,8 @@ abstract class BaseTemplatePdfPreviewDialogState<T extends BaseTemplatePdfPrevie
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation(_selectedStyle.accentColor),
+                  valueColor:
+                      AlwaysStoppedAnimation(_selectedStyle.accentColor),
                 ),
               ),
             ),
@@ -366,7 +368,8 @@ abstract class BaseTemplatePdfPreviewDialogState<T extends BaseTemplatePdfPrevie
                 Text(
                   getDocumentName(),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                    color: theme.textTheme.bodySmall?.color
+                        ?.withValues(alpha: 0.7),
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -446,7 +449,8 @@ abstract class BaseTemplatePdfPreviewDialogState<T extends BaseTemplatePdfPrevie
           spacing: 10,
           runSpacing: 10,
           children: _accentColorPresets.map((color) {
-            final isSelected = _selectedStyle.accentColor.toARGB32() == color.toARGB32();
+            final isSelected =
+                _selectedStyle.accentColor.toARGB32() == color.toARGB32();
             return GestureDetector(
               onTap: () => updateAccentColor(color),
               child: AnimatedContainer(
@@ -487,7 +491,8 @@ abstract class BaseTemplatePdfPreviewDialogState<T extends BaseTemplatePdfPrevie
       children: [
         Row(
           children: [
-            Icon(Icons.font_download, color: _selectedStyle.accentColor, size: 18),
+            Icon(Icons.font_download,
+                color: _selectedStyle.accentColor, size: 18),
             const SizedBox(width: 8),
             const Text(
               'FONT FAMILY',
@@ -515,91 +520,94 @@ abstract class BaseTemplatePdfPreviewDialogState<T extends BaseTemplatePdfPrevie
         else
           ..._availableFonts.map((font) {
             final isSelected = _selectedStyle.fontFamily == font;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? _selectedStyle.accentColor.withValues(alpha: 0.1)
-                    : Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                decoration: BoxDecoration(
                   color: isSelected
-                      ? _selectedStyle.accentColor
-                      : Colors.white.withValues(alpha: 0.1),
-                  width: isSelected ? 2 : 1,
-                ),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => updateFontFamily(font),
+                      ? _selectedStyle.accentColor.withValues(alpha: 0.1)
+                      : Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? _selectedStyle.accentColor
-                                : Colors.white.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Center(
-                            child: Text(
-                              font.displayName[0],
-                              style: TextStyle(
-                                color: isSelected ? Colors.black : Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                  border: Border.all(
+                    color: isSelected
+                        ? _selectedStyle.accentColor
+                        : Colors.white.withValues(alpha: 0.1),
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => updateFontFamily(font),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? _selectedStyle.accentColor
+                                  : Colors.white.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Center(
+                              child: Text(
+                                font.displayName[0],
+                                style: TextStyle(
+                                  color:
+                                      isSelected ? Colors.black : Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                font.displayName,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  font.displayName,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.w500,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                font.characteristicsLabel,
-                                style: TextStyle(
-                                  color: isSelected
-                                      ? _selectedStyle.accentColor
-                                      : Colors.white.withValues(alpha: 0.6),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
+                                const SizedBox(height: 2),
+                                Text(
+                                  font.characteristicsLabel,
+                                  style: TextStyle(
+                                    color: isSelected
+                                        ? _selectedStyle.accentColor
+                                        : Colors.white.withValues(alpha: 0.6),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        if (isSelected)
-                          Icon(
-                            Icons.check_circle,
-                            color: _selectedStyle.accentColor,
-                            size: 20,
-                          ),
-                      ],
+                          if (isSelected)
+                            Icon(
+                              Icons.check_circle,
+                              color: _selectedStyle.accentColor,
+                              size: 20,
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
       ],
     );
   }
@@ -632,7 +640,8 @@ abstract class BaseTemplatePdfPreviewDialogState<T extends BaseTemplatePdfPrevie
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: _accentColorPresets.map((color) {
-                  final isSelected = _selectedStyle.accentColor.toARGB32() == color.toARGB32();
+                  final isSelected =
+                      _selectedStyle.accentColor.toARGB32() == color.toARGB32();
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: InkWell(
@@ -693,7 +702,8 @@ abstract class BaseTemplatePdfPreviewDialogState<T extends BaseTemplatePdfPrevie
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       child: Row(
         children: [
-          Icon(Icons.font_download, color: theme.colorScheme.secondary, size: 20),
+          Icon(Icons.font_download,
+              color: theme.colorScheme.secondary, size: 20),
           const SizedBox(width: 12),
           Text(
             'Font Family:',
@@ -715,45 +725,45 @@ abstract class BaseTemplatePdfPreviewDialogState<T extends BaseTemplatePdfPrevie
                     child: Row(
                       children: _availableFonts.map((font) {
                         final isSelected = _selectedStyle.fontFamily == font;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(font.displayName),
-                          if (font.hasUnicodeSupport) ...[
-                            const SizedBox(width: 6),
-                            Icon(
-                              Icons.check_circle,
-                              size: 14,
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(font.displayName),
+                                if (font.hasUnicodeSupport) ...[
+                                  const SizedBox(width: 6),
+                                  Icon(
+                                    Icons.check_circle,
+                                    size: 14,
+                                    color: isSelected
+                                        ? theme.colorScheme.onPrimaryContainer
+                                        : theme.colorScheme.primary,
+                                  ),
+                                ],
+                              ],
+                            ),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              if (selected) {
+                                updateFontFamily(font);
+                              }
+                            },
+                            selectedColor: theme.colorScheme.primaryContainer,
+                            labelStyle: TextStyle(
                               color: isSelected
                                   ? theme.colorScheme.onPrimaryContainer
-                                  : theme.colorScheme.primary,
+                                  : theme.colorScheme.onSurface,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
                             ),
-                          ],
-                        ],
-                      ),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) {
-                          updateFontFamily(font);
-                        }
-                      },
-                      selectedColor: theme.colorScheme.primaryContainer,
-                      labelStyle: TextStyle(
-                        color: isSelected
-                            ? theme.colorScheme.onPrimaryContainer
-                            : theme.colorScheme.onSurface,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                  );
-                }).toList(),
-              ),
-            ),
+                  ),
           ),
         ],
       ),

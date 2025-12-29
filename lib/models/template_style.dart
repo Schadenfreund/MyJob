@@ -4,7 +4,8 @@ import 'pdf_font_family.dart';
 /// Template styles for PDF generation - Magazine-inspired layouts
 enum TemplateType {
   /// Electric high-contrast magazine-style layout with bold design
-  electric('Electric', 'Bold magazine-style layout with electric yellow accents and modern brutalist aesthetic');
+  electric('Electric',
+      'Bold magazine-style layout with electric yellow accents and modern brutalist aesthetic');
 
   const TemplateType(this.label, this.description);
   final String label;
