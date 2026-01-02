@@ -4,6 +4,7 @@ import '../../providers/templates_provider.dart';
 import '../../models/cover_letter_template.dart';
 import '../../widgets/tabbed_cover_letter_editor.dart';
 import '../../dialogs/cover_letter_template_pdf_preview_dialog.dart';
+import '../../widgets/draggable_dialog_wrapper.dart';
 
 /// Cover Letter Template Editor Screen - Streamlined content-focused editor
 ///
@@ -247,9 +248,13 @@ class _CoverLetterTemplateEditorScreenState
     if (mounted) {
       await showDialog(
         context: context,
-        builder: (context) => CoverLetterTemplatePdfPreviewDialog(
-          coverLetterTemplate: previewTemplate,
-          templateStyle: previewTemplate.templateStyle,
+        barrierDismissible: false,
+        barrierColor: Colors.black54,
+        builder: (context) => DraggableDialogWrapper(
+          child: CoverLetterTemplatePdfPreviewDialog(
+            coverLetterTemplate: previewTemplate,
+            templateStyle: previewTemplate.templateStyle,
+          ),
         ),
       );
     }

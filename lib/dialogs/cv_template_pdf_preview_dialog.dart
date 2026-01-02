@@ -2,15 +2,16 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../models/cv_template.dart';
 import '../models/template_style.dart';
-import '../models/template_customization.dart';
 import '../services/pdf_service.dart';
+import '../widgets/pdf_editor/template_edit_panel.dart';
 import 'base_template_pdf_preview_dialog.dart';
 
-/// Clean, professional PDF preview with sidebar controls for CV templates
+/// PDF preview and editor for CV templates
 class CvTemplatePdfPreviewDialog extends BaseTemplatePdfPreviewDialog {
   const CvTemplatePdfPreviewDialog({
     required this.cvTemplate,
     super.templateStyle,
+    super.templateCustomization,
     super.key,
   });
 
@@ -27,14 +28,6 @@ class CvTemplatePdfPreviewDialog extends BaseTemplatePdfPreviewDialog {
 
 class _CvTemplatePdfPreviewDialogState
     extends BaseTemplatePdfPreviewDialogState<CvTemplatePdfPreviewDialog> {
-  late TemplateCustomization _customization;
-
-  @override
-  void initState() {
-    _customization = const TemplateCustomization();
-    super.initState();
-  }
-
   @override
   bool get useSidebarLayout => true;
 
@@ -47,7 +40,7 @@ class _CvTemplatePdfPreviewDialogState
     return PdfService.instance.generateCvPdf(
       cvData,
       selectedStyle,
-      customization: _customization,
+      customization: customization,
     );
   }
 
@@ -58,106 +51,31 @@ class _CvTemplatePdfPreviewDialogState
       cvData: cvData,
       outputPath: outputPath,
       templateStyle: selectedStyle,
-      customization: _customization,
+      customization: customization,
     );
   }
 
   @override
-  List<Widget> buildAdditionalSections() {
+  List<Widget> buildAdditionalSidebarSections() {
     return [
-      _buildDarkModeSection(),
-      const SizedBox(height: 24),
       _buildInfoSection(),
     ];
   }
 
-  Widget _buildDarkModeSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.brightness_6,
-                color: selectedStyle.accentColor, size: 18),
-            const SizedBox(width: 8),
-            const Text(
-              'COLOR MODE',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: selectedStyle.accentColor.withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: toggleDarkMode,
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Icon(
-                      selectedStyle.isDarkMode
-                          ? Icons.dark_mode
-                          : Icons.light_mode,
-                      color: selectedStyle.accentColor,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            selectedStyle.isDarkMode
-                                ? 'Dark Mode'
-                                : 'Light Mode',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            selectedStyle.isDarkMode
-                                ? 'Dark background'
-                                : 'Light background',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: selectedStyle.isDarkMode,
-                      onChanged: (_) => toggleDarkMode(),
-                      activeThumbColor: selectedStyle.accentColor,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+  @override
+  List<EditableField> buildEditableFields() {
+    // Define editable fields for CV template
+    return [
+      EditableField(
+        id: 'profile',
+        label: 'Profile Summary',
+        value: getFieldValue('profile', widget.cvTemplate.profile),
+        onChanged: (value) => updateFieldValue('profile', value),
+        maxLines: 4,
+        hint: 'Enter your professional summary...',
+      ),
+      // Add more editable fields as needed
+    ];
   }
 
   Widget _buildInfoSection() {
@@ -167,7 +85,7 @@ class _CvTemplatePdfPreviewDialogState
         Row(
           children: [
             Icon(Icons.info_outline,
-                color: selectedStyle.accentColor, size: 18),
+                color: controller.style.accentColor, size: 18),
             const SizedBox(width: 8),
             const Text(
               'TEMPLATE INFO',
@@ -182,9 +100,9 @@ class _CvTemplatePdfPreviewDialogState
         ),
         const SizedBox(height: 12),
         _buildInfoRow('Style', 'Electric'),
-        _buildInfoRow('Font', selectedStyle.fontFamily.displayName),
-        _buildInfoRow('Mode', selectedStyle.isDarkMode ? 'Dark' : 'Light'),
-        _buildInfoRow('Accent', _getColorName(selectedStyle.accentColor)),
+        _buildInfoRow('Font', controller.style.fontFamily.displayName),
+        _buildInfoRow('Mode', controller.style.isDarkMode ? 'Dark' : 'Light'),
+        _buildInfoRow('Accent', _getColorName(controller.style.accentColor)),
       ],
     );
   }

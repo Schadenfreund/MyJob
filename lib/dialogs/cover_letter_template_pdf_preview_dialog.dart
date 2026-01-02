@@ -6,12 +6,13 @@ import '../models/template_style.dart';
 import '../services/pdf_service.dart';
 import 'base_template_pdf_preview_dialog.dart';
 
-/// Full-screen PDF preview dialog for cover letter templates
+/// PDF preview and editor for cover letter templates
 class CoverLetterTemplatePdfPreviewDialog extends BaseTemplatePdfPreviewDialog {
   const CoverLetterTemplatePdfPreviewDialog({
     required this.coverLetterTemplate,
     this.contactDetails,
     super.templateStyle,
+    super.templateCustomization,
     super.key,
   });
 
@@ -31,7 +32,7 @@ class _CoverLetterTemplatePdfPreviewDialogState
     extends BaseTemplatePdfPreviewDialogState<
         CoverLetterTemplatePdfPreviewDialog> {
   @override
-  bool get useSidebarLayout => false;
+  bool get useSidebarLayout => true;
 
   @override
   String getDocumentName() => widget.coverLetterTemplate.name;

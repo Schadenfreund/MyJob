@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import '../models/cv_template.dart';
@@ -30,7 +31,8 @@ class TemplatesStorageService {
       'cv_templates',
       'cover_letter_templates',
       'cv_instances',
-      'cover_letter_instances'
+      'cover_letter_instances',
+      'profile_pictures', // Profile pictures stored here
     ]) {
       final dir = Directory(p.join(_userDataPath!, subDir));
       if (!dir.existsSync()) {
@@ -39,6 +41,94 @@ class TemplatesStorageService {
     }
 
     return _userDataPath!;
+  }
+
+  // ============================================================================
+  // PROFILE PICTURE STORAGE
+  // ============================================================================
+
+  /// Save profile picture to UserData folder
+  ///
+  /// Copies the image file to UserData/profile_pictures/ and returns the new path.
+  /// The new filename is 'profile_[timestamp].[extension]'.
+  Future<String?> saveProfilePicture(String sourcePath) async {
+    try {
+      final sourceFile = File(sourcePath);
+      if (!sourceFile.existsSync()) {
+        debugPrint('Profile picture source not found: $sourcePath');
+        return null;
+      }
+
+      final userDataPath = await getUserDataPath();
+      final extension = p.extension(sourcePath).toLowerCase();
+      final filename =
+          'profile_${DateTime.now().millisecondsSinceEpoch}$extension';
+      final destPath = p.join(userDataPath, 'profile_pictures', filename);
+
+      await sourceFile.copy(destPath);
+      debugPrint('Profile picture saved: $destPath');
+      return destPath;
+    } catch (e) {
+      debugPrint('Error saving profile picture: $e');
+      return null;
+    }
+  }
+
+  /// Load profile picture bytes from UserData
+  Future<Uint8List?> loadProfilePictureBytes(String? imagePath) async {
+    if (imagePath == null || imagePath.isEmpty) return null;
+    try {
+      final file = File(imagePath);
+      if (file.existsSync()) {
+        return await file.readAsBytes();
+      }
+    } catch (e) {
+      debugPrint('Error loading profile picture: $e');
+    }
+    return null;
+  }
+
+  /// Delete profile picture from UserData
+  Future<void> deleteProfilePicture(String? imagePath) async {
+    if (imagePath == null || imagePath.isEmpty) return;
+    try {
+      final file = File(imagePath);
+      if (file.existsSync()) {
+        await file.delete();
+        debugPrint('Profile picture deleted: $imagePath');
+      }
+    } catch (e) {
+      debugPrint('Error deleting profile picture: $e');
+    }
+  }
+
+  /// Check if a path is in the UserData profile_pictures folder
+  Future<bool> isStoredProfilePicture(String? imagePath) async {
+    if (imagePath == null || imagePath.isEmpty) return false;
+    final userDataPath = await getUserDataPath();
+    final profilePicturesDir = p.join(userDataPath, 'profile_pictures');
+    return imagePath.startsWith(profilePicturesDir);
+  }
+
+  /// Get the default profile picture path (if any exists)
+  Future<String?> getDefaultProfilePicturePath() async {
+    try {
+      final userDataPath = await getUserDataPath();
+      final dir = Directory(p.join(userDataPath, 'profile_pictures'));
+
+      if (!dir.existsSync()) return null;
+
+      final files = dir.listSync().whereType<File>().toList();
+      if (files.isEmpty) return null;
+
+      // Return the most recently modified profile picture
+      files.sort(
+          (a, b) => b.statSync().modified.compareTo(a.statSync().modified));
+      return files.first.path;
+    } catch (e) {
+      debugPrint('Error getting default profile picture: $e');
+      return null;
+    }
   }
 
   // ============================================================================

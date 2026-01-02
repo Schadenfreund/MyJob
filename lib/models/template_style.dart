@@ -27,7 +27,7 @@ class TemplateStyle {
     this.fontFamily = PdfFontFamily.roboto,
     this.showPhoto = true,
     this.twoColumnLayout = false,
-    this.isDarkMode = false,
+    this.isDarkMode = true, // Dark mode by default for magazine-style look
   });
 
   factory TemplateStyle.fromJson(Map<String, dynamic> json) {
@@ -55,7 +55,7 @@ class TemplateStyle {
       fontFamily: fontFamily,
       showPhoto: json['showPhoto'] as bool? ?? true,
       twoColumnLayout: json['twoColumnLayout'] as bool? ?? false,
-      isDarkMode: json['isDarkMode'] as bool? ?? false,
+      isDarkMode: json['isDarkMode'] as bool? ?? true, // Dark mode by default
     );
   }
 
@@ -98,6 +98,7 @@ class TemplateStyle {
   }
 
   /// Electric template - High-contrast magazine style with electric yellow
+  /// Now uses dark mode by default for a more striking appearance
   static TemplateStyle get electric => TemplateStyle(
         type: TemplateType.electric,
         primaryColor: const Color(0xFF000000), // Black
@@ -105,6 +106,7 @@ class TemplateStyle {
         fontFamily: PdfFontFamily.roboto,
         twoColumnLayout: false,
         showPhoto: true,
+        isDarkMode: true, // Dark mode by default
       );
 
   /// Get all available presets (currently just Electric)

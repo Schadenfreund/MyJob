@@ -13,9 +13,11 @@ import '../models/user_data/skill.dart';
 import '../models/user_data/work_experience.dart';
 import '../models/user_data/language.dart';
 import '../models/user_data/interest.dart';
-import '../pdf/cv_templates/electric_cv_template.dart';
+import '../pdf/shared/template_registry.dart';
+import '../pdf/shared/pdf_icons.dart';
 import '../pdf/cover_letter_templates/electric_cover_letter_template.dart';
 import 'pdf_font_service.dart';
+import 'log_service.dart';
 
 /// Unified PDF Service for all document generation operations
 ///
@@ -23,26 +25,27 @@ import 'pdf_font_service.dart';
 /// - CV PDF generation (from CvData or user profile data)
 /// - Cover Letter PDF generation
 /// - PDF utilities (save, print, share)
+/// - Template selection via registry
 ///
-/// All PDF generation uses the Electric template system for a consistent,
-/// professional look across all documents.
+/// All PDF generation uses templates from the PdfTemplateRegistry for a
+/// consistent, professional look across all documents.
 ///
 /// Usage:
 /// ```dart
 /// final service = PdfService.instance;
 ///
-/// // Generate CV PDF
+/// // Generate CV PDF with default template
 /// final cvBytes = await service.generateCvPdf(cvData, style);
+///
+/// // Generate CV PDF with specific template
+/// final cvBytes = await service.generateCvPdf(
+///   cvData,
+///   style,
+///   templateId: 'classic_cv',
+/// );
 ///
 /// // Save to file
 /// await service.savePdfToFile(cvBytes, '/path/to/cv.pdf');
-///
-/// // Or generate and save in one step
-/// final file = await service.generateCvToFile(
-///   cvData: cvData,
-///   outputPath: '/path/to/cv.pdf',
-///   style: style,
-/// );
 /// ```
 class PdfService {
   PdfService._();
@@ -52,28 +55,45 @@ class PdfService {
   // CV PDF GENERATION
   // ============================================================================
 
-  /// Generate CV PDF bytes using the Electric template
+  /// Generate CV PDF bytes using the specified or default template
+  ///
+  /// [templateId] - Optional template ID (e.g., 'electric_cv', 'classic_cv')
+  ///                If not provided, uses the default template
   Future<Uint8List> generateCvPdf(
     CvData cv,
     TemplateStyle style, {
     TemplateCustomization? customization,
     Uint8List? profileImageBytes,
+    String? templateId,
   }) async {
-    final pdf = pw.Document();
-    final fonts = await PdfFontService.getFonts(style.fontFamily);
+    logDebug('Generating CV PDF with template: ${templateId ?? "default"}',
+        tag: 'PdfService');
 
-    ElectricCvTemplate.build(
-      pdf,
-      cv,
-      style,
-      regularFont: fonts.regular,
-      boldFont: fonts.bold,
-      mediumFont: fonts.medium,
-      profileImageBytes: profileImageBytes,
-      customization: customization,
-    );
+    try {
+      // Ensure icon font is loaded
+      await PdfIcons.loadFont();
 
-    return pdf.save();
+      // Get template by ID or use default
+      final template = templateId != null
+          ? (PdfTemplateRegistry.getCvTemplateById(templateId) ??
+              PdfTemplateRegistry.defaultCvTemplate)
+          : PdfTemplateRegistry.defaultCvTemplate;
+
+      final result = await template.build(
+        cv,
+        style,
+        customization: customization,
+        profileImageBytes: profileImageBytes,
+      );
+
+      logInfo('CV PDF generated successfully (${result.length} bytes)',
+          tag: 'PdfService');
+      return result;
+    } catch (e, stackTrace) {
+      logError('CV PDF generation failed',
+          error: e, stackTrace: stackTrace, tag: 'PdfService');
+      rethrow;
+    }
   }
 
   /// Generate CV PDF and save to file

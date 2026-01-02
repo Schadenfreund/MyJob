@@ -3,33 +3,30 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../models/cover_letter.dart';
 import '../../models/cv_data.dart';
 import '../../models/template_style.dart';
+import '../../models/template_customization.dart';
 import '../../constants/pdf_constants.dart';
+import '../shared/pdf_styling.dart';
 
 /// Electric Cover Letter Template - Matching Magazine-Style Design
 ///
 /// Features:
 /// - Bold asymmetric magazine layout matching Electric CV
-/// - Electric yellow (#FFFF00) accents on black backgrounds
+/// - Dynamic accent colors (respects theme settings)
 /// - Professional typography with brutalist aesthetic
 /// - Geometric accent shapes
-/// - High-contrast professional design
+/// - High-contrast professional design (light/dark mode)
 class ElectricCoverLetterTemplate {
   ElectricCoverLetterTemplate._();
 
-  // Professional Electric color palette (matching CV template)
-  static const PdfColor _electricYellow = PdfColor.fromInt(0xFFFFFF00);
-  static const PdfColor _electricYellowFaded =
-      PdfColor.fromInt(0x26FFFF00); // 15% opacity
-  static const PdfColor _black = PdfColors.black;
-  static const PdfColor _mediumGray = PdfColor.fromInt(0xFF2D2D2D);
-  static const PdfColor _lightGray = PdfColor.fromInt(0xFF666666);
-  static const PdfColor _white = PdfColors.white;
+  /// Singleton instance
+  static final instance = ElectricCoverLetterTemplate._();
 
-  // Professional ASCII-safe icons (works with Helvetica)
-  static const String _iconEmail = '@';
-  static const String _iconPhone = '#';
-  static const String _iconLocation = '*';
-  static const String _iconSquare = '-';
+  /// Template name
+  String get templateName => 'Electric';
+
+  /// Template description
+  String get templateDescription =>
+      'Modern, bold design matching Electric CV template';
 
   /// Build the Electric Cover Letter PDF with stunning magazine-style design
   static void build(
@@ -40,7 +37,11 @@ class ElectricCoverLetterTemplate {
     required pw.Font regularFont,
     required pw.Font boldFont,
     required pw.Font mediumFont,
+    TemplateCustomization? customization,
   }) {
+    // Create styling from template style (respects dark mode, accent color, and customization)
+    final s = PdfStyling(style: style, customization: customization);
+
     // Build page with custom theme
     pdf.addPage(
       pw.Page(
@@ -54,51 +55,54 @@ class ElectricCoverLetterTemplate {
         build: (context) => pw.Column(
           children: [
             // Hero header matching CV template
-            _buildHeroHeader(contactDetails),
+            _buildHeroHeader(contactDetails, s),
 
             // Main letter content
             pw.Expanded(
               child: pw.Container(
-                padding:
-                    const pw.EdgeInsets.symmetric(horizontal: 48, vertical: 32),
+                color: s.background,
+                padding: pw.EdgeInsets.symmetric(
+                  horizontal: s.space12,
+                  vertical: s.space8,
+                ),
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     // Recipient details
-                    _buildRecipientSection(coverLetter),
+                    _buildRecipientSection(coverLetter, s),
 
-                    pw.SizedBox(height: 24),
+                    pw.SizedBox(height: s.sectionGapMinor),
 
                     // Greeting
                     pw.Text(
                       coverLetter.greeting,
                       style: pw.TextStyle(
-                        fontSize: 12,
+                        fontSize: s.fontSizeBody,
                         fontWeight: pw.FontWeight.bold,
-                        color: _black,
+                        color: s.textPrimary,
                       ),
                     ),
 
-                    pw.SizedBox(height: 16),
+                    pw.SizedBox(height: s.space4),
 
                     // Letter body with electric accents
-                    _buildLetterBody(coverLetter.body),
+                    _buildLetterBody(coverLetter.body, s),
 
-                    pw.SizedBox(height: 20),
+                    pw.SizedBox(height: s.sectionGapMinor),
 
                     // Closing
                     pw.Text(
                       coverLetter.closing,
                       style: pw.TextStyle(
-                        fontSize: 11,
-                        color: _lightGray,
+                        fontSize: s.fontSizeBody,
+                        color: s.textSecondary,
                       ),
                     ),
 
-                    pw.SizedBox(height: 16),
+                    pw.SizedBox(height: s.space4),
 
-                    // Signature with electric yellow accent
-                    _buildSignature(contactDetails?.fullName ?? ''),
+                    // Signature with accent color
+                    _buildSignature(contactDetails?.fullName ?? '', s),
                   ],
                 ),
               ),
@@ -108,7 +112,7 @@ class ElectricCoverLetterTemplate {
             pw.Container(
               width: double.infinity,
               height: 8,
-              color: _electricYellow,
+              color: s.accent,
             ),
           ],
         ),
@@ -117,8 +121,17 @@ class ElectricCoverLetterTemplate {
   }
 
   /// Build stunning hero header matching CV template
-  static pw.Widget _buildHeroHeader(ContactDetails? contactDetails) {
+  static pw.Widget _buildHeroHeader(
+      ContactDetails? contactDetails, PdfStyling s) {
     final name = contactDetails?.fullName ?? 'Your Name';
+
+    // Faded accent for geometric shape
+    final accentFaded = PdfColor(
+      s.accent.red,
+      s.accent.green,
+      s.accent.blue,
+      0.15,
+    );
 
     return pw.Stack(
       children: [
@@ -126,17 +139,17 @@ class ElectricCoverLetterTemplate {
         pw.Container(
           width: double.infinity,
           height: 140,
-          color: _black,
+          color: s.headerBackground,
         ),
 
-        // Electric yellow accent bar (top)
+        // Accent bar (top)
         pw.Container(
           width: double.infinity,
           height: 8,
-          color: _electricYellow,
+          color: s.accent,
         ),
 
-        // Electric yellow geometric accent (diagonal)
+        // Geometric accent (diagonal)
         pw.Positioned(
           right: 0,
           top: 0,
@@ -145,7 +158,7 @@ class ElectricCoverLetterTemplate {
             child: pw.Container(
               width: 220,
               height: 120,
-              color: _electricYellowFaded,
+              color: accentFaded,
             ),
           ),
         ),
@@ -153,7 +166,7 @@ class ElectricCoverLetterTemplate {
         // Main content
         pw.Positioned.fill(
           child: pw.Container(
-            padding: const pw.EdgeInsets.symmetric(horizontal: 48),
+            padding: pw.EdgeInsets.symmetric(horizontal: s.space12),
             child: pw.Column(
               mainAxisAlignment: pw.MainAxisAlignment.center,
               crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -162,30 +175,30 @@ class ElectricCoverLetterTemplate {
                 pw.Text(
                   name.toUpperCase(),
                   style: pw.TextStyle(
-                    fontSize: 36,
+                    fontSize: s.fontSizeH1 * 1.5,
                     fontWeight: pw.FontWeight.bold,
-                    color: _white,
-                    letterSpacing: 2,
+                    color: s.headerText,
+                    letterSpacing: s.letterSpacingExtraWide,
                     height: 1.1,
                   ),
                 ),
 
-                pw.SizedBox(height: 12),
+                pw.SizedBox(height: s.space3),
 
                 // Contact info with icons
                 pw.Row(
                   children: [
                     if (contactDetails?.email != null) ...[
-                      _buildContactIcon(_iconEmail, contactDetails!.email!),
-                      pw.SizedBox(width: 24),
+                      _buildContactIcon('@', contactDetails!.email!, s),
+                      pw.SizedBox(width: s.space6),
                     ],
                     if (contactDetails?.phone != null) ...[
-                      _buildContactIcon(_iconPhone, contactDetails!.phone!),
-                      pw.SizedBox(width: 24),
+                      _buildContactIcon('#', contactDetails!.phone!, s),
+                      pw.SizedBox(width: s.space6),
                     ],
                     if (contactDetails?.address != null) ...[
-                      _buildContactIcon(_iconLocation,
-                          contactDetails!.address!.split(',').first),
+                      _buildContactIcon(
+                          '*', contactDetails!.address!.split(',').first, s),
                     ],
                   ],
                 ),
@@ -198,33 +211,33 @@ class ElectricCoverLetterTemplate {
   }
 
   /// Build contact info icon with text
-  static pw.Widget _buildContactIcon(String icon, String text) {
+  static pw.Widget _buildContactIcon(String icon, String text, PdfStyling s) {
     return pw.Row(
       children: [
         pw.Container(
           width: 20,
           height: 20,
-          decoration: const pw.BoxDecoration(
-            color: _electricYellow,
+          decoration: pw.BoxDecoration(
+            color: s.accent,
             shape: pw.BoxShape.circle,
           ),
           child: pw.Center(
             child: pw.Text(
               icon,
               style: pw.TextStyle(
-                fontSize: 11,
-                color: _black,
+                fontSize: s.fontSizeBody,
+                color: s.textOnAccent,
                 fontWeight: pw.FontWeight.bold,
               ),
             ),
           ),
         ),
-        pw.SizedBox(width: 8),
+        pw.SizedBox(width: s.space2),
         pw.Text(
           text,
-          style: const pw.TextStyle(
-            fontSize: 9,
-            color: _white,
+          style: pw.TextStyle(
+            fontSize: s.fontSizeSmall,
+            color: s.headerText,
           ),
         ),
       ],
@@ -232,7 +245,8 @@ class ElectricCoverLetterTemplate {
   }
 
   /// Build recipient section
-  static pw.Widget _buildRecipientSection(CoverLetter coverLetter) {
+  static pw.Widget _buildRecipientSection(
+      CoverLetter coverLetter, PdfStyling s) {
     final hasRecipient = (coverLetter.recipientName?.isNotEmpty ?? false) ||
         (coverLetter.recipientTitle?.isNotEmpty ?? false) ||
         (coverLetter.companyName?.isNotEmpty ?? false);
@@ -240,20 +254,20 @@ class ElectricCoverLetterTemplate {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // Date with electric accent
+        // Date with accent
         pw.Row(
           children: [
             pw.Container(
               width: 4,
               height: 12,
-              color: _electricYellow,
-              margin: const pw.EdgeInsets.only(right: 8),
+              color: s.accent,
+              margin: pw.EdgeInsets.only(right: s.space2),
             ),
             pw.Text(
               _formatDate(DateTime.now()),
               style: pw.TextStyle(
-                fontSize: 10,
-                color: _lightGray,
+                fontSize: s.fontSizeSmall,
+                color: s.textSecondary,
                 fontWeight: pw.FontWeight.bold,
               ),
             ),
@@ -261,38 +275,38 @@ class ElectricCoverLetterTemplate {
         ),
 
         if (hasRecipient) ...[
-          pw.SizedBox(height: 20),
+          pw.SizedBox(height: s.sectionGapMinor),
 
           // Recipient details
           if (coverLetter.recipientName?.isNotEmpty ?? false)
             pw.Text(
               coverLetter.recipientName!,
               style: pw.TextStyle(
-                fontSize: 11,
+                fontSize: s.fontSizeBody,
                 fontWeight: pw.FontWeight.bold,
-                color: _black,
+                color: s.textPrimary,
               ),
             ),
 
           if (coverLetter.recipientTitle?.isNotEmpty ?? false) ...[
-            pw.SizedBox(height: 4),
+            pw.SizedBox(height: s.space1),
             pw.Text(
               coverLetter.recipientTitle!,
-              style: const pw.TextStyle(
-                fontSize: 10,
-                color: _lightGray,
+              style: pw.TextStyle(
+                fontSize: s.fontSizeSmall,
+                color: s.textSecondary,
               ),
             ),
           ],
 
           if (coverLetter.companyName?.isNotEmpty ?? false) ...[
-            pw.SizedBox(height: 4),
+            pw.SizedBox(height: s.space1),
             pw.Text(
               coverLetter.companyName!,
               style: pw.TextStyle(
-                fontSize: 10,
+                fontSize: s.fontSizeSmall,
                 fontWeight: pw.FontWeight.bold,
-                color: _mediumGray,
+                color: s.textMuted,
               ),
             ),
           ],
@@ -302,45 +316,46 @@ class ElectricCoverLetterTemplate {
   }
 
   /// Build letter body with paragraph styling and bullet points
-  static pw.Widget _buildLetterBody(String body) {
+  static pw.Widget _buildLetterBody(String body, PdfStyling s) {
     final paragraphs =
         body.split('\n\n').where((p) => p.trim().isNotEmpty).toList();
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: paragraphs.map((paragraph) {
-        // Check if paragraph is a bullet point list (ASCII-safe)
+        // Check if paragraph is a bullet point list
         if (paragraph.trim().startsWith('-') ||
             paragraph.trim().startsWith('*')) {
           final bullets =
               paragraph.split('\n').where((l) => l.trim().isNotEmpty).toList();
           return pw.Container(
-            margin: const pw.EdgeInsets.only(bottom: 12),
+            margin: pw.EdgeInsets.only(bottom: s.space3),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: bullets.map((bullet) {
                 final cleanBullet =
                     bullet.trim().replaceFirst(RegExp(r'^[\-\*]\s*'), '');
                 return pw.Padding(
-                  padding: const pw.EdgeInsets.only(bottom: 6, left: 0),
+                  padding: pw.EdgeInsets.only(bottom: s.space1, left: 0),
                   child: pw.Row(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text(
-                        _iconSquare,
-                        style: const pw.TextStyle(
-                          fontSize: 8,
-                          color: _electricYellow,
+                      pw.Container(
+                        width: 6,
+                        height: 6,
+                        margin: pw.EdgeInsets.only(top: 4, right: s.space2),
+                        decoration: pw.BoxDecoration(
+                          color: s.accent,
+                          shape: pw.BoxShape.circle,
                         ),
                       ),
-                      pw.SizedBox(width: 10),
                       pw.Expanded(
                         child: pw.Text(
                           cleanBullet,
                           style: pw.TextStyle(
-                            fontSize: 11,
-                            lineSpacing: 1.5,
-                            color: _lightGray,
+                            fontSize: s.fontSizeBody,
+                            lineSpacing: s.lineHeightRelaxed,
+                            color: s.textSecondary,
                           ),
                         ),
                       ),
@@ -354,13 +369,13 @@ class ElectricCoverLetterTemplate {
 
         // Regular paragraph
         return pw.Container(
-          margin: const pw.EdgeInsets.only(bottom: 12),
+          margin: pw.EdgeInsets.only(bottom: s.space3),
           child: pw.Text(
             paragraph,
             style: pw.TextStyle(
-              fontSize: 11,
-              lineSpacing: 1.6,
-              color: _lightGray,
+              fontSize: s.fontSizeBody,
+              lineSpacing: s.lineHeightRelaxed,
+              color: s.textSecondary,
             ),
             textAlign: pw.TextAlign.justify,
           ),
@@ -369,25 +384,25 @@ class ElectricCoverLetterTemplate {
     );
   }
 
-  /// Build signature with electric yellow accent
-  static pw.Widget _buildSignature(String name) {
+  /// Build signature with accent color
+  static pw.Widget _buildSignature(String name, PdfStyling s) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // Electric yellow signature line
+        // Accent signature line
         pw.Container(
           width: 200,
           height: 2,
-          color: _electricYellow,
+          color: s.accent,
         ),
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: s.space2),
         pw.Text(
           name,
           style: pw.TextStyle(
-            fontSize: 12,
+            fontSize: s.fontSizeBody,
             fontWeight: pw.FontWeight.bold,
-            color: _black,
-            letterSpacing: 0.5,
+            color: s.textPrimary,
+            letterSpacing: s.letterSpacingNormal,
           ),
         ),
       ],

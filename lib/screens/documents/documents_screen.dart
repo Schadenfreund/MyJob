@@ -7,6 +7,7 @@ import '../../widgets/collapsible_card.dart';
 import '../../widgets/document_template_card.dart';
 import '../../dialogs/cv_template_pdf_preview_launcher.dart';
 import '../../dialogs/cover_letter_template_pdf_preview_dialog.dart';
+import '../../widgets/draggable_dialog_wrapper.dart';
 import '../../utils/ui_utils.dart';
 import '../../utils/dialog_utils.dart';
 import '../cv_template_editor/cv_template_editor_screen.dart';
@@ -313,10 +314,14 @@ class DocumentsScreen extends StatelessWidget {
       BuildContext context, CoverLetterTemplate template) {
     showDialog(
       context: context,
-      builder: (context) => CoverLetterTemplatePdfPreviewDialog(
-        coverLetterTemplate: template,
-        contactDetails: null, // Could extract from template if needed
-        templateStyle: template.templateStyle, // Use saved style as default
+      barrierDismissible: false,
+      barrierColor: Colors.black54,
+      builder: (context) => DraggableDialogWrapper(
+        child: CoverLetterTemplatePdfPreviewDialog(
+          coverLetterTemplate: template,
+          contactDetails: null, // Could extract from template if needed
+          templateStyle: template.templateStyle, // Use saved style as default
+        ),
       ),
     );
   }

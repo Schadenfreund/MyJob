@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/user_data_provider.dart';
 import '../../../models/user_data/personal_info.dart';
+import '../../../services/templates_storage_service.dart';
 import '../../../widgets/profile_picture_picker.dart';
 
 /// Personal information management section
@@ -531,10 +532,25 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
     String? trimOrNull(String value) =>
         value.trim().isEmpty ? null : value.trim();
 
+    // Copy profile picture to UserData folder if not already stored there
+    String? storedPicturePath = _profilePicturePath;
+    if (_profilePicturePath != null && _profilePicturePath!.isNotEmpty) {
+      final storage = TemplatesStorageService.instance;
+      final isAlreadyStored =
+          await storage.isStoredProfilePicture(_profilePicturePath);
+      if (!isAlreadyStored) {
+        // Copy to UserData folder
+        final newPath = await storage.saveProfilePicture(_profilePicturePath!);
+        if (newPath != null) {
+          storedPicturePath = newPath;
+        }
+      }
+    }
+
     final newInfo = widget.existingInfo?.copyWith(
           fullName: _nameController.text.trim(),
           jobTitle: trimOrNull(_jobTitleController.text),
-          profilePicturePath: _profilePicturePath,
+          profilePicturePath: storedPicturePath,
           email: trimOrNull(_emailController.text),
           phone: trimOrNull(_phoneController.text),
           address: trimOrNull(_addressController.text),
@@ -547,7 +563,7 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
         PersonalInfo(
           fullName: _nameController.text.trim(),
           jobTitle: trimOrNull(_jobTitleController.text),
-          profilePicturePath: _profilePicturePath,
+          profilePicturePath: storedPicturePath,
           email: trimOrNull(_emailController.text),
           phone: trimOrNull(_phoneController.text),
           address: trimOrNull(_addressController.text),

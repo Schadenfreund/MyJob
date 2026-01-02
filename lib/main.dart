@@ -7,6 +7,7 @@ import 'providers/applications_provider.dart';
 import 'providers/templates_provider.dart';
 import 'providers/user_data_provider.dart';
 import 'services/settings_service.dart';
+import 'services/log_service.dart';
 import 'widgets/custom_titlebar.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/applications/applications_screen.dart';
@@ -15,6 +16,11 @@ import 'screens/settings/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize logging service first
+  await LogService.instance.init();
+  await LogService.instance.cleanOldLogs(keepDays: 7);
+  logInfo('Application starting', tag: 'App');
 
   // Initialize window manager
   await windowManager.ensureInitialized();

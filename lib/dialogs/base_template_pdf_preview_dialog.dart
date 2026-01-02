@@ -1,69 +1,116 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
+import 'package:printing/printing.dart';
 import '../models/template_style.dart';
+import '../models/template_customization.dart';
 import '../models/pdf_font_family.dart';
 import '../services/pdf_font_service.dart';
-import '../widgets/multi_page_pdf_viewer.dart';
+import '../services/log_service.dart';
+import '../widgets/pdf_editor/pdf_editor_controller.dart';
+import '../widgets/pdf_editor/pdf_editor_sidebar.dart';
+import '../widgets/pdf_editor/pdf_editor_toolbar.dart';
+import '../widgets/pdf_editor/template_edit_panel.dart';
+import '../widgets/pdf_editor/enhanced_pdf_viewer.dart';
 
-/// Base class for PDF preview dialogs to eliminate code duplication
+/// Base class for PDF preview/editor dialogs with enhanced functionality
 ///
-/// This abstract class handles:
-/// - Template style management
-/// - PDF generation and caching
-/// - Accent color and font family selection UI
-/// - Export functionality
-/// - Common UI patterns
+/// This centralized base class provides:
+/// - Dynamic layout adjustments (spacing, margins, line height)
+/// - Side-by-side and single page view modes
+/// - Inline template editing capabilities
+/// - Accent color and font family customization
+/// - Export and print functionality
+/// - Clean, DRY architecture using PDF editor components
 ///
 /// Subclasses must implement:
-/// - generatePdfBytes() - PDF generation logic
+/// - generatePdfBytes() - PDF generation logic with current style/customization
 /// - exportPdf() - Export logic with service-specific details
 /// - getDocumentName() - Name for the document being previewed
+/// - buildEditableFields() - List of editable fields for inline editing (optional)
 abstract class BaseTemplatePdfPreviewDialog extends StatefulWidget {
   const BaseTemplatePdfPreviewDialog({
     this.templateStyle,
+    this.templateCustomization,
     super.key,
   });
 
   final TemplateStyle? templateStyle;
+  final TemplateCustomization? templateCustomization;
 
   TemplateStyle getDefaultStyle() => TemplateStyle.electric;
+  TemplateCustomization getDefaultCustomization() =>
+      const TemplateCustomization();
 }
 
 abstract class BaseTemplatePdfPreviewDialogState<
     T extends BaseTemplatePdfPreviewDialog> extends State<T> {
-  late TemplateStyle _selectedStyle;
-  bool _isGenerating = false;
+  // ============================================================================
+  // STATE
+  // ============================================================================
 
-  // PDF state
+  late PdfEditorController _controller;
+
   Uint8List? _cachedPdf;
-  int _pdfGenerationVersion = 0;
-
-  // Available fonts (loaded dynamically from bundled assets)
   List<PdfFontFamily> _availableFonts = [];
 
-  // Protected getter for subclasses
-  TemplateStyle get selectedStyle => _selectedStyle;
+  // Editable field values (for inline editing)
+  // This map stores field values during editing sessions. Subclasses should use
+  // getFieldValue() and updateFieldValue() to read/write these values, and
+  // implement buildEditableFields() to expose fields for editing.
+  final Map<String, String> _fieldValues = {};
 
-  // Accent color presets
-  static const List<Color> _accentColorPresets = [
-    Color(0xFFFFFF00), // Electric Yellow
-    Color(0xFF00FFFF), // Electric Cyan
-    Color(0xFFFF00FF), // Electric Magenta
-    Color(0xFF00FF00), // Electric Lime
-    Color(0xFFFF6600), // Electric Orange
-    Color(0xFF9D00FF), // Electric Purple
-    Color(0xFFFF0066), // Electric Pink
-    Color(0xFF66FF00), // Electric Chartreuse
-  ];
+  // ============================================================================
+  // GETTERS FOR SUBCLASSES
+  // ============================================================================
+
+  /// Current template style
+  TemplateStyle get selectedStyle => _controller.style;
+
+  /// Current template customization
+  TemplateCustomization get customization => _controller.customization;
+
+  /// PDF editor controller
+  PdfEditorController get controller => _controller;
+
+  // ============================================================================
+  // LIFECYCLE
+  // ============================================================================
 
   @override
   void initState() {
     super.initState();
-    _selectedStyle = widget.templateStyle ?? widget.getDefaultStyle();
+    _controller = PdfEditorController(
+      initialStyle: widget.templateStyle ?? widget.getDefaultStyle(),
+      initialCustomization:
+          widget.templateCustomization ?? widget.getDefaultCustomization(),
+    );
+    _controller.addListener(_onControllerChanged);
     _loadAvailableFonts();
   }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onControllerChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    // Regenerate PDF when controller signals regeneration needed
+    if (_controller.needsRegeneration && !_controller.isGenerating) {
+      _generatePdfAsync();
+    }
+    // Always rebuild UI on controller changes (for zoom, view mode, etc.)
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  // ============================================================================
+  // FONT LOADING
+  // ============================================================================
 
   Future<void> _loadAvailableFonts() async {
     try {
@@ -73,19 +120,17 @@ abstract class BaseTemplatePdfPreviewDialogState<
       setState(() {
         _availableFonts = fonts;
 
-        // Validate selected font is available, switch to first available if not
+        // Validate selected font is available
         if (_availableFonts.isNotEmpty &&
-            !_availableFonts.contains(_selectedStyle.fontFamily)) {
-          _selectedStyle =
-              _selectedStyle.copyWith(fontFamily: _availableFonts.first);
+            !_availableFonts.contains(_controller.style.fontFamily)) {
+          _controller.setFontFamily(_availableFonts.first);
         }
       });
 
-      // Generate PDF after fonts are loaded and validated
+      // Generate initial PDF
       _generatePdfAsync();
     } catch (e) {
       if (mounted) {
-        // Use all fonts as fallback if detection fails
         setState(() {
           _availableFonts = PdfFontFamily.values.toList();
         });
@@ -94,82 +139,79 @@ abstract class BaseTemplatePdfPreviewDialogState<
     }
   }
 
-  /// Subclasses must implement: Generate PDF bytes for preview
+  // ============================================================================
+  // PDF GENERATION - SUBCLASSES MUST IMPLEMENT
+  // ============================================================================
+
+  /// Generate PDF bytes with current style and customization
+  ///
+  /// This is called whenever the style or customization changes.
+  /// The implementation should use [selectedStyle] and [customization].
   Future<Uint8List> generatePdfBytes();
 
-  /// Subclasses must implement: Export PDF to file
+  /// Export PDF to file
   Future<void> exportPdf(BuildContext context, String outputPath);
 
-  /// Subclasses must implement: Get document name for display
+  /// Get document name for display and export
   String getDocumentName();
 
-  /// Optional: Additional UI sections (e.g., dark mode toggle, info section)
-  List<Widget> buildAdditionalSections() => [];
+  // ============================================================================
+  // OPTIONAL OVERRIDES
+  // ============================================================================
 
-  /// Optional: Use sidebar layout (true) or horizontal bars (false)
-  bool get useSidebarLayout => false;
+  /// Build list of editable fields for inline editing
+  ///
+  /// Return empty list to disable inline editing functionality
+  List<EditableField> buildEditableFields() => [];
 
-  void updateAccentColor(Color color) {
-    setState(() {
-      _selectedStyle = _selectedStyle.copyWith(accentColor: color);
-      _pdfGenerationVersion++;
-      _cachedPdf = null;
-    });
-    _generatePdfAsync();
-  }
+  /// Additional sidebar sections (e.g., dark mode toggle, info)
+  List<Widget> buildAdditionalSidebarSections() => [];
 
-  void updateFontFamily(PdfFontFamily fontFamily) {
-    // Only allow switching to available fonts
-    if (!_availableFonts.contains(fontFamily)) {
-      return;
-    }
+  /// Use sidebar layout (true) or horizontal bars (false)
+  bool get useSidebarLayout => true;
 
-    setState(() {
-      _selectedStyle = _selectedStyle.copyWith(fontFamily: fontFamily);
-      _pdfGenerationVersion++;
-      _cachedPdf = null;
-    });
-    _generatePdfAsync();
-  }
-
-  void toggleDarkMode() {
-    setState(() {
-      _selectedStyle =
-          _selectedStyle.copyWith(isDarkMode: !_selectedStyle.isDarkMode);
-      _pdfGenerationVersion++;
-      _cachedPdf = null;
-    });
-    _generatePdfAsync();
-  }
+  // ============================================================================
+  // PDF GENERATION
+  // ============================================================================
 
   Future<void> _generatePdfAsync() async {
-    if (_isGenerating) return;
+    if (_controller.isGenerating) return;
 
-    setState(() => _isGenerating = true);
+    _controller.setGenerating(true);
+    logDebug('Starting PDF generation', tag: 'PdfPreview');
 
     try {
       final pdf = await generatePdfBytes();
+
+      // Validate PDF bytes
+      if (pdf.isEmpty) {
+        throw Exception('Generated PDF is empty');
+      }
+
       if (mounted) {
         setState(() {
           _cachedPdf = pdf;
-          _isGenerating = false;
         });
+        _controller.markRegenerationComplete();
+        _controller.setGenerating(false);
+        logInfo('PDF generated successfully (${pdf.length} bytes)',
+            tag: 'PdfPreview');
       }
-    } catch (e, _) {
+    } catch (e, stackTrace) {
+      logError('PDF generation failed',
+          error: e, stackTrace: stackTrace, tag: 'PdfPreview');
       if (mounted) {
-        setState(() => _isGenerating = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error generating PDF: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 10),
-          ),
-        );
+        _controller.setGenerating(false);
+        _showError('Error generating PDF: $e');
       }
     }
   }
 
-  Future<void> _handleExport(BuildContext context) async {
+  // ============================================================================
+  // EXPORT & PRINT
+  // ============================================================================
+
+  Future<void> _handleExport() async {
     try {
       final result = await FilePicker.platform.saveFile(
         dialogTitle: 'Export PDF',
@@ -178,49 +220,58 @@ abstract class BaseTemplatePdfPreviewDialogState<
         allowedExtensions: ['pdf'],
       );
 
-      if (result == null) return;
-      if (!mounted) return;
+      if (result == null || !mounted) return;
 
-      setState(() => _isGenerating = true);
+      _controller.setGenerating(true);
 
       await exportPdf(context, result);
 
       if (!mounted) return;
-      setState(() => _isGenerating = false);
+      _controller.setGenerating(false);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('PDF exported to ${path.basename(result)}'),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      _showSuccess('PDF exported to ${path.basename(result)}');
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isGenerating = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error exporting PDF: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      _controller.setGenerating(false);
+      _showError('Error exporting PDF: $e');
     }
   }
+
+  Future<void> _handlePrint() async {
+    if (_cachedPdf == null) return;
+
+    try {
+      await Printing.layoutPdf(
+        onLayout: (_) => _cachedPdf!,
+        name: '${getDocumentName()}.pdf',
+      );
+    } catch (e) {
+      _showError('Error printing PDF: $e');
+    }
+  }
+
+  // ============================================================================
+  // INLINE EDITING
+  // ============================================================================
+
+  void _handleSaveEdits() {
+    // Subclasses can override to persist field changes
+    _controller.setEditMode(false);
+    _controller.regenerate();
+  }
+
+  void _handleCancelEdits() {
+    // Reset field values
+    _fieldValues.clear();
+    _controller.setEditMode(false);
+  }
+
+  // ============================================================================
+  // UI
+  // ============================================================================
 
   @override
   Widget build(BuildContext context) {
-    if (useSidebarLayout) {
-      return _buildSidebarLayout(context);
-    } else {
-      return _buildHorizontalLayout(context);
-    }
-  }
-
-  Widget _buildSidebarLayout(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
       body: Column(
@@ -229,31 +280,32 @@ abstract class BaseTemplatePdfPreviewDialogState<
           Expanded(
             child: Row(
               children: [
-                _buildSidebar(),
-                Expanded(child: _buildPreviewArea()),
+                if (useSidebarLayout) ...[
+                  PdfEditorSidebar(
+                    controller: _controller,
+                    availableFonts: _availableFonts,
+                    additionalSections: buildAdditionalSidebarSections(),
+                  ),
+                ],
+                Expanded(
+                  child: _buildPreviewArea(),
+                ),
+
+                // Edit panel (when in edit mode)
+                if (_controller.isEditMode && buildEditableFields().isNotEmpty)
+                  SizedBox(
+                    width: 320,
+                    child: TemplateEditPanel(
+                      fields: buildEditableFields(),
+                      onSave: _handleSaveEdits,
+                      onCancel: _handleCancelEdits,
+                      accentColor: _controller.style.accentColor,
+                    ),
+                  ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildHorizontalLayout(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Dialog.fullscreen(
-      child: Scaffold(
-        backgroundColor: theme.colorScheme.surface,
-        appBar: _buildAppBar(theme),
-        body: Column(
-          children: [
-            _buildAccentColorBar(theme),
-            _buildFontFamilyBar(theme),
-            ...buildAdditionalSections(),
-            Expanded(child: _buildPreviewArea()),
-          ],
-        ),
       ),
     );
   }
@@ -265,7 +317,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
         color: Colors.black,
         border: Border(
           bottom: BorderSide(
-            color: _selectedStyle.accentColor.withValues(alpha: 0.3),
+            color: _controller.style.accentColor.withValues(alpha: 0.3),
             width: 2,
           ),
         ),
@@ -277,7 +329,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
             width: 4,
             height: 32,
             decoration: BoxDecoration(
-              color: _selectedStyle.accentColor,
+              color: _controller.style.accentColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -288,7 +340,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'PDF PREVIEW',
+                  'PDF PREVIEW & EDITOR',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -307,7 +359,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
               ],
             ),
           ),
-          if (_isGenerating)
+          if (_controller.isGenerating)
             Padding(
               padding: const EdgeInsets.only(right: 16),
               child: SizedBox(
@@ -316,16 +368,16 @@ abstract class BaseTemplatePdfPreviewDialogState<
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor:
-                      AlwaysStoppedAnimation(_selectedStyle.accentColor),
+                      AlwaysStoppedAnimation(_controller.style.accentColor),
                 ),
               ),
             ),
           ElevatedButton.icon(
-            onPressed: _isGenerating ? null : () => _handleExport(context),
+            onPressed: _controller.isGenerating ? null : _handleExport,
             icon: const Icon(Icons.download, size: 18),
             label: const Text('Export PDF'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _selectedStyle.accentColor,
+              backgroundColor: _controller.style.accentColor,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               disabledBackgroundColor: Colors.grey.shade700,
@@ -345,466 +397,109 @@ abstract class BaseTemplatePdfPreviewDialogState<
     );
   }
 
-  AppBar _buildAppBar(ThemeData theme) {
-    return AppBar(
-      title: Row(
-        children: [
-          Icon(
-            Icons.picture_as_pdf,
-            color: theme.colorScheme.primary,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'PDF Preview',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  getDocumentName(),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color
-                        ?.withValues(alpha: 0.7),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      leading: IconButton(
-        icon: const Icon(Icons.close),
-        onPressed: () => Navigator.pop(context),
-        tooltip: 'Close',
-      ),
-      actions: [
-        ElevatedButton.icon(
-          onPressed: _isGenerating ? null : () => _handleExport(context),
-          icon: const Icon(Icons.download, size: 18),
-          label: const Text('Export PDF'),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 12,
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-      ],
-    );
-  }
-
-  Widget _buildSidebar() {
-    return Container(
-      width: 300,
-      decoration: BoxDecoration(
-        color: const Color(0xFF2D2D2D),
-        border: Border(
-          right: BorderSide(
-            color: Colors.white.withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
-      ),
-      child: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _buildAccentColorSectionSidebar(),
-          const SizedBox(height: 24),
-          _buildFontFamilySectionSidebar(),
-          const SizedBox(height: 24),
-          ...buildAdditionalSections(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAccentColorSectionSidebar() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.palette, color: _selectedStyle.accentColor, size: 18),
-            const SizedBox(width: 8),
-            const Text(
-              'ACCENT COLOR',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: _accentColorPresets.map((color) {
-            final isSelected =
-                _selectedStyle.accentColor.toARGB32() == color.toARGB32();
-            return GestureDetector(
-              onTap: () => updateAccentColor(color),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSelected ? Colors.white : Colors.transparent,
-                    width: 3,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.5),
-                            blurRadius: 12,
-                            spreadRadius: 2,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: isSelected
-                    ? const Icon(Icons.check, color: Colors.black, size: 24)
-                    : null,
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFontFamilySectionSidebar() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.font_download,
-                color: _selectedStyle.accentColor, size: 18),
-            const SizedBox(width: 8),
-            const Text(
-              'FONT FAMILY',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (_availableFonts.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              'No fonts available. Add TTF files to assets/fonts/',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
-                fontSize: 11,
-              ),
-            ),
-          )
-        else
-          ..._availableFonts.map((font) {
-            final isSelected = _selectedStyle.fontFamily == font;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? _selectedStyle.accentColor.withValues(alpha: 0.1)
-                      : Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSelected
-                        ? _selectedStyle.accentColor
-                        : Colors.white.withValues(alpha: 0.1),
-                    width: isSelected ? 2 : 1,
-                  ),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => updateFontFamily(font),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? _selectedStyle.accentColor
-                                  : Colors.white.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Center(
-                              child: Text(
-                                font.displayName[0],
-                                style: TextStyle(
-                                  color:
-                                      isSelected ? Colors.black : Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  font.displayName,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  font.characteristicsLabel,
-                                  style: TextStyle(
-                                    color: isSelected
-                                        ? _selectedStyle.accentColor
-                                        : Colors.white.withValues(alpha: 0.6),
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (isSelected)
-                            Icon(
-                              Icons.check_circle,
-                              color: _selectedStyle.accentColor,
-                              size: 20,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-      ],
-    );
-  }
-
-  Widget _buildAccentColorBar(ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: theme.dividerColor.withValues(alpha: 0.3),
-          ),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      child: Row(
-        children: [
-          Icon(Icons.palette, color: theme.colorScheme.secondary, size: 20),
-          const SizedBox(width: 12),
-          Text(
-            'Accent Color:',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: _accentColorPresets.map((color) {
-                  final isSelected =
-                      _selectedStyle.accentColor.toARGB32() == color.toARGB32();
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: InkWell(
-                      onTap: () => updateAccentColor(color),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected
-                                ? theme.colorScheme.onSurface
-                                : Colors.white,
-                            width: isSelected ? 3 : 2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: isSelected
-                            ? Icon(
-                                Icons.check,
-                                size: 16,
-                                color: color.computeLuminance() > 0.5
-                                    ? Colors.black
-                                    : Colors.white,
-                              )
-                            : null,
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFontFamilyBar(ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: theme.dividerColor.withValues(alpha: 0.3),
-          ),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      child: Row(
-        children: [
-          Icon(Icons.font_download,
-              color: theme.colorScheme.secondary, size: 20),
-          const SizedBox(width: 12),
-          Text(
-            'Font Family:',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _availableFonts.isEmpty
-                ? Text(
-                    'No fonts available. Add TTF files to assets/fonts/',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  )
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _availableFonts.map((font) {
-                        final isSelected = _selectedStyle.fontFamily == font;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            label: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(font.displayName),
-                                if (font.hasUnicodeSupport) ...[
-                                  const SizedBox(width: 6),
-                                  Icon(
-                                    Icons.check_circle,
-                                    size: 14,
-                                    color: isSelected
-                                        ? theme.colorScheme.onPrimaryContainer
-                                        : theme.colorScheme.primary,
-                                  ),
-                                ],
-                              ],
-                            ),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              if (selected) {
-                                updateFontFamily(font);
-                              }
-                            },
-                            selectedColor: theme.colorScheme.primaryContainer,
-                            labelStyle: TextStyle(
-                              color: isSelected
-                                  ? theme.colorScheme.onPrimaryContainer
-                                  : theme.colorScheme.onSurface,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildPreviewArea() {
-    return Container(
-      color: Colors.grey.shade300,
-      child: _cachedPdf != null
-          ? MultiPagePdfViewer(
-              key: ValueKey(_pdfGenerationVersion),
-              pdfBytes: _cachedPdf!,
-              accentColor: _selectedStyle.accentColor,
-              fileName: '${getDocumentName()}.pdf',
-              showSideBySide: true,
-            )
-          : Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: CircularProgressIndicator(
-                      color: _selectedStyle.accentColor,
-                      strokeWidth: 4,
-                    ),
+    return Stack(
+      children: [
+        Container(
+          color: Colors.grey.shade300,
+          child: _cachedPdf != null
+              ? EnhancedPdfViewer(
+                  key: ValueKey('pdf_${_controller.pdfVersion}'),
+                  pdfBytes: _cachedPdf!,
+                  controller: _controller,
+                  fileName: '${getDocumentName()}.pdf',
+                )
+              : Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 50,
+                        height: 50,
+                        child: CircularProgressIndicator(
+                          color: _controller.style.accentColor,
+                          strokeWidth: 4,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Generating PDF Preview...',
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Generating PDF Preview...',
-                    style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+        ),
+        // Floating toolbar at bottom
+        Positioned(
+          bottom: 24,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: PdfEditorToolbar(
+              controller: _controller,
+              accentColor: _controller.style.accentColor,
+              onPrint: _handlePrint,
             ),
+          ),
+        ),
+      ],
     );
+  }
+
+  // ============================================================================
+  // HELPERS
+  // ============================================================================
+
+  void _showSuccess(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green.shade600,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    // Log error for debugging
+    logError(message, tag: 'PdfPreview');
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: SelectableText(
+          message,
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 8), // Longer duration for errors
+        action: SnackBarAction(
+          label: 'Copy',
+          textColor: Colors.white,
+          onPressed: () {
+            Clipboard.setData(ClipboardData(text: message));
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Update a field value (for inline editing)
+  void updateFieldValue(String fieldId, String value) {
+    setState(() {
+      _fieldValues[fieldId] = value;
+    });
+  }
+
+  /// Get current field value
+  String getFieldValue(String fieldId, String defaultValue) {
+    return _fieldValues[fieldId] ?? defaultValue;
   }
 }
