@@ -6,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../models/cv_data.dart';
 import '../models/cover_letter.dart';
+import '../models/cover_letter_template_selection.dart';
 import '../models/template_style.dart';
 import '../models/template_customization.dart';
 import '../models/user_data/personal_info.dart';
@@ -15,7 +16,9 @@ import '../models/user_data/language.dart';
 import '../models/user_data/interest.dart';
 import '../pdf/shared/template_registry.dart';
 import '../pdf/shared/pdf_icons.dart';
-import '../pdf/cover_letter_templates/electric_cover_letter_template.dart';
+import '../pdf/cover_letter_templates/modern_two_cover_letter_template.dart';
+import '../pdf/cover_letter_templates/professional_cover_letter_template.dart';
+import '../pdf/cover_letter_templates/classic_cover_letter_template.dart';
 import 'pdf_font_service.dart';
 import 'log_service.dart';
 
@@ -166,26 +169,53 @@ class PdfService {
   // COVER LETTER PDF GENERATION
   // ============================================================================
 
-  /// Generate Cover Letter PDF bytes using the Electric template
+  /// Generate Cover Letter PDF bytes using the selected template
   Future<Uint8List> generateCoverLetterPdf(
     CoverLetter letter,
     TemplateStyle style, {
     ContactDetails? contactDetails,
+    TemplateCustomization? customization,
+    CoverLetterTemplateType? coverLetterTemplateType,
   }) async {
     final pdf = pw.Document();
     final fonts = await PdfFontService.getFonts(style.fontFamily);
 
-    ElectricCoverLetterTemplate.build(
-      pdf,
-      letter,
-      style,
-      contactDetails,
-      regularFont: fonts.regular,
-      boldFont: fonts.bold,
-      mediumFont: fonts.medium,
-    );
+    // Use provided template type or default to Modern
+    final templateType =
+        coverLetterTemplateType ?? CoverLetterTemplateType.modern;
 
-    return pdf.save();
+    // Select cover letter template (independent from CV template selection)
+    switch (templateType) {
+      case CoverLetterTemplateType.modern:
+        // Modern: Clean with accent bar (matching CV Modern)
+        return ProfessionalCoverLetterTemplate.instance.build(
+          letter,
+          style,
+          customization: customization,
+        );
+
+      case CoverLetterTemplateType.traditional:
+        // Traditional: Conservative (matching CV Traditional)
+        return ClassicCoverLetterTemplate.instance.build(
+          letter,
+          style,
+          customization: customization,
+        );
+
+      case CoverLetterTemplateType.compact:
+        // Compact: Space-efficient (matching CV Compact)
+        ModernTwoCoverLetterTemplate.build(
+          pdf,
+          letter,
+          style,
+          contactDetails,
+          regularFont: fonts.regular,
+          boldFont: fonts.bold,
+          mediumFont: fonts.medium,
+          customization: customization,
+        );
+        return pdf.save();
+    }
   }
 
   /// Generate Cover Letter PDF and save to file
@@ -194,6 +224,8 @@ class PdfService {
     required String outputPath,
     TemplateStyle? templateStyle,
     ContactDetails? contactDetails,
+    TemplateCustomization? customization,
+    CoverLetterTemplateType? coverLetterTemplateType,
   }) async {
     final style = templateStyle ?? TemplateStyle.electric;
 
@@ -201,6 +233,8 @@ class PdfService {
       coverLetter,
       style,
       contactDetails: contactDetails,
+      customization: customization,
+      coverLetterTemplateType: coverLetterTemplateType,
     );
 
     return savePdfToFile(bytes, outputPath);

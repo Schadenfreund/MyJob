@@ -8,26 +8,26 @@ import '../../constants/pdf_constants.dart';
 import '../shared/pdf_styling.dart';
 import '../shared/cv_translations.dart';
 
-/// Electric Cover Letter Template - Matching Magazine-Style Design
+/// Modern Two Cover Letter Template - Bold, Magazine-Style Design
 ///
 /// Features:
-/// - Bold asymmetric magazine layout matching Electric CV
+/// - Bold asymmetric magazine layout
 /// - Dynamic accent colors (respects theme settings)
-/// - Professional typography with brutalist aesthetic
+/// - Professional typography with modern aesthetic
 /// - Geometric accent shapes
 /// - High-contrast professional design (light/dark mode)
-class ElectricCoverLetterTemplate {
-  ElectricCoverLetterTemplate._();
+class ModernTwoCoverLetterTemplate {
+  ModernTwoCoverLetterTemplate._();
 
   /// Singleton instance
-  static final instance = ElectricCoverLetterTemplate._();
+  static final instance = ModernTwoCoverLetterTemplate._();
 
   /// Template name
-  String get templateName => 'Electric';
+  String get templateName => 'Modern 2';
 
   /// Template description
   String get templateDescription =>
-      'Modern, bold design matching Electric CV template';
+      'Modern, bold design with geometric accents';
 
   /// Build the Electric Cover Letter PDF with stunning magazine-style design
   static void build(

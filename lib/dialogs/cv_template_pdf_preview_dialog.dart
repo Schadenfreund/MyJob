@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/cv_template.dart';
 import '../models/template_style.dart';
+import '../providers/user_data_provider.dart';
 import '../services/pdf_service.dart';
 import '../widgets/pdf_editor/template_edit_panel.dart';
 import 'base_template_pdf_preview_dialog.dart';
@@ -37,10 +40,30 @@ class _CvTemplatePdfPreviewDialogState
   @override
   Future<Uint8List> generatePdfBytes() async {
     final cvData = widget.cvTemplate.toCvData();
+
+    // Load profile image from UserData (PersonalInfo) - this is where it's actually stored
+    // The CV template's ContactDetails doesn't have the profile picture path
+    Uint8List? profileImageBytes;
+
+    try {
+      // Get PersonalInfo from UserDataProvider
+      final personalInfo = context.read<UserDataProvider>().personalInfo;
+
+      if (personalInfo?.hasProfilePicture ?? false) {
+        final file = File(personalInfo!.profilePicturePath!);
+        if (await file.exists()) {
+          profileImageBytes = await file.readAsBytes();
+        }
+      }
+    } catch (e) {
+      // Ignore errors - PDF will generate without profile picture
+    }
+
     return PdfService.instance.generateCvPdf(
       cvData,
       selectedStyle,
       customization: customization,
+      profileImageBytes: profileImageBytes,
     );
   }
 

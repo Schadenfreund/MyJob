@@ -1,5 +1,6 @@
 import 'package:pdf/widgets.dart' as pw;
 import '../shared/pdf_styling.dart';
+import '../shared/cv_translations.dart';
 import 'icon_component.dart';
 
 /// Section Component - Consistent section headers across all layouts
@@ -21,18 +22,24 @@ class SectionComponent {
     String? iconType,
     SectionStyle style = SectionStyle.accent,
   }) {
+    // Auto-translate section title based on language setting
+    final translatedTitle = CvTranslations.getSectionHeader(
+      title,
+      styling.customization.language,
+    );
+
     switch (style) {
       case SectionStyle.accent:
-        return _buildAccentHeader(title, styling, iconType);
+        return _buildAccentHeader(translatedTitle, styling, iconType);
 
       case SectionStyle.minimal:
-        return _buildMinimalHeader(title, styling, iconType);
+        return _buildMinimalHeader(translatedTitle, styling, iconType);
 
       case SectionStyle.underline:
-        return _buildUnderlineHeader(title, styling, iconType);
+        return _buildUnderlineHeader(translatedTitle, styling, iconType);
 
       case SectionStyle.boxed:
-        return _buildBoxedHeader(title, styling, iconType);
+        return _buildBoxedHeader(translatedTitle, styling, iconType);
     }
   }
 

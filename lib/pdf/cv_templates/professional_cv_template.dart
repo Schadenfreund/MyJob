@@ -6,6 +6,7 @@ import '../../models/template_style.dart';
 import '../../models/template_customization.dart';
 import '../shared/pdf_styling.dart';
 import '../shared/base_pdf_template.dart';
+import '../shared/cv_translations.dart';
 import '../components/components.dart';
 
 /// Professional CV Template - Unified flexible template with multiple layout modes
@@ -70,6 +71,7 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
             cv,
             s,
             showProfile ? profileImage : null,
+            experienceStyle, // Add experience style
           ),
         ),
       );
@@ -141,39 +143,51 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   /// - Sidebar: Photo, Contact, Skills, Languages, Interests
   /// - Main: Name/Title, Summary, Experience, Education
   ///
-  /// Uses Table for reliable two-column rendering with full height.
+  /// Uses Row for reliable two-column rendering with full height.
   pw.Widget _buildTwoColumnSinglePageLayout(
     CvData cv,
     PdfStyling s,
     pw.ImageProvider? profileImage,
+    ExperienceLayout experienceLayout, // Add experience layout parameter
   ) {
     final sidebarRatio = s.customization.sidebarWidthRatio;
 
-    // Full-page container with background color for dark mode
+    // Full-page container with centered content
     return pw.Container(
       width: double.infinity,
       height: double.infinity,
-      color: s.background, // Respect dark/light mode
+      color: s.background,
       child: pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          // Sidebar column
+          // Sidebar column - accent background, no padding (photo will be full width)
           pw.Container(
             width: PdfPageFormat.a4.width * sidebarRatio,
-            color: s.cardBackground, // Sidebar has card background
-            padding: pw.EdgeInsets.all(s.space4),
-            child: _buildSidebarColumn(cv, s, profileImage),
+            color: s.accent, // Accent background
+            child: pw.Column(
+              crossAxisAlignment:
+                  pw.CrossAxisAlignment.center, // Center sidebar content
+              mainAxisSize: pw.MainAxisSize.max,
+              children: [
+                _buildSidebarColumn(cv, s, profileImage),
+              ],
+            ),
           ),
           // Accent divider
           pw.Container(
             width: 3,
             color: s.accent,
           ),
-          // Main content column
+          // Main content column - increased top margin
           pw.Expanded(
             child: pw.Container(
-              padding: pw.EdgeInsets.all(s.space4),
-              child: _buildMainColumn(cv, s),
+              padding: pw.EdgeInsets.only(
+                left: s.space4,
+                right: s.space4,
+                top: s.space6, // Increased top margin
+                bottom: s.space4,
+              ),
+              child: _buildMainColumn(cv, s, experienceLayout),
             ),
           ),
         ],
@@ -188,61 +202,113 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     pw.ImageProvider? profileImage,
   ) {
     return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      crossAxisAlignment:
+          pw.CrossAxisAlignment.center, // Center all sidebar content
+      mainAxisSize: pw.MainAxisSize.min,
       children: [
-        // Profile photo with customizable shape
+        // Profile photo - FULL WIDTH for all shapes
         if (profileImage != null) ...[
-          pw.Center(
-            child: _buildProfilePhoto(profileImage, s, size: 80),
+          pw.Container(
+            width: double.infinity,
+            height: 250, // Increased height
+            child: pw.Image(profileImage, fit: pw.BoxFit.cover),
           ),
           pw.SizedBox(height: s.space4),
         ],
 
-        // Contact info
-        if (cv.contactDetails != null) ...[
-          _buildSidebarSectionHeader('Contact', s),
-          pw.SizedBox(height: s.space2),
-          _buildSidebarContactInfo(cv.contactDetails!, s),
-          pw.SizedBox(height: s.space4),
-        ],
+        // Add padding for text content
+        pw.Padding(
+          padding: pw.EdgeInsets.all(s.space3),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Contact info - full width
+              if (cv.contactDetails != null) ...[
+                pw.Container(
+                  width: double.infinity,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      _buildSidebarSectionHeader('Contact', s),
+                      pw.SizedBox(height: s.space2),
+                      _buildSidebarContactInfo(cv.contactDetails!, s),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: s.space4),
+              ],
 
-        // Skills
-        if (cv.skills.isNotEmpty) ...[
-          _buildSidebarSectionHeader('Skills', s),
-          pw.SizedBox(height: s.space2),
-          _buildSidebarSkills(cv.skills, s),
-          pw.SizedBox(height: s.space4),
-        ],
+              // Skills - full width
+              if (cv.skills.isNotEmpty) ...[
+                pw.Container(
+                  width: double.infinity,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      _buildSidebarSectionHeader('Skills', s),
+                      pw.SizedBox(height: s.space2),
+                      _buildSidebarSkills(cv.skills, s),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: s.space4),
+              ],
 
-        // Languages
-        if (cv.languages.isNotEmpty) ...[
-          _buildSidebarSectionHeader('Languages', s),
-          pw.SizedBox(height: s.space2),
-          _buildSidebarLanguages(cv.languages, s),
-          pw.SizedBox(height: s.space4),
-        ],
+              // Languages - full width
+              if (cv.languages.isNotEmpty) ...[
+                pw.Container(
+                  width: double.infinity,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      _buildSidebarSectionHeader('Languages', s),
+                      pw.SizedBox(height: s.space2),
+                      _buildSidebarLanguages(cv.languages, s),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: s.space4),
+              ],
 
-        // Interests
-        if (cv.interests.isNotEmpty) ...[
-          _buildSidebarSectionHeader('Interests', s),
-          pw.SizedBox(height: s.space2),
-          _buildSidebarInterests(cv.interests, s),
-        ],
+              // Interests - full width
+              if (cv.interests.isNotEmpty) ...[
+                pw.Container(
+                  width: double.infinity,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      _buildSidebarSectionHeader('Interests', s),
+                      pw.SizedBox(height: s.space2),
+                      _buildSidebarInterests(cv.interests, s),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ],
     );
   }
 
   /// Build sidebar section header
   pw.Widget _buildSidebarSectionHeader(String title, PdfStyling s) {
+    // Translate the title
+    final translatedTitle =
+        CvTranslations.getSectionHeader(title, s.customization.language);
+    final displayTitle = s.customization.uppercaseHeaders
+        ? translatedTitle.toUpperCase()
+        : translatedTitle;
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
-          s.customization.uppercaseHeaders ? title.toUpperCase() : title,
+          displayTitle,
           style: pw.TextStyle(
             fontSize: s.fontSizeSmall,
             fontWeight: pw.FontWeight.bold,
-            color: s.accent,
+            color: PdfColors.black, // Black for contrast on accent
             letterSpacing: s.letterSpacingWide,
           ),
         ),
@@ -250,7 +316,7 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
         pw.Container(
           width: 30,
           height: 2,
-          color: s.accent,
+          color: PdfColors.black, // Black underline
         ),
       ],
     );
@@ -261,16 +327,16 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     final items = <pw.Widget>[];
 
     if (contact.email != null && contact.email!.isNotEmpty) {
-      items.add(_buildSidebarContactItem('✉', contact.email!, s));
+      items.add(_buildSidebarContactItem(contact.email!, s));
     }
     if (contact.phone != null && contact.phone!.isNotEmpty) {
-      items.add(_buildSidebarContactItem('☎', contact.phone!, s));
+      items.add(_buildSidebarContactItem(contact.phone!, s));
     }
     if (contact.address != null && contact.address!.isNotEmpty) {
-      items.add(_buildSidebarContactItem('⌂', contact.address!, s));
+      items.add(_buildSidebarContactItem(contact.address!, s));
     }
     if (contact.website != null && contact.website!.isNotEmpty) {
-      items.add(_buildSidebarContactItem('⊕', contact.website!, s));
+      items.add(_buildSidebarContactItem(contact.website!, s));
     }
 
     return pw.Column(
@@ -280,30 +346,15 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   }
 
   /// Build a single contact item for sidebar
-  pw.Widget _buildSidebarContactItem(String icon, String text, PdfStyling s) {
+  pw.Widget _buildSidebarContactItem(String text, PdfStyling s) {
     return pw.Padding(
       padding: pw.EdgeInsets.only(bottom: s.space2),
-      child: pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            icon,
-            style: pw.TextStyle(
-              fontSize: s.fontSizeTiny,
-              color: s.accent,
-            ),
-          ),
-          pw.SizedBox(width: s.space2),
-          pw.Expanded(
-            child: pw.Text(
-              text,
-              style: pw.TextStyle(
-                fontSize: s.fontSizeTiny,
-                color: s.textPrimary,
-              ),
-            ),
-          ),
-        ],
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: s.fontSizeTiny,
+          color: PdfColors.black,
+        ),
       ),
     );
   }
@@ -320,14 +371,14 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
             vertical: s.space1,
           ),
           decoration: pw.BoxDecoration(
-            border: pw.Border.all(color: s.accent, width: 0.5),
+            border: pw.Border.all(color: PdfColors.black, width: 0.5),
             borderRadius: pw.BorderRadius.circular(3),
           ),
           child: pw.Text(
             skill,
             style: pw.TextStyle(
               fontSize: s.fontSizeTiny,
-              color: s.textPrimary,
+              color: PdfColors.black,
             ),
           ),
         );
@@ -350,14 +401,14 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
                 lang.language,
                 style: pw.TextStyle(
                   fontSize: s.fontSizeTiny,
-                  color: s.textPrimary,
+                  color: PdfColors.black,
                 ),
               ),
               pw.Text(
                 lang.level,
                 style: pw.TextStyle(
                   fontSize: s.fontSizeTiny,
-                  color: s.textSecondary,
+                  color: PdfColors.black,
                 ),
               ),
             ],
@@ -379,14 +430,15 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
             vertical: s.space1,
           ),
           decoration: pw.BoxDecoration(
-            color: s.accentPale,
+            border: pw.Border.all(
+                color: PdfColors.black, width: 0.5), // Match skills
             borderRadius: pw.BorderRadius.circular(3),
           ),
           child: pw.Text(
             interest,
             style: pw.TextStyle(
               fontSize: s.fontSizeTiny,
-              color: s.textPrimary,
+              color: PdfColors.black,
             ),
           ),
         );
@@ -395,19 +447,23 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   }
 
   /// Build the main column for two-column layout
-  pw.Widget _buildMainColumn(CvData cv, PdfStyling s) {
+  pw.Widget _buildMainColumn(
+      CvData cv, PdfStyling s, ExperienceLayout experienceLayout) {
     final contact = cv.contactDetails;
+    final language = s.customization.language; // Get language setting
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
+      mainAxisSize: pw.MainAxisSize.min,
       children: [
-        // Name and title header
+        // Name and title header - consistent sizing
         pw.Text(
           (contact?.fullName ?? 'YOUR NAME').toUpperCase(),
           style: pw.TextStyle(
-            fontSize: s.fontSizeH1,
+            fontSize: s.fontSizeH2, // Consistent H2 size
             fontWeight: pw.FontWeight.bold,
             color: s.textPrimary,
-            letterSpacing: s.letterSpacingExtraWide,
+            letterSpacing: 2,
           ),
         ),
         if (contact?.jobTitle != null) ...[
@@ -415,47 +471,181 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
           pw.Text(
             contact!.jobTitle!,
             style: pw.TextStyle(
-              fontSize: s.fontSizeH4,
+              fontSize: s.fontSizeBody, // Consistent body size
               color: s.accent,
               fontWeight: pw.FontWeight.bold,
             ),
           ),
         ],
-        pw.SizedBox(height: s.space3),
+        pw.SizedBox(height: s.space2),
         pw.Container(height: 2, width: 60, color: s.accent),
-        pw.SizedBox(height: s.space4),
+        pw.SizedBox(height: s.space3),
 
-        // Profile/Summary
+        // Profile/Summary - consistent sizing
         if (cv.profile.isNotEmpty) ...[
-          _buildMainSectionHeader('Profile', s),
+          pw.Text(
+            CvTranslations.getSectionHeader('PROFILE', language),
+            style: pw.TextStyle(
+              fontSize: s.fontSizeSmall,
+              fontWeight: pw.FontWeight.bold,
+              color: s.accent,
+              letterSpacing: 1.5,
+            ),
+          ),
           pw.SizedBox(height: s.space2),
           pw.Text(
             cv.profile.replaceAll(RegExp(r'[\r\n]+'), ' ').trim(),
             style: pw.TextStyle(
               fontSize: s.fontSizeSmall,
               color: s.textSecondary,
-              lineSpacing: s.lineHeightNormal,
+              lineSpacing: 1.3,
             ),
           ),
-          pw.SizedBox(height: s.space4),
+          pw.SizedBox(height: s.space3),
         ],
 
-        // Experience
+        // Experience - Clean, compact, ALL content visible
         if (cv.experiences.isNotEmpty) ...[
-          _buildMainSectionHeader('Experience', s),
+          pw.Text(
+            CvTranslations.getSectionHeader('EXPERIENCE', language),
+            style: pw.TextStyle(
+              fontSize: s.fontSizeSmall,
+              fontWeight: pw.FontWeight.bold,
+              color: s.accent,
+              letterSpacing: 1.5,
+            ),
+          ),
           pw.SizedBox(height: s.space2),
-          ...cv.experiences
-              .take(3)
-              .map((exp) => _buildCompactExperienceEntry(exp, s)),
+          ...cv.experiences.map((exp) {
+            return pw.Container(
+              margin: pw.EdgeInsets.only(bottom: s.space2),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  // Title (bold, primary color)
+                  pw.Text(
+                    exp.title,
+                    style: pw.TextStyle(
+                      fontSize: s.fontSizeSmall,
+                      fontWeight: pw.FontWeight.bold,
+                      color: s.textPrimary,
+                    ),
+                  ),
+                  // Company & Date
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(
+                        exp.company,
+                        style: pw.TextStyle(
+                          fontSize: s.fontSizeSmall,
+                          color: s.accent,
+                        ),
+                      ),
+                      pw.Text(
+                        exp.dateRange,
+                        style: pw.TextStyle(
+                          fontSize: s.fontSizeSmall,
+                          color: s.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Bullets - ALL bullets, compact format
+                  if (exp.bullets.isNotEmpty) ...[
+                    pw.SizedBox(height: s.space1),
+                    ...exp.bullets.map((bullet) {
+                      return pw.Padding(
+                        padding: pw.EdgeInsets.only(
+                          left: s.space2,
+                          bottom: s.space1 * 0.5,
+                        ),
+                        child: pw.Row(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Container(
+                              margin: pw.EdgeInsets.only(top: 3),
+                              width: 3,
+                              height: 3,
+                              decoration: pw.BoxDecoration(
+                                color: s.accent,
+                                shape: pw.BoxShape.circle,
+                              ),
+                            ),
+                            pw.SizedBox(width: s.space1),
+                            pw.Expanded(
+                              child: pw.Text(
+                                bullet,
+                                style: pw.TextStyle(
+                                  fontSize: s.fontSizeTiny,
+                                  color: s.textSecondary,
+                                  lineSpacing: 1.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ],
+              ),
+            );
+          }).toList(),
+          pw.SizedBox(height: s.space3),
         ],
 
-        // Education
+        // Education - Clean, consistent format
         if (cv.education.isNotEmpty) ...[
-          _buildMainSectionHeader('Education', s),
+          pw.Text(
+            CvTranslations.getSectionHeader('EDUCATION', language),
+            style: pw.TextStyle(
+              fontSize: s.fontSizeSmall,
+              fontWeight: pw.FontWeight.bold,
+              color: s.accent,
+              letterSpacing: 1.5,
+            ),
+          ),
           pw.SizedBox(height: s.space2),
-          ...cv.education
-              .take(2)
-              .map((edu) => _buildCompactEducationEntry(edu, s)),
+          ...cv.education.map((edu) {
+            return pw.Container(
+              margin: pw.EdgeInsets.only(bottom: s.space2),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    edu.degree,
+                    style: pw.TextStyle(
+                      fontSize: s.fontSizeSmall,
+                      fontWeight: pw.FontWeight.bold,
+                      color: s.textPrimary,
+                    ),
+                  ),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Expanded(
+                        child: pw.Text(
+                          edu.institution,
+                          style: pw.TextStyle(
+                            fontSize: s.fontSizeSmall,
+                            color: s.textSecondary,
+                          ),
+                        ),
+                      ),
+                      pw.Text(
+                        edu.dateRange,
+                        style: pw.TextStyle(
+                          fontSize: s.fontSizeSmall,
+                          color: s.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
         ],
       ],
     );
@@ -489,121 +679,117 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
   /// Build compact experience entry for two-column layout
   pw.Widget _buildCompactExperienceEntry(Experience exp, PdfStyling s) {
-    return pw.Container(
-      margin: pw.EdgeInsets.only(bottom: s.space3),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          // Title and date on same row
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Expanded(
-                child: pw.Text(
-                  exp.title,
-                  style: pw.TextStyle(
-                    fontSize: s.fontSizeSmall,
-                    fontWeight: pw.FontWeight.bold,
-                    color: s.textPrimary,
-                  ),
-                ),
-              ),
-              pw.Text(
-                exp.dateRange,
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        // Title and date on same row
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Expanded(
+              child: pw.Text(
+                exp.title,
                 style: pw.TextStyle(
                   fontSize: s.fontSizeTiny,
-                  color: s.textSecondary,
+                  fontWeight: pw.FontWeight.bold,
+                  color: s.textPrimary,
                 ),
               ),
-            ],
-          ),
-          // Company
-          pw.Text(
-            exp.company,
-            style: pw.TextStyle(
-              fontSize: s.fontSizeTiny,
-              color: s.accent,
-              fontWeight: pw.FontWeight.bold,
             ),
-          ),
-          // Bullets (max 2)
-          if (exp.bullets.isNotEmpty) ...[
-            pw.SizedBox(height: s.space1),
-            ...exp.bullets.take(2).map((bullet) {
-              return pw.Padding(
-                padding: pw.EdgeInsets.only(bottom: s.space1),
-                child: pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Container(
-                      margin: pw.EdgeInsets.only(top: 3),
-                      width: 4,
-                      height: 4,
-                      decoration: pw.BoxDecoration(
-                        color: s.accent,
-                        shape: pw.BoxShape.circle,
-                      ),
-                    ),
-                    pw.SizedBox(width: s.space2),
-                    pw.Expanded(
-                      child: pw.Text(
-                        bullet,
-                        style: pw.TextStyle(
-                          fontSize: s.fontSizeTiny,
-                          color: s.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
+            pw.SizedBox(width: s.space2),
+            pw.Text(
+              exp.dateRange,
+              style: pw.TextStyle(
+                fontSize: s.fontSizeTiny * 0.9,
+                color: s.textSecondary,
+              ),
+            ),
           ],
+        ),
+        // Company
+        pw.Text(
+          exp.company,
+          style: pw.TextStyle(
+            fontSize: s.fontSizeTiny * 0.9,
+            color: s.accent,
+          ),
+        ),
+        // Bullets (max 2, very compact)
+        if (exp.bullets.isNotEmpty) ...[
+          pw.SizedBox(height: s.space1 * 0.5),
+          ...exp.bullets.take(2).map((bullet) {
+            return pw.Padding(
+              padding: pw.EdgeInsets.only(bottom: s.space1 * 0.5),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Container(
+                    margin: pw.EdgeInsets.only(top: 2),
+                    width: 3,
+                    height: 3,
+                    decoration: pw.BoxDecoration(
+                      color: s.accent,
+                      shape: pw.BoxShape.circle,
+                    ),
+                  ),
+                  pw.SizedBox(width: s.space1),
+                  pw.Expanded(
+                    child: pw.Text(
+                      bullet,
+                      style: pw.TextStyle(
+                        fontSize: s.fontSizeTiny * 0.85,
+                        color: s.textSecondary,
+                        lineSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
-      ),
+      ],
     );
   }
 
   /// Build compact education entry for two-column layout
   pw.Widget _buildCompactEducationEntry(Education edu, PdfStyling s) {
-    return pw.Container(
-      margin: pw.EdgeInsets.only(bottom: s.space2),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Expanded(
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  edu.degree,
-                  style: pw.TextStyle(
-                    fontSize: s.fontSizeSmall,
-                    fontWeight: pw.FontWeight.bold,
-                    color: s.textPrimary,
-                  ),
+    return pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Expanded(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                edu.degree,
+                style: pw.TextStyle(
+                  fontSize: s.fontSizeTiny,
+                  fontWeight: pw.FontWeight.bold,
+                  color: s.textPrimary,
                 ),
-                pw.Text(
-                  edu.institution,
-                  style: pw.TextStyle(
-                    fontSize: s.fontSizeTiny,
-                    color: s.textSecondary,
-                  ),
+              ),
+              pw.Text(
+                edu.institution,
+                style: pw.TextStyle(
+                  fontSize: s.fontSizeTiny * 0.9,
+                  color: s.textSecondary,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          pw.Text(
-            edu.dateRange,
-            style: pw.TextStyle(
-              fontSize: s.fontSizeTiny,
-              color: s.textSecondary,
-            ),
+        ),
+        pw.SizedBox(width: s.space2),
+        pw.Text(
+          edu.dateRange,
+          style: pw.TextStyle(
+            fontSize: s.fontSizeTiny * 0.9,
+            color: s.textSecondary,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -617,14 +803,14 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   ) {
     final widgets = <pw.Widget>[];
 
-    // Header (full width)
+    // Header with profile rendering based on shape
     widgets.add(
-      HeaderComponent.cvHeader(
+      _buildCustomHeader(
         name: cv.contactDetails?.fullName ?? 'Your Name',
         title: cv.contactDetails?.jobTitle,
         contact: cv.contactDetails,
         styling: s,
-        profileImage: profileImage,
+        profileImage: profileImage, // Pass raw image, header will style it
         layout: headerLayout,
       ),
     );
@@ -657,6 +843,62 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
     // Experience
     if (cv.experiences.isNotEmpty) {
+      // Only add bottom margin if education follows
+      final hasEducation = cv.education.isNotEmpty;
+      widgets.add(_buildExperienceSection(cv, s, experienceLayout,
+          addBottomMargin: hasEducation));
+    }
+
+    // Education (last section - no bottom margin)
+    if (cv.education.isNotEmpty) {
+      widgets.add(_buildEducationSection(cv, s, false, addBottomMargin: false));
+    }
+
+    return widgets;
+  }
+
+  /// Compact layout - Maximum information density
+  List<pw.Widget> _buildCompactLayout(
+    CvData cv,
+    PdfStyling s,
+    pw.ImageProvider? profileImage,
+    HeaderLayout headerLayout,
+    ExperienceLayout experienceLayout,
+  ) {
+    final widgets = <pw.Widget>[];
+
+    // Header with profile
+    widgets.add(
+      _buildCustomHeader(
+        name: cv.contactDetails?.fullName ?? 'Your Name',
+        title: cv.contactDetails?.jobTitle,
+        contact: cv.contactDetails,
+        styling: s,
+        profileImage: profileImage,
+        layout: HeaderLayout.compact,
+      ),
+    );
+
+    widgets.add(pw.SizedBox(height: s.sectionGapMinor));
+
+    // Profile (if exists)
+    if (cv.profile.isNotEmpty) {
+      widgets.add(_buildProfileSection(cv, s));
+    }
+
+    // Skills, languages, interests in sections
+    if (cv.skills.isNotEmpty) {
+      widgets.add(_buildSkillsSection(cv, s, true));
+    }
+    if (cv.languages.isNotEmpty) {
+      widgets.add(_buildLanguagesSection(cv, s));
+    }
+    if (cv.interests.isNotEmpty) {
+      widgets.add(_buildInterestsSection(cv, s));
+    }
+
+    // Experience
+    if (cv.experiences.isNotEmpty) {
       widgets.add(_buildExperienceSection(cv, s, experienceLayout));
     }
 
@@ -668,12 +910,362 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     return widgets;
   }
 
+  /// Build custom header with styled profile photo
+  pw.Widget _buildCustomHeader({
+    required String name,
+    String? title,
+    required ContactDetails? contact,
+    required PdfStyling styling,
+    pw.ImageProvider? profileImage,
+    required HeaderLayout layout,
+  }) {
+    // Use HeaderComponent but with our styled profile widget
+    // For now, if we have a custom profile photo, we'll build a custom header
+    // Otherwise use the standard HeaderComponent
+
+    if (profileImage != null && layout == HeaderLayout.modern) {
+      final margins = styling.pageMargins;
+      final shape = styling.customization.profilePhotoShape;
+
+      // SQUARE PHOTOS: Magazine-style, flush left corner, full header height
+      if (shape == ProfilePhotoShape.square) {
+        return pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Container(
+              width: double.infinity,
+              margin: pw.EdgeInsets.only(
+                left: -margins.left,
+                right: -margins.right,
+                top: -margins.top,
+              ),
+              decoration: pw.BoxDecoration(color: styling.accent),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  // Square photo - flush left, full height, no border
+                  pw.Container(
+                    width: 120,
+                    height: 120,
+                    child: pw.Image(profileImage, fit: pw.BoxFit.cover),
+                  ),
+
+                  // Name and title - vertically centered
+                  pw.Expanded(
+                    child: pw.Padding(
+                      padding: pw.EdgeInsets.symmetric(
+                        horizontal: styling.space5,
+                        vertical: styling.space6,
+                      ),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        mainAxisAlignment: pw.MainAxisAlignment.center,
+                        children: [
+                          pw.Text(
+                            name.toUpperCase(),
+                            style: pw.TextStyle(
+                              fontSize: styling.fontSizeH1 * 1.3,
+                              fontWeight: pw.FontWeight.bold,
+                              color: styling.textOnAccent,
+                              letterSpacing: 3,
+                            ),
+                          ),
+                          if (title != null && title.isNotEmpty) ...[
+                            pw.SizedBox(height: styling.space2),
+                            pw.Text(
+                              title,
+                              style: pw.TextStyle(
+                                fontSize: styling.fontSizeH3,
+                                color: styling.textOnAccent.flatten(),
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: styling.space4),
+            if (contact != null) _buildContactRow(contact, styling),
+          ],
+        );
+      }
+
+      // CIRCLE/ROUNDED: Styled with accent border, centered in header
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Container(
+            width: double.infinity,
+            margin: pw.EdgeInsets.only(
+              left: -margins.left,
+              right: -margins.right,
+              top: -margins.top,
+            ),
+            padding: pw.EdgeInsets.symmetric(
+              horizontal: margins.left + styling.space4,
+              vertical: styling.space6,
+            ),
+            decoration: pw.BoxDecoration(color: styling.accent),
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                // Styled profile photo with border
+                _buildProfilePhoto(profileImage, styling, size: 85),
+                pw.SizedBox(width: styling.space5),
+
+                // Name and title
+                pw.Expanded(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        name.toUpperCase(),
+                        style: pw.TextStyle(
+                          fontSize: styling.fontSizeH1 * 1.3,
+                          fontWeight: pw.FontWeight.bold,
+                          color: styling.textOnAccent,
+                          letterSpacing: 3,
+                        ),
+                      ),
+                      if (title != null && title.isNotEmpty) ...[
+                        pw.SizedBox(height: styling.space3),
+                        pw.Text(
+                          title,
+                          style: pw.TextStyle(
+                            fontSize: styling.fontSizeH3,
+                            color: styling.textOnAccent.flatten(),
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          pw.SizedBox(height: styling.space4),
+
+          // Contact info row
+          if (contact != null) _buildContactRow(contact, styling),
+        ],
+      );
+    }
+
+    // CLEAN LAYOUT (Traditional): Right-aligned photo, classic professional look
+    if (layout == HeaderLayout.clean && profileImage != null) {
+      final photoWidget = _buildProfilePhoto(profileImage, styling, size: 70);
+
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Name and title on left
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      name.toUpperCase(),
+                      style: pw.TextStyle(
+                        fontSize: styling.fontSizeH1,
+                        fontWeight: pw.FontWeight.bold,
+                        color: styling.textPrimary,
+                        letterSpacing: styling.letterSpacingWide,
+                      ),
+                    ),
+                    if (title != null && title.isNotEmpty) ...[
+                      pw.SizedBox(height: styling.space2),
+                      pw.Text(
+                        title,
+                        style: pw.TextStyle(
+                          fontSize: styling.fontSizeH3,
+                          color: styling.accent,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              pw.SizedBox(width: styling.space4),
+              // Photo on right
+              photoWidget,
+            ],
+          ),
+          pw.SizedBox(height: styling.space3),
+          pw.Container(height: 2, width: 80, color: styling.accent),
+          if (contact != null) ...[
+            pw.SizedBox(height: styling.space3),
+            _buildContactRow(contact, styling),
+          ],
+        ],
+      );
+    }
+
+    // COMPACT LAYOUT: Top-right photo, maximum space efficiency
+    if (layout == HeaderLayout.compact && profileImage != null) {
+      final photoWidget = _buildProfilePhoto(profileImage, styling, size: 60);
+
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Name and title - compact
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      name.toUpperCase(),
+                      style: pw.TextStyle(
+                        fontSize: styling.fontSizeH2,
+                        fontWeight: pw.FontWeight.bold,
+                        color: styling.textPrimary,
+                        letterSpacing: styling.letterSpacingWide,
+                      ),
+                    ),
+                    if (title != null && title.isNotEmpty) ...[
+                      pw.SizedBox(height: styling.space1),
+                      pw.Text(
+                        title,
+                        style: pw.TextStyle(
+                          fontSize: styling.fontSizeSmall,
+                          color: styling.accent,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              pw.SizedBox(width: styling.space3),
+              // Small photo top-right
+              photoWidget,
+            ],
+          ),
+          if (contact != null) ...[
+            pw.SizedBox(height: styling.space2),
+            _buildContactRow(contact, styling),
+          ],
+        ],
+      );
+    }
+
+    // OTHER LAYOUTS (Sidebar, etc) with photo: Centered
+    if (profileImage != null) {
+      final photoWidget = _buildProfilePhoto(profileImage, styling, size: 80);
+
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Center(child: photoWidget),
+          pw.SizedBox(height: styling.space3),
+          HeaderComponent.cvHeader(
+            name: name,
+            title: title,
+            contact: contact,
+            styling: styling,
+            profileImage: null,
+            layout: layout,
+          ),
+        ],
+      );
+    }
+
+    // No custom photo - use standard HeaderComponent
+    return HeaderComponent.cvHeader(
+      name: name,
+      title: title,
+      contact: contact,
+      styling: styling,
+      profileImage: null,
+      layout: layout,
+    );
+  }
+
+  /// Build contact info row (copied from HeaderComponent for custom header)
+  pw.Widget _buildContactRow(ContactDetails contact, PdfStyling styling) {
+    final items = <pw.Widget>[];
+
+    if (contact.email != null && contact.email!.isNotEmpty) {
+      items.add(
+        IconComponent.contact(
+          type: 'email',
+          text: contact.email!,
+          styling: styling,
+          size: IconSize.small,
+        ),
+      );
+    }
+
+    if (contact.phone != null && contact.phone!.isNotEmpty) {
+      items.add(
+        IconComponent.contact(
+          type: 'phone',
+          text: contact.phone!,
+          styling: styling,
+          size: IconSize.small,
+        ),
+      );
+    }
+
+    if (contact.address != null && contact.address!.isNotEmpty) {
+      items.add(
+        IconComponent.contact(
+          type: 'location',
+          text: contact.address!,
+          styling: styling,
+          size: IconSize.small,
+        ),
+      );
+    }
+
+    if (contact.website != null && contact.website!.isNotEmpty) {
+      items.add(
+        IconComponent.contact(
+          type: 'web',
+          text: contact.website!,
+          styling: styling,
+          size: IconSize.small,
+        ),
+      );
+    }
+
+    if (contact.linkedin != null && contact.linkedin!.isNotEmpty) {
+      items.add(
+        IconComponent.contact(
+          type: 'linkedin',
+          text: contact.linkedin!,
+          styling: styling,
+          size: IconSize.small,
+        ),
+      );
+    }
+
+    return pw.Wrap(
+      alignment: pw.WrapAlignment.start,
+      spacing: styling.space4,
+      runSpacing: styling.space2,
+      children: items,
+    );
+  }
+
   /// Sidebar layout - Enhanced single column with sidebar content at top
   ///
   /// Note: True two-column layouts with pw.Table/pw.Row cannot work with
   /// MultiPage as they can't be split across pages (causes TooManyPagesException).
-  /// Instead, we render sidebar content in a compact format at the top,
-  /// then the main content below. This gives a visually distinct layout
+  /// This "sidebar" layout is actually a single column that puts sidebar content
+  /// (skills, languages) prominently at the top in a compact horizontal format,
   /// while maintaining MultiPage compatibility.
   List<pw.Widget> _buildSidebarLayout(
     CvData cv,
@@ -682,9 +1274,11 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     HeaderLayout headerLayout,
     ExperienceLayout experienceLayout,
   ) {
-    return [
-      // Header with sidebar style
-      HeaderComponent.cvHeader(
+    final widgets = <pw.Widget>[];
+
+    // Header with profile
+    widgets.add(
+      _buildCustomHeader(
         name: cv.contactDetails?.fullName ?? 'Your Name',
         title: cv.contactDetails?.jobTitle,
         contact: cv.contactDetails,
@@ -692,17 +1286,19 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
         profileImage: profileImage,
         layout: headerLayout,
       ),
+    );
 
-      pw.SizedBox(height: s.sectionGapMinor),
+    widgets.add(pw.SizedBox(height: s.sectionGapMinor));
 
-      // Sidebar content rendered as a compact info bar
-      _buildSidebarInfoBar(cv, s),
+    // Compact info bar with skills, languages, etc.
+    widgets.add(_buildSidebarInfoBar(cv, s));
 
-      pw.SizedBox(height: s.sectionGapMajor),
+    widgets.add(pw.SizedBox(height: s.sectionGapMajor));
 
-      // Main content sections
-      ..._buildMainContentSections(cv, s, experienceLayout),
-    ];
+    // Main content sections
+    widgets.addAll(_buildMainContentSections(cv, s, experienceLayout));
+
+    return widgets;
   }
 
   /// Build a compact info bar containing sidebar content (skills, languages, etc.)
@@ -934,9 +1530,11 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     HeaderLayout headerLayout,
     ExperienceLayout experienceLayout,
   ) {
-    return [
-      // Header (use clean or traditional style)
-      HeaderComponent.cvHeader(
+    final widgets = <pw.Widget>[];
+
+    // Header with profile
+    widgets.add(
+      _buildCustomHeader(
         name: cv.contactDetails?.fullName ?? 'Your Name',
         title: cv.contactDetails?.jobTitle,
         contact: cv.contactDetails,
@@ -946,48 +1544,22 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
             ? HeaderLayout.clean
             : headerLayout,
       ),
+    );
 
-      pw.SizedBox(height: s.sectionGapMajor),
+    widgets.add(pw.SizedBox(height: s.sectionGapMajor));
 
-      // Sections with list-style experience (no timeline)
-      ..._buildSectionsInOrder(
+    // Sections with list-style experience (no timeline)
+    widgets.addAll(
+      _buildSectionsInOrder(
         cv,
         s,
         experienceLayout == ExperienceLayout.timeline
             ? ExperienceLayout.list
             : experienceLayout,
       ),
-    ];
-  }
+    );
 
-  /// Compact layout - Dense layout for extensive CVs
-  List<pw.Widget> _buildCompactLayout(
-    CvData cv,
-    PdfStyling s,
-    pw.ImageProvider? profileImage,
-    HeaderLayout headerLayout,
-    ExperienceLayout experienceLayout,
-  ) {
-    return [
-      // Compact header
-      HeaderComponent.cvHeader(
-        name: cv.contactDetails?.fullName ?? 'Your Name',
-        title: cv.contactDetails?.jobTitle,
-        contact: cv.contactDetails,
-        styling: s,
-        layout: HeaderLayout.compact,
-      ),
-
-      pw.SizedBox(height: s.sectionGapMinor),
-
-      // Sections with compact styles
-      ..._buildSectionsInOrder(
-        cv,
-        s,
-        ExperienceLayout.compact,
-        isCompact: true,
-      ),
-    ];
+    return widgets;
   }
 
   // ===========================================================================
@@ -1231,8 +1803,9 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   pw.Widget _buildExperienceSection(
     CvData cv,
     PdfStyling s,
-    ExperienceLayout experienceLayout,
-  ) {
+    ExperienceLayout experienceLayout, {
+    bool addBottomMargin = true,
+  }) {
     if (cv.experiences.isEmpty) {
       return pw.SizedBox();
     }
@@ -1288,7 +1861,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
       children: [
         headerWithFirstEntry,
         ...remainingEntries,
-        pw.SizedBox(height: s.sectionGapMajor),
+        // Only add bottom margin if requested
+        if (addBottomMargin) pw.SizedBox(height: s.sectionGapMajor),
       ],
     );
   }
@@ -1405,7 +1979,6 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     double size = 80,
   }) {
     final shape = s.customization.profilePhotoShape;
-    final photoStyle = s.customization.profilePhotoStyle;
 
     // Determine border radius based on shape
     double borderRadius;
@@ -1425,16 +1998,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
         break;
     }
 
-    // Build the image widget (apply grayscale filter if needed)
+    // Build the image widget
     pw.Widget imageWidget = pw.Image(image, fit: pw.BoxFit.cover);
-
-    // Apply grayscale using ColorFiltered if needed
-    if (photoStyle == ProfilePhotoStyle.grayscale) {
-      // Note: pdf package doesn't have ColorFilter, so we just render the image as-is
-      // The grayscale effect should be applied during image processing before PDF generation
-      // For now, we show a visual indicator by desaturating the border
-      imageWidget = pw.Image(image, fit: pw.BoxFit.cover);
-    }
 
     // Build container with appropriate shape
     if (boxShape == pw.BoxShape.circle) {
@@ -1443,12 +2008,7 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
         height: size,
         decoration: pw.BoxDecoration(
           shape: pw.BoxShape.circle,
-          border: pw.Border.all(
-            color: photoStyle == ProfilePhotoStyle.grayscale
-                ? PdfColors.grey600
-                : s.accent,
-            width: 2,
-          ),
+          border: pw.Border.all(color: s.accent, width: 2),
         ),
         child: pw.ClipOval(
           child: imageWidget,
@@ -1461,12 +2021,7 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
         decoration: pw.BoxDecoration(
           borderRadius:
               borderRadius > 0 ? pw.BorderRadius.circular(borderRadius) : null,
-          border: pw.Border.all(
-            color: photoStyle == ProfilePhotoStyle.grayscale
-                ? PdfColors.grey600
-                : s.accent,
-            width: 2,
-          ),
+          border: pw.Border.all(color: s.accent, width: 2),
         ),
         child: pw.ClipRRect(
           horizontalRadius: borderRadius,

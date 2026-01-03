@@ -3,18 +3,36 @@ import 'pdf_font_family.dart';
 
 /// Template styles for PDF generation - Magazine-inspired layouts
 enum TemplateType {
-  /// Electric high-contrast magazine-style layout with bold design
-  electric('Electric',
-      'Bold magazine-style layout with electric yellow accents and modern brutalist aesthetic');
+  /// Electric/Modern 2 - Bold magazine-style layout
+  electric('Modern 2',
+      'Bold magazine-style layout with geometric accents and modern aesthetic'),
+
+  /// Professional/Modern - Clean professional layout with accent bar
+  professional('Modern', 'Clean professional layout with accent color top bar'),
+
+  /// Traditional/Classic - Conservative, traditional layout
+  traditional(
+      'Classic', 'Conservative, traditional layout for formal applications');
 
   const TemplateType(this.label, this.description);
   final String label;
   final String description;
 
-  // Map old enum values to new Electric template for backwards compatibility
+  // Map old enum values to appropriate templates for backwards compatibility
   static TemplateType fromName(String name) {
-    // All old templates map to electric now
-    return TemplateType.electric;
+    switch (name.toLowerCase()) {
+      case 'professional':
+      case 'modern':
+        return TemplateType.professional;
+      case 'traditional':
+      case 'compact':
+      case 'sidebar':
+      case 'classic':
+        return TemplateType.traditional;
+      case 'electric':
+      default:
+        return TemplateType.electric;
+    }
   }
 }
 
@@ -97,8 +115,7 @@ class TemplateStyle {
     );
   }
 
-  /// Electric template - High-contrast magazine style with electric yellow
-  /// Now uses dark mode by default for a more striking appearance
+  /// Modern 2 template - Bold magazine style
   static TemplateStyle get electric => TemplateStyle(
         type: TemplateType.electric,
         primaryColor: const Color(0xFF000000), // Black
@@ -106,14 +123,38 @@ class TemplateStyle {
         fontFamily: PdfFontFamily.roboto,
         twoColumnLayout: false,
         showPhoto: true,
-        isDarkMode: true, // Dark mode by default
+        isDarkMode: true,
       );
 
-  /// Get all available presets (currently just Electric)
+  /// Modern template - Clean professional with accent bar
+  static TemplateStyle get modern => TemplateStyle(
+        type: TemplateType.professional,
+        primaryColor: const Color(0xFF000000), // Black
+        accentColor: const Color(0xFF3B82F6), // Blue accent
+        fontFamily: PdfFontFamily.roboto,
+        twoColumnLayout: false,
+        showPhoto: true,
+        isDarkMode: false, // Light mode
+      );
+
+  /// Classic template - Conservative, traditional
+  static TemplateStyle get classic => TemplateStyle(
+        type: TemplateType.traditional,
+        primaryColor: const Color(0xFF000000), // Black
+        accentColor: const Color(0xFF6B7280), // Neutral gray
+        fontFamily: PdfFontFamily.openSans,
+        twoColumnLayout: false,
+        showPhoto: false,
+        isDarkMode: false,
+      );
+
+  /// Get all available presets
   static List<TemplateStyle> get allPresets => [
-        electric,
+        modern, // Modern first (clean default)
+        electric, // Modern 2 second (bold option)
+        classic, // Classic last (conservative option)
       ];
 
-  /// Default template (Electric)
-  static TemplateStyle get defaultStyle => electric;
+  /// Default template (Modern)
+  static TemplateStyle get defaultStyle => modern;
 }

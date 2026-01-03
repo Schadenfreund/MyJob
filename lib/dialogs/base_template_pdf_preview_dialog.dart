@@ -167,8 +167,15 @@ abstract class BaseTemplatePdfPreviewDialogState<
   /// Additional sidebar sections (e.g., dark mode toggle, info)
   List<Widget> buildAdditionalSidebarSections() => [];
 
+  /// Build custom preset selector (override for cover letters)
+  /// Return null to use default CV layout presets
+  Widget? buildCustomPresets() => null;
+
   /// Use sidebar layout (true) or horizontal bars (false)
   bool get useSidebarLayout => true;
+
+  /// Hide CV layout presets section (for cover letters)
+  bool get hideCvLayoutPresets => false;
 
   // ============================================================================
   // PDF GENERATION
@@ -285,6 +292,8 @@ abstract class BaseTemplatePdfPreviewDialogState<
                     controller: _controller,
                     availableFonts: _availableFonts,
                     additionalSections: buildAdditionalSidebarSections(),
+                    hideCvLayoutPresets: hideCvLayoutPresets,
+                    customPresetsBuilder: buildCustomPresets,
                   ),
                 ],
                 Expanded(

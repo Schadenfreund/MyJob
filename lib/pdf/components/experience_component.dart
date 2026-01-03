@@ -2,6 +2,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../models/cv_data.dart';
 import '../shared/pdf_styling.dart';
 import '../shared/pdf_icons.dart';
+import '../shared/cv_translations.dart';
 import 'icon_component.dart';
 
 /// Experience Component - Flexible experience rendering with multiple layouts
@@ -212,7 +213,10 @@ class ExperienceComponent {
 
               // Right: Date
               pw.Text(
-                experience.dateRange,
+                CvTranslations.translateDate(
+                  experience.dateRange,
+                  styling.customization.language,
+                ),
                 style: pw.TextStyle(
                   fontSize: styling.fontSizeSmall,
                   color: styling.textSecondary,
@@ -283,7 +287,10 @@ class ExperienceComponent {
                 PdfIcons.calendar(color: styling.accent, size: 10),
                 pw.SizedBox(width: styling.space1),
                 pw.Text(
-                  experience.dateRange,
+                  CvTranslations.translateDate(
+                    experience.dateRange,
+                    styling.customization.language,
+                  ),
                   style: pw.TextStyle(
                     fontSize: styling.fontSizeSmall,
                     color: styling.textSecondary,

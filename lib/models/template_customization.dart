@@ -23,14 +23,16 @@ enum ProfilePhotoShape {
   const ProfilePhotoShape(this.displayName, this.icon);
 }
 
-/// Profile photo color style
+/// Profile photo color style (only color - grayscale removed as PDF library doesn't support it)
 enum ProfilePhotoStyle {
-  color('Color', Icons.color_lens),
-  grayscale('Black & White', Icons.filter_b_and_w);
+  color, // Full color photo
+  // grayscale, // Removed - not supported by pdf package
+}
 
-  final String displayName;
-  final IconData icon;
-  const ProfilePhotoStyle(this.displayName, this.icon);
+/// Language options for CV content
+enum CvLanguage {
+  english,
+  german,
 }
 
 /// CV Layout modes for the professional template
@@ -200,6 +202,13 @@ class TemplateCustomization {
   final bool showProficiencyBars;
 
   // -------------------------------------------------------------------------
+  // LANGUAGE OPTIONS
+  // -------------------------------------------------------------------------
+
+  /// Language of the CV content
+  final CvLanguage language;
+
+  // -------------------------------------------------------------------------
   // CONSTRUCTOR
   // -------------------------------------------------------------------------
 
@@ -222,12 +231,94 @@ class TemplateCustomization {
     this.uppercaseHeaders = true,
     // Visibility
     this.showProfilePhoto = true,
-    this.profilePhotoShape = ProfilePhotoShape.circle,
+    this.profilePhotoShape = ProfilePhotoShape.square,
     this.profilePhotoStyle = ProfilePhotoStyle.color,
     this.showContactIcons = true,
     this.showSkillLevels = true,
     this.showProficiencyBars = true,
+    // Language
+    this.language = CvLanguage.english,
   });
+
+  // -------------------------------------------------------------------------
+  // METHODS - JSON Serialization
+  // -------------------------------------------------------------------------
+
+  /// Convert to JSON for persistence
+  Map<String, dynamic> toJson() {
+    return {
+      'spacingScale': spacingScale,
+      'fontSizeScale': fontSizeScale,
+      'lineHeight': lineHeight,
+      'marginPreset': marginPreset.name,
+      'layoutMode': layoutMode.name,
+      'useTwoColumnLayout': useTwoColumnLayout,
+      'sidebarWidthRatio': sidebarWidthRatio,
+      'sectionOrderPreset': sectionOrderPreset.name,
+      'sectionOrder': sectionOrder?.map((e) => e.toString()).toList(),
+      'headerStyle': headerStyle.name,
+      'experienceStyle': experienceStyle.name,
+      'showDividers': showDividers,
+      'uppercaseHeaders': uppercaseHeaders,
+      'showProfilePhoto': showProfilePhoto,
+      'profilePhotoShape': profilePhotoShape.name,
+      'profilePhotoStyle': profilePhotoStyle.name,
+      'showContactIcons': showContactIcons,
+      'showSkillLevels': showSkillLevels,
+      'showProficiencyBars': showProficiencyBars,
+      'language': language.name,
+    };
+  }
+
+  /// Create from JSON
+  factory TemplateCustomization.fromJson(Map<String, dynamic> json) {
+    return TemplateCustomization(
+      spacingScale: json['spacingScale'] as double? ?? 1.0,
+      fontSizeScale: json['fontSizeScale'] as double? ?? 1.0,
+      lineHeight: json['lineHeight'] as double? ?? 1.4,
+      marginPreset: MarginPreset.values.firstWhere(
+        (e) => e.name == json['marginPreset'],
+        orElse: () => MarginPreset.normal,
+      ),
+      layoutMode: CvLayoutMode.values.firstWhere(
+        (e) => e.name == json['layoutMode'],
+        orElse: () => CvLayoutMode.modern,
+      ),
+      useTwoColumnLayout: json['useTwoColumnLayout'] as bool? ?? false,
+      sidebarWidthRatio: json['sidebarWidthRatio'] as double? ?? 0.35,
+      sectionOrderPreset: SectionOrderPreset.values.firstWhere(
+        (e) => e.name == json['sectionOrderPreset'],
+        orElse: () => SectionOrderPreset.standard,
+      ),
+      sectionOrder: null, // Skip custom order for now
+      headerStyle: HeaderStyle.values.firstWhere(
+        (e) => e.name == json['headerStyle'],
+        orElse: () => HeaderStyle.modern,
+      ),
+      experienceStyle: ExperienceStyle.values.firstWhere(
+        (e) => e.name == json['experienceStyle'],
+        orElse: () => ExperienceStyle.timeline,
+      ),
+      showDividers: json['showDividers'] as bool? ?? true,
+      uppercaseHeaders: json['uppercaseHeaders'] as bool? ?? true,
+      showProfilePhoto: json['showProfilePhoto'] as bool? ?? true,
+      profilePhotoShape: ProfilePhotoShape.values.firstWhere(
+        (e) => e.name == json['profilePhotoShape'],
+        orElse: () => ProfilePhotoShape.square,
+      ),
+      profilePhotoStyle: ProfilePhotoStyle.values.firstWhere(
+        (e) => e.name == json['profilePhotoStyle'],
+        orElse: () => ProfilePhotoStyle.color,
+      ),
+      showContactIcons: json['showContactIcons'] as bool? ?? true,
+      showSkillLevels: json['showSkillLevels'] as bool? ?? true,
+      showProficiencyBars: json['showProficiencyBars'] as bool? ?? true,
+      language: CvLanguage.values.firstWhere(
+        (e) => e.name == json['language'],
+        orElse: () => CvLanguage.english,
+      ),
+    );
+  }
 
   // -------------------------------------------------------------------------
   // FACTORY PRESETS
@@ -357,6 +448,7 @@ class TemplateCustomization {
     bool? showContactIcons,
     bool? showSkillLevels,
     bool? showProficiencyBars,
+    CvLanguage? language,
   }) {
     return TemplateCustomization(
       spacingScale: spacingScale ?? this.spacingScale,
@@ -378,6 +470,7 @@ class TemplateCustomization {
       showContactIcons: showContactIcons ?? this.showContactIcons,
       showSkillLevels: showSkillLevels ?? this.showSkillLevels,
       showProficiencyBars: showProficiencyBars ?? this.showProficiencyBars,
+      language: language ?? this.language,
     );
   }
 }

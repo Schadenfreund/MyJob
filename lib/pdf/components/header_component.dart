@@ -72,7 +72,18 @@ class HeaderComponent {
     required PdfStyling styling,
     HeaderLayout layout = HeaderLayout.clean,
   }) {
-    // Cover letters always use clean or compact layout
+    // Modern layout - accent bar header
+    if (layout == HeaderLayout.modern) {
+      return _buildModernHeader(
+        name: name,
+        title: null,
+        contact: contact,
+        styling: styling,
+        profileImage: null,
+      );
+    }
+
+    // Compact layout
     if (layout == HeaderLayout.compact) {
       return _buildCompactHeader(
         name: name,
@@ -82,6 +93,7 @@ class HeaderComponent {
       );
     }
 
+    // Default: Clean layout
     return _buildCleanHeader(
       name: name,
       title: null,

@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../models/cover_letter.dart';
 import '../../models/cv_data.dart';
@@ -7,35 +8,30 @@ import '../../models/template_customization.dart';
 import '../shared/base_pdf_template.dart';
 import '../shared/pdf_styling.dart';
 import '../shared/cv_translations.dart';
-import '../components/components.dart';
+import '../components/header_component.dart';
+import '../../services/pdf_font_service.dart';
 
-/// Professional Cover Letter Template
-///
-/// A flexible, professional cover letter template that uses the component
-/// system for consistent styling and layout. Supports multiple header
-/// layouts and customization options.
+/// Classic Cover Letter Template - Conservative, Traditional Design
 ///
 /// Features:
-/// - Clean, professional design
-/// - Component-based architecture
-/// - Full customization support
-/// - Proper typography and spacing
-/// - Dark mode support
-/// - Multiple header layouts
-class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
-    with PdfTemplateHelpers {
-  ProfessionalCoverLetterTemplate._();
+/// - Clean, minimalist design
+/// - Traditional formatting
+/// - No bold colors or heavy accents
+/// - Professional and timeless
+/// - Suitable for formal applications
+class ClassicCoverLetterTemplate extends BasePdfTemplate<CoverLetter> {
+  ClassicCoverLetterTemplate._();
 
   /// Singleton instance
-  static final instance = ProfessionalCoverLetterTemplate._();
+  static final instance = ClassicCoverLetterTemplate._();
 
   @override
   TemplateInfo get info => const TemplateInfo(
-        id: 'professional_cover_letter',
-        name: 'Professional',
-        description: 'Clean, flexible professional cover letter template',
+        id: 'classic_cover_letter',
+        name: 'Classic',
+        description: 'Conservative, traditional cover letter template',
         category: 'cover_letter',
-        previewTags: ['professional', 'clean', 'flexible'],
+        previewTags: ['classic', 'traditional', 'conservative'],
       );
 
   @override
@@ -45,12 +41,12 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
     TemplateCustomization? customization,
     Uint8List? profileImageBytes,
   }) async {
-    final pdf = createDocument(
+    final pdf = pw.Document(
       title: 'Cover Letter - ${coverLetter.name}',
       author: coverLetter.senderName ?? 'MyLife',
     );
 
-    final fonts = await loadFonts(style);
+    final fonts = await PdfFontService.getFonts(style.fontFamily);
     final s = PdfStyling(
       style: style,
       customization: customization ?? const TemplateCustomization(),
@@ -59,31 +55,34 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
     // Create ContactDetails from cover letter data
     final contact = _buildContactDetails(coverLetter);
 
-    // Use Modern header layout by default for this template
-    final headerLayout = _mapHeaderStyle(
-      customization?.headerStyle ?? HeaderStyle.modern,
-    );
-
     pdf.addPage(
       pw.MultiPage(
-        pageTheme: PdfPageThemes.standard(
-          regularFont: fonts.regular,
-          boldFont: fonts.bold,
-          mediumFont: fonts.medium,
-          styling: s,
+        pageTheme: pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.all(s.space10),
+          theme: pw.ThemeData.withFont(
+            base: fonts.regular,
+            bold: fonts.bold,
+            fontFallback: [fonts.regular, fonts.bold, fonts.medium],
+          ),
+          buildBackground: (context) => pw.FullPage(
+            ignoreMargins: true,
+            child: pw.Container(color: s.background),
+          ),
         ),
         build: (context) => [
-          // Header with name and contact info
+          // Traditional header - clean and centered
           HeaderComponent.coverLetterHeader(
             name: coverLetter.senderName ?? contact?.fullName ?? 'Your Name',
             contact: contact,
             styling: s,
-            layout: headerLayout,
+            layout:
+                HeaderLayout.clean, // Clean, centered layout for traditional
           ),
 
-          pw.SizedBox(height: s.sectionGapMajor),
+          pw.SizedBox(height: s.space8),
 
-          // Date
+          // Date (right-aligned, traditional placement)
           _buildDateSection(s),
 
           pw.SizedBox(height: s.space6),
@@ -102,7 +101,6 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
             ),
             style: pw.TextStyle(
               fontSize: s.fontSizeBody,
-              fontWeight: pw.FontWeight.bold,
               color: s.textPrimary,
             ),
           ),
@@ -122,16 +120,20 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
             ),
             style: pw.TextStyle(
               fontSize: s.fontSizeBody,
-              color: s.textSecondary,
+              color: s.textPrimary,
             ),
           ),
 
-          pw.SizedBox(height: s.space6),
+          pw.SizedBox(height: s.space8),
 
-          // Signature
-          _buildSignature(
+          // Signature (simple name)
+          pw.Text(
             coverLetter.senderName ?? contact?.fullName ?? '',
-            s,
+            style: pw.TextStyle(
+              fontSize: s.fontSizeBody,
+              fontWeight: pw.FontWeight.bold,
+              color: s.textPrimary,
+            ),
           ),
         ],
       ),
@@ -144,34 +146,23 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
   // SECTION BUILDERS
   // ===========================================================================
 
-  /// Build the date section with accent
+  /// Build date section (right-aligned)
   pw.Widget _buildDateSection(PdfStyling s) {
     final now = DateTime.now();
     final formattedDate = _formatDate(now);
 
-    return pw.Row(
-      children: [
-        pw.Container(
-          width: 4,
-          height: 16,
-          decoration: pw.BoxDecoration(
-            color: s.accent,
-            borderRadius: pw.BorderRadius.circular(2),
-          ),
+    return pw.Align(
+      alignment: pw.Alignment.centerRight,
+      child: pw.Text(
+        CvTranslations.translateDate(
+          formattedDate,
+          s.customization.language,
         ),
-        pw.SizedBox(width: s.space3),
-        pw.Text(
-          CvTranslations.translateDate(
-            formattedDate,
-            s.customization.language,
-          ),
-          style: pw.TextStyle(
-            fontSize: s.fontSizeSmall,
-            color: s.textSecondary,
-            fontWeight: pw.FontWeight.bold,
-          ),
+        style: pw.TextStyle(
+          fontSize: s.fontSizeSmall,
+          color: s.textSecondary,
         ),
-      ],
+      ),
     );
   }
 
@@ -180,18 +171,14 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // Recipient name
         if (coverLetter.recipientName?.isNotEmpty ?? false)
           pw.Text(
             coverLetter.recipientName!,
             style: pw.TextStyle(
               fontSize: s.fontSizeBody,
-              fontWeight: pw.FontWeight.bold,
               color: s.textPrimary,
             ),
           ),
-
-        // Recipient title
         if (coverLetter.recipientTitle?.isNotEmpty ?? false) ...[
           pw.SizedBox(height: s.space1),
           pw.Text(
@@ -202,15 +189,12 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
             ),
           ),
         ],
-
-        // Company name
         if (coverLetter.companyName?.isNotEmpty ?? false) ...[
           pw.SizedBox(height: s.space1),
           pw.Text(
             coverLetter.companyName!,
             style: pw.TextStyle(
               fontSize: s.fontSizeSmall,
-              fontWeight: pw.FontWeight.bold,
               color: s.textSecondary,
             ),
           ),
@@ -221,21 +205,12 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
 
   /// Build letter body with paragraph styling
   pw.Widget _buildLetterBody(String body, PdfStyling s) {
-    // Split into paragraphs
     final paragraphs =
         body.split('\n\n').where((p) => p.trim().isNotEmpty).toList();
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: paragraphs.map((paragraph) {
-        // Check if this is a bullet list
-        if (paragraph.trim().startsWith('-') ||
-            paragraph.trim().startsWith('*') ||
-            paragraph.trim().startsWith('•')) {
-          return _buildBulletList(paragraph, s);
-        }
-
-        // Regular paragraph
         return pw.Container(
           margin: pw.EdgeInsets.only(bottom: s.paragraphGap),
           child: pw.Text(
@@ -243,85 +218,12 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
             style: pw.TextStyle(
               fontSize: s.fontSizeBody,
               height: s.lineHeightRelaxed,
-              color: s.textSecondary,
+              color: s.textPrimary,
             ),
             textAlign: pw.TextAlign.justify,
           ),
         );
       }).toList(),
-    );
-  }
-
-  /// Build a bullet list from paragraph text
-  pw.Widget _buildBulletList(String paragraph, PdfStyling s) {
-    final bullets =
-        paragraph.split('\n').where((l) => l.trim().isNotEmpty).toList();
-
-    return pw.Container(
-      margin: pw.EdgeInsets.only(bottom: s.paragraphGap),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: bullets.map((bullet) {
-          // Remove bullet character
-          final cleanBullet = bullet.trim().replaceFirst(
-                RegExp(r'^[\-\*\•]\s*'),
-                '',
-              );
-
-          return pw.Padding(
-            padding: pw.EdgeInsets.only(bottom: s.space2, left: s.space2),
-            child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                // Bullet icon using IconComponent
-                IconComponent.bullet(
-                  styling: s,
-                  style: BulletStyle.dot,
-                ),
-                pw.SizedBox(width: s.space3),
-                pw.Expanded(
-                  child: pw.Text(
-                    cleanBullet,
-                    style: pw.TextStyle(
-                      fontSize: s.fontSizeBody,
-                      height: s.lineHeightNormal,
-                      color: s.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  /// Build signature with accent line
-  pw.Widget _buildSignature(String name, PdfStyling s) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        // Signature line
-        pw.Container(
-          width: 180,
-          height: 2,
-          decoration: pw.BoxDecoration(
-            color: s.accent,
-            borderRadius: pw.BorderRadius.circular(1),
-          ),
-        ),
-        pw.SizedBox(height: s.space3),
-        pw.Text(
-          name,
-          style: pw.TextStyle(
-            fontSize: s.fontSizeH4,
-            fontWeight: pw.FontWeight.bold,
-            color: s.textPrimary,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ],
     );
   }
 
@@ -331,8 +233,6 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
 
   /// Build ContactDetails from CoverLetter
   ContactDetails? _buildContactDetails(CoverLetter coverLetter) {
-    // Cover letters don't have embedded contact details,
-    // but we can return null and let the header component handle it
     return null;
   }
 
@@ -343,21 +243,7 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
         (coverLetter.companyName?.isNotEmpty ?? false);
   }
 
-  /// Map HeaderStyle to HeaderLayout
-  HeaderLayout _mapHeaderStyle(HeaderStyle style) {
-    switch (style) {
-      case HeaderStyle.modern:
-        return HeaderLayout.modern;
-      case HeaderStyle.clean:
-        return HeaderLayout.clean;
-      case HeaderStyle.sidebar:
-        return HeaderLayout.sidebar;
-      case HeaderStyle.compact:
-        return HeaderLayout.compact;
-    }
-  }
-
-  /// Format date in professional style
+  /// Format date in traditional style
   String _formatDate(DateTime date) {
     const months = [
       'January',

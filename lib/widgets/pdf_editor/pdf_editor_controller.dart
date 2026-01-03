@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/template_customization.dart';
 import '../../models/template_style.dart';
 import '../../models/pdf_font_family.dart';
+import '../../services/customization_persistence.dart';
 
 /// Centralized controller for PDF preview/editor functionality
 ///
@@ -37,10 +38,22 @@ class PdfEditorController extends ChangeNotifier {
     TemplateCustomization? initialCustomization,
     this.regenerationDelay = const Duration(milliseconds: 300),
   })  : _style = initialStyle ?? TemplateStyle.electric,
-        _customization = initialCustomization ?? const TemplateCustomization();
+        _customization = initialCustomization ?? const TemplateCustomization() {
+    // Load saved customization asynchronously
+    _loadSavedCustomization();
+  }
 
   /// Delay before triggering PDF regeneration after style changes
   final Duration regenerationDelay;
+
+  /// Load saved customization from persistence
+  Future<void> _loadSavedCustomization() async {
+    final saved = await CustomizationPersistence.load();
+    if (saved != null) {
+      _customization = saved;
+      notifyListeners();
+    }
+  }
 
   // ============================================================================
   // STATE
@@ -192,7 +205,28 @@ class PdfEditorController extends ChangeNotifier {
     // Always update when copyWith creates a new object
     _customization = newCustomization;
     _scheduleRegeneration();
+
+    // Auto-save settings
+    CustomizationPersistence.save(newCustomization);
   }
+
+  // ============================================================================
+  // STYLE MANAGEMENT
+  // ============================================================================
+
+  /// Set template style (triggers PDF regeneration)
+  void setStyle(TemplateStyle newStyle) {
+    if (_style.type != newStyle.type ||
+        _style.accentColor != newStyle.accentColor ||
+        _style.fontFamily != newStyle.fontFamily) {
+      _style = newStyle;
+      regenerate();
+    }
+  }
+
+  // ============================================================================
+  // LAYOUT MANAGEMENT
+  // ============================================================================
 
   /// Apply a layout preset
   void setLayoutPreset(LayoutPreset preset) {
@@ -214,6 +248,7 @@ class PdfEditorController extends ChangeNotifier {
     if (_customization.spacingScale != clamped) {
       _customization = _customization.copyWith(spacingScale: clamped);
       _scheduleRegeneration();
+      CustomizationPersistence.save(_customization);
     }
   }
 
@@ -223,6 +258,7 @@ class PdfEditorController extends ChangeNotifier {
     if (_customization.fontSizeScale != clamped) {
       _customization = _customization.copyWith(fontSizeScale: clamped);
       _scheduleRegeneration();
+      CustomizationPersistence.save(_customization);
     }
   }
 
@@ -232,6 +268,7 @@ class PdfEditorController extends ChangeNotifier {
     if (_customization.lineHeight != clamped) {
       _customization = _customization.copyWith(lineHeight: clamped);
       _scheduleRegeneration();
+      CustomizationPersistence.save(_customization);
     }
   }
 

@@ -9,12 +9,16 @@ class PdfEditorSidebar extends StatelessWidget {
     required this.controller,
     required this.availableFonts,
     this.additionalSections = const [],
+    this.hideCvLayoutPresets = false,
+    this.customPresetsBuilder,
     super.key,
   });
 
   final PdfEditorController controller;
   final List<PdfFontFamily> availableFonts;
   final List<Widget> additionalSections;
+  final bool hideCvLayoutPresets;
+  final Widget? Function()? customPresetsBuilder;
 
   // Accent color presets (matching PDF styling presets)
   static const List<Color> _accentColorPresets = [
@@ -47,9 +51,32 @@ class PdfEditorSidebar extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              // Design Presets - Most Important
-              _buildLayoutPresetsSection(),
-              const SizedBox(height: 28),
+              // Design Presets - Custom or CV layout presets
+              () {
+                // Try custom presets first
+                final customPresets = customPresetsBuilder?.call();
+                if (customPresets != null) {
+                  return Column(
+                    children: [
+                      customPresets,
+                      const SizedBox(height: 28),
+                    ],
+                  );
+                }
+
+                // Fall back to CV layout presets if not hidden
+                if (!hideCvLayoutPresets) {
+                  return Column(
+                    children: [
+                      _buildLayoutPresetsSection(),
+                      const SizedBox(height: 28),
+                    ],
+                  );
+                }
+
+                // No presets to show
+                return const SizedBox.shrink();
+              }(),
 
               // Color Selection
               _buildAccentColorSection(),
@@ -63,10 +90,14 @@ class PdfEditorSidebar extends StatelessWidget {
               _buildDarkModeToggle(),
               const SizedBox(height: 28),
 
-              // Preset-specific adjustments (replaces Advanced Layout + Customization)
+              // Language Toggle
+              _buildLanguageToggle(),
+              const SizedBox(height: 28),
+
+              // Preset-specific adjustments
               _buildPresetAdjustmentsSection(),
 
-              // Photo Options (only when photo is shown)
+              // Photo Options (always show when photo is enabled - works on all presets)
               if (controller.customization.showProfilePhoto) ...[
                 const SizedBox(height: 28),
                 _buildPhotoOptionsSection(),
@@ -115,8 +146,68 @@ class PdfEditorSidebar extends StatelessWidget {
           Switch(
             value: controller.style.isDarkMode,
             onChanged: (_) => controller.toggleDarkMode(),
-            activeTrackColor: controller.style.accentColor,
-            thumbColor: WidgetStatePropertyAll(controller.style.accentColor),
+            activeTrackColor:
+                controller.style.accentColor.withValues(alpha: 0.5),
+            activeThumbColor: controller.style.accentColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageToggle() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.language,
+            color: controller.style.accentColor,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              controller.customization.language == CvLanguage.english
+                  ? 'English'
+                  : 'Deutsch',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          DropdownButton<CvLanguage>(
+            value: controller.customization.language,
+            dropdownColor: const Color(0xFF1A1A1A),
+            underline: const SizedBox(),
+            icon: Icon(Icons.arrow_drop_down,
+                color: controller.style.accentColor),
+            items: const [
+              DropdownMenuItem(
+                value: CvLanguage.english,
+                child: Text('English', style: TextStyle(color: Colors.white)),
+              ),
+              DropdownMenuItem(
+                value: CvLanguage.german,
+                child: Text('Deutsch', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                controller.updateCustomization(
+                  controller.customization.copyWith(language: value),
+                );
+              }
+            },
           ),
         ],
       ),
@@ -552,74 +643,7 @@ class PdfEditorSidebar extends StatelessWidget {
             );
           }).toList(),
         ),
-        const SizedBox(height: 16),
-
-        // Color style toggle
-        Text(
-          'Style',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.7),
-            fontSize: 11,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: ProfilePhotoStyle.values.map((style) {
-            final isSelected =
-                controller.customization.profilePhotoStyle == style;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: InkWell(
-                onTap: () {
-                  controller.updateCustomization(
-                    controller.customization.copyWith(profilePhotoStyle: style),
-                  );
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? controller.style.accentColor.withValues(alpha: 0.2)
-                        : Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isSelected
-                          ? controller.style.accentColor
-                          : Colors.white.withValues(alpha: 0.1),
-                      width: isSelected ? 2 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        style.icon,
-                        color: isSelected
-                            ? controller.style.accentColor
-                            : Colors.white70,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        style.displayName,
-                        style: TextStyle(
-                          color: isSelected
-                              ? controller.style.accentColor
-                              : Colors.white70,
-                          fontSize: 11,
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
+        // Style selector removed - only one option (color) exists, so no need to show UI
       ],
     );
   }
@@ -665,7 +689,16 @@ class PdfEditorSidebar extends StatelessWidget {
         break;
 
       case LayoutPreset.compact:
-        // Compact preset uses tighter defaults, no extra options needed
+        widgets.addAll([
+          const SizedBox(height: 16),
+          _buildSubsectionHeader('Display Options'),
+          const SizedBox(height: 8),
+          _buildToggle(
+            'Show Profile Photo',
+            controller.customization.showProfilePhoto,
+            () => _toggleShowProfilePhoto(),
+          ),
+        ]);
         break;
 
       case LayoutPreset.traditional:
@@ -673,6 +706,11 @@ class PdfEditorSidebar extends StatelessWidget {
           const SizedBox(height: 16),
           _buildSubsectionHeader('Display Options'),
           const SizedBox(height: 8),
+          _buildToggle(
+            'Show Profile Photo',
+            controller.customization.showProfilePhoto,
+            () => _toggleShowProfilePhoto(),
+          ),
           _buildToggle(
             'Uppercase Headers',
             controller.customization.uppercaseHeaders,
