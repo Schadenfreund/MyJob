@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_data_provider.dart';
+import '../../constants/app_constants.dart';
 import '../../dialogs/unified_import_dialog.dart';
 import '../../utils/ui_utils.dart';
 import '../../utils/dialog_utils.dart';
@@ -46,45 +47,132 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     final theme = Theme.of(context);
+    final userDataProvider = context.watch<UserDataProvider>();
+    final currentLang = userDataProvider.currentLanguage;
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            Icons.person,
-            color: theme.colorScheme.primary,
-            size: 28,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Your Profile',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.5,
-                ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Master profile data for all CVs and Cover Letters • Import YAML files here',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color:
-                      theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                ),
+              child: Icon(
+                Icons.person,
+                color: theme.colorScheme.primary,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Your Profile',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Master profile data for all CVs and Cover Letters • Import YAML files here',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.textTheme.bodySmall?.color
+                          ?.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Language Toggle
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: theme.dividerColor,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildLanguageButton(
+                context,
+                userDataProvider,
+                DocumentLanguage.en,
+                currentLang == DocumentLanguage.en,
+              ),
+              const SizedBox(width: 4),
+              _buildLanguageButton(
+                context,
+                userDataProvider,
+                DocumentLanguage.de,
+                currentLang == DocumentLanguage.de,
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildLanguageButton(
+    BuildContext context,
+    UserDataProvider provider,
+    DocumentLanguage language,
+    bool isSelected,
+  ) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color:
+          isSelected ? theme.colorScheme.primaryContainer : Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: () => provider.switchLanguage(language),
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                language.flag,
+                style: const TextStyle(fontSize: 20),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                language.label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected
+                      ? theme.colorScheme.onPrimaryContainer
+                      : theme.textTheme.labelLarge?.color,
+                ),
+              ),
+              if (isSelected) ...[
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.check_circle,
+                  size: 16,
+                  color: theme.colorScheme.primary,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -207,6 +295,10 @@ class _ProfileSections extends StatelessWidget {
 
         // Interests Section
         _buildInterestsSection(context),
+        const SizedBox(height: 16),
+
+        // Default Cover Letter Section
+        _buildDefaultCoverLetterSection(context),
       ],
     );
   }
@@ -302,6 +394,54 @@ class _ProfileSections extends StatelessWidget {
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildDefaultCoverLetterSection(BuildContext context) {
+    final userDataProvider = context.watch<UserDataProvider>();
+    final coverLetterBody = userDataProvider.defaultCoverLetterBody;
+    final theme = Theme.of(context);
+    final controller = TextEditingController(text: coverLetterBody);
+
+    return CollapsibleCard(
+      title: 'Default Cover Letter',
+      subtitle: 'Template body for new job applications',
+      cardDecoration: UIUtils.getCardDecoration(context),
+      collapsedSummary: Text(
+        coverLetterBody.isEmpty
+            ? 'No default cover letter set'
+            : '${coverLetterBody.split('\n').length} paragraphs',
+        style: theme.textTheme.bodySmall,
+      ),
+      expandedContent: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'This text will be used as the default body for new cover letters. '
+            'You can customize it for each job application later.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: controller,
+            maxLines: 12,
+            decoration: InputDecoration(
+              hintText: 'Enter your default cover letter body...\n\n'
+                  'Example:\nDear Hiring Manager,\n\n'
+                  'I am writing to express my interest in the [Position] role at [Company]...',
+              border: const OutlineInputBorder(),
+              filled: true,
+              fillColor: theme.colorScheme.surface,
+            ),
+            onChanged: (value) {
+              // Debounced save would be better, but for now just save on change
+              userDataProvider.updateDefaultCoverLetterBody(value);
+            },
+          ),
+        ],
+      ),
     );
   }
 }

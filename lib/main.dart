@@ -8,6 +8,7 @@ import 'providers/templates_provider.dart';
 import 'providers/user_data_provider.dart';
 import 'services/settings_service.dart';
 import 'services/log_service.dart';
+import 'services/migration_service.dart';
 import 'widgets/custom_titlebar.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/applications/applications_screen.dart';
@@ -21,6 +22,12 @@ void main() async {
   await LogService.instance.init();
   await LogService.instance.cleanOldLogs(keepDays: 7);
   logInfo('Application starting', tag: 'App');
+
+  // Run migration if needed (convert old user_data.json to new structure)
+  final migrated = await MigrationService.instance.migrateIfNeeded();
+  if (migrated) {
+    logInfo('User data migrated to bilingual structure', tag: 'Migration');
+  }
 
   // Initialize window manager
   await windowManager.ensureInitialized();

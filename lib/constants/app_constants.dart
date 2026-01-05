@@ -49,12 +49,27 @@ enum ApplicationStatus {
 
 /// Supported languages for documents
 enum DocumentLanguage {
-  en('English', 'en'),
-  de('German', 'de');
+  en('English', 'en', '🇬🇧'),
+  de('German', 'de', '🇩🇪');
 
-  const DocumentLanguage(this.label, this.code);
+  const DocumentLanguage(this.label, this.code, this.flag);
   final String label;
   final String code;
+  final String flag;
+
+  /// Get language from code string
+  static DocumentLanguage fromCode(String code) {
+    return DocumentLanguage.values.firstWhere(
+      (lang) => lang.code.toLowerCase() == code.toLowerCase(),
+      orElse: () => DocumentLanguage.en,
+    );
+  }
+
+  /// Convert to JSON-serializable string
+  String toJson() => code;
+
+  /// Create from JSON string
+  static DocumentLanguage fromJson(String json) => fromCode(json);
 }
 
 /// Debug configuration

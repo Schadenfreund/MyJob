@@ -5,6 +5,11 @@ import 'package:path/path.dart' as p;
 import '../models/job_application.dart';
 import '../models/cv_data.dart';
 import '../models/cover_letter.dart';
+import '../models/master_profile.dart';
+import '../models/job_cv_data.dart';
+import '../models/job_cover_letter.dart';
+import '../models/template_customization.dart';
+import '../constants/app_constants.dart';
 
 /// Storage service for persisting application data as JSON files
 class StorageService {
@@ -26,8 +31,14 @@ class StorageService {
       userDataDir.createSync(recursive: true);
     }
 
-    // Create subdirectories
-    for (final subDir in ['applications', 'cvs', 'cover_letters']) {
+    // Create new directory structure for bilingual profiles
+    for (final subDir in [
+      'profiles/en',
+      'profiles/de',
+      'applications',
+      'cvs', // Legacy
+      'cover_letters' // Legacy
+    ]) {
       final dir = Directory(p.join(_userDataPath!, subDir));
       if (!dir.existsSync()) {
         dir.createSync(recursive: true);
@@ -333,6 +344,212 @@ class StorageService {
       debugPrint('Data imported successfully');
     } catch (e) {
       debugPrint('Error importing data: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================================
+  // MASTER PROFILES (Bilingual Support)
+  // ============================================================================
+
+  /// Load master profile for a specific language
+  Future<MasterProfile> loadMasterProfile(DocumentLanguage language) async {
+    try {
+      final userDataPath = await getUserDataPath();
+      final file = File(
+          p.join(userDataPath, 'profiles', language.code, 'base_data.json'));
+
+      if (!file.existsSync()) {
+        // Return empty profile if doesn't exist
+        return MasterProfile.empty(language);
+      }
+
+      final content = await file.readAsString();
+      final json = jsonDecode(content) as Map<String, dynamic>;
+      return MasterProfile.fromJson(json);
+    } catch (e) {
+      debugPrint('Error loading master profile (${language.code}): $e');
+      return MasterProfile.empty(language);
+    }
+  }
+
+  /// Save master profile for a specific language
+  Future<void> saveMasterProfile(MasterProfile profile) async {
+    try {
+      final userDataPath = await getUserDataPath();
+      final file = File(p.join(
+          userDataPath, 'profiles', profile.language.code, 'base_data.json'));
+
+      await file.writeAsString(
+        const JsonEncoder.withIndent('  ').convert(profile.toJson()),
+      );
+
+      debugPrint('Master profile saved (${profile.language.code})');
+    } catch (e) {
+      debugPrint('Error saving master profile: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================================
+  // JOB-SPECIFIC DATA (Per-Application Storage)
+  // ============================================================================
+
+  /// Create job application folder structure
+  Future<String> createJobApplicationFolder(JobApplication application) async {
+    final userDataPath = await getUserDataPath();
+    final date = (application.applicationDate ?? DateTime.now())
+        .toIso8601String()
+        .split('T')[0];
+    final sanitizedCompany =
+        application.company.replaceAll(RegExp(r'[^\w\s-]'), '');
+    final sanitizedPosition =
+        application.position.replaceAll(RegExp(r'[^\w\s-]'), '');
+
+    final folderName =
+        '${date}_${sanitizedCompany}_${sanitizedPosition}_${application.id.substring(0, 8)}';
+    final folderPath = p.join(userDataPath, 'applications', folderName);
+
+    final dir = Directory(folderPath);
+    if (!dir.existsSync()) {
+      dir.createSync(recursive: true);
+
+      // Create exports subfolder
+      final exportsDir = Directory(p.join(folderPath, 'exports'));
+      exportsDir.createSync();
+    }
+
+    return folderPath;
+  }
+
+  /// Clone master profile to job application
+  Future<void> cloneProfileToApplication(
+    MasterProfile profile,
+    JobApplication application,
+  ) async {
+    try {
+      final folderPath = await createJobApplicationFolder(application);
+
+      // Clone CV data
+      final cvData = JobCvData.fromMasterProfile(profile);
+      final cvFile = File(p.join(folderPath, 'cv_data.json'));
+      await cvFile.writeAsString(
+        const JsonEncoder.withIndent('  ').convert(cvData.toJson()),
+      );
+
+      // Clone cover letter with defaults
+      final coverLetter = JobCoverLetter.fromDefault(
+        defaultBody: profile.defaultCoverLetterBody,
+        companyName: application.company,
+      );
+      final clFile = File(p.join(folderPath, 'cl_data.json'));
+      await clFile.writeAsString(
+        const JsonEncoder.withIndent('  ').convert(coverLetter.toJson()),
+      );
+
+      // Create default PDF settings
+      const pdfSettings = TemplateCustomization();
+      final pdfFile = File(p.join(folderPath, 'pdf_settings.json'));
+      await pdfFile.writeAsString(
+        const JsonEncoder.withIndent('  ').convert(pdfSettings.toJson()),
+      );
+
+      // Save application metadata with folder path
+      final updatedApp = application.copyWith(folderPath: folderPath);
+      await saveApplication(updatedApp);
+
+      debugPrint('Profile cloned to: $folderPath');
+    } catch (e) {
+      debugPrint('Error cloning profile to application: $e');
+      rethrow;
+    }
+  }
+
+  /// Load job-specific CV data
+  Future<JobCvData?> loadJobCvData(String folderPath) async {
+    try {
+      final file = File(p.join(folderPath, 'cv_data.json'));
+      if (!file.existsSync()) return null;
+
+      final content = await file.readAsString();
+      final json = jsonDecode(content) as Map<String, dynamic>;
+      return JobCvData.fromJson(json);
+    } catch (e) {
+      debugPrint('Error loading job CV data: $e');
+      return null;
+    }
+  }
+
+  /// Save job-specific CV data
+  Future<void> saveJobCvData(String folderPath, JobCvData data) async {
+    try {
+      final file = File(p.join(folderPath, 'cv_data.json'));
+      await file.writeAsString(
+        const JsonEncoder.withIndent('  ').convert(data.toJson()),
+      );
+      debugPrint('Job CV data saved');
+    } catch (e) {
+      debugPrint('Error saving job CV data: $e');
+      rethrow;
+    }
+  }
+
+  /// Load job-specific cover letter
+  Future<JobCoverLetter?> loadJobCoverLetter(String folderPath) async {
+    try {
+      final file = File(p.join(folderPath, 'cl_data.json'));
+      if (!file.existsSync()) return null;
+
+      final content = await file.readAsString();
+      final json = jsonDecode(content) as Map<String, dynamic>;
+      return JobCoverLetter.fromJson(json);
+    } catch (e) {
+      debugPrint('Error loading job cover letter: $e');
+      return null;
+    }
+  }
+
+  /// Save job-specific cover letter
+  Future<void> saveJobCoverLetter(
+      String folderPath, JobCoverLetter letter) async {
+    try {
+      final file = File(p.join(folderPath, 'cl_data.json'));
+      await file.writeAsString(
+        const JsonEncoder.withIndent('  ').convert(letter.toJson()),
+      );
+      debugPrint('Job cover letter saved');
+    } catch (e) {
+      debugPrint('Error saving job cover letter: $e');
+      rethrow;
+    }
+  }
+
+  /// Load job-specific PDF settings
+  Future<TemplateCustomization?> loadJobPdfSettings(String folderPath) async {
+    try {
+      final file = File(p.join(folderPath, 'pdf_settings.json'));
+      if (!file.existsSync()) return const TemplateCustomization();
+
+      final content = await file.readAsString();
+      final json = jsonDecode(content) as Map<String, dynamic>;
+      return TemplateCustomization.fromJson(json);
+    } catch (e) {
+      debugPrint('Error loading job PDF settings: $e');
+      return const TemplateCustomization();
+    }
+  }
+
+  /// Save job-specific PDF settings
+  Future<void> saveJobPdfSettings(
+      String folderPath, TemplateCustomization settings) async {
+    try {
+      final file = File(p.join(folderPath, 'pdf_settings.json'));
+      await file.writeAsString(
+        const JsonEncoder.withIndent('  ').convert(settings.toJson()),
+      );
+      debugPrint('Job PDF settings saved');
+    } catch (e) {
+      debugPrint('Error saving job PDF settings: $e');
       rethrow;
     }
   }

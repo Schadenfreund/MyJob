@@ -74,10 +74,11 @@ class ApplicationsProvider extends ChangeNotifier {
     }
   }
 
-  /// Create a new application
+  /// Create a new application and clone profile data
   Future<JobApplication> createApplication({
     required String company,
     required String position,
+    required DocumentLanguage baseLanguage,
     String? location,
     String? jobUrl,
     String? contactPerson,
@@ -89,6 +90,7 @@ class ApplicationsProvider extends ChangeNotifier {
       id: _uuid.v4(),
       company: company,
       position: position,
+      baseLanguage: baseLanguage,
       status: ApplicationStatus.draft,
       applicationDate: DateTime.now(),
       lastUpdated: DateTime.now(),
@@ -100,11 +102,21 @@ class ApplicationsProvider extends ChangeNotifier {
       salary: salary,
     );
 
-    await _storage.saveApplication(application);
-    _applications.insert(0, application);
+    // Load the master profile for the selected language
+    final masterProfile = await _storage.loadMasterProfile(baseLanguage);
+
+    // Clone the profile data to the job application folder
+    await _storage.cloneProfileToApplication(masterProfile, application);
+
+    // Reload the application to get the updated folderPath
+    final applications = await _storage.loadApplications();
+    final createdApp =
+        applications.firstWhere((app) => app.id == application.id);
+
+    _applications.insert(0, createdApp);
     notifyListeners();
 
-    return application;
+    return createdApp;
   }
 
   /// Update an existing application

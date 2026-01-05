@@ -12,6 +12,7 @@ import '../../utils/dialog_utils.dart';
 import '../../utils/app_date_utils.dart';
 import '../../services/pdf_service.dart';
 import 'application_editor_dialog.dart';
+import '../tailoring/tailoring_workspace.dart';
 
 /// Applications screen - Organized with CollapsibleCard sections by status
 class ApplicationsScreen extends StatelessWidget {
@@ -443,6 +444,27 @@ class _ApplicationCardState extends State<_ApplicationCard> {
               const SizedBox(height: 16),
               Row(
                 children: [
+                  // Tailor button - Opens the workspace
+                  if (widget.application.folderPath != null)
+                    FilledButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => TailoringWorkspace(
+                              application: widget.application,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.edit_note, size: 18),
+                      label: const Text('Tailor'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                  if (widget.application.folderPath != null)
+                    const SizedBox(width: 12),
                   TextButton.icon(
                     onPressed: widget.onEdit,
                     icon: const Icon(Icons.edit, size: 16),

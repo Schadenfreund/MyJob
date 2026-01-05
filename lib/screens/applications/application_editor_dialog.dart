@@ -33,6 +33,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
   final _salaryController = TextEditingController();
 
   ApplicationStatus _status = ApplicationStatus.draft;
+  DocumentLanguage _baseLanguage = DocumentLanguage.en; // Default to English
   bool _isEditing = false;
   JobApplication? _existingApplication;
 
@@ -213,6 +214,44 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
 
                 // Template Selection (only for new applications)
                 if (!_isEditing) ...[
+                  Divider(color: theme.dividerColor),
+                  const SizedBox(height: 24),
+                  Text('Application Language',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Select the base language for your CV and cover letter',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.textTheme.bodySmall?.color
+                          ?.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: DocumentLanguage.values.map((lang) {
+                      final isSelected = _baseLanguage == lang;
+                      return ChoiceChip(
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(lang.flag),
+                            const SizedBox(width: 8),
+                            Text(lang.label),
+                          ],
+                        ),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() => _baseLanguage = lang);
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
                   Divider(color: theme.dividerColor),
                   const SizedBox(height: 24),
                   Text('Documents',
@@ -521,6 +560,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
       final newApp = await applicationsProvider.createApplication(
         company: _companyController.text,
         position: _positionController.text,
+        baseLanguage: _baseLanguage,
         location:
             _locationController.text.isEmpty ? null : _locationController.text,
         jobUrl: _jobUrlController.text.isEmpty ? null : _jobUrlController.text,

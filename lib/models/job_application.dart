@@ -6,6 +6,8 @@ class JobApplication {
     required this.id,
     required this.company,
     required this.position,
+    required this.baseLanguage,
+    this.folderPath,
     this.status = ApplicationStatus.draft,
     this.applicationDate,
     this.lastUpdated,
@@ -13,11 +15,14 @@ class JobApplication {
     this.jobUrl,
     this.contactPerson,
     this.contactEmail,
-    this.cvInstanceId,
-    this.coverLetterInstanceId,
     this.notes,
     this.salary,
+    this.interviewDate,
+    this.followUpDate,
     this.reminders = const [],
+    // Legacy fields for backward compatibility
+    this.cvInstanceId,
+    this.coverLetterInstanceId,
   });
 
   /// Create from JSON
@@ -26,6 +31,10 @@ class JobApplication {
       id: json['id'] as String,
       company: json['company'] as String,
       position: json['position'] as String,
+      baseLanguage: json['baseLanguage'] != null
+          ? DocumentLanguage.fromJson(json['baseLanguage'] as String)
+          : DocumentLanguage.en,
+      folderPath: json['folderPath'] as String?,
       status: ApplicationStatus.values.firstWhere(
         (s) => s.name == json['status'],
         orElse: () => ApplicationStatus.draft,
@@ -40,21 +49,30 @@ class JobApplication {
       jobUrl: json['jobUrl'] as String?,
       contactPerson: json['contactPerson'] as String?,
       contactEmail: json['contactEmail'] as String?,
-      cvInstanceId: (json['cvInstanceId'] ?? json['cvId']) as String?,
-      coverLetterInstanceId:
-          (json['coverLetterInstanceId'] ?? json['coverLetterId']) as String?,
       notes: json['notes'] as String?,
       salary: json['salary'] as String?,
+      interviewDate: json['interviewDate'] != null
+          ? DateTime.parse(json['interviewDate'] as String)
+          : null,
+      followUpDate: json['followUpDate'] != null
+          ? DateTime.parse(json['followUpDate'] as String)
+          : null,
       reminders: (json['reminders'] as List<dynamic>?)
               ?.map((r) => Reminder.fromJson(r as Map<String, dynamic>))
               .toList() ??
           [],
+      // Legacy fields
+      cvInstanceId: (json['cvInstanceId'] ?? json['cvId']) as String?,
+      coverLetterInstanceId:
+          (json['coverLetterInstanceId'] ?? json['coverLetterId']) as String?,
     );
   }
 
   final String id;
   final String company;
   final String position;
+  final DocumentLanguage baseLanguage;
+  final String? folderPath;
   final ApplicationStatus status;
   final DateTime? applicationDate;
   final DateTime? lastUpdated;
@@ -62,17 +80,25 @@ class JobApplication {
   final String? jobUrl;
   final String? contactPerson;
   final String? contactEmail;
-  final String? cvInstanceId;
-  final String? coverLetterInstanceId;
   final String? notes;
   final String? salary;
+  final DateTime? interviewDate;
+  final DateTime? followUpDate;
   final List<Reminder> reminders;
+
+  // Legacy fields for backward compatibility
+  @Deprecated('Use folder-based storage instead')
+  final String? cvInstanceId;
+  @Deprecated('Use folder-based storage instead')
+  final String? coverLetterInstanceId;
 
   /// Convert to JSON
   Map<String, dynamic> toJson() => {
         'id': id,
         'company': company,
         'position': position,
+        'baseLanguage': baseLanguage.toJson(),
+        'folderPath': folderPath,
         'status': status.name,
         'applicationDate': applicationDate?.toIso8601String(),
         'lastUpdated': lastUpdated?.toIso8601String(),
@@ -80,11 +106,14 @@ class JobApplication {
         'jobUrl': jobUrl,
         'contactPerson': contactPerson,
         'contactEmail': contactEmail,
-        'cvInstanceId': cvInstanceId,
-        'coverLetterInstanceId': coverLetterInstanceId,
         'notes': notes,
         'salary': salary,
+        'interviewDate': interviewDate?.toIso8601String(),
+        'followUpDate': followUpDate?.toIso8601String(),
         'reminders': reminders.map((r) => r.toJson()).toList(),
+        // Legacy fields
+        'cvInstanceId': cvInstanceId,
+        'coverLetterInstanceId': coverLetterInstanceId,
       };
 
   /// Create a copy with updated fields
@@ -92,6 +121,8 @@ class JobApplication {
     String? id,
     String? company,
     String? position,
+    DocumentLanguage? baseLanguage,
+    String? folderPath,
     ApplicationStatus? status,
     DateTime? applicationDate,
     DateTime? lastUpdated,
@@ -99,16 +130,20 @@ class JobApplication {
     String? jobUrl,
     String? contactPerson,
     String? contactEmail,
-    String? cvInstanceId,
-    String? coverLetterInstanceId,
     String? notes,
     String? salary,
+    DateTime? interviewDate,
+    DateTime? followUpDate,
     List<Reminder>? reminders,
+    String? cvInstanceId,
+    String? coverLetterInstanceId,
   }) {
     return JobApplication(
       id: id ?? this.id,
       company: company ?? this.company,
       position: position ?? this.position,
+      baseLanguage: baseLanguage ?? this.baseLanguage,
+      folderPath: folderPath ?? this.folderPath,
       status: status ?? this.status,
       applicationDate: applicationDate ?? this.applicationDate,
       lastUpdated: lastUpdated ?? this.lastUpdated,
@@ -116,12 +151,14 @@ class JobApplication {
       jobUrl: jobUrl ?? this.jobUrl,
       contactPerson: contactPerson ?? this.contactPerson,
       contactEmail: contactEmail ?? this.contactEmail,
+      notes: notes ?? this.notes,
+      salary: salary ?? this.salary,
+      interviewDate: interviewDate ?? this.interviewDate,
+      followUpDate: followUpDate ?? this.followUpDate,
+      reminders: reminders ?? this.reminders,
       cvInstanceId: cvInstanceId ?? this.cvInstanceId,
       coverLetterInstanceId:
           coverLetterInstanceId ?? this.coverLetterInstanceId,
-      notes: notes ?? this.notes,
-      salary: salary ?? this.salary,
-      reminders: reminders ?? this.reminders,
     );
   }
 }
