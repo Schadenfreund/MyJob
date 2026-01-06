@@ -9,6 +9,9 @@ class EditableField {
     required this.onChanged,
     this.maxLines = 1,
     this.hint,
+    this.actionIcon,
+    this.actionTooltip,
+    this.onAction,
   });
 
   final String id;
@@ -17,6 +20,9 @@ class EditableField {
   final ValueChanged<String> onChanged;
   final int maxLines;
   final String? hint;
+  final IconData? actionIcon;
+  final String? actionTooltip;
+  final VoidCallback? onAction;
 }
 
 /// Panel for editing PDF template text fields
@@ -224,14 +230,29 @@ class _TemplateEditPanelState extends State<TemplateEditPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          field.label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.8),
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                field.label,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            if (field.onAction != null && field.actionIcon != null)
+              IconButton(
+                onPressed: field.onAction,
+                icon: Icon(field.actionIcon, size: 18),
+                tooltip: field.actionTooltip ?? '',
+                color: Colors.white.withValues(alpha: 0.6),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+          ],
         ),
         const SizedBox(height: 8),
         TextField(

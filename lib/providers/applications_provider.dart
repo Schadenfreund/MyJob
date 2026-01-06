@@ -182,33 +182,4 @@ class ApplicationsProvider extends ChangeNotifier {
     _searchQuery = '';
     notifyListeners();
   }
-
-  /// Link CV instance to application
-  Future<void> linkCvInstance(String applicationId, String cvInstanceId) async {
-    final index = _applications.indexWhere((app) => app.id == applicationId);
-    if (index != -1) {
-      final updated = _applications[index].copyWith(
-        cvInstanceId: cvInstanceId,
-        lastUpdated: DateTime.now(),
-      );
-      await _storage.saveApplication(updated);
-      _applications[index] = updated;
-      notifyListeners();
-    }
-  }
-
-  /// Link cover letter instance to application
-  Future<void> linkCoverLetterInstance(
-      String applicationId, String coverLetterInstanceId) async {
-    final index = _applications.indexWhere((app) => app.id == applicationId);
-    if (index != -1) {
-      final updated = _applications[index].copyWith(
-        coverLetterInstanceId: coverLetterInstanceId,
-        lastUpdated: DateTime.now(),
-      );
-      await _storage.saveApplication(updated);
-      _applications[index] = updated;
-      notifyListeners();
-    }
-  }
 }

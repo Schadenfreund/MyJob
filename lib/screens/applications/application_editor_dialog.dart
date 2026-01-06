@@ -3,8 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/applications_provider.dart';
 import '../../providers/templates_provider.dart';
 import '../../models/job_application.dart';
-import '../../models/cv_template.dart';
-import '../../models/cover_letter_template.dart';
+
 import '../../constants/app_constants.dart';
 import '../../widgets/status_badge.dart';
 
@@ -36,10 +35,6 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
   DocumentLanguage _baseLanguage = DocumentLanguage.en; // Default to English
   bool _isEditing = false;
   JobApplication? _existingApplication;
-
-  // Template selection
-  CvTemplate? _selectedCvTemplate;
-  CoverLetterTemplate? _selectedCoverLetterTemplate;
 
   @override
   void initState() {
@@ -82,7 +77,6 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final templatesProvider = context.watch<TemplatesProvider>();
 
     return Dialog(
       child: ConstrainedBox(
@@ -212,7 +206,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                 ),
                 const SizedBox(height: 24),
 
-                // Template Selection (only for new applications)
+                // Language Selection (only for new applications)
                 if (!_isEditing) ...[
                   Divider(color: theme.dividerColor),
                   const SizedBox(height: 24),
@@ -221,7 +215,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                           ?.copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   Text(
-                    'Select the base language for your CV and cover letter',
+                    'Select the language for your application documents',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.textTheme.bodySmall?.color
                           ?.withValues(alpha: 0.7),
@@ -250,45 +244,6 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                         },
                       );
                     }).toList(),
-                  ),
-                  const SizedBox(height: 24),
-                  Divider(color: theme.dividerColor),
-                  const SizedBox(height: 24),
-                  Text('Documents',
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Select templates to create customized documents for this application',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.bodySmall?.color
-                          ?.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // CV Template Selection
-                  _buildTemplateSelector(
-                    theme,
-                    'CV Template',
-                    Icons.description,
-                    _selectedCvTemplate?.name ?? 'Select CV template',
-                    templatesProvider.cvTemplates.isEmpty,
-                    () =>
-                        _showCvTemplateSelector(templatesProvider.cvTemplates),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Cover Letter Template Selection
-                  _buildTemplateSelector(
-                    theme,
-                    'Cover Letter Template',
-                    Icons.email,
-                    _selectedCoverLetterTemplate?.name ??
-                        'Select cover letter template',
-                    templatesProvider.coverLetterTemplates.isEmpty,
-                    () => _showCoverLetterTemplateSelector(
-                        templatesProvider.coverLetterTemplates),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -358,180 +313,10 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
     );
   }
 
-  Widget _buildTemplateSelector(
-    ThemeData theme,
-    String label,
-    IconData icon,
-    String value,
-    bool isEmpty,
-    VoidCallback onTap,
-  ) {
-    return InkWell(
-      onTap: isEmpty ? null : onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: theme.brightness == Brightness.dark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.03),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: theme.dividerColor,
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: theme.colorScheme.primary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.bodySmall?.color
-                          ?.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    isEmpty ? 'No templates available' : value,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: isEmpty
-                          ? theme.textTheme.bodySmall?.color
-                              ?.withValues(alpha: 0.4)
-                          : null,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (!isEmpty)
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showCvTemplateSelector(List<CvTemplate> templates) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select CV Template'),
-        content: SizedBox(
-          width: 400,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: templates.length,
-            itemBuilder: (context, index) {
-              final template = templates[index];
-              final isSelected = _selectedCvTemplate?.id == template.id;
-              return ListTile(
-                leading: Icon(
-                  Icons.description,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                title: Text(template.name),
-                subtitle: Text(
-                  '${template.experiences.length} experiences • ${template.skills.length} skills',
-                ),
-                trailing: isSelected
-                    ? const Icon(Icons.check_circle, color: Colors.green)
-                    : null,
-                selected: isSelected,
-                onTap: () {
-                  setState(() {
-                    _selectedCvTemplate = template;
-                  });
-                  Navigator.pop(context);
-                },
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showCoverLetterTemplateSelector(List<CoverLetterTemplate> templates) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Cover Letter Template'),
-        content: SizedBox(
-          width: 400,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: templates.length,
-            itemBuilder: (context, index) {
-              final template = templates[index];
-              final isSelected =
-                  _selectedCoverLetterTemplate?.id == template.id;
-              return ListTile(
-                leading: Icon(
-                  Icons.email,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                title: Text(template.name),
-                subtitle: Text(
-                  template.body.isEmpty
-                      ? 'No content yet'
-                      : '${template.body.length} characters',
-                ),
-                trailing: isSelected
-                    ? const Icon(Icons.check_circle, color: Colors.green)
-                    : null,
-                selected: isSelected,
-                onTap: () {
-                  setState(() {
-                    _selectedCoverLetterTemplate = template;
-                  });
-                  Navigator.pop(context);
-                },
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
     final applicationsProvider = context.read<ApplicationsProvider>();
-    final templatesProvider = context.read<TemplatesProvider>();
 
     if (_isEditing && _existingApplication != null) {
       await applicationsProvider.updateApplication(
@@ -555,8 +340,12 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
           status: _status,
         ),
       );
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
     } else {
-      // Create new application
+      // Create new application - profile data is automatically cloned
       final newApp = await applicationsProvider.createApplication(
         company: _companyController.text,
         position: _positionController.text,
@@ -574,30 +363,11 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
         salary: _salaryController.text.isEmpty ? null : _salaryController.text,
       );
 
-      // Create instances from selected templates
-      if (_selectedCvTemplate != null) {
-        final cvInstance = await templatesProvider.createCvInstanceFromTemplate(
-          templateId: _selectedCvTemplate!.id,
-          applicationId: newApp.id,
-        );
-        await applicationsProvider.linkCvInstance(newApp.id, cvInstance.id);
+      // Close this dialog and return the created application
+      // The caller will open the PDF editor
+      if (mounted) {
+        Navigator.pop(context, newApp);
       }
-
-      if (_selectedCoverLetterTemplate != null) {
-        final clInstance =
-            await templatesProvider.createCoverLetterInstanceFromTemplate(
-          templateId: _selectedCoverLetterTemplate!.id,
-          applicationId: newApp.id,
-          companyName: _companyController.text,
-          jobTitle: _positionController.text,
-        );
-        await applicationsProvider.linkCoverLetterInstance(
-            newApp.id, clInstance.id);
-      }
-    }
-
-    if (mounted) {
-      Navigator.pop(context);
     }
   }
 
@@ -607,7 +377,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
       builder: (context) => AlertDialog(
         title: const Text('Delete Application?'),
         content: const Text(
-            'This will also delete associated CV and cover letter instances. This action cannot be undone.'),
+            'This will delete the application and all associated documents. This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

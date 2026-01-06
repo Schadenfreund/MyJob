@@ -13,6 +13,7 @@ class DocumentTemplateCard extends StatelessWidget {
     required this.onEdit,
     required this.onDuplicate,
     required this.onDelete,
+    required this.onRename,
     super.key,
   });
 
@@ -24,6 +25,7 @@ class DocumentTemplateCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDuplicate;
   final VoidCallback onDelete;
+  final VoidCallback onRename;
 
   @override
   Widget build(BuildContext context) {
@@ -135,6 +137,9 @@ class DocumentTemplateCard extends StatelessWidget {
                   icon: const Icon(Icons.more_vert, size: 18),
                   onSelected: (value) {
                     switch (value) {
+                      case 'rename':
+                        onRename();
+                        break;
                       case 'duplicate':
                         onDuplicate();
                         break;
@@ -144,6 +149,16 @@ class DocumentTemplateCard extends StatelessWidget {
                     }
                   },
                   itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'rename',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_outlined, size: 18),
+                          SizedBox(width: 12),
+                          Text('Rename'),
+                        ],
+                      ),
+                    ),
                     const PopupMenuItem(
                       value: 'duplicate',
                       child: Row(

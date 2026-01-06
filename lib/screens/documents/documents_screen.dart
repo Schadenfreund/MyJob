@@ -97,6 +97,7 @@ class DocumentsScreen extends StatelessWidget {
                           onDuplicate: () =>
                               _duplicateCvTemplate(context, template),
                           onDelete: () => _deleteCvTemplate(context, template),
+                          onRename: () => _renameCvTemplate(context, template),
                         ),
                       ),
                     ),
@@ -175,6 +176,8 @@ class DocumentsScreen extends StatelessWidget {
                               _duplicateCoverLetterTemplate(context, template),
                           onDelete: () =>
                               _deleteCoverLetterTemplate(context, template),
+                          onRename: () =>
+                              _renameCoverLetterTemplate(context, template),
                         ),
                       ),
                     ),
@@ -261,6 +264,58 @@ class DocumentsScreen extends StatelessWidget {
         context.showErrorSnackBar('Error duplicating template: $e');
       }
     }
+  }
+
+  void _renameCvTemplate(BuildContext context, CvTemplate template) async {
+    final controller = TextEditingController(text: template.name);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename Template'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Template Name',
+            hintText: 'Enter new name',
+          ),
+          autofocus: true,
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName != null &&
+        newName.isNotEmpty &&
+        newName != template.name &&
+        context.mounted) {
+      final templatesProvider = context.read<TemplatesProvider>();
+      try {
+        await templatesProvider
+            .updateCvTemplate(template.copyWith(name: newName));
+        if (context.mounted) {
+          context.showSuccessSnackBar('Template renamed to "$newName"');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          context.showErrorSnackBar('Error renaming template: $e');
+        }
+      }
+    }
+
+    // Dispose controller after dialog animation completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.dispose();
+    });
   }
 
   void _deleteCvTemplate(BuildContext context, CvTemplate template) async {
@@ -357,6 +412,59 @@ class DocumentsScreen extends StatelessWidget {
         context.showErrorSnackBar('Error duplicating template: $e');
       }
     }
+  }
+
+  void _renameCoverLetterTemplate(
+      BuildContext context, CoverLetterTemplate template) async {
+    final controller = TextEditingController(text: template.name);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename Template'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Template Name',
+            hintText: 'Enter new name',
+          ),
+          autofocus: true,
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName != null &&
+        newName.isNotEmpty &&
+        newName != template.name &&
+        context.mounted) {
+      final templatesProvider = context.read<TemplatesProvider>();
+      try {
+        await templatesProvider
+            .updateCoverLetterTemplate(template.copyWith(name: newName));
+        if (context.mounted) {
+          context.showSuccessSnackBar('Template renamed to "$newName"');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          context.showErrorSnackBar('Error renaming template: $e');
+        }
+      }
+    }
+
+    // Dispose controller after dialog animation completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.dispose();
+    });
   }
 
   void _deleteCoverLetterTemplate(

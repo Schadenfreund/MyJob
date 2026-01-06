@@ -1,18 +1,20 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:path/path.dart' as path;
 import '../../constants/app_constants.dart';
 import '../../providers/applications_provider.dart';
-import '../../providers/templates_provider.dart';
+
 import '../../widgets/status_badge.dart';
 import '../../widgets/collapsible_card.dart';
 import '../../utils/ui_utils.dart';
 import '../../utils/dialog_utils.dart';
 import '../../utils/app_date_utils.dart';
-import '../../services/pdf_service.dart';
+import '../../services/storage_service.dart';
+import '../../models/template_style.dart';
+import '../../models/template_customization.dart';
 import 'application_editor_dialog.dart';
-import '../tailoring/tailoring_workspace.dart';
+import '../../dialogs/job_application_pdf_dialog.dart';
 
 /// Applications screen - Organized with CollapsibleCard sections by status
 class ApplicationsScreen extends StatelessWidget {
@@ -68,6 +70,38 @@ class ApplicationsScreen extends StatelessWidget {
                 icon: Icons.add,
               ),
             ),
+            SizedBox(height: UIUtils.spacingMd),
+
+            // Search bar
+            if (applicationsProvider.allApplications.isNotEmpty)
+              TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search by company, position, or location...',
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  suffixIcon: applicationsProvider.searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 20),
+                          onPressed: () {
+                            applicationsProvider.setSearchQuery('');
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.3),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                onChanged: (value) {
+                  applicationsProvider.setSearchQuery(value);
+                },
+              ),
             SizedBox(height: UIUtils.spacingXl),
 
             // Empty state
@@ -269,10 +303,58 @@ class ApplicationsScreen extends StatelessWidget {
     );
   }
 
-  void _showAddDialog(BuildContext context) {
-    showDialog(
+  Future<void> _showAddDialog(BuildContext context) async {
+    // Open the application creation dialog
+    final newApplication = await showDialog(
       context: context,
       builder: (context) => const ApplicationEditorDialog(),
+    );
+
+    // If an application was created (not canceled), open the PDF editor
+    if (newApplication != null && context.mounted) {
+      await _openPdfEditorForApplication(context, newApplication);
+    }
+  }
+
+  /// Open PDF editor for a newly-created application
+  Future<void> _openPdfEditorForApplication(
+      BuildContext context, dynamic application) async {
+    final storage = StorageService.instance;
+
+    // Load CV and cover letter data
+    final cvData = await storage.loadJobCvData(application.folderPath!);
+    final coverLetter =
+        await storage.loadJobCoverLetter(application.folderPath!);
+
+    // Load PDF settings (both style and customization)
+    final (loadedStyle, loadedCustomization) =
+        await storage.loadJobPdfSettings(application.folderPath!);
+
+    // Use loaded settings or defaults
+    final templateStyle = loadedStyle ?? TemplateStyle.defaultStyle;
+    final customization = loadedCustomization ?? const TemplateCustomization();
+
+    if (cvData == null) {
+      if (context.mounted) {
+        context.showErrorSnackBar('No CV data found for this application');
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    // Open the PDF dialog
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => JobApplicationPdfDialog(
+        application: application,
+        cvData: cvData,
+        coverLetter: coverLetter,
+        isCV: true, // Default to CV view
+        templateStyle: templateStyle,
+        templateCustomization: customization,
+      ),
     );
   }
 
@@ -323,7 +405,6 @@ class _ApplicationCardState extends State<_ApplicationCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final templatesProvider = context.watch<TemplatesProvider>();
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -351,146 +432,184 @@ class _ApplicationCardState extends State<_ApplicationCard> {
         ),
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header row
-              Row(
-                children: [
-                  Expanded(
+              // PDF Thumbnail Preview
+              if (widget.application.folderPath != null)
+                Container(
+                  width: 80,
+                  height: 100,
+                  margin: const EdgeInsets.only(right: 16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: InkWell(
+                    onTap: () => _viewPdf(context),
+                    borderRadius: BorderRadius.circular(8),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          widget.application.company,
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        Icon(
+                          Icons.picture_as_pdf,
+                          size: 32,
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.6),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          widget.application.position,
-                          style: theme.textTheme.bodyLarge?.copyWith(
+                          'CV',
+                          style: theme.textTheme.labelSmall?.copyWith(
                             color: theme.textTheme.bodySmall?.color
-                                ?.withValues(alpha: 0.8),
+                                ?.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  StatusBadge(status: widget.application.status),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Info row
-              Wrap(
-                spacing: 24,
-                runSpacing: 8,
-                children: [
-                  if (widget.application.applicationDate != null)
-                    _InfoItem(
-                      icon: Icons.calendar_today,
-                      label: 'Applied',
-                      value: _formatDate(widget.application.applicationDate!),
-                    ),
-                  if (widget.application.cvInstanceId != null)
-                    _InfoItem(
-                      icon: Icons.description,
-                      label: 'CV',
-                      value: _getTemplateName(
-                        templatesProvider,
-                        widget.application.cvInstanceId,
-                        isCV: true,
-                      ),
-                    ),
-                  if (widget.application.coverLetterInstanceId != null)
-                    _InfoItem(
-                      icon: Icons.mail,
-                      label: 'Cover Letter',
-                      value: _getTemplateName(
-                        templatesProvider,
-                        widget.application.coverLetterInstanceId,
-                        isCV: false,
-                      ),
-                    ),
-                ],
-              ),
-
-              // Notes
-              if (widget.application.notes != null &&
-                  widget.application.notes!.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    widget.application.notes!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.bodySmall?.color
-                          ?.withValues(alpha: 0.7),
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ),
-              ],
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.application.company,
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                widget.application.position,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: theme.textTheme.bodySmall?.color
+                                      ?.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        StatusBadge(status: widget.application.status),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
 
-              // Actions
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  // Tailor button - Opens the workspace
-                  if (widget.application.folderPath != null)
-                    FilledButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => TailoringWorkspace(
-                              application: widget.application,
+                    // Info row
+                    Wrap(
+                      spacing: 24,
+                      runSpacing: 8,
+                      children: [
+                        if (widget.application.applicationDate != null)
+                          _InfoItem(
+                            icon: Icons.calendar_today,
+                            label: 'Applied',
+                            value: _formatDate(
+                                widget.application.applicationDate!),
+                          ),
+                        if (widget.application.location != null &&
+                            widget.application.location!.isNotEmpty)
+                          _InfoItem(
+                            icon: Icons.location_on,
+                            label: 'Location',
+                            value: widget.application.location!,
+                          ),
+                      ],
+                    ),
+
+                    // Notes
+                    if (widget.application.notes != null &&
+                        widget.application.notes!.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          widget.application.notes!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.textTheme.bodySmall?.color
+                                ?.withValues(alpha: 0.7),
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+
+                    // Actions
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        // Tailor button - Opens the workspace
+                        if (widget.application.folderPath != null)
+                          FilledButton.icon(
+                            onPressed: () => _viewPdf(context),
+                            icon: const Icon(Icons.edit_note, size: 18),
+                            label: const Text('Tailor'),
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
                             ),
                           ),
-                        );
-                      },
-                      icon: const Icon(Icons.edit_note, size: 18),
-                      label: const Text('Tailor'),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                      ),
+                        if (widget.application.folderPath != null)
+                          const SizedBox(width: 12),
+                        // View PDF button
+                        if (widget.application.folderPath != null)
+                          OutlinedButton.icon(
+                            onPressed: () => _viewPdf(context),
+                            icon: const Icon(Icons.picture_as_pdf, size: 18),
+                            label: const Text('View PDF'),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                            ),
+                          ),
+                        if (widget.application.folderPath != null)
+                          const SizedBox(width: 12),
+                        TextButton.icon(
+                          onPressed: widget.onEdit,
+                          icon: const Icon(Icons.edit, size: 16),
+                          label: const Text('Edit'),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton.icon(
+                          onPressed: widget.onDelete,
+                          icon: const Icon(Icons.delete, size: 16),
+                          label: const Text('Delete'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: theme.colorScheme.error,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (widget.application.folderPath != null)
+                          OutlinedButton.icon(
+                            onPressed: () => _openJobFolder(widget.application),
+                            icon: const Icon(Icons.folder_open, size: 16),
+                            label: const Text('Open Folder'),
+                          ),
+                      ],
                     ),
-                  if (widget.application.folderPath != null)
-                    const SizedBox(width: 12),
-                  TextButton.icon(
-                    onPressed: widget.onEdit,
-                    icon: const Icon(Icons.edit, size: 16),
-                    label: const Text('Edit'),
-                  ),
-                  const SizedBox(width: 8),
-                  TextButton.icon(
-                    onPressed: widget.onDelete,
-                    icon: const Icon(Icons.delete, size: 16),
-                    label: const Text('Delete'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: theme.colorScheme.error,
-                    ),
-                  ),
-                  const Spacer(),
-                  OutlinedButton.icon(
-                    onPressed: () => _regeneratePdfs(
-                        context, widget.application, templatesProvider),
-                    icon: const Icon(Icons.refresh, size: 16),
-                    label: const Text('Regenerate PDFs'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+                  ],
+                ), // Column (children list)
+              ), // Expanded
+            ], // Row children
+          ), // Row
+        ), // Padding
       ),
     );
   }
@@ -499,109 +618,57 @@ class _ApplicationCardState extends State<_ApplicationCard> {
     return AppDateUtils.formatTimeAgo(date);
   }
 
-  String _getTemplateName(TemplatesProvider provider, String? templateId,
-      {required bool isCV}) {
-    if (templateId == null) return 'None';
+  /// Open the job application folder in system file explorer
+  void _openJobFolder(dynamic application) {
+    if (application.folderPath == null) return;
 
-    if (isCV) {
-      final template = provider.getCvTemplateById(templateId);
-      return template?.name ?? 'Unknown';
-    } else {
-      final template = provider.getCoverLetterTemplateById(templateId);
-      return template?.name ?? 'Unknown';
+    try {
+      // Use Process.run to open folder in Windows Explorer
+      Process.run('explorer', [application.folderPath!]);
+    } catch (e) {
+      debugPrint('Error opening folder: $e');
     }
   }
 
-  Future<void> _regeneratePdfs(
-    BuildContext context,
-    dynamic application,
-    TemplatesProvider templatesProvider,
-  ) async {
-    try {
-      // Pick directory to save PDFs
-      final outputPath = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: 'Select folder to save PDFs',
-      );
+  /// Open PDF preview dialog
+  Future<void> _viewPdf(BuildContext context) async {
+    final storage = StorageService.instance;
 
-      if (outputPath == null) return;
+    // Load CV and cover letter data
+    final cvData = await storage.loadJobCvData(widget.application.folderPath!);
+    final coverLetter =
+        await storage.loadJobCoverLetter(widget.application.folderPath!);
 
-      var generatedCount = 0;
-      final errors = <String>[];
+    // Load PDF settings (both style and customization)
+    final (loadedStyle, loadedCustomization) =
+        await storage.loadJobPdfSettings(widget.application.folderPath!);
 
-      // Generate CV PDF if instance exists
-      if (application.cvInstanceId != null) {
-        try {
-          final cvInstance =
-              templatesProvider.getCvInstanceById(application.cvInstanceId!);
-          if (cvInstance != null) {
-            final cvData = cvInstance.toCvData();
-            final fileName =
-                '${application.company}_${application.position}_CV.pdf'
-                    .replaceAll(' ', '_')
-                    .replaceAll(RegExp(r'[^\w\-\.]'), '');
+    // Use loaded settings or defaults
+    final templateStyle = loadedStyle ?? TemplateStyle.defaultStyle;
+    final customization = loadedCustomization ?? const TemplateCustomization();
 
-            await PdfService.instance.generateCvToFile(
-              cvData: cvData,
-              outputPath: path.join(outputPath, fileName),
-            );
-            generatedCount++;
-          } else {
-            errors.add('CV instance not found');
-          }
-        } catch (e) {
-          errors.add('CV generation failed: $e');
-        }
-      }
-
-      // Generate Cover Letter PDF if instance exists
-      if (application.coverLetterInstanceId != null) {
-        try {
-          final clInstance = templatesProvider.getCoverLetterInstanceById(
-            application.coverLetterInstanceId!,
-          );
-          if (clInstance != null) {
-            final coverLetter = clInstance.toCoverLetter();
-            final fileName =
-                '${application.company}_${application.position}_CoverLetter.pdf'
-                    .replaceAll(' ', '_')
-                    .replaceAll(RegExp(r'[^\w\-\.]'), '');
-
-            await PdfService.instance.generateCoverLetterToFile(
-              coverLetter: coverLetter,
-              outputPath: path.join(outputPath, fileName),
-            );
-            generatedCount++;
-          } else {
-            errors.add('Cover letter instance not found');
-          }
-        } catch (e) {
-          errors.add('Cover letter generation failed: $e');
-        }
-      }
-
+    if (cvData == null) {
       if (context.mounted) {
-        if (generatedCount > 0) {
-          final message =
-              'Generated $generatedCount PDF${generatedCount > 1 ? 's' : ''} successfully'
-              '${errors.isNotEmpty ? ' (${errors.length} error${errors.length > 1 ? 's' : ''})' : ''}';
-          if (errors.isEmpty) {
-            context.showSuccessSnackBar(message);
-          } else {
-            context.showWarningSnackBar(message);
-          }
-        } else {
-          context.showErrorSnackBar(
-            errors.isEmpty
-                ? 'No documents to regenerate'
-                : 'Failed to generate PDFs: ${errors.join(', ')}',
-          );
-        }
+        context.showErrorSnackBar('No CV data found for this application');
       }
-    } catch (e) {
-      if (context.mounted) {
-        context.showErrorSnackBar('Error: $e');
-      }
+      return;
     }
+
+    if (!context.mounted) return;
+
+    // Open the PDF dialog
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => JobApplicationPdfDialog(
+        application: widget.application,
+        cvData: cvData,
+        coverLetter: coverLetter,
+        isCV: true, // Default to CV view
+        templateStyle: templateStyle,
+        templateCustomization: customization,
+      ),
+    );
   }
 }
 

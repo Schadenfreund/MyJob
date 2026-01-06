@@ -9,6 +9,7 @@ import '../models/master_profile.dart';
 import '../models/job_cv_data.dart';
 import '../models/job_cover_letter.dart';
 import '../models/template_customization.dart';
+import '../models/template_style.dart';
 import '../constants/app_constants.dart';
 
 /// Storage service for persisting application data as JSON files
@@ -525,27 +526,48 @@ class StorageService {
   }
 
   /// Load job-specific PDF settings
-  Future<TemplateCustomization?> loadJobPdfSettings(String folderPath) async {
+  Future<(TemplateStyle?, TemplateCustomization?)> loadJobPdfSettings(
+      String folderPath) async {
     try {
       final file = File(p.join(folderPath, 'pdf_settings.json'));
-      if (!file.existsSync()) return const TemplateCustomization();
+      if (!file.existsSync()) {
+        return (null, null);
+      }
 
       final content = await file.readAsString();
       final json = jsonDecode(content) as Map<String, dynamic>;
-      return TemplateCustomization.fromJson(json);
+
+      // Load both style and customization from the same file
+      final style = json.containsKey('style')
+          ? TemplateStyle.fromJson(json['style'] as Map<String, dynamic>)
+          : null;
+
+      final customization = json.containsKey('customization')
+          ? TemplateCustomization.fromJson(
+              json['customization'] as Map<String, dynamic>)
+          : null;
+
+      return (style, customization);
     } catch (e) {
       debugPrint('Error loading job PDF settings: $e');
-      return const TemplateCustomization();
+      return (null, null);
     }
   }
 
-  /// Save job-specific PDF settings
+  /// Save job-specific PDF settings (both style and customization)
   Future<void> saveJobPdfSettings(
-      String folderPath, TemplateCustomization settings) async {
+    String folderPath,
+    TemplateStyle style,
+    TemplateCustomization customization,
+  ) async {
     try {
       final file = File(p.join(folderPath, 'pdf_settings.json'));
+      final settings = {
+        'style': style.toJson(),
+        'customization': customization.toJson(),
+      };
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(settings.toJson()),
+        const JsonEncoder.withIndent('  ').convert(settings),
       );
       debugPrint('Job PDF settings saved');
     } catch (e) {
