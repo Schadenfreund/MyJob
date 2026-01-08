@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/user_data_provider.dart';
 import '../../../models/user_data/work_experience.dart';
 import '../../../dialogs/experience_edit_dialog.dart';
+import '../../../constants/ui_constants.dart';
 
 /// Work experience management section
 class WorkExperienceSection extends StatelessWidget {
@@ -15,18 +16,7 @@ class WorkExperienceSection extends StatelessWidget {
     final experiences = userDataProvider.sortedWorkExperiences;
 
     return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.dividerColor, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      decoration: UIConstants.getCardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -73,7 +63,6 @@ class WorkExperienceSection extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1),
           // Content
           Padding(
             padding: const EdgeInsets.all(20),

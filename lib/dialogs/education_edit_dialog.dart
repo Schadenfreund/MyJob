@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/master_profile.dart' show Education;
+import '../models/master_profile.dart';
+import '../constants/ui_constants.dart';
 
 /// Dialog for adding or editing education entries
 class EducationEditDialog extends StatefulWidget {

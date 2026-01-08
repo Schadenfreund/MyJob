@@ -5,6 +5,7 @@ import '../../../providers/user_data_provider.dart';
 import '../../../models/user_data/personal_info.dart';
 import '../../../services/templates_storage_service.dart';
 import '../../../widgets/profile_picture_picker.dart';
+import '../../../constants/ui_constants.dart';
 
 /// Personal information management section
 class PersonalInfoSection extends StatelessWidget {
@@ -17,24 +18,13 @@ class PersonalInfoSection extends StatelessWidget {
     final personalInfo = userDataProvider.personalInfo;
 
     return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.dividerColor, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      decoration: UIConstants.getCardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: UIConstants.cardPadding,
             child: Row(
               children: [
                 Icon(
@@ -57,14 +47,14 @@ class PersonalInfoSection extends StatelessWidget {
                     size: 16,
                   ),
                   label: Text(personalInfo == null ? 'Add Info' : 'Edit'),
+                  style: UIConstants.getSecondaryButtonStyle(context),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1),
           // Content
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: UIConstants.cardPadding,
             child: personalInfo == null
                 ? _buildEmptyState(context)
                 : _buildPersonalInfoContent(context, personalInfo),
@@ -511,10 +501,12 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
+          style: UIConstants.getTextButtonStyle(context),
           child: const Text('Cancel'),
         ),
-        ElevatedButton(
+        FilledButton(
           onPressed: _save,
+          style: UIConstants.getPrimaryButtonStyle(context),
           child: const Text('Save'),
         ),
       ],

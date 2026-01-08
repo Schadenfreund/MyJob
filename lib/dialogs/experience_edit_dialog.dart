@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/user_data/work_experience.dart';
+import '../constants/ui_constants.dart';
 
 /// Dialog for adding or editing work experience
 ///
@@ -133,11 +134,11 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: UIConstants.dialogPadding,
               decoration: BoxDecoration(
                 color: theme.colorScheme.primaryContainer,
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
+                  top: Radius.circular(UIConstants.radiusMedium),
                 ),
               ),
               child: Row(

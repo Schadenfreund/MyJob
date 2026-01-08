@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/user_data_provider.dart';
 import '../../../models/user_data/language.dart';
+import '../../../theme/app_theme.dart';
+import '../../../constants/ui_constants.dart';
 
 /// Languages management section
 class LanguagesSection extends StatelessWidget {
@@ -72,7 +74,6 @@ class LanguagesSection extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1),
           // Content
           Padding(
             padding: const EdgeInsets.all(20),

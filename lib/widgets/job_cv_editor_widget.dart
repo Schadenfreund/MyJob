@@ -16,6 +16,7 @@ import '../widgets/language_editor.dart';
 import '../widgets/interest_chip_editor.dart';
 import '../utils/ui_utils.dart';
 import '../constants/app_constants.dart';
+import '../constants/ui_constants.dart';
 
 /// Modern tabbed CV content editor for job applications
 ///
@@ -906,9 +907,9 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       elevation: 2,
       child: InkWell(
         onTap: () => _editExperience(index),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(UIConstants.radiusMedium),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: UIConstants.cardPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

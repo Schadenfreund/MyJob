@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/user_data_provider.dart';
 import '../../../models/user_data/skill.dart';
 import '../../../theme/app_theme.dart';
+import '../../../constants/ui_constants.dart';
 
 /// Skills management section
 class SkillsSection extends StatelessWidget {
@@ -73,7 +74,6 @@ class SkillsSection extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1),
           // Content
           Padding(
             padding: const EdgeInsets.all(20),

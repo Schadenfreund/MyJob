@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
+import '../../constants/ui_constants.dart';
 import '../../providers/applications_provider.dart';
 
 import '../../widgets/status_badge.dart';
@@ -413,27 +414,31 @@ class _ApplicationCardState extends State<_ApplicationCard> {
       onExit: (_) => setState(() => _isHovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+        decoration: UIConstants.getCardDecoration(context).copyWith(
           border: Border.all(
             color: _isHovered
-                ? theme.colorScheme.primary.withValues(alpha: 0.3)
-                : theme.dividerColor.withValues(alpha: 0.3),
+                ? theme.colorScheme.primary.withOpacity(0.3)
+                : theme.colorScheme.outline.withOpacity(0.2),
             width: 1,
           ),
           boxShadow: _isHovered
               ? [
                   BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                    color: theme.colorScheme.primary.withOpacity(0.1),
                     blurRadius: 12,
                     spreadRadius: 2,
                   ),
                 ]
-              : [],
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: UIConstants.cardPadding,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -593,15 +598,12 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                       children: [
                         // Primary action group - Edit & PDF
                         if (widget.application.folderPath != null) ...[
-                          // Unified Edit button with dropdown
+                          // Unified Edit button
                           FilledButton.icon(
                             onPressed: () => _editContent(context),
                             icon: const Icon(Icons.edit_document, size: 18),
                             label: const Text('Edit'),
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                            ),
+                            style: UIConstants.getPrimaryButtonStyle(context),
                           ),
                           const SizedBox(width: 8),
                           // PDF Customization
@@ -609,10 +611,7 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                             onPressed: () => _viewPdf(context),
                             icon: const Icon(Icons.palette_outlined, size: 18),
                             label: const Text('CV Style'),
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                            ),
+                            style: UIConstants.getPrimaryButtonStyle(context),
                           ),
                           const SizedBox(width: 8),
                           // Cover Letter PDF
@@ -620,10 +619,7 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                             onPressed: () => _viewCoverLetterPdf(context),
                             icon: const Icon(Icons.email_outlined, size: 18),
                             label: const Text('Cover Letter'),
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                            ),
+                            style: UIConstants.getPrimaryButtonStyle(context),
                           ),
                           const SizedBox(width: 16),
                         ],

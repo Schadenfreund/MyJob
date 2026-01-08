@@ -1,5 +1,9 @@
+import 'dart:io';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../providers/user_data_provider.dart';
 import '../../models/user_data/interest.dart';
 import '../../constants/app_constants.dart';
@@ -262,8 +266,43 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  void _showExportDialog(BuildContext context) {
-    context.showInfoSnackBar('YAML export coming soon');
+  void _showExportDialog(BuildContext context) async {
+    final provider = context.read<UserDataProvider>();
+    final profile = provider.currentProfile;
+
+    if (profile == null) {
+      if (context.mounted) {
+        context.showErrorSnackBar('No profile data to export');
+      }
+      return;
+    }
+
+    try {
+      // Generate JSON content (valid YAML)
+      final jsonData = profile.toJson();
+      final yamlContent = const JsonEncoder.withIndent('  ').convert(jsonData);
+
+      // Show save file dialog
+      final result = await FilePicker.platform.saveFile(
+        dialogTitle: 'Export Profile as YAML',
+        fileName: 'profile_${profile.language.code}.yaml',
+        type: FileType.custom,
+        allowedExtensions: ['yaml', 'yml'],
+      );
+
+      if (result != null) {
+        final file = File(result);
+        await file.writeAsString(yamlContent);
+
+        if (context.mounted) {
+          context.showSuccessSnackBar('Profile exported successfully!');
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        context.showErrorSnackBar('Export failed: $e');
+      }
+    }
   }
 }
 
@@ -298,10 +337,6 @@ class _ProfileSections extends StatelessWidget {
 
         // Interests Section
         _buildInterestsSection(context),
-        const SizedBox(height: 16),
-
-        // Profile Summary Section
-        _buildProfileSummarySection(context),
         const SizedBox(height: 16),
 
         // Default Cover Letter Section

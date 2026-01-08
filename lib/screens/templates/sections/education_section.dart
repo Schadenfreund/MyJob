@@ -4,8 +4,9 @@ import 'package:intl/intl.dart';
 import '../../../providers/user_data_provider.dart';
 import '../../../models/master_profile.dart';
 import '../../../widgets/collapsible_card.dart';
-import '../../../utils/ui_utils.dart';
 import '../../../dialogs/education_edit_dialog.dart';
+import '../../../constants/ui_constants.dart';
+import '../../../utils/ui_utils.dart';
 
 /// Education section for master profile
 ///

@@ -1,0 +1,195 @@
+{
+  "language": "de",
+  "personalInfo": {
+    "id": "eec63928-a2d4-4cfa-9487-7a7bc45d6edd",
+    "fullName": "Sarah Burić",
+    "jobTitle": null,
+    "profileSummary": "TEST Knackig, durchdacht und fundiert – seit über 20 Jahren erzähle ich Geschichten rund um Games, Technik und Kultur.\nZuletzt als Senior PR & Communications Managerin bei der ESL FACEIT Group, davor als Games- und E-Sports-Journalistin\n(u. a. WDR, 1LIVE, Deutschlandfunk) sowie als TV-Moderatorin für eine E-Sports-Sendung auf sportschau.de.\nGamerin aus Überzeugung, kommunikationsstark aus Erfahrung – bereit für den nächsten Berg.",
+    "profilePicturePath": null,
+    "email": "s.buric01@gmail.com",
+    "phone": "01590 / 633 9776",
+    "address": "Hamm-Mühle 1",
+    "city": "Stolberg",
+    "country": "Deutschland",
+    "linkedin": null,
+    "website": null,
+    "createdAt": "2026-01-03T23:53:38.590623",
+    "lastModified": "2026-01-08T13:29:21.861762"
+  },
+  "profileSummary": "",
+  "experiences": [
+    {
+      "id": "19179e99-855a-4cbe-bb7b-667e43a5981e",
+      "company": "ESL FACEIT Group",
+      "position": "Senior PR & Communications Managerin",
+      "startDate": "2022-01-01T00:00:00.000",
+      "endDate": null,
+      "isCurrent": true,
+      "location": null,
+      "responsibilities": [
+        "Leitung von PR-Initiativen rund um mehrere E-Sports-Events und internationale Märkte",
+        "Entwicklung und Umsetzung von PR- und Kommunikationsstrategien im globalen E-Sports-Umfeld",
+        "Steuerung von Medienarbeit und langfristigen Storytelling-Strategien, Übersetzung komplexer Produkte und globaler Initiativen in klare, medientaugliche Narrative",
+        "Strategische Zusammenarbeit mit internen, bereichsübergreifenden Teams sowie externen Stakeholdern und Partnern",
+        "Erstellung strategischer Kommunikationsframeworks, PR-Guidelines und Messaging-Dokumente zur Unterstützung der internen Abstimmung und Zusammenarbeit im Team"
+      ],
+      "description": "Beförderung zur Senior-Rolle im Jahr 2024",
+      "createdAt": "2026-01-03T23:53:38.591624",
+      "lastModified": null
+    },
+    {
+      "id": "5b584fd1-c983-4be4-a369-da633e030a0c",
+      "company": "WDR / ARD-Verbund",
+      "position": "Games- & E-Sports-Journalistin · TV-Moderatorin · Reporterin",
+      "startDate": "2017-01-01T00:00:00.000",
+      "endDate": "2022-01-01T00:00:00.000",
+      "isCurrent": false,
+      "location": "Deutschland",
+      "responsibilities": [
+        "Berichterstattung über Games, E-Sports und digitale Kultur für führende deutsche Medienhäuser",
+        "Konzeption, Moderation und Präsentation der eSportschau, dem ersten E-Sports-Format der sportschau-Redaktion (sportschau.de, YouTube, Facebook)",
+        "Verfassen und Präsentieren von Radiobeiträgen, Nachrichtensegmenten und Reviews",
+        "Planung und Umsetzung von TV-Beiträgen, Interviews und Reportagen",
+        "Erstellung interaktiver Web-Stories"
+      ],
+      "description": "U. a. 1LIVE, WDR2–5, sportschau.de, Deutschlandfunk, WDR Pageflow",
+      "createdAt": "2026-01-03T23:53:38.591624",
+      "lastModified": null
+    },
+    {
+      "id": "c76cfa04-7942-4aad-ab7b-861e917ffdba",
+      "company": "Radio-, TV- und Printmedien (verschiedene Stationen)",
+      "position": "Moderatorin · Journalistin · Redakteurin",
+      "startDate": "2006-01-01T00:00:00.000",
+      "endDate": "2016-12-31T00:00:00.000",
+      "isCurrent": false,
+      "location": "Deutschland",
+      "responsibilities": [
+        "Moderation und Präsentation in Radio- und TV-Formaten",
+        "Redaktionelle Arbeit, Nachrichtenredaktion und Berichterstattung",
+        "Interviews, Reviews und Feature-Produktion",
+        "Früher Schwerpunkt auf Games, Medien und Kultur",
+        "Erfahrung von Live-Radiomoderation bis hin zu redaktioneller Planung und Umsetzung"
+      ],
+      "description": "U. a. Radio Rur, Radio Euskirchen, Deutschlandfunk Nova, Radio Contact, 100'5 Das Hitradio, Gameswelt, Aachener Zeitung",
+      "createdAt": "2026-01-03T23:53:38.591624",
+      "lastModified": null
+    }
+  ],
+  "education": [],
+  "skills": [
+    {
+      "id": "e117e1e5-23fd-4bd0-ba51-b01a569de4cf",
+      "name": "Organisation",
+      "category": "Beruflich",
+      "level": "SkillLevel.expert",
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    },
+    {
+      "id": "0b3f52f5-6623-4d13-ae2a-f2abbf0fd00f",
+      "name": "Recherche",
+      "category": "Beruflich",
+      "level": "SkillLevel.expert",
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    },
+    {
+      "id": "baaa495d-003d-41a4-a401-949c75aba172",
+      "name": "Texten",
+      "category": "Beruflich",
+      "level": "SkillLevel.expert",
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    },
+    {
+      "id": "51b5d24a-f2e8-43d1-8977-8e89c01ac63a",
+      "name": "Storytelling",
+      "category": "Beruflich",
+      "level": "SkillLevel.expert",
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    },
+    {
+      "id": "74db0a9f-5e54-4e8f-a9c4-db3a2fb57170",
+      "name": "Moderation",
+      "category": "Beruflich",
+      "level": "SkillLevel.expert",
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    },
+    {
+      "id": "ab3ef899-9313-477c-8c8f-d4ac787bb0b3",
+      "name": "Programmierung",
+      "category": "Technisch",
+      "level": "SkillLevel.beginner",
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    }
+  ],
+  "languages": [
+    {
+      "id": "ad9a4fc3-bed4-4e15-a1b4-d5b80ec7a4c0",
+      "name": "Deutsch",
+      "proficiency": "LanguageProficiency.native",
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    },
+    {
+      "id": "256df740-1c37-4354-b8c9-d93254ae64ca",
+      "name": "Englisch",
+      "proficiency": "LanguageProficiency.fluent",
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    },
+    {
+      "id": "85afe162-8133-4314-8789-7f001d9c60fb",
+      "name": "Kroatisch",
+      "proficiency": "LanguageProficiency.basic",
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    },
+    {
+      "id": "23ebce8e-8d55-46f3-b1ac-4dcbcc2083cd",
+      "name": "Französisch",
+      "proficiency": "LanguageProficiency.basic",
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    }
+  ],
+  "interests": [
+    {
+      "id": "d203bf09-1007-4a03-b34a-9410821701c0",
+      "name": "Gaming & interaktive Medien",
+      "category": "Technologie",
+      "level": null,
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    },
+    {
+      "id": "2d74c467-240e-43be-b274-74c4a603d480",
+      "name": "Outdoor & Fitness",
+      "category": "Lifestyle",
+      "level": null,
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    },
+    {
+      "id": "3c7e8d0c-7a24-45bf-801f-b2914f0e1a3d",
+      "name": "Technik & Innovation",
+      "category": "Technologie",
+      "level": null,
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    },
+    {
+      "id": "36ccc2fe-e460-4bbc-abb7-62af4c47d2d4",
+      "name": "Gartenarbeit",
+      "category": "Lifestyle",
+      "level": null,
+      "createdAt": "2026-01-03T23:53:38.591123",
+      "lastModified": null
+    }
+  ],
+  "defaultCoverLetterBody": ""
+}
