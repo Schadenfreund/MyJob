@@ -9,11 +9,13 @@ import '../models/job_application.dart';
 import '../models/job_cv_data.dart';
 import '../models/job_cover_letter.dart';
 import '../models/template_style.dart';
+import '../models/template_customization.dart';
 import '../models/cv_data.dart';
 import '../models/cv_data.dart' as cv_data;
 import '../models/cover_letter.dart';
 import '../models/user_data/work_experience.dart';
 import '../models/user_data/skill.dart';
+import '../constants/app_constants.dart';
 import '../services/pdf_service.dart';
 import '../services/storage_service.dart';
 import '../widgets/pdf_editor/template_edit_panel.dart';
@@ -55,8 +57,62 @@ class _JobApplicationPdfDialogState
   @override
   void initState() {
     super.initState();
+
+    // CRITICAL: Set language IMMEDIATELY (synchronously) to prevent wrong language on first open
+    final correctLanguage =
+        _documentLanguageToCvLanguage(widget.application.baseLanguage);
+    controller.updateCustomization(
+      controller.customization.copyWith(language: correctLanguage),
+    );
+
+    // Then load saved PDF settings if they exist (async - updates other settings)
+    _loadSavedSettings();
+
     // Listen to PDF settings changes to auto-save
     controller.addListener(_onPdfSettingsChanged);
+  }
+
+  /// Load saved PDF settings from job folder
+  Future<void> _loadSavedSettings() async {
+    if (widget.application.folderPath == null) return;
+
+    try {
+      final settings = await _storage.loadJobPdfSettings(
+        widget.application.folderPath!,
+      );
+
+      if (settings != null && mounted) {
+        final (style, customization) = settings;
+
+        if (style != null && customization != null) {
+          controller.updateStyle(style);
+          // Language is already set in initState, just load other settings
+          // But ensure it stays correct by overriding any saved wrong language
+          final updatedCustomization = customization.copyWith(
+            language:
+                _documentLanguageToCvLanguage(widget.application.baseLanguage),
+          );
+          controller.updateCustomization(updatedCustomization);
+        }
+        debugPrint('[PDF Dialog] Loaded saved settings');
+      }
+      // No else needed - language already set in initState
+    } catch (e) {
+      debugPrint('[PDF Dialog] No saved settings or error loading: $e');
+      // Language already set in initState, no action needed
+    }
+  }
+
+  /// Convert DocumentLanguage to CvLanguage
+  CvLanguage _documentLanguageToCvLanguage(DocumentLanguage docLang) {
+    // DocumentLanguage.de = German document
+    // DocumentLanguage.en = English document
+    switch (docLang) {
+      case DocumentLanguage.de:
+        return CvLanguage.german; // German app → German PDF
+      case DocumentLanguage.en:
+        return CvLanguage.english; // English app → English PDF
+    }
   }
 
   @override
@@ -108,12 +164,18 @@ class _JobApplicationPdfDialogState
   }
 
   Future<Uint8List> _generateCvPdf() async {
+    // Debug: Check professional summary value
+    debugPrint(
+        '[PDF Gen] Professional Summary: "${widget.cvData.professionalSummary}"');
+    debugPrint(
+        '[PDF Gen] Summary length: ${widget.cvData.professionalSummary.length}');
+
     // Convert JobCvData to CvData format with proper type conversions
     final cvData = CvData(
       id: widget.application.id,
       name: '${widget.application.position} at ${widget.application.company}',
       language: widget.application.baseLanguage,
-      profile: getFieldValue('profile', ''),
+      profile: widget.cvData.professionalSummary,
       skills: widget.cvData.skills.map((s) => s.name).toList(),
       languages: widget.cvData.languages
           .map((l) => LanguageSkill(
@@ -159,6 +221,14 @@ class _JobApplicationPdfDialogState
           .toList()
           .cast<cv_data.Education>(),
     );
+
+    // Debug: Verify CvData.profile is set
+    debugPrint('[PDF Gen] CvData.profile: "${cvData.profile}"');
+    debugPrint('[PDF Gen] CvData.profile length: ${cvData.profile.length}');
+    debugPrint(
+        '[PDF Gen] Application language: ${widget.application.baseLanguage}');
+    debugPrint('[PDF Gen] Customization language: ${customization.language}');
+    debugPrint('[PDF Gen] CvData.language: ${cvData.language}');
 
     return await PdfService.instance.generateCvPdf(
       cvData,
@@ -258,6 +328,8 @@ class _JobApplicationPdfDialogState
   List<Widget> buildAdditionalSidebarSections() {
     return [
       _buildJobInfoSection(),
+      const SizedBox(height: 16),
+      _buildStyleInfoSection(),
       const SizedBox(height: 16),
       _buildSaveAndCloseButton(),
     ];
@@ -625,5 +697,52 @@ class _JobApplicationPdfDialogState
     } catch (e) {
       debugPrint('Failed to remove experience: $e');
     }
+  }
+
+  /// Build style info section showing current PDF design settings
+  Widget _buildStyleInfoSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.palette_outlined,
+                color: controller.style.accentColor, size: 18),
+            const SizedBox(width: 8),
+            const Text(
+              'DOCUMENT STYLE',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildInfoRow('Template', controller.style.type.label),
+        _buildInfoRow('Font', controller.style.fontFamily.displayName),
+        _buildInfoRow('Mode', controller.style.isDarkMode ? 'Dark' : 'Light'),
+        _buildInfoRow('Accent', _getColorName(controller.style.accentColor)),
+      ],
+    );
+  }
+
+  /// Get user-friendly color name
+  String _getColorName(Color color) {
+    final colorMap = {
+      0xFFFFFF00: 'Yellow',
+      0xFF00FFFF: 'Cyan',
+      0xFFFF00FF: 'Magenta',
+      0xFF00FF00: 'Lime',
+      0xFFFF6600: 'Orange',
+      0xFF9D00FF: 'Purple',
+      0xFFFF0066: 'Pink',
+      0xFF66FF00: 'Chartreuse',
+      0xFF3B82F6: 'Blue',
+      0xFF6B7280: 'Gray',
+    };
+    return colorMap[color.toARGB32()] ?? 'Custom';
   }
 }

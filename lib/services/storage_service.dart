@@ -431,8 +431,21 @@ class StorageService {
     try {
       final folderPath = await createJobApplicationFolder(application);
 
+      // Debug: Check what's being cloned
+      debugPrint(
+          '[Clone] Profile Summary from MasterProfile: "${profile.profileSummary}"');
+      debugPrint(
+          '[Clone] Profile Summary length: ${profile.profileSummary.length}');
+
       // Clone CV data
       final cvData = JobCvData.fromMasterProfile(profile);
+
+      // Debug: Verify it was copied
+      debugPrint(
+          '[Clone] CV Data Professional Summary: "${cvData.professionalSummary}"');
+      debugPrint(
+          '[Clone] CV Data Professional Summary length: ${cvData.professionalSummary.length}');
+
       final cvFile = File(p.join(folderPath, 'cv_data.json'));
       await cvFile.writeAsString(
         const JsonEncoder.withIndent('  ').convert(cvData.toJson()),
@@ -448,8 +461,11 @@ class StorageService {
         const JsonEncoder.withIndent('  ').convert(coverLetter.toJson()),
       );
 
-      // Create default PDF settings
-      const pdfSettings = TemplateCustomization();
+      // Create default PDF settings WITH CORRECT LANGUAGE
+      final cvLanguage = application.baseLanguage == DocumentLanguage.de
+          ? CvLanguage.german
+          : CvLanguage.english;
+      final pdfSettings = TemplateCustomization(language: cvLanguage);
       final pdfFile = File(p.join(folderPath, 'pdf_settings.json'));
       await pdfFile.writeAsString(
         const JsonEncoder.withIndent('  ').convert(pdfSettings.toJson()),
@@ -554,7 +570,7 @@ class StorageService {
     }
   }
 
-  /// Save job-specific PDF settings (both style and customization)
+  /// Save job-specific PDF settings
   Future<void> saveJobPdfSettings(
     String folderPath,
     TemplateStyle style,

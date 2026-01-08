@@ -13,8 +13,10 @@ import '../../utils/app_date_utils.dart';
 import '../../services/storage_service.dart';
 import '../../models/template_style.dart';
 import '../../models/template_customization.dart';
+import '../../models/job_cv_data.dart';
 import 'application_editor_dialog.dart';
 import '../../dialogs/job_application_pdf_dialog.dart';
+import '../job_cv_editor/job_cv_editor_screen.dart';
 
 /// Applications screen - Organized with CollapsibleCard sections by status
 class ApplicationsScreen extends StatelessWidget {
@@ -501,7 +503,41 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                             ],
                           ),
                         ),
-                        StatusBadge(status: widget.application.status),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Language indicator
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.secondaryContainer,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    widget.application.baseLanguage.flag,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    widget.application.baseLanguage.code
+                                        .toUpperCase(),
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme
+                                          .colorScheme.onSecondaryContainer,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            StatusBadge(status: widget.application.status),
+                          ],
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -551,57 +587,69 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                       ),
                     ],
 
-                    // Actions
+                    // Actions - Reorganized and unified
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        // Tailor button - Opens the workspace
-                        if (widget.application.folderPath != null)
+                        // Primary action group - Edit & PDF
+                        if (widget.application.folderPath != null) ...[
+                          // Unified Edit button with dropdown
                           FilledButton.icon(
-                            onPressed: () => _viewPdf(context),
-                            icon: const Icon(Icons.edit_note, size: 18),
-                            label: const Text('Tailor'),
+                            onPressed: () => _editContent(context),
+                            icon: const Icon(Icons.edit_document, size: 18),
+                            label: const Text('Edit'),
                             style: FilledButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
+                                  horizontal: 20, vertical: 12),
                             ),
                           ),
-                        if (widget.application.folderPath != null)
-                          const SizedBox(width: 12),
-                        // View PDF button
-                        if (widget.application.folderPath != null)
-                          OutlinedButton.icon(
+                          const SizedBox(width: 8),
+                          // PDF Customization
+                          FilledButton.tonalIcon(
                             onPressed: () => _viewPdf(context),
-                            icon: const Icon(Icons.picture_as_pdf, size: 18),
-                            label: const Text('View PDF'),
-                            style: OutlinedButton.styleFrom(
+                            icon: const Icon(Icons.palette_outlined, size: 18),
+                            label: const Text('CV Style'),
+                            style: FilledButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
+                                  horizontal: 20, vertical: 12),
                             ),
                           ),
-                        if (widget.application.folderPath != null)
-                          const SizedBox(width: 12),
-                        TextButton.icon(
-                          onPressed: widget.onEdit,
-                          icon: const Icon(Icons.edit, size: 16),
-                          label: const Text('Edit'),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton.icon(
-                          onPressed: widget.onDelete,
-                          icon: const Icon(Icons.delete, size: 16),
-                          label: const Text('Delete'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: theme.colorScheme.error,
+                          const SizedBox(width: 8),
+                          // Cover Letter PDF
+                          FilledButton.tonalIcon(
+                            onPressed: () => _viewCoverLetterPdf(context),
+                            icon: const Icon(Icons.email_outlined, size: 18),
+                            label: const Text('Cover Letter'),
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                            ),
                           ),
-                        ),
-                        const Spacer(),
+                          const SizedBox(width: 16),
+                        ],
+
                         if (widget.application.folderPath != null)
-                          OutlinedButton.icon(
+                          IconButton(
                             onPressed: () => _openJobFolder(widget.application),
-                            icon: const Icon(Icons.folder_open, size: 16),
-                            label: const Text('Open Folder'),
+                            icon: const Icon(Icons.folder_open, size: 20),
+                            tooltip: 'Open Folder',
+                            style: IconButton.styleFrom(
+                              padding: const EdgeInsets.all(12),
+                            ),
                           ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          onPressed: widget.onDelete,
+                          icon: Icon(
+                            Icons.delete_outline,
+                            size: 20,
+                            color: theme.colorScheme.error,
+                          ),
+                          tooltip: 'Delete Application',
+                          style: IconButton.styleFrom(
+                            padding: const EdgeInsets.all(12),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -628,6 +676,37 @@ class _ApplicationCardState extends State<_ApplicationCard> {
     } catch (e) {
       debugPrint('Error opening folder: $e');
     }
+  }
+
+  /// Open full content editor for comprehensive CV editing
+  Future<void> _editContent(BuildContext context) async {
+    final storage = StorageService.instance;
+
+    // Load CV and cover letter data
+    final cvData = await storage.loadJobCvData(widget.application.folderPath!);
+    final coverLetter =
+        await storage.loadJobCoverLetter(widget.application.folderPath!);
+
+    if (cvData == null) {
+      if (context.mounted) {
+        context.showErrorSnackBar('No CV data found for this application');
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    // Open full-screen content editor
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => JobCvEditorScreen(
+          application: widget.application,
+          cvData: cvData,
+          coverLetter: coverLetter,
+        ),
+      ),
+    );
   }
 
   /// Open PDF preview dialog
@@ -665,6 +744,48 @@ class _ApplicationCardState extends State<_ApplicationCard> {
         cvData: cvData,
         coverLetter: coverLetter,
         isCV: true, // Default to CV view
+        templateStyle: templateStyle,
+        templateCustomization: customization,
+      ),
+    );
+  }
+
+  /// Open Cover Letter PDF preview dialog
+  Future<void> _viewCoverLetterPdf(BuildContext context) async {
+    final storage = StorageService.instance;
+
+    // Load CV and cover letter data
+    final cvData = await storage.loadJobCvData(widget.application.folderPath!);
+    final coverLetter =
+        await storage.loadJobCoverLetter(widget.application.folderPath!);
+
+    // Load PDF settings (both style and customization)
+    final (loadedStyle, loadedCustomization) =
+        await storage.loadJobPdfSettings(widget.application.folderPath!);
+
+    // Use loaded settings or defaults
+    final templateStyle = loadedStyle ?? TemplateStyle.defaultStyle;
+    final customization = loadedCustomization ?? const TemplateCustomization();
+
+    if (coverLetter == null) {
+      if (context.mounted) {
+        context.showErrorSnackBar(
+            'No cover letter found. Create one in the Edit screen.');
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    // Open the PDF dialog showing cover letter
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => JobApplicationPdfDialog(
+        application: widget.application,
+        cvData: cvData ?? JobCvData(), // Provide minimal data if null
+        coverLetter: coverLetter,
+        isCV: false, // Show cover letter view
         templateStyle: templateStyle,
         templateCustomization: customization,
       ),

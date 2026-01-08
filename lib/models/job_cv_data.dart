@@ -10,6 +10,7 @@ import 'user_data/interest.dart';
 class JobCvData {
   JobCvData({
     this.personalInfo,
+    this.professionalSummary = '',
     this.experiences = const [],
     this.education = const [],
     this.skills = const [],
@@ -23,6 +24,7 @@ class JobCvData {
       personalInfo: json['personalInfo'] != null
           ? PersonalInfo.fromJson(json['personalInfo'] as Map<String, dynamic>)
           : null,
+      professionalSummary: json['professionalSummary'] as String? ?? '',
       experiences: (json['experiences'] as List<dynamic>?)
               ?.map((e) => WorkExperience.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -50,6 +52,9 @@ class JobCvData {
   factory JobCvData.fromMasterProfile(MasterProfile profile) {
     return JobCvData(
       personalInfo: profile.personalInfo,
+      // CORRECT: Copy from PersonalInfo.profileSummary (where it's actually stored)
+      professionalSummary:
+          profile.personalInfo?.profileSummary ?? profile.profileSummary,
       experiences: List.from(profile.experiences),
       education: List.from(profile.education),
       skills: List.from(profile.skills),
@@ -59,6 +64,7 @@ class JobCvData {
   }
 
   final PersonalInfo? personalInfo;
+  final String professionalSummary;
   final List<WorkExperience> experiences;
   final List<Education> education;
   final List<Skill> skills;
@@ -68,6 +74,7 @@ class JobCvData {
   /// Convert to JSON
   Map<String, dynamic> toJson() => {
         'personalInfo': personalInfo?.toJson(),
+        'professionalSummary': professionalSummary,
         'experiences': experiences.map((e) => e.toJson()).toList(),
         'education': education.map((e) => e.toJson()).toList(),
         'skills': skills.map((e) => e.toJson()).toList(),
@@ -78,6 +85,7 @@ class JobCvData {
   /// Create a copy with updated fields
   JobCvData copyWith({
     PersonalInfo? personalInfo,
+    String? professionalSummary,
     List<WorkExperience>? experiences,
     List<Education>? education,
     List<Skill>? skills,
@@ -86,6 +94,7 @@ class JobCvData {
   }) {
     return JobCvData(
       personalInfo: personalInfo ?? this.personalInfo,
+      professionalSummary: professionalSummary ?? this.professionalSummary,
       experiences: experiences ?? this.experiences,
       education: education ?? this.education,
       skills: skills ?? this.skills,

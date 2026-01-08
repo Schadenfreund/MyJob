@@ -30,6 +30,7 @@ class UserDataProvider with ChangeNotifier {
   List<Skill> get skills => currentProfile?.skills ?? [];
   List<Language> get languages => currentProfile?.languages ?? [];
   List<Interest> get interests => currentProfile?.interests ?? [];
+  String get profileSummary => currentProfile?.profileSummary ?? '';
   String get defaultCoverLetterBody =>
       currentProfile?.defaultCoverLetterBody ?? '';
 
@@ -68,6 +69,15 @@ class UserDataProvider with ChangeNotifier {
     if (profile == null) return;
 
     final updated = profile.copyWith(defaultCoverLetterBody: body);
+    await _saveProfile(updated);
+  }
+
+  /// Update profile summary
+  Future<void> updateProfileSummary(String summary) async {
+    final profile = _getCurrentProfile();
+    if (profile == null) return;
+
+    final updated = profile.copyWith(profileSummary: summary);
     await _saveProfile(updated);
   }
 

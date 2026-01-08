@@ -12,7 +12,6 @@ import 'services/migration_service.dart';
 import 'widgets/custom_titlebar.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/applications/applications_screen.dart';
-import 'screens/documents/documents_screen.dart';
 import 'screens/settings/settings_screen.dart';
 
 void main() async {
@@ -92,7 +91,7 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentTabIndex = 0;
 
-  // Define tabs
+  // Define tabs (3-tab structure: Profile, Job Applications, Settings)
   final List<TabInfo> _tabs = const [
     TabInfo(
       label: 'Profile',
@@ -100,12 +99,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       activeIcon: Icons.person,
     ),
     TabInfo(
-      label: 'Documents',
-      icon: Icons.description_outlined,
-      activeIcon: Icons.description,
-    ),
-    TabInfo(
-      label: 'Tracking',
+      label: 'Job Applications',
       icon: Icons.work_outline,
       activeIcon: Icons.work,
     ),
@@ -124,7 +118,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     super.initState();
     _screens = [
       const ProfileScreen(),
-      const DocumentsScreen(),
       const ApplicationsScreen(),
       const SettingsScreen(),
     ];

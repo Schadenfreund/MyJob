@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_data_provider.dart';
+import '../../models/user_data/interest.dart';
 import '../../constants/app_constants.dart';
 import '../../dialogs/unified_import_dialog.dart';
 import '../../utils/ui_utils.dart';
 import '../../utils/dialog_utils.dart';
 import '../../widgets/collapsible_card.dart';
+import '../../dialogs/interest_edit_dialog.dart';
 import '../templates/sections/personal_info_section.dart';
 import '../templates/sections/skills_section.dart';
 import '../templates/sections/work_experience_section.dart';
+import '../templates/sections/education_section.dart';
 import '../templates/sections/languages_section.dart';
 
 /// Profile Screen - Central hub for all user data
@@ -281,8 +284,8 @@ class _ProfileSections extends StatelessWidget {
         const WorkExperienceSection(),
         const SizedBox(height: 16),
 
-        // Education Section (placeholder)
-        _buildEducationPlaceholder(context),
+        // Education Section
+        const EducationSection(),
         const SizedBox(height: 16),
 
         // Skills Section
@@ -297,34 +300,13 @@ class _ProfileSections extends StatelessWidget {
         _buildInterestsSection(context),
         const SizedBox(height: 16),
 
+        // Profile Summary Section
+        _buildProfileSummarySection(context),
+        const SizedBox(height: 16),
+
         // Default Cover Letter Section
         _buildDefaultCoverLetterSection(context),
       ],
-    );
-  }
-
-  Widget _buildEducationPlaceholder(BuildContext context) {
-    return CollapsibleCard(
-      title: 'Education',
-      subtitle: 'Your academic background',
-      cardDecoration: UIUtils.getCardDecoration(context),
-      collapsedSummary: Text(
-        'No education added yet',
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      expandedContent: UIUtils.buildEmptyState(
-        context,
-        icon: Icons.school_outlined,
-        title: 'No Education Added',
-        message: 'Add your educational background to include it in your CV.',
-        action: OutlinedButton.icon(
-          onPressed: () {
-            context.showInfoSnackBar('Education editor coming soon');
-          },
-          icon: const Icon(Icons.add, size: 18),
-          label: const Text('Add Education'),
-        ),
-      ),
     );
   }
 
@@ -360,10 +342,8 @@ class _ProfileSections extends StatelessWidget {
               icon: Icons.interests_outlined,
               title: 'No Interests Added',
               message: 'Add your hobbies and interests to personalize your CV.',
-              action: OutlinedButton.icon(
-                onPressed: () {
-                  context.showInfoSnackBar('Interest editor coming soon');
-                },
+              action: FilledButton.icon(
+                onPressed: () => _addInterest(context, userDataProvider),
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Add Interest'),
               ),
@@ -375,25 +355,71 @@ class _ProfileSections extends StatelessWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: interests.map((interest) {
-                    return Chip(
+                    return InputChip(
                       label: Text(interest.name),
                       deleteIcon: const Icon(Icons.close, size: 16),
-                      onDeleted: () {
-                        userDataProvider.deleteInterest(interest.id);
-                      },
+                      onPressed: () =>
+                          _editInterest(context, userDataProvider, interest),
+                      onDeleted: () =>
+                          _deleteInterest(context, userDataProvider, interest),
                     );
                   }).toList(),
                 ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
-                  onPressed: () {
-                    context.showInfoSnackBar('Interest editor coming soon');
-                  },
+                  onPressed: () => _addInterest(context, userDataProvider),
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Add Interest'),
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildProfileSummarySection(BuildContext context) {
+    final userDataProvider = context.watch<UserDataProvider>();
+    final profileSummary = userDataProvider.profileSummary;
+    final theme = Theme.of(context);
+    final controller = TextEditingController(text: profileSummary);
+
+    return CollapsibleCard(
+      title: 'Profile Summary',
+      subtitle: 'Default summary for new job applications',
+      cardDecoration: UIUtils.getCardDecoration(context),
+      collapsedSummary: Text(
+        profileSummary.isEmpty
+            ? 'No profile summary set'
+            : '${profileSummary.split('\n').first.substring(0, profileSummary.split('\n').first.length > 50 ? 50 : profileSummary.split('\n').first.length)}...',
+        style: theme.textTheme.bodySmall,
+      ),
+      expandedContent: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'This summary will be used as the starting point for all new job applications. '
+            'You can customize it for each specific job.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: controller,
+            maxLines: 4,
+            decoration: InputDecoration(
+              hintText: 'Enter your professional summary...\n\n'
+                  'Example: Experienced professional with 5+ years in software development, '
+                  'specializing in full-stack solutions and team leadership.',
+              border: const OutlineInputBorder(),
+              filled: true,
+              fillColor: theme.colorScheme.surface,
+            ),
+            onChanged: (value) {
+              userDataProvider.updateProfileSummary(value);
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -443,5 +469,66 @@ class _ProfileSections extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // Interest management helpers
+  Future<void> _addInterest(
+    BuildContext context,
+    UserDataProvider provider,
+  ) async {
+    final result = await showDialog<Interest>(
+      context: context,
+      builder: (context) => const InterestEditDialog(),
+    );
+
+    if (result != null) {
+      provider.addInterest(result);
+    }
+  }
+
+  Future<void> _editInterest(
+    BuildContext context,
+    UserDataProvider provider,
+    Interest interest,
+  ) async {
+    final result = await showDialog<Interest>(
+      context: context,
+      builder: (context) => InterestEditDialog(interest: interest),
+    );
+
+    if (result != null) {
+      provider.updateInterest(result);
+    }
+  }
+
+  Future<void> _deleteInterest(
+    BuildContext context,
+    UserDataProvider provider,
+    Interest interest,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Interest'),
+        content: Text('Remove "${interest.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      provider.deleteInterest(interest.id);
+    }
   }
 }

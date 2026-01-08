@@ -105,6 +105,13 @@ class ApplicationsProvider extends ChangeNotifier {
     // Load the master profile for the selected language
     final masterProfile = await _storage.loadMasterProfile(baseLanguage);
 
+    debugPrint('[CreateApp] Language selected: $baseLanguage');
+    debugPrint('[CreateApp] Master profile loaded: ${masterProfile != null}');
+    if (masterProfile != null) {
+      debugPrint(
+          '[CreateApp] Profile summary in master: "${masterProfile.profileSummary}"');
+    }
+
     // Clone the profile data to the job application folder
     await _storage.cloneProfileToApplication(masterProfile, application);
 

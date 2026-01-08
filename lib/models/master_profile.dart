@@ -10,6 +10,7 @@ class MasterProfile {
   MasterProfile({
     required this.language,
     this.personalInfo,
+    this.profileSummary = '',
     this.experiences = const [],
     this.education = const [],
     this.skills = const [],
@@ -25,6 +26,7 @@ class MasterProfile {
       personalInfo: json['personalInfo'] != null
           ? PersonalInfo.fromJson(json['personalInfo'] as Map<String, dynamic>)
           : null,
+      profileSummary: json['profileSummary'] as String? ?? '',
       experiences: (json['experiences'] as List<dynamic>?)
               ?.map((e) => WorkExperience.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -51,6 +53,7 @@ class MasterProfile {
 
   final DocumentLanguage language;
   final PersonalInfo? personalInfo;
+  final String profileSummary;
   final List<WorkExperience> experiences;
   final List<Education> education;
   final List<Skill> skills;
@@ -62,6 +65,7 @@ class MasterProfile {
   Map<String, dynamic> toJson() => {
         'language': language.toJson(),
         'personalInfo': personalInfo?.toJson(),
+        'profileSummary': profileSummary,
         'experiences': experiences.map((e) => e.toJson()).toList(),
         'education': education.map((e) => e.toJson()).toList(),
         'skills': skills.map((e) => e.toJson()).toList(),
@@ -74,6 +78,7 @@ class MasterProfile {
   MasterProfile copyWith({
     DocumentLanguage? language,
     PersonalInfo? personalInfo,
+    String? profileSummary,
     List<WorkExperience>? experiences,
     List<Education>? education,
     List<Skill>? skills,
@@ -84,6 +89,7 @@ class MasterProfile {
     return MasterProfile(
       language: language ?? this.language,
       personalInfo: personalInfo ?? this.personalInfo,
+      profileSummary: profileSummary ?? this.profileSummary,
       experiences: experiences ?? this.experiences,
       education: education ?? this.education,
       skills: skills ?? this.skills,
@@ -99,6 +105,7 @@ class MasterProfile {
     return MasterProfile(
       language: language,
       personalInfo: null,
+      profileSummary: '',
       experiences: [],
       education: [],
       skills: [],
