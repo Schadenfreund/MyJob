@@ -1,0 +1,85 @@
+personal_info:
+  full_name: "Sarah Burić"
+  email: "s.buric01@gmail.com"
+  phone: "+49 1590 / 633 9776"
+  address: "Hamm Mühle 1"
+  city: "Stolberg"
+  country: "Germany"
+  profile_summary: |
+    TEST Crisp, strategic and well-crafted storytelling has shaped my work for over 20 years across games, esports and media.
+    Most recently, I worked as Senior PR & Communications Manager at ESL FACEIT Group, after several years as a games
+    and esports journalist (including Germany's leading media outlets WDR, 1LIVE and Deutschlandfunk) and as a TV host
+    for an esports show on sportschau.de. A gamer by passion and tech-savvy by nature, I'm ready for the next challenge.
+
+work_experience:
+  - position: "Senior PR & Communications Manager"
+    company: "ESL FACEIT Group"
+    start_date: "2022-01-01"
+    is_current: true
+    responsibilities:
+      - "Led PR initiatives across multiple esports events and international markets"
+      - "Development and execution of PR and communications strategies across the global esports ecosystem"
+      - "Managing media relations and long-term storytelling, translating complex products and global initiatives into clear, media-ready narratives"
+      - "Strategic collaboration with cross-functional internal teams and external stakeholders and partners"
+      - "Authoring strategic communication frameworks, PR guidelines and messaging documents to support internal team alignment and collaboration"
+  - position: "Games & Esports Journalist · TV Host · Reporter"
+    company: "WDR / ARD Network"
+    location: "Germany"
+    start_date: "2017-01-01"
+    end_date: "2022-01-01"
+    is_current: false
+    responsibilities:
+      - "Reporting on games, esports and digital culture for Germany's leading media outlets"
+      - "Concept development, hosting and moderation of eSportschau, the first esports format within the sportschau editorial team (sportschau.de, YouTube, Facebook)"
+      - "Writing and presenting radio features, news segments and reviews"
+      - "Planning and production of TV features, interviews and reports"
+      - "Creation of interactive web stories"
+  - position: "Moderator · Journalist · Editor"
+    company: "Radio, TV & Print Media (Various Outlets)"
+    location: "Germany"
+    start_date: "2006-01-01"
+    end_date: "2016-12-31"
+    is_current: false
+    responsibilities:
+      - "Moderation and presentation in radio and TV formats"
+      - "Editorial work, news writing and reporting"
+      - "Interviews, reviews and feature production"
+      - "Early focus on games, media and culture"
+      - "Experience ranges from live radio hosting to editorial planning and reporting"
+
+skills:
+  - name: "Organization"
+    category: "Professional"
+    level: "expert"
+  - name: "Research"
+    category: "Professional"
+    level: "expert"
+  - name: "Writing"
+    category: "Professional"
+    level: "expert"
+  - name: "Storytelling"
+    category: "Professional"
+    level: "expert"
+  - name: "Hosting & Moderation"
+    category: "Professional"
+    level: "expert"
+  - name: "Programming"
+    category: "Technical"
+    level: "beginner"
+
+languages:
+  - name: "German"
+    proficiency: "native"
+  - name: "English"
+    proficiency: "fluent"
+  - name: "Croatian"
+    proficiency: "basic"
+  - name: "French"
+    proficiency: "basic"
+
+interests:
+  - "Gaming & Interactive Media"
+  - "Outdoor & Fitness"
+  - "Tech & Innovation"
+  - "Gardening"
+

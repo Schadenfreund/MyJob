@@ -222,28 +222,36 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: DocumentLanguage.values.map((lang) {
-                      final isSelected = _baseLanguage == lang;
-                      return ChoiceChip(
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(lang.flag),
-                            const SizedBox(width: 8),
-                            Text(lang.label),
-                          ],
-                        ),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          if (selected) {
-                            setState(() => _baseLanguage = lang);
-                          }
-                        },
-                      );
-                    }).toList(),
+                  // Language selector with consistent styling
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (var i = 0;
+                            i < DocumentLanguage.values.length;
+                            i++) ...[
+                          if (i > 0)
+                            Container(
+                              width: 1,
+                              height: 32,
+                              color: theme.colorScheme.outline.withOpacity(0.2),
+                            ),
+                          _buildLanguageOption(
+                            theme,
+                            DocumentLanguage.values[i],
+                            _baseLanguage == DocumentLanguage.values[i],
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -408,6 +416,57 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
             child: const Text('Delete'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption(
+    ThemeData theme,
+    DocumentLanguage language,
+    bool isSelected,
+  ) {
+    return Material(
+      color: isSelected
+          ? theme.colorScheme.primary.withOpacity(0.12)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: () => setState(() => _baseLanguage = language),
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Flag with background
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? theme.colorScheme.primary.withOpacity(0.1)
+                      : theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  language.flag,
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Language code
+              Text(
+                language.code.toUpperCase(),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

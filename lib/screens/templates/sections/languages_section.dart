@@ -7,13 +7,29 @@ import '../../../constants/ui_constants.dart';
 
 /// Languages management section
 class LanguagesSection extends StatelessWidget {
-  const LanguagesSection({super.key});
+  const LanguagesSection({
+    this.showHeader = true,
+    super.key,
+  });
+
+  final bool showHeader;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final userDataProvider = context.watch<UserDataProvider>();
     final languages = userDataProvider.languages;
+
+    final content = Padding(
+      padding: showHeader ? const EdgeInsets.all(20) : EdgeInsets.zero,
+      child: languages.isEmpty
+          ? _buildEmptyState(context)
+          : _buildLanguagesList(context, languages),
+    );
+
+    if (!showHeader) {
+      return content;
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -36,51 +52,55 @@ class LanguagesSection extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                Icon(
-                  Icons.language,
-                  color: theme.colorScheme.primary,
-                  size: 24,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.language,
+                    color: theme.colorScheme.primary,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   'Languages',
-                  style: theme.textTheme.titleLarge?.copyWith(
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${languages.length}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.primary,
+                if (languages.isNotEmpty)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${languages.length}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                   ),
-                ),
                 const Spacer(),
                 OutlinedButton.icon(
-                  onPressed: () => _showAddLanguageDialog(context),
+                  onPressed: () =>
+                      LanguagesSection.showAddLanguageDialog(context),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Add Language'),
+                  label: const Text('Add'),
+                  style: UIConstants.getSecondaryButtonStyle(context),
                 ),
               ],
             ),
           ),
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: languages.isEmpty
-                ? _buildEmptyState(context)
-                : _buildLanguagesList(context, languages),
-          ),
+          content,
         ],
       ),
     );
@@ -203,7 +223,7 @@ class LanguagesSection extends StatelessWidget {
     }
   }
 
-  void _showAddLanguageDialog(BuildContext context) {
+  static void showAddLanguageDialog(BuildContext context) {
     _showLanguageDialog(context, null);
   }
 
@@ -211,7 +231,8 @@ class LanguagesSection extends StatelessWidget {
     _showLanguageDialog(context, language);
   }
 
-  void _showLanguageDialog(BuildContext context, Language? existingLang) {
+  static void _showLanguageDialog(
+      BuildContext context, Language? existingLang) {
     final nameController =
         TextEditingController(text: existingLang?.name ?? '');
     LanguageProficiency selectedProficiency =

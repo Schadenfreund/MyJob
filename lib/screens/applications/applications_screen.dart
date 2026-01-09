@@ -516,24 +516,38 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.secondaryContainer,
-                                borderRadius: BorderRadius.circular(4),
+                                color:
+                                    theme.colorScheme.primary.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.2),
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    widget.application.baseLanguage.flag,
-                                    style: const TextStyle(fontSize: 12),
+                                  // Flag with background
+                                  Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary
+                                          .withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      widget.application.baseLanguage.flag,
+                                      style: const TextStyle(fontSize: 11),
+                                    ),
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 6),
                                   Text(
                                     widget.application.baseLanguage.code
                                         .toUpperCase(),
                                     style: theme.textTheme.labelSmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: theme
-                                          .colorScheme.onSecondaryContainer,
+                                      fontWeight: FontWeight.w700,
+                                      color: theme.colorScheme.primary,
+                                      letterSpacing: 0.5,
                                     ),
                                   ),
                                 ],

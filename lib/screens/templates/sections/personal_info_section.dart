@@ -9,13 +9,29 @@ import '../../../constants/ui_constants.dart';
 
 /// Personal information management section
 class PersonalInfoSection extends StatelessWidget {
-  const PersonalInfoSection({super.key});
+  const PersonalInfoSection({
+    this.showHeader = true,
+    super.key,
+  });
+
+  final bool showHeader;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final userDataProvider = context.watch<UserDataProvider>();
     final personalInfo = userDataProvider.personalInfo;
+
+    final content = Padding(
+      padding: showHeader ? UIConstants.cardPadding : EdgeInsets.zero,
+      child: personalInfo == null
+          ? _buildEmptyState(context)
+          : _buildPersonalInfoContent(context, personalInfo),
+    );
+
+    if (!showHeader) {
+      return content;
+    }
 
     return Container(
       decoration: UIConstants.getCardDecoration(context),
@@ -27,15 +43,22 @@ class PersonalInfoSection extends StatelessWidget {
             padding: UIConstants.cardPadding,
             child: Row(
               children: [
-                Icon(
-                  Icons.person_outline,
-                  color: theme.colorScheme.primary,
-                  size: 24,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.person_outline,
+                    color: theme.colorScheme.primary,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   'Personal Information',
-                  style: theme.textTheme.titleLarge?.copyWith(
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -46,19 +69,13 @@ class PersonalInfoSection extends StatelessWidget {
                     personalInfo == null ? Icons.add : Icons.edit,
                     size: 16,
                   ),
-                  label: Text(personalInfo == null ? 'Add Info' : 'Edit'),
+                  label: Text(personalInfo == null ? 'Add' : 'Edit'),
                   style: UIConstants.getSecondaryButtonStyle(context),
                 ),
               ],
             ),
           ),
-          // Content
-          Padding(
-            padding: UIConstants.cardPadding,
-            child: personalInfo == null
-                ? _buildEmptyState(context)
-                : _buildPersonalInfoContent(context, personalInfo),
-          ),
+          content,
         ],
       ),
     );

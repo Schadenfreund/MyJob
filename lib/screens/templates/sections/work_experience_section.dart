@@ -7,16 +7,43 @@ import '../../../constants/ui_constants.dart';
 
 /// Work experience management section
 class WorkExperienceSection extends StatelessWidget {
-  const WorkExperienceSection({super.key});
+  const WorkExperienceSection({
+    this.showHeader = true,
+    super.key,
+  });
+
+  final bool showHeader;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final userDataProvider = context.watch<UserDataProvider>();
-    final experiences = userDataProvider.sortedWorkExperiences;
+    final experiences = userDataProvider.experiences;
+
+    final content = Padding(
+      padding: showHeader ? const EdgeInsets.all(20) : EdgeInsets.zero,
+      child: experiences.isEmpty
+          ? _buildEmptyState(context)
+          : _buildExperiencesList(context, experiences),
+    );
+
+    if (!showHeader) {
+      return content;
+    }
 
     return Container(
-      decoration: UIConstants.getCardDecoration(context),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -25,51 +52,54 @@ class WorkExperienceSection extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                Icon(
-                  Icons.work_outline,
-                  color: theme.colorScheme.primary,
-                  size: 24,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.work_outline,
+                    color: theme.colorScheme.primary,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   'Work Experience',
-                  style: theme.textTheme.titleLarge?.copyWith(
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${experiences.length}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.primary,
+                if (experiences.isNotEmpty)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${experiences.length}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                   ),
-                ),
                 const Spacer(),
                 OutlinedButton.icon(
                   onPressed: () => _showAddExperienceDialog(context),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Add Experience'),
+                  label: const Text('Add'),
+                  style: UIConstants.getSecondaryButtonStyle(context),
                 ),
               ],
             ),
           ),
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: experiences.isEmpty
-                ? _buildEmptyState(context)
-                : _buildExperiencesList(context, experiences),
-          ),
+          content,
         ],
       ),
     );

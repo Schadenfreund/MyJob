@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../providers/user_data_provider.dart';
 import '../../../models/master_profile.dart';
-import '../../../widgets/collapsible_card.dart';
 import '../../../dialogs/education_edit_dialog.dart';
 import '../../../constants/ui_constants.dart';
 import '../../../utils/ui_utils.dart';
@@ -13,7 +12,12 @@ import '../../../utils/ui_utils.dart';
 /// Displays all education entries with CRUD operations.
 /// Reuses EducationEditDialog from job applications for consistency.
 class EducationSection extends StatelessWidget {
-  const EducationSection({super.key});
+  const EducationSection({
+    this.showHeader = true,
+    super.key,
+  });
+
+  final bool showHeader;
 
   @override
   Widget build(BuildContext context) {
@@ -22,45 +26,88 @@ class EducationSection extends StatelessWidget {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM yyyy');
 
-    return CollapsibleCard(
-      title: 'Education',
-      subtitle: education.isEmpty
-          ? 'Your academic background'
-          : '${education.length} ${education.length == 1 ? 'entry' : 'entries'}',
-      cardDecoration: UIUtils.getCardDecoration(context),
-      collapsedSummary: education.isEmpty
-          ? Text(
-              'No education added yet',
-              style: theme.textTheme.bodySmall,
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: education.take(2).map((edu) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.school_outlined,
-                        size: 16,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${edu.degree} • ${edu.institution}',
-                          style: theme.textTheme.bodySmall,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-      expandedContent: education.isEmpty
+    final content = Padding(
+      padding: showHeader ? const EdgeInsets.all(20) : EdgeInsets.zero,
+      child: education.isEmpty
           ? _buildEmptyState(context, provider)
           : _buildEducationList(context, provider, education, dateFormat),
+    );
+
+    if (!showHeader) {
+      return content;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.school_outlined,
+                    color: theme.colorScheme.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Education',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (education.isNotEmpty)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${education.length}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                const Spacer(),
+                OutlinedButton.icon(
+                  onPressed: () => _addEducation(context, provider),
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('Add'),
+                  style: UIConstants.getSecondaryButtonStyle(context),
+                ),
+              ],
+            ),
+          ),
+          content,
+        ],
+      ),
     );
   }
 
