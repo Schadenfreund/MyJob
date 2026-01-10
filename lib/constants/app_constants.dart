@@ -37,10 +37,9 @@ enum ApplicationStatus {
   draft('Draft', 'Application in progress'),
   applied('Applied', 'Application submitted'),
   interviewing('Interviewing', 'In interview process'),
-  offered('Offered', 'Received job offer'),
-  accepted('Accepted', 'Offer accepted'),
+  successful('Successful', 'Job offer accepted'),
   rejected('Rejected', 'Application rejected'),
-  withdrawn('Withdrawn', 'Application withdrawn');
+  noResponse('No Response', 'No response received');
 
   const ApplicationStatus(this.label, this.description);
   final String label;

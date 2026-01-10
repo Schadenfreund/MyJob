@@ -21,14 +21,12 @@ class StatusBadge extends StatelessWidget {
         return AppTheme.statusApplied;
       case ApplicationStatus.interviewing:
         return AppTheme.statusInterviewing;
-      case ApplicationStatus.offered:
-        return AppTheme.statusOffered;
-      case ApplicationStatus.accepted:
-        return AppTheme.statusAccepted;
+      case ApplicationStatus.successful:
+        return AppTheme.statusAccepted; // Reuse green color
       case ApplicationStatus.rejected:
         return AppTheme.statusRejected;
-      case ApplicationStatus.withdrawn:
-        return AppTheme.statusWithdrawn;
+      case ApplicationStatus.noResponse:
+        return AppTheme.statusWithdrawn; // Reuse gray color
     }
   }
 
@@ -40,14 +38,12 @@ class StatusBadge extends StatelessWidget {
         return Icons.send_outlined;
       case ApplicationStatus.interviewing:
         return Icons.people_outline;
-      case ApplicationStatus.offered:
-        return Icons.local_offer_outlined;
-      case ApplicationStatus.accepted:
+      case ApplicationStatus.successful:
         return Icons.check_circle_outline;
       case ApplicationStatus.rejected:
         return Icons.cancel_outlined;
-      case ApplicationStatus.withdrawn:
-        return Icons.undo_outlined;
+      case ApplicationStatus.noResponse:
+        return Icons.schedule;
     }
   }
 

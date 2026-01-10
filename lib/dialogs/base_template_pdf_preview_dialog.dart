@@ -155,6 +155,12 @@ abstract class BaseTemplatePdfPreviewDialogState<
   /// Get document name for display and export
   String getDocumentName();
 
+  /// Get initial directory for export dialog (optional)
+  ///
+  /// Override this method to provide a default directory for the file picker.
+  /// Returns null by default, which lets the system choose the default location.
+  String? getInitialExportDirectory() => null;
+
   // ============================================================================
   // OPTIONAL OVERRIDES
   // ============================================================================
@@ -223,6 +229,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
       final result = await FilePicker.platform.saveFile(
         dialogTitle: 'Export PDF',
         fileName: '${getDocumentName()}.pdf',
+        initialDirectory: getInitialExportDirectory(),
         type: FileType.custom,
         allowedExtensions: ['pdf'],
       );

@@ -13,6 +13,7 @@ import 'widgets/custom_titlebar.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/applications/applications_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'models/tab_info.dart'; // Added based on context of TabInfo usage
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

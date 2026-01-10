@@ -1,35 +1,57 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
 import '../models/template_customization.dart';
+import 'storage_service.dart';
 
-/// Service for persisting template customization settings
+/// Service for persisting template customization settings in UserData folder
 class CustomizationPersistence {
-  static const String _key = 'cv_customization';
+  static const String _fileName = 'cv_customization.json';
+
+  /// Get customization file path in UserData folder
+  static Future<String> _getFilePath() async {
+    final userDataPath = await StorageService.instance.getUserDataPath();
+    return p.join(userDataPath, _fileName);
+  }
 
   /// Save customization settings
   static Future<void> save(TemplateCustomization customization) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final filePath = await _getFilePath();
+      final file = File(filePath);
       final json = customization.toJson();
-      await prefs.setString(_key, jsonEncode(json));
+      await file.writeAsString(
+        const JsonEncoder.withIndent('  ').convert(json),
+      );
     } catch (e) {
-      // Silently fail - persistence is not critical
-      print('Failed to save customization: $e');
+      debugPrint('[CustomizationPersistence] Failed to save: $e');
     }
   }
 
   /// Load customization settings
   static Future<TemplateCustomization?> load() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonString = prefs.getString(_key);
-      if (jsonString == null) return null;
+      final filePath = await _getFilePath();
+      final file = File(filePath);
+
+      if (!await file.exists()) return null;
+
+      final jsonString = await file.readAsString();
+
+      // Handle empty or whitespace-only files
+      if (jsonString.trim().isEmpty) {
+        debugPrint('[CustomizationPersistence] File is empty, using defaults');
+        await _safeDeleteFile(file);
+        return null;
+      }
 
       final json = jsonDecode(jsonString) as Map<String, dynamic>;
       return TemplateCustomization.fromJson(json);
     } catch (e) {
-      // Return null on error - will use defaults
-      print('Failed to load customization: $e');
+      debugPrint('[CustomizationPersistence] Failed to load: $e');
+      // Delete corrupted file to prevent repeated errors
+      await _deleteCorruptedFile();
       return null;
     }
   }
@@ -37,10 +59,35 @@ class CustomizationPersistence {
   /// Clear saved settings
   static Future<void> clear() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_key);
+      final filePath = await _getFilePath();
+      final file = File(filePath);
+      if (await file.exists()) {
+        await file.delete();
+      }
     } catch (e) {
-      print('Failed to clear customization: $e');
+      debugPrint('[CustomizationPersistence] Failed to clear: $e');
+    }
+  }
+
+  /// Safely delete a file, ignoring errors
+  static Future<void> _safeDeleteFile(File file) async {
+    try {
+      if (await file.exists()) {
+        await file.delete();
+        debugPrint('[CustomizationPersistence] Deleted file: ${file.path}');
+      }
+    } catch (e) {
+      debugPrint('[CustomizationPersistence] Failed to delete file: $e');
+    }
+  }
+
+  /// Delete corrupted customization file
+  static Future<void> _deleteCorruptedFile() async {
+    try {
+      final filePath = await _getFilePath();
+      await _safeDeleteFile(File(filePath));
+    } catch (e) {
+      debugPrint('[CustomizationPersistence] Failed to delete corrupted file: $e');
     }
   }
 }

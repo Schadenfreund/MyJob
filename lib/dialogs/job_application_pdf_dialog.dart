@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
 
 import '../models/job_application.dart';
@@ -263,49 +262,33 @@ class _JobApplicationPdfDialogState
     );
   }
 
-  /// Override export to use job application folder as default location
-  Future<void> handleExport() async {
-    try {
-      final result = await FilePicker.platform.saveFile(
-        dialogTitle: 'Export PDF',
-        fileName: '${getDocumentName()}.pdf',
-        initialDirectory: widget.application.folderPath,
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-      );
-
-      if (result == null || !mounted) return;
-
-      controller.setGenerating(true);
-
-      await exportPdf(context, result);
-
-      if (!mounted) return;
-      controller.setGenerating(false);
-
-      // Show success message with just filename
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('PDF exported to ${path.basename(result)}'),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      controller.setGenerating(false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error exporting PDF: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+  /// Get and ensure exports folder exists
+  String? _getOrCreateExportsFolder() {
+    if (widget.application.folderPath == null) {
+      debugPrint('[Export] No folder path set for application');
+      return null;
     }
+
+    final exportsPath = path.join(widget.application.folderPath!, 'exports');
+    final exportsDir = Directory(exportsPath);
+
+    // Create exports folder if it doesn't exist
+    if (!exportsDir.existsSync()) {
+      exportsDir.createSync(recursive: true);
+      debugPrint('[Export] Created exports folder: $exportsPath');
+    }
+
+    return exportsPath;
+  }
+
+  /// Override to provide job application exports folder as default location
+  @override
+  String? getInitialExportDirectory() {
+    final exportsPath = _getOrCreateExportsFolder();
+    if (exportsPath != null) {
+      debugPrint('[Export] Initial directory set to: $exportsPath');
+    }
+    return exportsPath;
   }
 
   @override
@@ -314,13 +297,27 @@ class _JobApplicationPdfDialogState
     final file = File(outputPath);
     await file.writeAsBytes(bytes);
 
-    // Auto-open folder after export (job application specific feature)
-    if (widget.application.folderPath != null) {
-      try {
-        await Process.run('explorer', [widget.application.folderPath!]);
-      } catch (e) {
-        debugPrint('Error opening folder: $e');
+    // Auto-open exports folder after successful export
+    await _openExportsFolder();
+  }
+
+  /// Open the exports folder in the system file explorer
+  Future<void> _openExportsFolder() async {
+    final exportsPath = _getOrCreateExportsFolder();
+    if (exportsPath == null) return;
+
+    try {
+      if (Platform.isWindows) {
+        await Process.run('explorer', [exportsPath]);
+      } else if (Platform.isMacOS) {
+        await Process.run('open', [exportsPath]);
+      } else if (Platform.isLinux) {
+        await Process.run('xdg-open', [exportsPath]);
       }
+
+      debugPrint('[Export] Opened exports folder: $exportsPath');
+    } catch (e) {
+      debugPrint('[Export] Error opening exports folder: $e');
     }
   }
 

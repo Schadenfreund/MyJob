@@ -1,5 +1,35 @@
 import '../constants/app_constants.dart';
 
+/// Model for tracking status changes
+class StatusChange {
+  StatusChange({
+    required this.status,
+    required this.changedAt,
+    this.notes,
+  });
+
+  factory StatusChange.fromJson(Map<String, dynamic> json) {
+    return StatusChange(
+      status: ApplicationStatus.values.firstWhere(
+        (s) => s.name == json['status'],
+        orElse: () => ApplicationStatus.draft,
+      ),
+      changedAt: DateTime.parse(json['changedAt'] as String),
+      notes: json['notes'] as String?,
+    );
+  }
+
+  final ApplicationStatus status;
+  final DateTime changedAt;
+  final String? notes;
+
+  Map<String, dynamic> toJson() => {
+        'status': status.name,
+        'changedAt': changedAt.toIso8601String(),
+        'notes': notes,
+      };
+}
+
 /// Model representing a job application
 class JobApplication {
   JobApplication({
@@ -20,6 +50,7 @@ class JobApplication {
     this.interviewDate,
     this.followUpDate,
     this.reminders = const [],
+    this.statusHistory = const [],
     // Legacy fields for backward compatibility
     this.cvInstanceId,
     this.coverLetterInstanceId,
@@ -61,6 +92,10 @@ class JobApplication {
               ?.map((r) => Reminder.fromJson(r as Map<String, dynamic>))
               .toList() ??
           [],
+      statusHistory: (json['statusHistory'] as List<dynamic>?)
+              ?.map((s) => StatusChange.fromJson(s as Map<String, dynamic>))
+              .toList() ??
+          [],
       // Legacy fields
       cvInstanceId: (json['cvInstanceId'] ?? json['cvId']) as String?,
       coverLetterInstanceId:
@@ -85,12 +120,16 @@ class JobApplication {
   final DateTime? interviewDate;
   final DateTime? followUpDate;
   final List<Reminder> reminders;
+  final List<StatusChange>? statusHistory;
 
   // Legacy fields for backward compatibility
   @Deprecated('Use folder-based storage instead')
   final String? cvInstanceId;
   @Deprecated('Use folder-based storage instead')
   final String? coverLetterInstanceId;
+
+  /// Safe getter for status history - returns empty list if null
+  List<StatusChange> get safeStatusHistory => statusHistory ?? [];
 
   /// Convert to JSON
   Map<String, dynamic> toJson() => {
@@ -111,6 +150,7 @@ class JobApplication {
         'interviewDate': interviewDate?.toIso8601String(),
         'followUpDate': followUpDate?.toIso8601String(),
         'reminders': reminders.map((r) => r.toJson()).toList(),
+        'statusHistory': statusHistory?.map((s) => s.toJson()).toList(),
         // Legacy fields
         'cvInstanceId': cvInstanceId,
         'coverLetterInstanceId': coverLetterInstanceId,
@@ -135,6 +175,7 @@ class JobApplication {
     DateTime? interviewDate,
     DateTime? followUpDate,
     List<Reminder>? reminders,
+    List<StatusChange>? statusHistory,
     String? cvInstanceId,
     String? coverLetterInstanceId,
   }) {
@@ -156,10 +197,45 @@ class JobApplication {
       interviewDate: interviewDate ?? this.interviewDate,
       followUpDate: followUpDate ?? this.followUpDate,
       reminders: reminders ?? this.reminders,
+      statusHistory: statusHistory ?? this.statusHistory,
       cvInstanceId: cvInstanceId ?? this.cvInstanceId,
       coverLetterInstanceId:
           coverLetterInstanceId ?? this.coverLetterInstanceId,
     );
+  }
+
+  /// Create a copy with a new status and add to history
+  JobApplication withStatusChange(ApplicationStatus newStatus,
+      {String? notes}) {
+    // Don't add to history if status hasn't changed
+    if (newStatus == status) return this;
+
+    final statusChange = StatusChange(
+      status: newStatus,
+      changedAt: DateTime.now(),
+      notes: notes,
+    );
+
+    return copyWith(
+      status: newStatus,
+      lastUpdated: DateTime.now(),
+      statusHistory: [...safeStatusHistory, statusChange],
+    );
+  }
+
+  /// Get the date when a specific status was reached, if ever
+  DateTime? getStatusChangeDate(ApplicationStatus targetStatus) {
+    final change = safeStatusHistory
+        .where((change) => change.status == targetStatus)
+        .lastOrNull;
+    return change?.changedAt;
+  }
+
+  /// Get all status changes in chronological order
+  List<StatusChange> get chronologicalStatusHistory {
+    final history = [...safeStatusHistory];
+    history.sort((a, b) => a.changedAt.compareTo(b.changedAt));
+    return history;
   }
 }
 
