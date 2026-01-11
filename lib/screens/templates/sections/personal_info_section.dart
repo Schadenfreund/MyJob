@@ -108,46 +108,39 @@ class PersonalInfoSection extends StatelessWidget {
 
   Widget _buildPersonalInfoContent(BuildContext context, PersonalInfo info) {
     final theme = Theme.of(context);
+    final userDataProvider = context.read<UserDataProvider>();
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Profile picture
-        if (info.hasProfilePicture) ...[
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: theme.colorScheme.primary,
-                width: 2,
-              ),
+        // Profile Picture Picker - Always visible for easy editing
+        Column(
+          children: [
+            ProfilePicturePicker(
+              imagePath: info.profilePicturePath,
+              size: 90,
+              placeholderInitial: info.fullName.isNotEmpty ? info.fullName[0] : null,
+              backgroundColor: theme.colorScheme.primary,
+              onImageSelected: (selectedPath) async {
+                await _handleProfilePictureUpdate(
+                  context,
+                  userDataProvider,
+                  info,
+                  selectedPath,
+                );
+              },
+              onImageRemoved: () async {
+                await _handleProfilePictureUpdate(
+                  context,
+                  userDataProvider,
+                  info,
+                  '', // Empty string to clear
+                );
+              },
             ),
-            child: ClipOval(
-              child: Image.file(
-                File(info.profilePicturePath!),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: theme.colorScheme.primary,
-                  child: Center(
-                    child: Text(
-                      info.fullName.isNotEmpty
-                          ? info.fullName[0].toUpperCase()
-                          : '?',
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 20),
-        ],
+          ],
+        ),
+        const SizedBox(width: 20),
 
         // Info fields
         Expanded(
@@ -286,6 +279,79 @@ class PersonalInfoSection extends StatelessWidget {
         },
       ),
     );
+  }
+
+  /// Handle profile picture update
+  Future<void> _handleProfilePictureUpdate(
+    BuildContext context,
+    UserDataProvider provider,
+    PersonalInfo info,
+    String newPath,
+  ) async {
+    try {
+      debugPrint('[PersonalInfoSection] === Profile Picture Update ===');
+      debugPrint('[PersonalInfoSection] New path from picker: "$newPath"');
+
+      String? storedPath = newPath;
+
+      // If adding/changing picture (not removing), copy to storage
+      if (newPath.isNotEmpty) {
+        final storage = TemplatesStorageService.instance;
+        final isAlreadyStored = await storage.isStoredProfilePicture(newPath);
+        debugPrint('[PersonalInfoSection] Is already stored: $isAlreadyStored');
+
+        if (!isAlreadyStored) {
+          // Copy to UserData folder (language-specific)
+          final currentLanguage = provider.currentLanguage;
+          debugPrint('[PersonalInfoSection] Copying to UserData folder for language: ${currentLanguage.code}');
+          final copiedPath = await storage.saveProfilePicture(newPath, language: currentLanguage);
+          debugPrint('[PersonalInfoSection] Copied to: "$copiedPath"');
+          if (copiedPath != null) {
+            storedPath = copiedPath;
+          }
+        }
+      } else {
+        // Removing picture
+        debugPrint('[PersonalInfoSection] Removing picture');
+        storedPath = null;
+      }
+
+      // Update the personal info with new picture path
+      debugPrint('[PersonalInfoSection] Updating PersonalInfo with path: "$storedPath"');
+      final updatedInfo = info.copyWith(profilePicturePath: storedPath ?? '');
+      debugPrint('[PersonalInfoSection] Updated info has picture: ${updatedInfo.hasProfilePicture}');
+      debugPrint('[PersonalInfoSection] Updated info path: "${updatedInfo.profilePicturePath}"');
+
+      await provider.updatePersonalInfo(updatedInfo);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Text(newPath.isEmpty
+                    ? 'Profile picture removed'
+                    : 'Profile picture updated'),
+              ],
+            ),
+            backgroundColor: Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update profile picture: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
   }
 }
 
@@ -544,12 +610,19 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
     // Copy profile picture to UserData folder if not already stored there
     String? storedPicturePath = _profilePicturePath;
     if (_profilePicturePath != null && _profilePicturePath!.isNotEmpty) {
+      // Get language before async operations
+      final provider = context.read<UserDataProvider>();
+      final currentLanguage = provider.currentLanguage;
+
       final storage = TemplatesStorageService.instance;
       final isAlreadyStored =
           await storage.isStoredProfilePicture(_profilePicturePath);
       if (!isAlreadyStored) {
-        // Copy to UserData folder
-        final newPath = await storage.saveProfilePicture(_profilePicturePath!);
+        // Copy to UserData folder (language-specific)
+        final newPath = await storage.saveProfilePicture(
+          _profilePicturePath!,
+          language: currentLanguage,
+        );
         if (newPath != null) {
           storedPicturePath = newPath;
         }

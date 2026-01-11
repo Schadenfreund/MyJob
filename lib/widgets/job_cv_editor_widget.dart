@@ -1,19 +1,20 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as path;
 import '../models/job_application.dart';
 import '../models/job_cv_data.dart';
+import '../models/job_cover_letter.dart';
 import '../models/user_data/work_experience.dart';
 import '../models/user_data/personal_info.dart';
 import '../models/master_profile.dart'; // Contains Education class
-import '../models/user_data/skill.dart';
-import '../models/user_data/language.dart';
-import '../models/user_data/interest.dart';
-import '../models/cover_letter_template.dart';
+import '../services/storage_service.dart';
 import '../dialogs/experience_edit_dialog.dart';
 import '../dialogs/education_edit_dialog.dart';
 import '../widgets/skill_chip_editor.dart';
 import '../widgets/language_editor.dart';
 import '../widgets/interest_chip_editor.dart';
+import '../widgets/profile_picture_picker.dart';
 import '../utils/ui_utils.dart';
 import '../constants/app_constants.dart';
 import '../constants/ui_constants.dart';
@@ -28,6 +29,8 @@ class JobCvEditorWidget extends StatefulWidget {
     required this.onChanged,
     this.applicationContext,
     this.onApplicationChanged,
+    this.coverLetter,
+    this.onTabChanged,
     super.key,
   });
 
@@ -35,6 +38,8 @@ class JobCvEditorWidget extends StatefulWidget {
   final ValueChanged<JobCvData> onChanged;
   final JobApplication? applicationContext;
   final ValueChanged<JobApplication>? onApplicationChanged;
+  final dynamic coverLetter; // JobCoverLetter?
+  final ValueChanged<int>? onTabChanged;
 
   @override
   State<JobCvEditorWidget> createState() => _JobCvEditorWidgetState();
@@ -44,7 +49,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late JobCvData _cvData;
-  CoverLetterInstance? _coverLetterInstance;
+  JobCoverLetter? _jobCoverLetter;
 
   // Cover letter text controllers
   late TextEditingController _recipientNameController;
@@ -52,6 +57,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   late TextEditingController _greetingController;
   late TextEditingController _bodyController;
   late TextEditingController _closingController;
+
+  final _storage = StorageService.instance;
 
   // No additional controllers needed for CV sections
 
@@ -61,26 +68,33 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     _cvData = widget.cvData;
     _tabController = TabController(length: 8, vsync: this);
 
-    // Initialize cover letter instance (will load from storage later)
-    _initializeCoverLetterInstance();
+    // Add listener to notify parent of tab changes
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        widget.onTabChanged?.call(_tabController.index);
+      }
+    });
 
-    // Initialize cover letter controllers
+    // Load JobCoverLetter from widget
+    _jobCoverLetter = widget.coverLetter as JobCoverLetter?;
+
+    // Initialize cover letter controllers with loaded data
     _recipientNameController = TextEditingController(
-      text: _coverLetterInstance?.recipientName ??
+      text: _jobCoverLetter?.recipientName ??
           widget.applicationContext?.contactPerson ??
           '',
     );
     _recipientTitleController = TextEditingController(
-      text: _coverLetterInstance?.recipientTitle ?? '',
+      text: _jobCoverLetter?.recipientTitle ?? '',
     );
     _greetingController = TextEditingController(
-      text: _coverLetterInstance?.greeting ?? 'Dear Hiring Manager,',
+      text: _jobCoverLetter?.greeting ?? 'Dear Hiring Manager,',
     );
     _bodyController = TextEditingController(
-      text: _coverLetterInstance?.body ?? '',
+      text: _jobCoverLetter?.body ?? '',
     );
     _closingController = TextEditingController(
-      text: _coverLetterInstance?.closing ?? 'Sincerely,',
+      text: _jobCoverLetter?.closing ?? 'Sincerely,',
     );
 
     // Add listeners for auto-save
@@ -108,51 +122,38 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     widget.onChanged(updatedData);
   }
 
-  /// Initialize cover letter instance
-  void _initializeCoverLetterInstance() {
-    // TODO: Load from storage when implemented
-    // For now, create a new instance if needed
-    final app = widget.applicationContext;
-    if (app != null) {
-      _coverLetterInstance = CoverLetterInstance(
-        id: 'cl_${app.id}',
-        applicationId: app.id,
-        templateId:
-            'default', // Will be updated when template selection is implemented
-        name: 'Cover Letter for ${app.company}',
-        language: app.baseLanguage,
-        companyName: app.company,
-        jobTitle: app.position,
-        recipientName: app.contactPerson,
-        greeting: 'Dear Hiring Manager,',
-        body: '',
-        closing: 'Sincerely,',
-        lastModified: DateTime.now(),
-      );
-    }
-  }
-
   /// Update cover letter instance when text changes
   void _updateCoverLetter() {
-    if (_coverLetterInstance == null) return;
+    // Update JobCoverLetter with new values
+    final updatedCoverLetter = JobCoverLetter(
+      recipientName: _recipientNameController.text.trim(),
+      recipientTitle: _recipientTitleController.text.trim(),
+      companyName: _jobCoverLetter?.companyName ?? widget.applicationContext?.company ?? '',
+      greeting: _greetingController.text,
+      body: _bodyController.text,
+      closing: _closingController.text,
+      signature: _jobCoverLetter?.signature ?? '',
+    );
 
     setState(() {
-      _coverLetterInstance = _coverLetterInstance!.copyWith(
-        recipientName: _recipientNameController.text.trim().isNotEmpty
-            ? _recipientNameController.text.trim()
-            : null,
-        recipientTitle: _recipientTitleController.text.trim().isNotEmpty
-            ? _recipientTitleController.text.trim()
-            : null,
-        greeting: _greetingController.text,
-        body: _bodyController.text,
-        closing: _closingController.text,
-        lastModified: DateTime.now(),
-      );
+      _jobCoverLetter = updatedCoverLetter;
     });
 
-    // TODO: Auto-save to storage
-    // For now, just update state
+    // Auto-save to storage
+    _saveCoverLetter(updatedCoverLetter);
+  }
+
+  /// Save cover letter to storage
+  Future<void> _saveCoverLetter(JobCoverLetter coverLetter) async {
+    final folderPath = widget.applicationContext?.folderPath;
+    if (folderPath == null) return;
+
+    try {
+      await _storage.saveJobCoverLetter(folderPath, coverLetter);
+      debugPrint('[CoverLetter] Auto-saved to $folderPath');
+    } catch (e) {
+      debugPrint('[CoverLetter] Failed to auto-save: $e');
+    }
   }
 
   @override
@@ -396,6 +397,55 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Company field
+                  TextFormField(
+                    initialValue: application?.company ?? '',
+                    decoration: const InputDecoration(
+                      labelText: 'Company',
+                      hintText: 'Company name',
+                      prefixIcon: Icon(Icons.business),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      if (application != null && value.isNotEmpty) {
+                        widget.onApplicationChanged?.call(
+                          application.copyWith(company: value),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Position field
+                  TextFormField(
+                    initialValue: application?.position ?? '',
+                    decoration: const InputDecoration(
+                      labelText: 'Position',
+                      hintText: 'Job title',
+                      prefixIcon: Icon(Icons.work),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      if (application != null && value.isNotEmpty) {
+                        widget.onApplicationChanged?.call(
+                          application.copyWith(position: value),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Language field (read-only)
+                  TextFormField(
+                    initialValue: application?.baseLanguage.label ?? 'English',
+                    decoration: const InputDecoration(
+                      labelText: 'Application Language',
+                      hintText: 'Document language',
+                      prefixIcon: Icon(Icons.language),
+                      border: OutlineInputBorder(),
+                      helperText: 'Language cannot be changed after creation',
+                    ),
+                    enabled: false,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -649,6 +699,24 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
               ),
             ],
           ),
+          const SizedBox(height: 24),
+
+          // Profile Picture Picker
+          Center(
+            child: ProfilePicturePicker(
+              imagePath: info?.profilePicturePath,
+              size: 120,
+              placeholderInitial: info?.fullName.isNotEmpty ?? false
+                  ? info!.fullName[0]
+                  : null,
+              backgroundColor: theme.colorScheme.primary,
+              onImageSelected: (selectedPath) =>
+                  _handleProfilePictureSelected(selectedPath),
+              onImageRemoved: () => _handleProfilePictureRemoved(),
+            ),
+          ),
+          const SizedBox(height: 32),
+          const Divider(),
           const SizedBox(height: 24),
 
           // Full Name
@@ -1197,7 +1265,6 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   Widget _buildCoverLetterTab() {
     final theme = Theme.of(context);
     final application = widget.applicationContext;
-    final hasContent = _bodyController.text.isNotEmpty;
     final wordCount = _bodyController.text
         .trim()
         .split(RegExp(r'\s+'))
@@ -1429,27 +1496,6 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
               ),
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          // Preview button
-          if (hasContent)
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.tonalIcon(
-                onPressed: () {
-                  // TODO: Show PDF preview
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('PDF preview coming soon!'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.picture_as_pdf),
-                label: const Text('Preview Cover Letter PDF'),
-              ),
-            ),
         ],
       ),
     );
@@ -1590,6 +1636,89 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       final education = List<Education>.from(_cvData.education);
       education.removeAt(index);
       _updateCvData(_cvData.copyWith(education: education));
+    }
+  }
+
+  /// Handle profile picture selected
+  Future<void> _handleProfilePictureSelected(String selectedPath) async {
+    final folderPath = widget.applicationContext?.folderPath;
+    if (folderPath == null) {
+      debugPrint('[ProfilePicture] No folder path for application');
+      return;
+    }
+
+    try {
+      // Create a unique filename based on the original
+      final extension = path.extension(selectedPath);
+      final filename = 'profile_picture$extension';
+      final targetPath = path.join(folderPath, filename);
+
+      // Copy the selected image to the job application folder
+      final sourceFile = File(selectedPath);
+      final targetFile = await sourceFile.copy(targetPath);
+
+      debugPrint('[ProfilePicture] Copied to: $targetPath');
+
+      // Update CV data with the new path
+      final info = _cvData.personalInfo ?? PersonalInfo(fullName: '');
+      _updateCvData(_cvData.copyWith(
+        personalInfo: info.copyWith(profilePicturePath: targetFile.path),
+      ));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white, size: 18),
+                SizedBox(width: 8),
+                Text('Profile picture updated'),
+              ],
+            ),
+            backgroundColor: Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[ProfilePicture] Error copying image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to set profile picture: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Handle profile picture removed
+  void _handleProfilePictureRemoved() {
+    final info = _cvData.personalInfo;
+    if (info == null) return;
+
+    // Remove the profile picture path
+    _updateCvData(_cvData.copyWith(
+      personalInfo: info.copyWith(profilePicturePath: ''),
+    ));
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text('Profile picture removed'),
+            ],
+          ),
+          backgroundColor: Colors.orange.shade600,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 }

@@ -817,40 +817,49 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
     widgets.add(pw.SizedBox(height: s.sectionGapMinor));
 
+    // Determine last section for bottom margin control
+    final hasEducation = cv.education.isNotEmpty;
+    final hasExperience = cv.experiences.isNotEmpty;
+    final hasLanguages = cv.languages.isNotEmpty;
+    final hasInterests = cv.interests.isNotEmpty;
+    final hasSkills = cv.skills.isNotEmpty;
+
     // Profile section
     if (cv.profile.isNotEmpty) {
       widgets.add(_buildProfileSection(cv, s));
     }
 
     // Skills and Interests side by side (if both exist)
-    if (cv.skills.isNotEmpty && cv.interests.isNotEmpty) {
+    if (hasSkills && hasInterests) {
       widgets.add(_buildSkillsAndInterestsSideBySide(cv, s));
     } else {
       // Skills alone
-      if (cv.skills.isNotEmpty) {
-        widgets.add(_buildSkillsSection(cv, s, false));
+      if (hasSkills) {
+        final isLast = !hasInterests && !hasLanguages && !hasExperience && !hasEducation;
+        widgets.add(_buildSkillsSection(cv, s, false, addBottomMargin: !isLast));
       }
       // Interests alone
-      if (cv.interests.isNotEmpty) {
-        widgets.add(_buildInterestsSection(cv, s));
+      if (hasInterests) {
+        final isLast = !hasLanguages && !hasExperience && !hasEducation;
+        widgets.add(_buildInterestsSection(cv, s, addBottomMargin: !isLast));
       }
     }
 
     // Languages (before Experience - usually shorter)
-    if (cv.languages.isNotEmpty) {
-      widgets.add(_buildLanguagesSection(cv, s));
+    if (hasLanguages) {
+      final isLast = !hasExperience && !hasEducation;
+      widgets.add(_buildLanguagesSection(cv, s, addBottomMargin: !isLast));
     }
 
     // Experience
-    if (cv.experiences.isNotEmpty) {
+    if (hasExperience) {
       // Only add bottom margin if education follows
-      final hasEducation = cv.education.isNotEmpty;
       widgets.add(_buildExperienceSection(cv, s, experienceLayout,
           addBottomMargin: hasEducation));
     }
 
     // Education (last section - no bottom margin)
-    if (cv.education.isNotEmpty) {
+    if (hasEducation) {
       widgets.add(_buildEducationSection(cv, s, false, addBottomMargin: false));
     }
 
@@ -881,29 +890,45 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
     widgets.add(pw.SizedBox(height: s.sectionGapMinor));
 
+    // Determine last section to avoid bottom margin
+    final hasEducation = cv.education.isNotEmpty;
+    final hasExperience = cv.experiences.isNotEmpty;
+    final hasInterests = cv.interests.isNotEmpty;
+    final hasLanguages = cv.languages.isNotEmpty;
+    final hasSkills = cv.skills.isNotEmpty;
+    final hasProfile = cv.profile.isNotEmpty;
+
     // Profile (if exists)
-    if (cv.profile.isNotEmpty) {
+    if (hasProfile) {
       widgets.add(_buildProfileSection(cv, s));
     }
 
-    // Skills, languages, interests in sections
-    if (cv.skills.isNotEmpty) {
-      widgets.add(_buildSkillsSection(cv, s, true));
+    // Skills
+    if (hasSkills) {
+      final isLast = !hasLanguages && !hasInterests && !hasExperience && !hasEducation;
+      widgets.add(_buildSkillsSection(cv, s, true, addBottomMargin: !isLast));
     }
-    if (cv.languages.isNotEmpty) {
-      widgets.add(_buildLanguagesSection(cv, s));
+
+    // Languages
+    if (hasLanguages) {
+      final isLast = !hasInterests && !hasExperience && !hasEducation;
+      widgets.add(_buildLanguagesSection(cv, s, addBottomMargin: !isLast));
     }
-    if (cv.interests.isNotEmpty) {
-      widgets.add(_buildInterestsSection(cv, s));
+
+    // Interests
+    if (hasInterests) {
+      final isLast = !hasExperience && !hasEducation;
+      widgets.add(_buildInterestsSection(cv, s, addBottomMargin: !isLast));
     }
 
     // Experience
-    if (cv.experiences.isNotEmpty) {
-      widgets.add(_buildExperienceSection(cv, s, experienceLayout));
+    if (hasExperience) {
+      final isLast = !hasEducation;
+      widgets.add(_buildExperienceSection(cv, s, experienceLayout, addBottomMargin: !isLast));
     }
 
-    // Education (last section - no bottom margin to prevent blank page)
-    if (cv.education.isNotEmpty) {
+    // Education (last section by default)
+    if (hasEducation) {
       widgets.add(_buildEducationSection(cv, s, false, addBottomMargin: false));
     }
 
@@ -945,8 +970,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
                 children: [
                   // Square photo - flush left, full height, no border
                   pw.Container(
-                    width: 120,
-                    height: 120,
+                    width: 140,
+                    height: 140,
                     child: pw.Image(profileImage, fit: pw.BoxFit.cover),
                   ),
 
@@ -994,55 +1019,66 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
         );
       }
 
-      // CIRCLE/ROUNDED: Styled with accent border, centered in header
+      // CIRCLE/ROUNDED: Full height photo aligned with content below
       return pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Container(
             width: double.infinity,
+            height: 130, // Fixed height for MultiPage compatibility
             margin: pw.EdgeInsets.only(
               left: -margins.left,
               right: -margins.right,
               top: -margins.top,
             ),
-            padding: pw.EdgeInsets.symmetric(
-              horizontal: margins.left + styling.space4,
-              vertical: styling.space6,
-            ),
             decoration: pw.BoxDecoration(color: styling.accent),
             child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                // Styled profile photo with border
-                _buildProfilePhoto(profileImage, styling, size: 85),
+                // Left padding to align photo with content below
+                pw.SizedBox(width: margins.left),
+
+                // Full-height profile photo - aligned with content
+                pw.Container(
+                  width: 130,
+                  height: 130,
+                  child: _buildFullHeightPhoto(profileImage, styling),
+                ),
                 pw.SizedBox(width: styling.space5),
 
                 // Name and title
                 pw.Expanded(
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        name.toUpperCase(),
-                        style: pw.TextStyle(
-                          fontSize: styling.fontSizeH1 * 1.3,
-                          fontWeight: pw.FontWeight.bold,
-                          color: styling.textOnAccent,
-                          letterSpacing: 3,
-                        ),
-                      ),
-                      if (title != null && title.isNotEmpty) ...[
-                        pw.SizedBox(height: styling.space3),
+                  child: pw.Padding(
+                    padding: pw.EdgeInsets.symmetric(
+                      horizontal: styling.space4,
+                      vertical: styling.space5,
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      mainAxisAlignment: pw.MainAxisAlignment.center,
+                      children: [
                         pw.Text(
-                          title,
+                          name.toUpperCase(),
                           style: pw.TextStyle(
-                            fontSize: styling.fontSizeH3,
-                            color: styling.textOnAccent.flatten(),
+                            fontSize: styling.fontSizeH1 * 1.3,
                             fontWeight: pw.FontWeight.bold,
+                            color: styling.textOnAccent,
+                            letterSpacing: 3,
                           ),
                         ),
+                        if (title != null && title.isNotEmpty) ...[
+                          pw.SizedBox(height: styling.space3),
+                          pw.Text(
+                            title,
+                            style: pw.TextStyle(
+                              fontSize: styling.fontSizeH3,
+                              color: styling.textOnAccent.flatten(),
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ],
@@ -1057,21 +1093,27 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
       );
     }
 
-    // CLEAN LAYOUT (Traditional): Right-aligned photo, classic professional look
+    // CLEAN LAYOUT (Traditional): Left photo with name and contact stacked on right - classic professional look
     if (layout == HeaderLayout.clean && profileImage != null) {
-      final photoWidget = _buildProfilePhoto(profileImage, styling, size: 70);
+      final photoWidget = _buildProfilePhoto(profileImage, styling, size: 100);
 
       return pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              // Name and title on left
+              // Photo on left
+              photoWidget,
+              pw.SizedBox(width: styling.space4),
+
+              // Name, title, and contact info stacked vertically on right
               pw.Expanded(
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
                   children: [
+                    // Name
                     pw.Text(
                       name.toUpperCase(),
                       style: pw.TextStyle(
@@ -1081,6 +1123,7 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
                         letterSpacing: styling.letterSpacingWide,
                       ),
                     ),
+                    // Title
                     if (title != null && title.isNotEmpty) ...[
                       pw.SizedBox(height: styling.space2),
                       pw.Text(
@@ -1092,78 +1135,77 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
                         ),
                       ),
                     ],
-                  ],
-                ),
-              ),
-              pw.SizedBox(width: styling.space4),
-              // Photo on right
-              photoWidget,
-            ],
-          ),
-          pw.SizedBox(height: styling.space3),
-          pw.Container(height: 2, width: 80, color: styling.accent),
-          if (contact != null) ...[
-            pw.SizedBox(height: styling.space3),
-            _buildContactRow(contact, styling),
-          ],
-        ],
-      );
-    }
-
-    // COMPACT LAYOUT: Top-right photo, maximum space efficiency
-    if (layout == HeaderLayout.compact && profileImage != null) {
-      final photoWidget = _buildProfilePhoto(profileImage, styling, size: 60);
-
-      return pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              // Name and title - compact
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      name.toUpperCase(),
-                      style: pw.TextStyle(
-                        fontSize: styling.fontSizeH2,
-                        fontWeight: pw.FontWeight.bold,
-                        color: styling.textPrimary,
-                        letterSpacing: styling.letterSpacingWide,
-                      ),
-                    ),
-                    if (title != null && title.isNotEmpty) ...[
-                      pw.SizedBox(height: styling.space1),
-                      pw.Text(
-                        title,
-                        style: pw.TextStyle(
-                          fontSize: styling.fontSizeSmall,
-                          color: styling.accent,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
+                    // Accent divider
+                    pw.SizedBox(height: styling.space2),
+                    pw.Container(height: 2, width: 80, color: styling.accent),
+                    // Contact info
+                    if (contact != null) ...[
+                      pw.SizedBox(height: styling.space2),
+                      _buildContactRow(contact, styling),
                     ],
                   ],
                 ),
               ),
-              pw.SizedBox(width: styling.space3),
-              // Small photo top-right
-              photoWidget,
             ],
           ),
-          if (contact != null) ...[
-            pw.SizedBox(height: styling.space2),
-            _buildContactRow(contact, styling),
-          ],
+        ],
+      );
+    }
+
+    // COMPACT LAYOUT: Left photo with name and contact stacked on right - maximum space efficiency
+    if (layout == HeaderLayout.compact && profileImage != null) {
+      final photoWidget = _buildProfilePhoto(profileImage, styling, size: 85);
+
+      return pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          // Photo on left
+          photoWidget,
+          pw.SizedBox(width: styling.space4),
+
+          // Name, title, and contact info stacked vertically on right
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              mainAxisAlignment: pw.MainAxisAlignment.center,
+              children: [
+                // Name
+                pw.Text(
+                  name.toUpperCase(),
+                  style: pw.TextStyle(
+                    fontSize: styling.fontSizeH2,
+                    fontWeight: pw.FontWeight.bold,
+                    color: styling.textPrimary,
+                    letterSpacing: styling.letterSpacingWide,
+                  ),
+                ),
+                // Title
+                if (title != null && title.isNotEmpty) ...[
+                  pw.SizedBox(height: styling.space1),
+                  pw.Text(
+                    title,
+                    style: pw.TextStyle(
+                      fontSize: styling.fontSizeSmall,
+                      color: styling.accent,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                ],
+                // Contact info
+                if (contact != null) ...[
+                  pw.SizedBox(height: styling.space2),
+                  _buildCompactContactInfo(contact, styling),
+                ],
+              ],
+            ),
+          ),
         ],
       );
     }
 
     // OTHER LAYOUTS (Sidebar, etc) with photo: Centered
     if (profileImage != null) {
-      final photoWidget = _buildProfilePhoto(profileImage, styling, size: 80);
+      final photoWidget = _buildProfilePhoto(profileImage, styling, size: 95);
 
       return pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -1256,6 +1298,66 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
       alignment: pw.WrapAlignment.start,
       spacing: styling.space4,
       runSpacing: styling.space2,
+      children: items,
+    );
+  }
+
+  /// Build compact contact info for compact layout - key details only
+  pw.Widget _buildCompactContactInfo(ContactDetails contact, PdfStyling styling) {
+    final items = <pw.Widget>[];
+
+    // Email - most important
+    if (contact.email != null && contact.email!.isNotEmpty) {
+      items.add(
+        IconComponent.contact(
+          type: 'email',
+          text: contact.email!,
+          styling: styling,
+          size: IconSize.small,
+        ),
+      );
+    }
+
+    // Phone - second most important
+    if (contact.phone != null && contact.phone!.isNotEmpty) {
+      items.add(
+        IconComponent.contact(
+          type: 'phone',
+          text: contact.phone!,
+          styling: styling,
+          size: IconSize.small,
+        ),
+      );
+    }
+
+    // Location (simplified)
+    if (contact.address != null && contact.address!.isNotEmpty) {
+      items.add(
+        IconComponent.contact(
+          type: 'location',
+          text: contact.address!,
+          styling: styling,
+          size: IconSize.small,
+        ),
+      );
+    }
+
+    // LinkedIn (professional network)
+    if (contact.linkedin != null && contact.linkedin!.isNotEmpty) {
+      items.add(
+        IconComponent.contact(
+          type: 'linkedin',
+          text: contact.linkedin!,
+          styling: styling,
+          size: IconSize.small,
+        ),
+      );
+    }
+
+    return pw.Wrap(
+      alignment: pw.WrapAlignment.start,
+      spacing: styling.space3,
+      runSpacing: styling.space1,
       children: items,
     );
   }
@@ -1459,12 +1561,19 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   ) {
     final List<pw.Widget> sections = [];
 
+    // Determine which is the last section
+    final hasProfile = cv.profile.isNotEmpty;
+    final hasExperience = cv.experiences.isNotEmpty;
+    final hasEducation = cv.education.isNotEmpty;
+
     // Professional Summary (uses 'profile' field from CvData)
-    if (cv.profile.isNotEmpty) {
+    if (hasProfile) {
+      final isLast = !hasExperience && !hasEducation;
       sections.add(
         SectionComponent.section(
           title: 'Professional Summary',
           styling: s,
+          addBottomMargin: !isLast,
           content: pw.Text(
             cv.profile,
             style: pw.TextStyle(
@@ -1478,11 +1587,13 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     }
 
     // Experience
-    if (cv.experiences.isNotEmpty) {
+    if (hasExperience) {
+      final isLast = !hasEducation;
       sections.add(
         SectionComponent.section(
           title: 'Experience',
           styling: s,
+          addBottomMargin: !isLast,
           content: ExperienceComponent.section(
             experiences: cv.experiences,
             styling: s,
@@ -1492,12 +1603,13 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
       );
     }
 
-    // Education
-    if (cv.education.isNotEmpty) {
+    // Education (last section by default)
+    if (hasEducation) {
       sections.add(
         SectionComponent.section(
           title: 'Education',
           styling: s,
+          addBottomMargin: false,
           content: EducationComponent.section(
             education: cv.education,
             styling: s,
@@ -1576,7 +1688,26 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     final sections = <pw.Widget>[];
     final order = _getSectionOrder(s.customization.sectionOrderPreset);
 
+    // Find the last section that will be rendered
+    String? lastSection;
+    for (var i = order.length - 1; i >= 0; i--) {
+      final sectionName = order[i];
+      final hasContent = (sectionName == 'profile' && cv.profile.isNotEmpty) ||
+          (sectionName == 'skills' && cv.skills.isNotEmpty) ||
+          (sectionName == 'experience' && cv.experiences.isNotEmpty) ||
+          (sectionName == 'education' && cv.education.isNotEmpty) ||
+          (sectionName == 'languages' && cv.languages.isNotEmpty) ||
+          (sectionName == 'interests' && cv.interests.isNotEmpty);
+
+      if (hasContent) {
+        lastSection = sectionName;
+        break;
+      }
+    }
+
     for (final sectionName in order) {
+      final isLast = sectionName == lastSection;
+
       switch (sectionName) {
         case 'profile':
           if (cv.profile.isNotEmpty) {
@@ -1586,31 +1717,31 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
         case 'skills':
           if (cv.skills.isNotEmpty) {
-            sections.add(_buildSkillsSection(cv, s, isCompact));
+            sections.add(_buildSkillsSection(cv, s, isCompact, addBottomMargin: !isLast));
           }
           break;
 
         case 'experience':
           if (cv.experiences.isNotEmpty) {
-            sections.add(_buildExperienceSection(cv, s, experienceLayout));
+            sections.add(_buildExperienceSection(cv, s, experienceLayout, addBottomMargin: !isLast));
           }
           break;
 
         case 'education':
           if (cv.education.isNotEmpty) {
-            sections.add(_buildEducationSection(cv, s, isCompact));
+            sections.add(_buildEducationSection(cv, s, isCompact, addBottomMargin: !isLast));
           }
           break;
 
         case 'languages':
           if (cv.languages.isNotEmpty) {
-            sections.add(_buildLanguagesSection(cv, s));
+            sections.add(_buildLanguagesSection(cv, s, addBottomMargin: !isLast));
           }
           break;
 
         case 'interests':
           if (cv.interests.isNotEmpty) {
-            sections.add(_buildInterestsSection(cv, s));
+            sections.add(_buildInterestsSection(cv, s, addBottomMargin: !isLast));
           }
           break;
       }
@@ -1768,7 +1899,7 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   }
 
   /// Build skills section
-  pw.Widget _buildSkillsSection(CvData cv, PdfStyling s, bool isCompact) {
+  pw.Widget _buildSkillsSection(CvData cv, PdfStyling s, bool isCompact, {bool addBottomMargin = true}) {
     final showProficiency =
         s.customization.showProficiencyBars && s.customization.showSkillLevels;
 
@@ -1796,6 +1927,7 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
       styling: s,
       iconType: 'skills',
       content: skillsContent,
+      addBottomMargin: addBottomMargin,
     );
   }
 
@@ -1888,11 +2020,12 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   }
 
   /// Build languages section
-  pw.Widget _buildLanguagesSection(CvData cv, PdfStyling s) {
+  pw.Widget _buildLanguagesSection(CvData cv, PdfStyling s, {bool addBottomMargin = true}) {
     return SectionComponent.section(
       title: 'Languages',
       styling: s,
       iconType: 'language',
+      addBottomMargin: addBottomMargin,
       content: pw.Wrap(
         spacing: s.space3,
         runSpacing: s.space2,
@@ -1909,11 +2042,12 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   }
 
   /// Build interests section
-  pw.Widget _buildInterestsSection(CvData cv, PdfStyling s) {
+  pw.Widget _buildInterestsSection(CvData cv, PdfStyling s, {bool addBottomMargin = true}) {
     return SectionComponent.section(
       title: 'Interests',
       styling: s,
       iconType: 'star',
+      addBottomMargin: addBottomMargin,
       content: pw.Wrap(
         spacing: s.space2,
         runSpacing: s.space2,
@@ -1972,15 +2106,43 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     }
   }
 
+  /// Build full-height profile photo for modern header (no border, fills height)
+  pw.Widget _buildFullHeightPhoto(
+    pw.ImageProvider image,
+    PdfStyling s,
+  ) {
+    final shape = s.customization.profilePhotoShape;
+
+    // Build the image widget
+    pw.Widget imageWidget = pw.Image(image, fit: pw.BoxFit.cover);
+
+    // Apply clipping based on shape
+    switch (shape) {
+      case ProfilePhotoShape.circle:
+        return pw.ClipOval(
+          child: imageWidget,
+        );
+      case ProfilePhotoShape.rounded:
+        return pw.ClipRRect(
+          horizontalRadius: 20,
+          verticalRadius: 20,
+          child: imageWidget,
+        );
+      case ProfilePhotoShape.square:
+        return imageWidget;
+    }
+  }
+
   /// Build profile photo with customizable shape and style
   pw.Widget _buildProfilePhoto(
     pw.ImageProvider image,
     PdfStyling s, {
     double size = 80,
+    bool useWhiteBorder = false,
   }) {
     final shape = s.customization.profilePhotoShape;
 
-    // Determine border radius based on shape
+    // Determine border radius based on shape and size
     double borderRadius;
     pw.BoxShape? boxShape;
     switch (shape) {
@@ -1990,7 +2152,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
         break;
       case ProfilePhotoShape.rounded:
         boxShape = pw.BoxShape.rectangle;
-        borderRadius = 12;
+        // Scale border radius with size for better proportions
+        borderRadius = size * 0.15; // 15% of size
         break;
       case ProfilePhotoShape.square:
         boxShape = pw.BoxShape.rectangle;
@@ -2001,6 +2164,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     // Build the image widget
     pw.Widget imageWidget = pw.Image(image, fit: pw.BoxFit.cover);
 
+    // Determine border color and width based on context
+    final borderColor = useWhiteBorder ? PdfColors.white : s.accent;
+    final borderWidth = useWhiteBorder ? 5.0 : 4.0;
+
     // Build container with appropriate shape
     if (boxShape == pw.BoxShape.circle) {
       return pw.Container(
@@ -2008,7 +2175,7 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
         height: size,
         decoration: pw.BoxDecoration(
           shape: pw.BoxShape.circle,
-          border: pw.Border.all(color: s.accent, width: 2),
+          border: pw.Border.all(color: borderColor, width: borderWidth),
         ),
         child: pw.ClipOval(
           child: imageWidget,
@@ -2021,7 +2188,7 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
         decoration: pw.BoxDecoration(
           borderRadius:
               borderRadius > 0 ? pw.BorderRadius.circular(borderRadius) : null,
-          border: pw.Border.all(color: s.accent, width: 2),
+          border: pw.Border.all(color: borderColor, width: borderWidth),
         ),
         child: pw.ClipRRect(
           horizontalRadius: borderRadius,

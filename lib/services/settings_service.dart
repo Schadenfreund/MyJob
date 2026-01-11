@@ -3,12 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import '../models/template_style.dart';
+import '../constants/json_constants.dart';
 
 /// Portable settings service that stores configuration in a JSON file
 class SettingsService extends ChangeNotifier {
   static const Color defaultAccentColor = Color(0xFF6366F1);
 
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.dark;
   Color _accentColor = defaultAccentColor;
   TemplateStyle _defaultCvTemplate = TemplateStyle.electric;
   TemplateStyle _defaultCoverLetterTemplate = TemplateStyle.electric;
@@ -93,7 +94,7 @@ class SettingsService extends ChangeNotifier {
       };
 
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(json),
+        JsonConstants.prettyEncoder.convert(json),
       );
 
       debugPrint('Settings saved');
@@ -135,7 +136,7 @@ class SettingsService extends ChangeNotifier {
   }
 
   Future<void> resetSettings() async {
-    _themeMode = ThemeMode.system;
+    _themeMode = ThemeMode.dark;
     _accentColor = defaultAccentColor;
     _defaultCvTemplate = TemplateStyle.electric;
     _defaultCoverLetterTemplate = TemplateStyle.electric;

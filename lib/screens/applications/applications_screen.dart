@@ -833,8 +833,10 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
 
     final storage = StorageService.instance;
 
-    // Load CV data
+    // Load CV data and cover letter
     final cvData = await storage.loadJobCvData(application.folderPath!);
+    final coverLetter =
+        await storage.loadJobCoverLetter(application.folderPath!);
 
     if (cvData == null) {
       if (context.mounted) {
@@ -848,10 +850,11 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
 
     if (!context.mounted) return;
 
-    // Navigate to CV editor
+    // Navigate to CV editor with cover letter data
     final editor = JobCvEditorScreen(
       application: application,
       cvData: cvData,
+      coverLetter: coverLetter,
     );
     await Navigator.push(
       context,

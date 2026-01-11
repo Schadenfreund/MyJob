@@ -1,23 +1,25 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import '../services/unified_yaml_import_service.dart';
 import '../providers/user_data_provider.dart';
-import '../providers/templates_provider.dart';
-import '../models/cv_data.dart';
+import '../constants/app_constants.dart';
 
 /// Unified YAML import dialog with auto-detection and smart UI
 ///
 /// Features:
 /// - Single file picker for all YAML types
 /// - Auto-detects CV vs Cover Letter format
+/// - Detects language (English/German)
 /// - Smart preview based on detected content
 /// - Selective import options for CV data
-/// - Merge vs Replace modes
-/// - Routes data to appropriate providers
+/// - Always replaces existing data
+/// - Cover letters import to Profile tab's default cover letter
+/// - Routes data to appropriate providers based on language
 class UnifiedImportDialog extends StatefulWidget {
-  const UnifiedImportDialog({super.key});
+  const UnifiedImportDialog({super.key, this.preSelectedFile});
+
+  final File? preSelectedFile;
 
   @override
   State<UnifiedImportDialog> createState() => _UnifiedImportDialogState();
@@ -35,69 +37,95 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
   bool _importLanguages = true;
   bool _importInterests = true;
   bool _importWorkExperience = true;
-  bool _createTemplate = true; // Also create a CV template
-  bool _mergeData = true;
 
-  // Import state
-  bool _importComplete = false;
-  String? _importSummary;
+  @override
+  void initState() {
+    super.initState();
+    // If a file is pre-selected, parse it immediately
+    if (widget.preSelectedFile != null) {
+      _selectedFile = widget.preSelectedFile;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _parseFile(widget.preSelectedFile!);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560, maxHeight: 700),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Colors.transparent,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 720),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header
             _buildHeader(context),
-            const Divider(height: 1),
 
             // Content
             Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (!_importComplete) ...[
-                      // File selector
-                      _buildFileSelector(context),
+              child: _isLoading && _parseResult == null
+                  ? _buildLoadingState(context)
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Error message
+                          if (_error != null) ...[
+                            _buildError(context),
+                            const SizedBox(height: 16),
+                          ],
 
-                      // Error message
-                      if (_error != null) ...[
-                        const SizedBox(height: 16),
-                        _buildError(context),
-                      ],
-
-                      // Parse result preview
-                      if (_parseResult != null && _parseResult!.success) ...[
-                        const SizedBox(height: 20),
-                        _buildDetectedType(context),
-                        const SizedBox(height: 16),
-                        _buildPreview(context),
-                        const SizedBox(height: 20),
-                        if (_parseResult!.isCvData) ...[
-                          _buildCvImportOptions(context),
-                          const SizedBox(height: 16),
-                          _buildImportMode(context),
+                          // Parse result preview
+                          if (_parseResult != null &&
+                              _parseResult!.success) ...[
+                            _buildPreview(context),
+                            const SizedBox(height: 20),
+                            if (_parseResult!.isCvData) ...[
+                              _buildCvImportOptions(context),
+                            ],
+                          ],
                         ],
-                      ],
-                    ] else ...[
-                      // Success state
-                      _buildSuccessState(context),
-                    ],
-                  ],
-                ),
-              ),
+                      ),
+                    ),
             ),
 
-            // Actions
-            const Divider(height: 1),
-            _buildActions(context),
+            // Info banner and Actions
+            if (!(_isLoading && _parseResult == null)) ...[
+              if (_parseResult != null && _parseResult!.success) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                  child: _parseResult!.isCvData
+                      ? _buildInfoBanner(
+                          context,
+                          'CV data will replace existing data in the selected sections.',
+                          Icons.info_outline_rounded,
+                        )
+                      : _buildInfoBanner(
+                          context,
+                          'Cover letter will be imported to your Profile tab based on the detected language.',
+                          Icons.info_outline_rounded,
+                        ),
+                ),
+              ],
+              _buildActions(context),
+            ],
           ],
         ),
       ),
@@ -106,95 +134,46 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
 
   Widget _buildHeader(BuildContext context) {
     final theme = Theme.of(context);
+    final fileName = _selectedFile?.path.split(Platform.pathSeparator).last ?? '';
+    final userDataProvider = context.watch<UserDataProvider>();
+    final currentLang = userDataProvider.currentLanguage;
 
     return Container(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.upload_file,
-              color: theme.colorScheme.primary,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Import YAML',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Auto-detects CV or Cover Letter format',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color
-                        ?.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close),
-            style: IconButton.styleFrom(
-              foregroundColor: theme.textTheme.bodySmall?.color,
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primary.withValues(alpha: 0.08),
+            theme.colorScheme.primary.withValues(alpha: 0.03),
+          ],
+        ),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
       ),
-    );
-  }
-
-  Widget _buildFileSelector(BuildContext context) {
-    final theme = Theme.of(context);
-    final hasFile = _selectedFile != null;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: _isLoading ? null : _selectFile,
-        borderRadius: BorderRadius.circular(12),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: hasFile ? theme.colorScheme.primary : theme.dividerColor,
-              width: hasFile ? 2 : 1,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            color: hasFile
-                ? theme.colorScheme.primary.withValues(alpha: 0.03)
-                : theme.colorScheme.surfaceContainerHighest
-                    .withValues(alpha: 0.3),
-          ),
-          child: Row(
+      child: Column(
+        children: [
+          Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: hasFile
-                      ? theme.colorScheme.primary.withValues(alpha: 0.1)
-                      : theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(10),
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Icon(
-                  hasFile ? Icons.description : Icons.folder_open,
-                  color: hasFile
-                      ? theme.colorScheme.primary
-                      : theme.textTheme.bodySmall?.color,
+                  Icons.upload_file_rounded,
+                  color: theme.colorScheme.onPrimary,
                   size: 24,
                 ),
               ),
@@ -204,44 +183,131 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      hasFile
-                          ? _selectedFile!.path
-                              .split(Platform.pathSeparator)
-                              .last
-                          : 'Choose YAML File',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
+                      'Import YAML',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      hasFile
-                          ? _truncatePath(_selectedFile!.path)
-                          : 'Supports CV data and Cover Letter templates',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.textTheme.bodySmall?.color
-                            ?.withValues(alpha: 0.7),
+                    if (fileName.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        fileName,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    ],
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded),
+                style: IconButton.styleFrom(
+                  foregroundColor: theme.textTheme.bodyMedium?.color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Text(
+                'Target Language:',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildLanguageToggle(
+                      context,
+                      userDataProvider,
+                      DocumentLanguage.en,
+                      currentLang == DocumentLanguage.en,
+                    ),
+                    Container(
+                      width: 1,
+                      height: 32,
+                      color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                    ),
+                    _buildLanguageToggle(
+                      context,
+                      userDataProvider,
+                      DocumentLanguage.de,
+                      currentLang == DocumentLanguage.de,
                     ),
                   ],
                 ),
               ),
-              if (_isLoading)
-                const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              else
-                Icon(
-                  hasFile ? Icons.check_circle : Icons.chevron_right,
-                  color: hasFile
-                      ? theme.colorScheme.primary
-                      : theme.textTheme.bodySmall?.color
-                          ?.withValues(alpha: 0.5),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageToggle(
+    BuildContext context,
+    UserDataProvider provider,
+    DocumentLanguage language,
+    bool isSelected,
+  ) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: isSelected
+          ? theme.colorScheme.primary.withValues(alpha: 0.12)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: () => provider.switchLanguage(language),
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Flag with subtle background
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                      : theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(6),
                 ),
+                child: Text(
+                  language.flag,
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Language label
+              Text(
+                language.code.toUpperCase(),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                  letterSpacing: 0.5,
+                ),
+              ),
             ],
           ),
         ),
@@ -249,67 +315,92 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
     );
   }
 
-  String _truncatePath(String path) {
-    if (path.length <= 50) return path;
-    final parts = path.split(Platform.pathSeparator);
-    if (parts.length <= 3) return path;
-    return '...${Platform.pathSeparator}${parts.sublist(parts.length - 3).join(Platform.pathSeparator)}';
+  Widget _buildLoadingState(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(48),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Analyzing file...',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Detecting content type and language',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  Widget _buildDetectedType(BuildContext context) {
-    final theme = Theme.of(context);
-    final result = _parseResult!;
 
-    final isCv = result.isCvData;
-    final icon = isCv ? Icons.description : Icons.mail;
-    final color = isCv ? theme.colorScheme.primary : Colors.green;
+  Widget _buildInfoBanner(BuildContext context, String message, IconData icon) {
+    final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primary.withValues(alpha: 0.06),
+            theme.colorScheme.primary.withValues(alpha: 0.03),
+          ],
+        ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+        ),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
+              color: theme.colorScheme.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(
+              icon,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Detected: ${result.fileTypeDisplay}',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: color,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  isCv
-                      ? 'Will update your Profile and optionally create a template'
-                      : 'Will create a new Cover Letter template',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color
-                        ?.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
+            child: Text(
+              message,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.85),
+                height: 1.4,
+              ),
             ),
           ),
         ],
       ),
     );
   }
+
 
   Widget _buildPreview(BuildContext context) {
     final theme = Theme.of(context);
@@ -320,23 +411,43 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
       return const SizedBox.shrink();
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Content Preview',
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.preview_rounded,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Content Preview',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children:
-              items.map((item) => _buildPreviewChip(context, item)).toList(),
-        ),
-      ],
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children:
+                items.map((item) => _buildPreviewChip(context, item)).toList(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -346,52 +457,66 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
     IconData iconData;
     switch (item.icon) {
       case 'person':
-        iconData = Icons.person;
+        iconData = Icons.person_rounded;
         break;
       case 'build':
-        iconData = Icons.build;
+        iconData = Icons.construction_rounded;
         break;
       case 'language':
-        iconData = Icons.language;
+        iconData = Icons.language_rounded;
         break;
       case 'interests':
-        iconData = Icons.interests;
+        iconData = Icons.favorite_rounded;
         break;
       case 'work':
-        iconData = Icons.work;
+        iconData = Icons.work_rounded;
         break;
       case 'mail':
-        iconData = Icons.mail;
+        iconData = Icons.mail_rounded;
         break;
       case 'edit':
-        iconData = Icons.edit;
+        iconData = Icons.edit_rounded;
         break;
       default:
-        iconData = Icons.check;
+        iconData = Icons.check_circle_rounded;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primary.withValues(alpha: 0.08),
+            theme.colorScheme.primary.withValues(alpha: 0.04),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.5),
+          color: theme.colorScheme.primary.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(iconData, size: 16, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(iconData, size: 16, color: theme.colorScheme.primary),
+          ),
+          const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 item.label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
@@ -412,234 +537,210 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
   Widget _buildCvImportOptions(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Select what to import:',
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.tune_rounded,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Select what to import',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _buildFilterChip(
-              context,
-              label: 'Personal Info',
-              selected: _importPersonalInfo,
-              onSelected: (v) => setState(() => _importPersonalInfo = v),
-              enabled: _parseResult?.personalInfo != null,
-            ),
-            _buildFilterChip(
-              context,
-              label: 'Skills',
-              selected: _importSkills,
-              onSelected: (v) => setState(() => _importSkills = v),
-              enabled: _parseResult?.skills.isNotEmpty ?? false,
-            ),
-            _buildFilterChip(
-              context,
-              label: 'Languages',
-              selected: _importLanguages,
-              onSelected: (v) => setState(() => _importLanguages = v),
-              enabled: _parseResult?.languages.isNotEmpty ?? false,
-            ),
-            _buildFilterChip(
-              context,
-              label: 'Interests',
-              selected: _importInterests,
-              onSelected: (v) => setState(() => _importInterests = v),
-              enabled: _parseResult?.interests.isNotEmpty ?? false,
-            ),
-            _buildFilterChip(
-              context,
-              label: 'Work Experience',
-              selected: _importWorkExperience,
-              onSelected: (v) => setState(() => _importWorkExperience = v),
-              enabled: _parseResult?.workExperiences.isNotEmpty ?? false,
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        // Create template option
-        CheckboxListTile(
-          value: _createTemplate,
-          onChanged: (v) => setState(() => _createTemplate = v ?? true),
-          title: const Text('Also create a CV template'),
-          subtitle: Text(
-            'Creates a ready-to-use document template',
-            style: theme.textTheme.bodySmall,
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildFilterChip(
+                context,
+                label: 'Personal Info',
+                icon: Icons.person_rounded,
+                selected: _importPersonalInfo,
+                onSelected: (v) => setState(() => _importPersonalInfo = v),
+                enabled: _parseResult?.personalInfo != null,
+              ),
+              _buildFilterChip(
+                context,
+                label: 'Skills',
+                icon: Icons.construction_rounded,
+                selected: _importSkills,
+                onSelected: (v) => setState(() => _importSkills = v),
+                enabled: _parseResult?.skills.isNotEmpty ?? false,
+              ),
+              _buildFilterChip(
+                context,
+                label: 'Languages',
+                icon: Icons.language_rounded,
+                selected: _importLanguages,
+                onSelected: (v) => setState(() => _importLanguages = v),
+                enabled: _parseResult?.languages.isNotEmpty ?? false,
+              ),
+              _buildFilterChip(
+                context,
+                label: 'Interests',
+                icon: Icons.favorite_rounded,
+                selected: _importInterests,
+                onSelected: (v) => setState(() => _importInterests = v),
+                enabled: _parseResult?.interests.isNotEmpty ?? false,
+              ),
+              _buildFilterChip(
+                context,
+                label: 'Work Experience',
+                icon: Icons.work_rounded,
+                selected: _importWorkExperience,
+                onSelected: (v) => setState(() => _importWorkExperience = v),
+                enabled: _parseResult?.workExperiences.isNotEmpty ?? false,
+              ),
+            ],
           ),
-          dense: true,
-          contentPadding: EdgeInsets.zero,
-          controlAffinity: ListTileControlAffinity.leading,
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildFilterChip(
     BuildContext context, {
     required String label,
+    required IconData icon,
     required bool selected,
     required ValueChanged<bool> onSelected,
     bool enabled = true,
   }) {
-    return FilterChip(
-      label: Text(label),
-      selected: selected && enabled,
-      onSelected: enabled ? onSelected : null,
-      showCheckmark: true,
-      visualDensity: VisualDensity.compact,
-    );
-  }
-
-  Widget _buildImportMode(BuildContext context) {
     final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Import mode:',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _buildModeOption(
-                  context,
-                  title: 'Merge',
-                  subtitle: 'Add to existing',
-                  icon: Icons.merge,
-                  isSelected: _mergeData,
-                  onTap: () => setState(() => _mergeData = true),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildModeOption(
-                  context,
-                  title: 'Replace',
-                  subtitle: 'Overwrite existing',
-                  icon: Icons.swap_horiz,
-                  isSelected: !_mergeData,
-                  onTap: () => setState(() => _mergeData = false),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildModeOption(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
+    final isActive = selected && enabled;
+    final chipColor = enabled
+        ? theme.colorScheme.primary
+        : theme.colorScheme.outline;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        onTap: enabled ? () => onSelected(!selected) : null,
+        borderRadius: BorderRadius.circular(20),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.all(12),
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected
-                ? theme.colorScheme.primary.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+            color: isActive
+                ? chipColor.withValues(alpha: 0.15)
+                : theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color:
-                  isSelected ? theme.colorScheme.primary : theme.dividerColor,
-              width: isSelected ? 2 : 1,
+              color: isActive
+                  ? chipColor.withValues(alpha: 0.5)
+                  : theme.dividerColor.withValues(alpha: 0.3),
+              width: isActive ? 1.5 : 1,
             ),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                size: 18,
-                color: isSelected
-                    ? theme.colorScheme.primary
-                    : theme.textTheme.bodySmall?.color,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? theme.colorScheme.primary : null,
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontSize: 11,
-                        color: theme.textTheme.bodySmall?.color
-                            ?.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
+              // Icon with background
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? chipColor.withValues(alpha: 0.2)
+                      : theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  icon,
+                  size: 14,
+                  color: isActive
+                      ? chipColor
+                      : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
                 ),
               ),
-              if (isSelected)
+              const SizedBox(width: 8),
+              // Label
+              Text(
+                label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                  color: isActive
+                      ? chipColor
+                      : (enabled
+                          ? theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)
+                          : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4)),
+                ),
+              ),
+              if (isActive) ...[
+                const SizedBox(width: 6),
                 Icon(
                   Icons.check_circle,
-                  size: 18,
-                  color: theme.colorScheme.primary,
+                  size: 16,
+                  color: chipColor,
                 ),
+              ],
             ],
           ),
         ),
       ),
     );
   }
+
 
   Widget _buildError(BuildContext context) {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-        border:
-            Border.all(color: theme.colorScheme.error.withValues(alpha: 0.3)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.error.withValues(alpha: 0.1),
+            theme.colorScheme.error.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.error.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: theme.colorScheme.error, size: 20),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.error.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.error_outline_rounded,
+              color: theme.colorScheme.error,
+              size: 20,
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               _error!,
-              style: theme.textTheme.bodySmall?.copyWith(
+              style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.error,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -648,114 +749,67 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
     );
   }
 
-  Widget _buildSuccessState(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: 48,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Import Complete!',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: Colors.green.shade700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _importSummary ?? 'Your data has been imported successfully.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodySmall?.color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildActions(BuildContext context) {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          if (!_importComplete) ...[
-            TextButton(
-              onPressed: _isLoading ? null : () => Navigator.pop(context),
-              child: const Text('Cancel'),
+          TextButton(
+            onPressed: _isLoading ? null : () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              minimumSize: const Size(0, 44),
             ),
-            const SizedBox(width: 12),
-            FilledButton.icon(
-              onPressed:
-                  (_parseResult != null && _parseResult!.success && !_isLoading)
-                      ? _performImport
-                      : null,
-              icon: _isLoading
-                  ? SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: theme.colorScheme.onPrimary,
-                      ),
-                    )
-                  : const Icon(Icons.download_done, size: 18),
-              label: Text(_isLoading ? 'Importing...' : 'Import'),
+            child: const Text('Cancel'),
+          ),
+          const SizedBox(width: 12),
+          FilledButton.icon(
+            onPressed:
+                (_parseResult != null && _parseResult!.success && !_isLoading)
+                    ? _performImport
+                    : null,
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              minimumSize: const Size(0, 44),
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              disabledBackgroundColor:
+                  theme.colorScheme.primary.withValues(alpha: 0.3),
             ),
-          ] else ...[
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Done'),
+            icon: _isLoading
+                ? SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: theme.colorScheme.onPrimary,
+                    ),
+                  )
+                : const Icon(Icons.download_done_rounded, size: 20),
+            label: Text(
+              _isLoading ? 'Importing...' : 'Import Now',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
             ),
-          ],
+          ),
         ],
       ),
     );
   }
 
-  Future<void> _selectFile() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['yaml', 'yml'],
-        dialogTitle: 'Select YAML File',
-      );
-
-      if (result != null && result.files.single.path != null) {
-        final file = File(result.files.single.path!);
-        setState(() {
-          _selectedFile = file;
-          _error = null;
-          _parseResult = null;
-        });
-        await _parseFile(file);
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Error selecting file: $e';
-      });
-    }
-  }
 
   Future<void> _parseFile(File file) async {
     setState(() {
@@ -799,10 +853,10 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
         await _importCoverLetter();
       }
 
-      setState(() {
-        _isLoading = false;
-        _importComplete = true;
-      });
+      // Close dialog immediately after successful import
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
     } catch (e) {
       setState(() {
         _error = 'Import failed: $e';
@@ -813,163 +867,88 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
 
   Future<void> _importCvData() async {
     final userDataProvider = context.read<UserDataProvider>();
-    final templatesProvider = context.read<TemplatesProvider>();
     final result = _parseResult!;
-
-    final importedItems = <String>[];
 
     // Import to Profile (UserDataProvider)
     if (_importPersonalInfo && result.personalInfo != null) {
       await userDataProvider.updatePersonalInfo(result.personalInfo!);
-      importedItems.add('personal info');
     }
 
+    // Always replace (clear existing data before import)
     if (_importSkills && result.skills.isNotEmpty) {
-      if (!_mergeData) {
-        for (final skill in userDataProvider.skills) {
-          await userDataProvider.deleteSkill(skill.id);
-        }
+      for (final skill in userDataProvider.skills) {
+        await userDataProvider.deleteSkill(skill.id);
       }
       for (final skill in result.skills) {
         await userDataProvider.addSkill(skill);
       }
-      importedItems.add('${result.skills.length} skills');
     }
 
     if (_importLanguages && result.languages.isNotEmpty) {
-      if (!_mergeData) {
-        for (final lang in userDataProvider.languages) {
-          await userDataProvider.deleteLanguage(lang.id);
-        }
+      for (final lang in userDataProvider.languages) {
+        await userDataProvider.deleteLanguage(lang.id);
       }
       for (final lang in result.languages) {
         await userDataProvider.addLanguage(lang);
       }
-      importedItems.add('${result.languages.length} languages');
     }
 
     if (_importInterests && result.interests.isNotEmpty) {
-      if (!_mergeData) {
-        for (final interest in userDataProvider.interests) {
-          await userDataProvider.deleteInterest(interest.id);
-        }
+      for (final interest in userDataProvider.interests) {
+        await userDataProvider.deleteInterest(interest.id);
       }
       for (final interest in result.interests) {
         await userDataProvider.addInterest(interest);
       }
-      importedItems.add('${result.interests.length} interests');
     }
 
     if (_importWorkExperience && result.workExperiences.isNotEmpty) {
-      if (!_mergeData) {
-        for (final exp in userDataProvider.workExperiences) {
-          await userDataProvider.deleteWorkExperience(exp.id);
-        }
+      for (final exp in userDataProvider.experiences) {
+        await userDataProvider.deleteExperience(exp.id);
       }
       for (final exp in result.workExperiences) {
-        await userDataProvider.addWorkExperience(exp);
+        await userDataProvider.addExperience(exp);
       }
-      importedItems.add('${result.workExperiences.length} work experiences');
     }
-
-    // Optionally create a CV Template
-    if (_createTemplate) {
-      final templateName = result.personalInfo?.fullName ?? 'Imported CV';
-      final skills = result.skills.map((s) => s.name).toList();
-      final languages = result.languages.map((lang) {
-        return LanguageSkill(
-          language: lang.name,
-          level: lang.proficiency.toString().split('.').last,
-        );
-      }).toList();
-      final interests = result.interests.map((i) => i.name).toList();
-
-      ContactDetails? contactDetails;
-      if (result.personalInfo != null) {
-        final pi = result.personalInfo!;
-        contactDetails = ContactDetails(
-          fullName: pi.fullName,
-          jobTitle: pi.jobTitle,
-          email: pi.email,
-          phone: pi.phone,
-          address: _buildAddress(pi.address, pi.city, pi.country),
-          linkedin: pi.linkedin,
-          website: pi.website,
-        );
-      }
-
-      final experiences = result.workExperiences.map((exp) {
-        return Experience(
-          company: exp.company,
-          title: exp.position,
-          startDate: _formatDate(exp.startDate),
-          endDate: exp.endDate != null
-              ? _formatDate(exp.endDate!)
-              : (exp.isCurrent ? 'Present' : null),
-          description: exp.description,
-          bullets: exp.responsibilities,
-        );
-      }).toList();
-
-      final template = await templatesProvider.createCvTemplate(
-        name: templateName,
-        profile: result.personalInfo?.profileSummary ?? '',
-        skills: skills,
-        contactDetails: contactDetails,
-      );
-
-      await templatesProvider.updateCvTemplate(
-        template.copyWith(
-          languages: languages,
-          interests: interests,
-          experiences: experiences,
-          lastModified: DateTime.now(),
-        ),
-      );
-
-      importedItems.add('CV template');
-    }
-
-    _importSummary = 'Imported: ${importedItems.join(', ')}';
-  }
-
-  String? _buildAddress(String? address, String? city, String? country) {
-    final parts =
-        [address, city, country].where((p) => p != null && p.isNotEmpty);
-    return parts.isNotEmpty ? parts.join(', ') : null;
-  }
-
-  String _formatDate(DateTime date) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
-    return '${months[date.month - 1]} ${date.year}';
   }
 
   Future<void> _importCoverLetter() async {
-    final templatesProvider = context.read<TemplatesProvider>();
+    final userDataProvider = context.read<UserDataProvider>();
     final result = _parseResult!;
 
-    final body = result.paragraphs.join('\n\n');
+    // Detect language and switch to it if needed
+    if (result.language != null) {
+      final lang = result.language!.toLowerCase();
+      DocumentLanguage targetLang;
 
-    await templatesProvider.createCoverLetterTemplate(
-      name: result.templateName ?? 'Imported Cover Letter',
-      greeting: result.greeting ?? '',
-      body: body,
-      closing: result.closing ?? '',
-    );
+      if (lang == 'german' || lang == 'de' || lang == 'deutsch') {
+        targetLang = DocumentLanguage.de;
+      } else {
+        targetLang = DocumentLanguage.en;
+      }
 
-    _importSummary = 'Created cover letter template: ${result.templateName}';
+      // Switch to the target language
+      await userDataProvider.switchLanguage(targetLang);
+    }
+
+    // Build the complete cover letter body
+    final bodyParts = <String>[];
+
+    if (result.greeting != null && result.greeting!.isNotEmpty) {
+      bodyParts.add(result.greeting!);
+    }
+
+    if (result.paragraphs.isNotEmpty) {
+      bodyParts.add(result.paragraphs.join('\n\n'));
+    }
+
+    if (result.closing != null && result.closing!.isNotEmpty) {
+      bodyParts.add(result.closing!);
+    }
+
+    final fullBody = bodyParts.join('\n\n');
+
+    // Update the default cover letter body for the current language
+    await userDataProvider.updateDefaultCoverLetterBody(fullBody);
   }
 }

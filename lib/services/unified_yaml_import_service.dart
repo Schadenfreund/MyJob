@@ -60,6 +60,22 @@ class UnifiedYamlImportService {
 
   /// Parse CV data from YAML
   UnifiedImportResult _parseCvData(YamlMap yamlData, String filePath) {
+    // Try to detect language from multiple sources
+    String? detectedLanguage = yamlData['language'] as String?;
+
+    // If not specified, try to detect from file path
+    if (detectedLanguage == null) {
+      final fileName = filePath.toLowerCase();
+      if (fileName.contains('german') || fileName.contains('deutsch') || fileName.contains('_de')) {
+        detectedLanguage = 'german';
+      } else if (fileName.contains('english') || fileName.contains('_en')) {
+        detectedLanguage = 'english';
+      }
+    }
+
+    // Default to English if still not detected
+    detectedLanguage ??= 'english';
+
     PersonalInfo? personalInfo;
     List<Skill> skills = [];
     List<Language> languages = [];
@@ -145,6 +161,7 @@ class UnifiedYamlImportService {
 
     return UnifiedImportResult.cv(
       filePath: filePath,
+      language: detectedLanguage,
       personalInfo: personalInfo,
       skills: skills,
       languages: languages,
@@ -155,7 +172,22 @@ class UnifiedYamlImportService {
 
   /// Parse cover letter template from YAML
   UnifiedImportResult _parseCoverLetter(YamlMap yamlData, String filePath) {
-    final language = yamlData['language'] as String? ?? 'english';
+    // Try to detect language from multiple sources
+    String? detectedLanguage = yamlData['language'] as String?;
+
+    // If not specified, try to detect from file path
+    if (detectedLanguage == null) {
+      final fileName = filePath.toLowerCase();
+      if (fileName.contains('german') || fileName.contains('deutsch') || fileName.contains('_de')) {
+        detectedLanguage = 'german';
+      } else if (fileName.contains('english') || fileName.contains('_en')) {
+        detectedLanguage = 'english';
+      }
+    }
+
+    // Default to English if still not detected
+    detectedLanguage ??= 'english';
+
     final version = yamlData['version'] as String? ?? 'current';
 
     // Determine which template to use
@@ -200,7 +232,7 @@ class UnifiedYamlImportService {
     return UnifiedImportResult.coverLetter(
       filePath: filePath,
       templateName: templateName,
-      language: language,
+      language: detectedLanguage,
       version: version,
       greeting: greeting,
       paragraphs: paragraphs,
@@ -313,6 +345,7 @@ class UnifiedImportResult {
   /// Create a successful CV import result
   factory UnifiedImportResult.cv({
     required String filePath,
+    String? language,
     PersonalInfo? personalInfo,
     List<Skill> skills = const [],
     List<Language> languages = const [],
@@ -323,6 +356,7 @@ class UnifiedImportResult {
       success: true,
       fileType: YamlFileType.cvData,
       filePath: filePath,
+      language: language,
       personalInfo: personalInfo,
       skills: skills,
       languages: languages,

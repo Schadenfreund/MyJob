@@ -3,6 +3,8 @@ import '../../../models/job_application.dart';
 import '../../../constants/app_constants.dart';
 import '../../../constants/ui_constants.dart';
 import '../../../widgets/status_chip.dart';
+import '../../../utils/application_status_helper.dart';
+import '../../../utils/app_date_utils.dart';
 
 /// Compact, collapsible application card for prototype
 class CompactApplicationCard extends StatefulWidget {
@@ -45,57 +47,6 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
     _isExpanded = widget.initiallyExpanded;
   }
 
-  IconData _getStatusIcon(ApplicationStatus status) {
-    switch (status) {
-      case ApplicationStatus.draft:
-        return Icons.edit_outlined;
-      case ApplicationStatus.applied:
-        return Icons.send_outlined;
-      case ApplicationStatus.interviewing:
-        return Icons.chat_outlined;
-      case ApplicationStatus.successful:
-        return Icons.check_circle_outline;
-      case ApplicationStatus.rejected:
-        return Icons.cancel_outlined;
-      case ApplicationStatus.noResponse:
-        return Icons.schedule;
-    }
-  }
-
-  Color _getStatusColor(ApplicationStatus status) {
-    switch (status) {
-      case ApplicationStatus.draft:
-        return Colors.blue;
-      case ApplicationStatus.applied:
-        return Colors.lightBlue;
-      case ApplicationStatus.interviewing:
-        return Colors.orange;
-      case ApplicationStatus.successful:
-        return Colors.green;
-      case ApplicationStatus.rejected:
-        return Colors.red.withOpacity(0.7);
-      case ApplicationStatus.noResponse:
-        return Colors.grey;
-    }
-  }
-
-  String _getStatusLabel(ApplicationStatus status) {
-    switch (status) {
-      case ApplicationStatus.draft:
-        return 'Draft';
-      case ApplicationStatus.applied:
-        return 'Applied';
-      case ApplicationStatus.interviewing:
-        return 'Interviewing';
-      case ApplicationStatus.successful:
-        return 'Successful';
-      case ApplicationStatus.rejected:
-        return 'Rejected';
-      case ApplicationStatus.noResponse:
-        return 'No Response';
-    }
-  }
-
   void _showStatusMenu(BuildContext context) async {
     final theme = Theme.of(context);
     final RenderBox button = context.findRenderObject() as RenderBox;
@@ -118,7 +69,7 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       items: ApplicationStatus.values.map((status) {
         final isSelected = status == widget.application.status;
-        final color = _getStatusColor(status);
+        final color = ApplicationStatusHelper.getColor(status);
 
         return PopupMenuItem<ApplicationStatus>(
           value: status,
@@ -134,14 +85,14 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
                       isSelected ? Border.all(color: color, width: 2) : null,
                 ),
                 child: Icon(
-                  _getStatusIcon(status),
+                  ApplicationStatusHelper.getIcon(status),
                   size: 16,
                   color: color,
                 ),
               ),
               const SizedBox(width: 12),
               Text(
-                _getStatusLabel(status),
+                ApplicationStatusHelper.getLabel(status),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected ? color : null,
@@ -160,10 +111,6 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
     if (status != null && status != widget.application.status) {
       widget.onStatusChange(status);
     }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
   }
 
   /// Build status timeline showing all status changes
@@ -186,24 +133,24 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
 
     // Build timeline in logical order
     if (draftDate != null) {
-      timeline.add('Draft: ${_formatDate(draftDate)}');
+      timeline.add('Draft: ${AppDateUtils.formatNumeric(draftDate)}');
     }
 
     if (appliedDate != null) {
-      timeline.add('Applied: ${_formatDate(appliedDate)}');
+      timeline.add('Applied: ${AppDateUtils.formatNumeric(appliedDate)}');
     }
 
     if (interviewingDate != null) {
-      timeline.add('Interviewing: ${_formatDate(interviewingDate)}');
+      timeline.add('Interviewing: ${AppDateUtils.formatNumeric(interviewingDate)}');
     }
 
     // Show final status (only one of these should be present)
     if (successfulDate != null) {
-      timeline.add('Successful: ${_formatDate(successfulDate)}');
+      timeline.add('Successful: ${AppDateUtils.formatNumeric(successfulDate)}');
     } else if (rejectedDate != null) {
-      timeline.add('Rejected: ${_formatDate(rejectedDate)}');
+      timeline.add('Rejected: ${AppDateUtils.formatNumeric(rejectedDate)}');
     } else if (noResponseDate != null) {
-      timeline.add('No Response: ${_formatDate(noResponseDate)}');
+      timeline.add('No Response: ${AppDateUtils.formatNumeric(noResponseDate)}');
     }
 
     return timeline.join(' | ');
@@ -456,7 +403,7 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${statusDate.$1}: ${_formatDate(statusDate.$2!)}',
+                            '${statusDate.$1}: ${AppDateUtils.formatNumeric(statusDate.$2!)}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontSize: 11,
                               color: theme.textTheme.bodySmall?.color

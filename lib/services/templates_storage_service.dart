@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import '../models/cv_template.dart';
 import '../models/cover_letter_template.dart';
+import '../constants/json_constants.dart';
+import '../constants/app_constants.dart';
 
 /// Storage service for CV and Cover Letter templates and instances
 class TemplatesStorageService {
@@ -47,29 +49,47 @@ class TemplatesStorageService {
   // PROFILE PICTURE STORAGE
   // ============================================================================
 
-  /// Save profile picture to UserData folder
+  /// Save profile picture to language-specific profile folder
   ///
-  /// Copies the image file to UserData/profile_pictures/ and returns the new path.
-  /// The new filename is 'profile_[timestamp].[extension]'.
-  Future<String?> saveProfilePicture(String sourcePath) async {
+  /// Copies the image file to UserData/profiles/{language}/ and returns the new path.
+  /// The filename is 'profile_picture.[extension]' (overwrites existing).
+  Future<String?> saveProfilePicture(String sourcePath, {DocumentLanguage? language}) async {
     try {
+      debugPrint('[TemplatesStorage] === Saving Profile Picture ===');
+      debugPrint('[TemplatesStorage] Source path: "$sourcePath"');
+      debugPrint('[TemplatesStorage] Language: ${language?.code ?? "not specified"}');
+
       final sourceFile = File(sourcePath);
       if (!sourceFile.existsSync()) {
-        debugPrint('Profile picture source not found: $sourcePath');
+        debugPrint('[TemplatesStorage] ✗ Source file not found: $sourcePath');
         return null;
       }
 
       final userDataPath = await getUserDataPath();
       final extension = p.extension(sourcePath).toLowerCase();
-      final filename =
-          'profile_${DateTime.now().millisecondsSinceEpoch}$extension';
-      final destPath = p.join(userDataPath, 'profile_pictures', filename);
+
+      // If language is specified, save to profiles/{language}/
+      // Otherwise save to generic profile_pictures/ for backward compatibility
+      String destPath;
+      if (language != null) {
+        final profileDir = p.join(userDataPath, 'profiles', language.code);
+        final dir = Directory(profileDir);
+        if (!dir.existsSync()) {
+          dir.createSync(recursive: true);
+        }
+        destPath = p.join(profileDir, 'profile_picture$extension');
+        debugPrint('[TemplatesStorage] Saving to profile folder: $destPath');
+      } else {
+        final filename = 'profile_${DateTime.now().millisecondsSinceEpoch}$extension';
+        destPath = p.join(userDataPath, 'profile_pictures', filename);
+        debugPrint('[TemplatesStorage] Saving to generic folder: $destPath');
+      }
 
       await sourceFile.copy(destPath);
-      debugPrint('Profile picture saved: $destPath');
+      debugPrint('[TemplatesStorage] ✓ Profile picture saved: $destPath');
       return destPath;
     } catch (e) {
-      debugPrint('Error saving profile picture: $e');
+      debugPrint('[TemplatesStorage] ✗ Error saving profile picture: $e');
       return null;
     }
   }
@@ -176,7 +196,7 @@ class TemplatesStorageService {
 
       final updatedTemplate = template.copyWith(lastModified: DateTime.now());
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(updatedTemplate.toJson()),
+        JsonConstants.prettyEncoder.convert(updatedTemplate.toJson()),
       );
 
       debugPrint('CV template saved: ${template.id}');
@@ -262,7 +282,7 @@ class TemplatesStorageService {
 
       final updatedTemplate = template.copyWith(lastModified: DateTime.now());
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(updatedTemplate.toJson()),
+        JsonConstants.prettyEncoder.convert(updatedTemplate.toJson()),
       );
 
       debugPrint('Cover letter template saved: ${template.id}');
@@ -344,7 +364,7 @@ class TemplatesStorageService {
 
       final updatedInstance = instance.copyWith(lastModified: DateTime.now());
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(updatedInstance.toJson()),
+        JsonConstants.prettyEncoder.convert(updatedInstance.toJson()),
       );
 
       debugPrint('CV instance saved: ${instance.id}');
@@ -424,7 +444,7 @@ class TemplatesStorageService {
 
       final updatedInstance = instance.copyWith(lastModified: DateTime.now());
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(updatedInstance.toJson()),
+        JsonConstants.prettyEncoder.convert(updatedInstance.toJson()),
       );
 
       debugPrint('Cover letter instance saved: ${instance.id}');

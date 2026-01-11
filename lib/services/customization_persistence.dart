@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import '../models/template_customization.dart';
 import 'storage_service.dart';
+import '../constants/json_constants.dart';
 
 /// Service for persisting template customization settings in UserData folder
 class CustomizationPersistence {
@@ -22,7 +23,7 @@ class CustomizationPersistence {
       final file = File(filePath);
       final json = customization.toJson();
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(json),
+        JsonConstants.prettyEncoder.convert(json),
       );
     } catch (e) {
       debugPrint('[CustomizationPersistence] Failed to save: $e');

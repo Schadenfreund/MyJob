@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'storage_service.dart';
+import '../constants/json_constants.dart';
 
 /// Service for managing user preferences stored in UserData folder
 class PreferencesService {
@@ -43,7 +44,7 @@ class PreferencesService {
       final filePath = await _getPreferencesPath();
       final file = File(filePath);
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(_preferences),
+        JsonConstants.prettyEncoder.convert(_preferences),
       );
     } catch (e) {
       // Handle save errors silently or log them

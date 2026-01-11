@@ -134,7 +134,7 @@ class TemplateStyle {
         fontFamily: PdfFontFamily.roboto,
         twoColumnLayout: false,
         showPhoto: true,
-        isDarkMode: false, // Light mode
+        isDarkMode: true, // Dark mode
       );
 
   /// Classic template - Conservative, traditional
@@ -145,7 +145,7 @@ class TemplateStyle {
         fontFamily: PdfFontFamily.openSans,
         twoColumnLayout: false,
         showPhoto: false,
-        isDarkMode: false,
+        isDarkMode: true,
       );
 
   /// Get all available presets

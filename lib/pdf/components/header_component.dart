@@ -124,31 +124,27 @@ class HeaderComponent {
         // Full-width accent header bar (extends beyond page margins)
         pw.Container(
           width: double.infinity,
+          height: 130, // Fixed height for MultiPage compatibility
           // Negative margin to extend to page edges
           margin: pw.EdgeInsets.only(
             left: -margins.left,
             right: -margins.right,
             top: -margins.top,
           ),
-          padding: pw.EdgeInsets.symmetric(
-            horizontal: margins.left + styling.space4,
-            vertical: styling.space6,
-          ),
           decoration: pw.BoxDecoration(
             color: styling.accent,
           ),
           child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              // Profile image (if provided)
+              // Left padding to align photo with content below
+              if (profileImage != null) pw.SizedBox(width: margins.left),
+
+              // Profile image (if provided) - aligned with content
               if (profileImage != null) ...[
                 pw.Container(
-                  width: 80,
-                  height: 80,
-                  decoration: pw.BoxDecoration(
-                    shape: pw.BoxShape.circle,
-                    border: pw.Border.all(color: PdfColors.white, width: 3),
-                  ),
+                  width: 130,
+                  height: 130,
                   child: pw.ClipOval(
                     child: pw.Image(profileImage, fit: pw.BoxFit.cover),
                   ),
@@ -158,33 +154,40 @@ class HeaderComponent {
 
               // Name and title
               pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    // Name - bold on accent
-                    pw.Text(
-                      name.toUpperCase(),
-                      style: pw.TextStyle(
-                        fontSize: styling.fontSizeH1 * 1.3,
-                        fontWeight: pw.FontWeight.bold,
-                        color: styling.textOnAccent,
-                        letterSpacing: 3,
-                      ),
-                    ),
-
-                    // Job title
-                    if (title != null && title.isNotEmpty) ...[
-                      pw.SizedBox(height: styling.space3),
+                child: pw.Padding(
+                  padding: pw.EdgeInsets.symmetric(
+                    horizontal: styling.space4,
+                    vertical: styling.space5,
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    mainAxisAlignment: pw.MainAxisAlignment.center,
+                    children: [
+                      // Name - bold on accent
                       pw.Text(
-                        title,
+                        name.toUpperCase(),
                         style: pw.TextStyle(
-                          fontSize: styling.fontSizeH3,
-                          color: styling.textOnAccent.flatten(),
+                          fontSize: styling.fontSizeH1 * 1.3,
                           fontWeight: pw.FontWeight.bold,
+                          color: styling.textOnAccent,
+                          letterSpacing: 3,
                         ),
                       ),
+
+                      // Job title
+                      if (title != null && title.isNotEmpty) ...[
+                        pw.SizedBox(height: styling.space3),
+                        pw.Text(
+                          title,
+                          style: pw.TextStyle(
+                            fontSize: styling.fontSizeH3,
+                            color: styling.textOnAccent.flatten(),
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -213,11 +216,11 @@ class HeaderComponent {
         // Profile image (if provided)
         if (profileImage != null) ...[
           pw.Container(
-            width: 70,
-            height: 70,
+            width: 105,
+            height: 105,
             decoration: pw.BoxDecoration(
               shape: pw.BoxShape.circle,
-              border: pw.Border.all(color: styling.accent, width: 2),
+              border: pw.Border.all(color: styling.accent, width: 4),
             ),
             child: pw.ClipOval(
               child: pw.Image(profileImage, fit: pw.BoxFit.cover),
@@ -288,11 +291,11 @@ class HeaderComponent {
               // Profile image (if provided)
               if (profileImage != null) ...[
                 pw.Container(
-                  width: 70,
-                  height: 70,
+                  width: 105,
+                  height: 105,
                   decoration: pw.BoxDecoration(
                     shape: pw.BoxShape.circle,
-                    border: pw.Border.all(color: styling.accent, width: 2),
+                    border: pw.Border.all(color: styling.accent, width: 4),
                   ),
                   child: pw.ClipOval(
                     child: pw.Image(profileImage, fit: pw.BoxFit.cover),

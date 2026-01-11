@@ -8,6 +8,7 @@ import '../models/cover_letter.dart';
 import '../models/master_profile.dart';
 import '../models/job_cv_data.dart';
 import '../models/job_cover_letter.dart';
+import '../constants/json_constants.dart';
 import '../models/template_customization.dart';
 import '../models/template_style.dart';
 import '../constants/app_constants.dart';
@@ -95,7 +96,7 @@ class StorageService {
 
       final updatedApp = application.copyWith(lastUpdated: DateTime.now());
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(updatedApp.toJson()),
+        JsonConstants.prettyEncoder.convert(updatedApp.toJson()),
       );
 
       debugPrint('Application saved: ${application.id}');
@@ -165,7 +166,7 @@ class StorageService {
 
       final updatedCv = cv.copyWith(lastModified: DateTime.now());
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(updatedCv.toJson()),
+        JsonConstants.prettyEncoder.convert(updatedCv.toJson()),
       );
 
       debugPrint('CV saved: ${cv.id}');
@@ -252,7 +253,7 @@ class StorageService {
 
       final updatedLetter = letter.copyWith(lastModified: DateTime.now());
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(updatedLetter.toJson()),
+        JsonConstants.prettyEncoder.convert(updatedLetter.toJson()),
       );
 
       debugPrint('Cover letter saved: ${letter.id}');
@@ -310,7 +311,7 @@ class StorageService {
       'coverLetters': coverLetters.map((l) => l.toJson()).toList(),
     };
 
-    return const JsonEncoder.withIndent('  ').convert(exportData);
+    return JsonConstants.prettyEncoder.convert(exportData);
   }
 
   Future<void> importData(String jsonData) async {
@@ -382,7 +383,7 @@ class StorageService {
           userDataPath, 'profiles', profile.language.code, 'base_data.json'));
 
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(profile.toJson()),
+        JsonConstants.prettyEncoder.convert(profile.toJson()),
       );
 
       debugPrint('Master profile saved (${profile.language.code})');
@@ -438,7 +439,7 @@ class StorageService {
           '[Clone] Profile Summary length: ${profile.profileSummary.length}');
 
       // Clone CV data
-      final cvData = JobCvData.fromMasterProfile(profile);
+      var cvData = JobCvData.fromMasterProfile(profile);
 
       // Debug: Verify it was copied
       debugPrint(
@@ -446,19 +447,76 @@ class StorageService {
       debugPrint(
           '[Clone] CV Data Professional Summary length: ${cvData.professionalSummary.length}');
 
+      // Debug: Check profile picture state
+      debugPrint('[Clone] === Profile Picture Cloning ===');
+      debugPrint('[Clone] Has PersonalInfo: ${profile.personalInfo != null}');
+      if (profile.personalInfo != null) {
+        debugPrint('[Clone] Profile picture path: "${profile.personalInfo!.profilePicturePath}"');
+        debugPrint('[Clone] Has profile picture: ${profile.personalInfo!.hasProfilePicture}');
+      }
+
+      // Copy profile picture if it exists in master profile
+      if (profile.personalInfo?.profilePicturePath != null &&
+          profile.personalInfo!.profilePicturePath!.isNotEmpty) {
+        try {
+          final sourcePath = profile.personalInfo!.profilePicturePath!;
+          debugPrint('[Clone] Attempting to copy from: $sourcePath');
+
+          final sourceFile = File(sourcePath);
+          final fileExists = await sourceFile.exists();
+          debugPrint('[Clone] Source file exists: $fileExists');
+
+          if (fileExists) {
+            // Determine file extension
+            final extension = p.extension(sourcePath);
+            final targetFileName = 'profile_picture$extension';
+            final targetPath = p.join(folderPath, targetFileName);
+
+            debugPrint('[Clone] Copying to: $targetPath');
+
+            // Copy the file
+            await sourceFile.copy(targetPath);
+
+            debugPrint('[Clone] ✓ Profile picture copied successfully');
+
+            // Update CV data with new path
+            cvData = cvData.copyWith(
+              personalInfo: profile.personalInfo!.copyWith(
+                profilePicturePath: targetPath,
+              ),
+            );
+
+            debugPrint('[Clone] ✓ CV data updated with new path');
+          } else {
+            debugPrint('[Clone] ✗ Source profile picture not found: $sourcePath');
+          }
+        } catch (e) {
+          debugPrint('[Clone] ✗ Error copying profile picture: $e');
+          // Continue without profile picture - not a critical error
+        }
+      } else {
+        debugPrint('[Clone] No profile picture to copy (path is null or empty)');
+      }
+
       final cvFile = File(p.join(folderPath, 'cv_data.json'));
       await cvFile.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(cvData.toJson()),
+        JsonConstants.prettyEncoder.convert(cvData.toJson()),
       );
 
       // Clone cover letter with defaults
+      debugPrint('[Clone] Default cover letter body length: ${profile.defaultCoverLetterBody.length}');
+      debugPrint('[Clone] Default cover letter preview: "${profile.defaultCoverLetterBody.length > 50 ? '${profile.defaultCoverLetterBody.substring(0, 50)}...' : profile.defaultCoverLetterBody}"');
+
       final coverLetter = JobCoverLetter.fromDefault(
         defaultBody: profile.defaultCoverLetterBody,
         companyName: application.company,
       );
+
+      debugPrint('[Clone] JobCoverLetter body length: ${coverLetter.body.length}');
+
       final clFile = File(p.join(folderPath, 'cl_data.json'));
       await clFile.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(coverLetter.toJson()),
+        JsonConstants.prettyEncoder.convert(coverLetter.toJson()),
       );
 
       // Create default PDF settings WITH CORRECT LANGUAGE
@@ -468,7 +526,7 @@ class StorageService {
       final pdfSettings = TemplateCustomization(language: cvLanguage);
       final pdfFile = File(p.join(folderPath, 'pdf_settings.json'));
       await pdfFile.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(pdfSettings.toJson()),
+        JsonConstants.prettyEncoder.convert(pdfSettings.toJson()),
       );
 
       // Save application metadata with folder path
@@ -502,7 +560,7 @@ class StorageService {
     try {
       final file = File(p.join(folderPath, 'cv_data.json'));
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(data.toJson()),
+        JsonConstants.prettyEncoder.convert(data.toJson()),
       );
       debugPrint('Job CV data saved');
     } catch (e) {
@@ -532,7 +590,7 @@ class StorageService {
     try {
       final file = File(p.join(folderPath, 'cl_data.json'));
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(letter.toJson()),
+        JsonConstants.prettyEncoder.convert(letter.toJson()),
       );
       debugPrint('Job cover letter saved');
     } catch (e) {
@@ -583,7 +641,7 @@ class StorageService {
         'customization': customization.toJson(),
       };
       await file.writeAsString(
-        const JsonEncoder.withIndent('  ').convert(settings),
+        JsonConstants.prettyEncoder.convert(settings),
       );
       debugPrint('Job PDF settings saved');
     } catch (e) {

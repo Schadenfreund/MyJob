@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
-import '../theme/app_theme.dart';
+import '../utils/application_status_helper.dart';
 
 /// A badge widget for displaying application status
 class StatusBadge extends StatelessWidget {
@@ -12,40 +12,6 @@ class StatusBadge extends StatelessWidget {
 
   final ApplicationStatus status;
   final StatusBadgeSize size;
-
-  Color get _color {
-    switch (status) {
-      case ApplicationStatus.draft:
-        return AppTheme.statusDraft;
-      case ApplicationStatus.applied:
-        return AppTheme.statusApplied;
-      case ApplicationStatus.interviewing:
-        return AppTheme.statusInterviewing;
-      case ApplicationStatus.successful:
-        return AppTheme.statusAccepted; // Reuse green color
-      case ApplicationStatus.rejected:
-        return AppTheme.statusRejected;
-      case ApplicationStatus.noResponse:
-        return AppTheme.statusWithdrawn; // Reuse gray color
-    }
-  }
-
-  IconData get _icon {
-    switch (status) {
-      case ApplicationStatus.draft:
-        return Icons.edit_outlined;
-      case ApplicationStatus.applied:
-        return Icons.send_outlined;
-      case ApplicationStatus.interviewing:
-        return Icons.people_outline;
-      case ApplicationStatus.successful:
-        return Icons.check_circle_outline;
-      case ApplicationStatus.rejected:
-        return Icons.cancel_outlined;
-      case ApplicationStatus.noResponse:
-        return Icons.schedule;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,13 +34,16 @@ class StatusBadge extends StatelessWidget {
         padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 6);
     }
 
+    final color = ApplicationStatusHelper.getColor(status, useThemeColors: true);
+    final icon = ApplicationStatusHelper.getIcon(status, variant: 'badge');
+
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: _color.withValues(alpha: 0.3),
+          color: color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -82,9 +51,9 @@ class StatusBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            _icon,
+            icon,
             size: iconSize,
-            color: _color,
+            color: color,
           ),
           const SizedBox(width: 4),
           Text(
@@ -92,7 +61,7 @@ class StatusBadge extends StatelessWidget {
             style: TextStyle(
               fontSize: fontSize,
               fontWeight: FontWeight.w500,
-              color: _color,
+              color: color,
             ),
           ),
         ],

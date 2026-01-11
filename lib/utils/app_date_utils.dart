@@ -13,6 +13,7 @@ class AppDateUtils {
   static final DateFormat _monthYearFormat = DateFormat('MMMM yyyy');
   static final DateFormat _dayMonthFormat = DateFormat('d MMM');
   static final DateFormat _isoFormat = DateFormat('yyyy-MM-dd');
+  static final DateFormat _numericFormat = DateFormat('dd.MM.yyyy');
 
   // ============================================================================
   // FORMATTING METHODS
@@ -46,6 +47,12 @@ class AppDateUtils {
   static String formatIso(DateTime? date) {
     if (date == null) return '';
     return _isoFormat.format(date);
+  }
+
+  /// Format date as "15.01.2024" (European numeric format)
+  static String formatNumeric(DateTime? date) {
+    if (date == null) return '';
+    return _numericFormat.format(date);
   }
 
   /// Format date range as "Jan 2020 - Mar 2024" or "Jan 2020 - Present"

@@ -17,6 +17,7 @@ import '../models/user_data/skill.dart';
 import '../constants/app_constants.dart';
 import '../services/pdf_service.dart';
 import '../services/storage_service.dart';
+import '../utils/data_converters.dart';
 import '../widgets/pdf_editor/template_edit_panel.dart';
 import 'base_template_pdf_preview_dialog.dart';
 
@@ -169,6 +170,23 @@ class _JobApplicationPdfDialogState
     debugPrint(
         '[PDF Gen] Summary length: ${widget.cvData.professionalSummary.length}');
 
+    // Load profile picture if available
+    Uint8List? profileImageBytes;
+    final profilePicturePath = widget.cvData.personalInfo?.profilePicturePath;
+    if (profilePicturePath != null && profilePicturePath.isNotEmpty) {
+      try {
+        final file = File(profilePicturePath);
+        if (await file.exists()) {
+          profileImageBytes = await file.readAsBytes();
+          debugPrint('[PDF Gen] Loaded profile picture: $profilePicturePath');
+        } else {
+          debugPrint('[PDF Gen] Profile picture file not found: $profilePicturePath');
+        }
+      } catch (e) {
+        debugPrint('[PDF Gen] Error loading profile picture: $e');
+      }
+    }
+
     // Convert JobCvData to CvData format with proper type conversions
     final cvData = CvData(
       id: widget.application.id,
@@ -184,16 +202,8 @@ class _JobApplicationPdfDialogState
           .toList(),
       interests: widget.cvData.interests.map((i) => i.name).toList(),
       contactDetails: widget.cvData.personalInfo != null
-          ? ContactDetails(
-              fullName: widget.cvData.personalInfo!.fullName,
-              jobTitle: widget.cvData.personalInfo!.jobTitle ?? '',
-              email: widget.cvData.personalInfo!.email ?? '',
-              phone: widget.cvData.personalInfo!.phone ?? '',
-              address: widget.cvData.personalInfo!.address ?? '',
-              linkedin: widget.cvData.personalInfo!.linkedin ?? '',
-              website: widget.cvData.personalInfo!.website ?? '',
-              profilePicturePath:
-                  widget.cvData.personalInfo!.profilePicturePath,
+          ? DataConverters.personalInfoToContactDetails(
+              widget.cvData.personalInfo!,
             )
           : null,
       experiences: widget.cvData.experiences.asMap().entries.map((entry) {
@@ -228,11 +238,13 @@ class _JobApplicationPdfDialogState
         '[PDF Gen] Application language: ${widget.application.baseLanguage}');
     debugPrint('[PDF Gen] Customization language: ${customization.language}');
     debugPrint('[PDF Gen] CvData.language: ${cvData.language}');
+    debugPrint('[PDF Gen] Profile picture loaded: ${profileImageBytes != null}');
 
     return await PdfService.instance.generateCvPdf(
       cvData,
       selectedStyle,
       customization: customization,
+      profileImageBytes: profileImageBytes,
     );
   }
 

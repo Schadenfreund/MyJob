@@ -51,9 +51,6 @@ class JobApplication {
     this.followUpDate,
     this.reminders = const [],
     this.statusHistory = const [],
-    // Legacy fields for backward compatibility
-    this.cvInstanceId,
-    this.coverLetterInstanceId,
   });
 
   /// Create from JSON
@@ -96,10 +93,7 @@ class JobApplication {
               ?.map((s) => StatusChange.fromJson(s as Map<String, dynamic>))
               .toList() ??
           [],
-      // Legacy fields
-      cvInstanceId: (json['cvInstanceId'] ?? json['cvId']) as String?,
-      coverLetterInstanceId:
-          (json['coverLetterInstanceId'] ?? json['coverLetterId']) as String?,
+      // Note: Legacy cvInstanceId and coverLetterInstanceId fields are ignored for backward compatibility
     );
   }
 
@@ -121,12 +115,6 @@ class JobApplication {
   final DateTime? followUpDate;
   final List<Reminder> reminders;
   final List<StatusChange>? statusHistory;
-
-  // Legacy fields for backward compatibility
-  @Deprecated('Use folder-based storage instead')
-  final String? cvInstanceId;
-  @Deprecated('Use folder-based storage instead')
-  final String? coverLetterInstanceId;
 
   /// Safe getter for status history - returns empty list if null
   List<StatusChange> get safeStatusHistory => statusHistory ?? [];
@@ -151,9 +139,6 @@ class JobApplication {
         'followUpDate': followUpDate?.toIso8601String(),
         'reminders': reminders.map((r) => r.toJson()).toList(),
         'statusHistory': statusHistory?.map((s) => s.toJson()).toList(),
-        // Legacy fields
-        'cvInstanceId': cvInstanceId,
-        'coverLetterInstanceId': coverLetterInstanceId,
       };
 
   /// Create a copy with updated fields
@@ -176,8 +161,6 @@ class JobApplication {
     DateTime? followUpDate,
     List<Reminder>? reminders,
     List<StatusChange>? statusHistory,
-    String? cvInstanceId,
-    String? coverLetterInstanceId,
   }) {
     return JobApplication(
       id: id ?? this.id,
@@ -198,9 +181,6 @@ class JobApplication {
       followUpDate: followUpDate ?? this.followUpDate,
       reminders: reminders ?? this.reminders,
       statusHistory: statusHistory ?? this.statusHistory,
-      cvInstanceId: cvInstanceId ?? this.cvInstanceId,
-      coverLetterInstanceId:
-          coverLetterInstanceId ?? this.coverLetterInstanceId,
     );
   }
 

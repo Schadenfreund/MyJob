@@ -33,6 +33,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
   late JobCvData _currentCvData;
   bool _hasUnsavedChanges = false;
   bool _isSaving = false;
+  int _currentTabIndex = 0; // Track current tab (0-7, where 7 is Cover Letter)
   final _storage = StorageService.instance;
 
   @override
@@ -169,6 +170,9 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
 
     if (!mounted) return;
 
+    // Determine if user is on Cover Letter tab (index 7)
+    final isCoverLetterTab = _currentTabIndex == 7;
+
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -176,7 +180,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
         application: widget.application,
         cvData: _currentCvData,
         coverLetter: widget.coverLetter,
-        isCV: true,
+        isCV: !isCoverLetterTab, // Show cover letter PDF if on cover letter tab
       ),
     );
   }
@@ -313,11 +317,11 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
 
             const SizedBox(width: 8),
 
-            // Customize PDF button
+            // Preview PDF button
             ElevatedButton.icon(
               onPressed: _showPdfCustomization,
-              icon: const Icon(Icons.palette_outlined, size: 18),
-              label: const Text('Customize PDF'),
+              icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+              label: const Text('Preview PDF'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -334,6 +338,12 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
           onChanged: _onCvDataChanged,
           applicationContext: widget.application,
           onApplicationChanged: _onApplicationChanged,
+          coverLetter: widget.coverLetter,
+          onTabChanged: (index) {
+            setState(() {
+              _currentTabIndex = index;
+            });
+          },
         ),
       ),
     );

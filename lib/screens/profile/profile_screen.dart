@@ -297,13 +297,35 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void _showImportDialog(BuildContext context) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => const UnifiedImportDialog(),
-    );
+    // First, pick the file
+    try {
+      final fileResult = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['yaml', 'yml'],
+        dialogTitle: 'Select YAML File to Import',
+      );
 
-    if (result == true && context.mounted) {
-      context.showSuccessSnackBar('Profile data imported successfully!');
+      if (fileResult == null || fileResult.files.single.path == null) {
+        return; // User cancelled
+      }
+
+      final file = File(fileResult.files.single.path!);
+
+      // Then show the import dialog with the pre-selected file
+      if (context.mounted) {
+        final result = await showDialog<bool>(
+          context: context,
+          builder: (context) => UnifiedImportDialog(preSelectedFile: file),
+        );
+
+        if (result == true && context.mounted) {
+          context.showSuccessSnackBar('Profile data imported successfully!');
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        context.showErrorSnackBar('Error selecting file: $e');
+      }
     }
   }
 
@@ -479,25 +501,71 @@ class _ProfileSections extends StatelessWidget {
           actionLabel: '',
           onActionPressed: null,
           collapsedPreview: userDataProvider.personalInfo != null
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              ? Row(
                   children: [
-                    Text(
-                      userDataProvider.personalInfo!.fullName,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    if (userDataProvider.personalInfo!.email != null &&
-                        userDataProvider.personalInfo!.email!.isNotEmpty)
-                      Text(
-                        userDataProvider.personalInfo!.email!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color
-                              ?.withOpacity(0.7),
+                    // Profile picture preview in collapsed state
+                    if (userDataProvider.personalInfo!.hasProfilePicture)
+                      Container(
+                        width: 40,
+                        height: 40,
+                        margin: const EdgeInsets.only(right: 12),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: theme.colorScheme.primary,
+                            width: 2,
+                          ),
+                        ),
+                        child: ClipOval(
+                          child: Image.file(
+                            File(userDataProvider
+                                .personalInfo!.profilePicturePath!),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                              color: theme.colorScheme.primary,
+                              child: Center(
+                                child: Text(
+                                  userDataProvider.personalInfo!.fullName
+                                          .isNotEmpty
+                                      ? userDataProvider
+                                          .personalInfo!.fullName[0]
+                                          .toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            userDataProvider.personalInfo!.fullName,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          if (userDataProvider.personalInfo!.email != null &&
+                              userDataProvider.personalInfo!.email!.isNotEmpty)
+                            Text(
+                              userDataProvider.personalInfo!.email!,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.textTheme.bodySmall?.color
+                                    ?.withOpacity(0.7),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ],
                 )
               : Text(
@@ -969,7 +1037,8 @@ class _ProfileSections extends StatelessWidget {
           const SizedBox(height: 16),
           TextField(
             controller: controller,
-            maxLines: 12,
+            minLines: 8,
+            maxLines: null,
             decoration: InputDecoration(
               hintText: 'Enter your default cover letter body...\n\n'
                   'Example:\nDear Hiring Manager,\n\n'

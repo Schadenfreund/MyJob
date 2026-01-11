@@ -148,27 +148,7 @@ class PdfStyling {
   double get sectionGapMajor => 32 * _spaceScale; // Between major sections
   double get sectionGapMinor => 20 * _spaceScale; // Between minor sections
   double get itemGap => 16 * _spaceScale; // Between list items
-  double get paragraphGap => 12 * _spaceScale; // Between paragraphs
-
-  // Deprecated (use semantic tokens above)
-  @Deprecated('Use sectionGapMajor or sectionGapMinor')
-  double get sectionGap => sectionGapMajor;
-
-  // Deprecated old spacing names (mapped to new 8px grid)
-  @Deprecated('Use space1')
-  double get spaceXxs => space1;
-  @Deprecated('Use space2')
-  double get spaceXs => space2;
-  @Deprecated('Use space3')
-  double get spaceSm => space3;
-  @Deprecated('Use space4')
-  double get spaceMd => space4;
-  @Deprecated('Use space6')
-  double get spaceLg => space6;
-  @Deprecated('Use space8')
-  double get spaceXl => space8;
-  @Deprecated('Use space12')
-  double get spaceXxl => space12;
+  double get paragraphGap => 12 * _spaceScale; // Between paragraphs;
 
   // ===========================================================================
   // MARGINS - Based on marginPreset
@@ -189,10 +169,6 @@ class PdfStyling {
   pw.EdgeInsets get sectionPadding => pw.EdgeInsets.all(space6);
   pw.EdgeInsets get compactPadding => pw.EdgeInsets.all(space3);
   pw.EdgeInsets get relaxedPadding => pw.EdgeInsets.all(space8);
-
-  // Deprecated
-  @Deprecated('Use cardPadding, sectionPadding, or relaxedPadding')
-  pw.EdgeInsets get contentPadding => pw.EdgeInsets.all(space6);
 
   // ===========================================================================
   // LAYOUT HELPERS
