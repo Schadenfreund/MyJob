@@ -31,11 +31,11 @@ class LogService {
 
       // Create log file with date
       final date = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      _logFile = File('${logDir.path}/mylife_$date.log');
+      _logFile = File('${logDir.path}/myjob_$date.log');
 
       // Write startup header
       await _logFile!.writeAsString(
-        '\n\n=== MyLife Started at ${DateTime.now().toIso8601String()} ===\n',
+        '\n\n=== MyJob Started at ${DateTime.now().toIso8601String()} ===\n',
         mode: FileMode.append,
       );
 
@@ -130,7 +130,7 @@ class LogService {
   Future<void> cleanOldLogs({int keepDays = 7}) async {
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final logDir = Directory('${directory.path}/MyLife/logs');
+      final logDir = Directory('${directory.path}/MyJob/logs');
 
       if (!await logDir.exists()) return;
 

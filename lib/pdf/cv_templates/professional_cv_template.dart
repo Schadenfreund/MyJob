@@ -835,8 +835,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     } else {
       // Skills alone
       if (hasSkills) {
-        final isLast = !hasInterests && !hasLanguages && !hasExperience && !hasEducation;
-        widgets.add(_buildSkillsSection(cv, s, false, addBottomMargin: !isLast));
+        final isLast =
+            !hasInterests && !hasLanguages && !hasExperience && !hasEducation;
+        widgets
+            .add(_buildSkillsSection(cv, s, false, addBottomMargin: !isLast));
       }
       // Interests alone
       if (hasInterests) {
@@ -905,7 +907,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
     // Skills
     if (hasSkills) {
-      final isLast = !hasLanguages && !hasInterests && !hasExperience && !hasEducation;
+      final isLast =
+          !hasLanguages && !hasInterests && !hasExperience && !hasEducation;
       widgets.add(_buildSkillsSection(cv, s, true, addBottomMargin: !isLast));
     }
 
@@ -924,7 +927,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     // Experience
     if (hasExperience) {
       final isLast = !hasEducation;
-      widgets.add(_buildExperienceSection(cv, s, experienceLayout, addBottomMargin: !isLast));
+      widgets.add(_buildExperienceSection(cv, s, experienceLayout,
+          addBottomMargin: !isLast));
     }
 
     // Education (last section by default)
@@ -1303,7 +1307,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   }
 
   /// Build compact contact info for compact layout - key details only
-  pw.Widget _buildCompactContactInfo(ContactDetails contact, PdfStyling styling) {
+  pw.Widget _buildCompactContactInfo(
+      ContactDetails contact, PdfStyling styling) {
     final items = <pw.Widget>[];
 
     // Email - most important
@@ -1717,31 +1722,36 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
         case 'skills':
           if (cv.skills.isNotEmpty) {
-            sections.add(_buildSkillsSection(cv, s, isCompact, addBottomMargin: !isLast));
+            sections.add(_buildSkillsSection(cv, s, isCompact,
+                addBottomMargin: !isLast));
           }
           break;
 
         case 'experience':
           if (cv.experiences.isNotEmpty) {
-            sections.add(_buildExperienceSection(cv, s, experienceLayout, addBottomMargin: !isLast));
+            sections.add(_buildExperienceSection(cv, s, experienceLayout,
+                addBottomMargin: !isLast));
           }
           break;
 
         case 'education':
           if (cv.education.isNotEmpty) {
-            sections.add(_buildEducationSection(cv, s, isCompact, addBottomMargin: !isLast));
+            sections.add(_buildEducationSection(cv, s, isCompact,
+                addBottomMargin: !isLast));
           }
           break;
 
         case 'languages':
           if (cv.languages.isNotEmpty) {
-            sections.add(_buildLanguagesSection(cv, s, addBottomMargin: !isLast));
+            sections
+                .add(_buildLanguagesSection(cv, s, addBottomMargin: !isLast));
           }
           break;
 
         case 'interests':
           if (cv.interests.isNotEmpty) {
-            sections.add(_buildInterestsSection(cv, s, addBottomMargin: !isLast));
+            sections
+                .add(_buildInterestsSection(cv, s, addBottomMargin: !isLast));
           }
           break;
       }
@@ -1899,7 +1909,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   }
 
   /// Build skills section
-  pw.Widget _buildSkillsSection(CvData cv, PdfStyling s, bool isCompact, {bool addBottomMargin = true}) {
+  pw.Widget _buildSkillsSection(CvData cv, PdfStyling s, bool isCompact,
+      {bool addBottomMargin = true}) {
     final showProficiency =
         s.customization.showProficiencyBars && s.customization.showSkillLevels;
 
@@ -2020,7 +2031,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   }
 
   /// Build languages section
-  pw.Widget _buildLanguagesSection(CvData cv, PdfStyling s, {bool addBottomMargin = true}) {
+  pw.Widget _buildLanguagesSection(CvData cv, PdfStyling s,
+      {bool addBottomMargin = true}) {
     return SectionComponent.section(
       title: 'Languages',
       styling: s,
@@ -2042,7 +2054,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   }
 
   /// Build interests section
-  pw.Widget _buildInterestsSection(CvData cv, PdfStyling s, {bool addBottomMargin = true}) {
+  pw.Widget _buildInterestsSection(CvData cv, PdfStyling s,
+      {bool addBottomMargin = true}) {
     return SectionComponent.section(
       title: 'Interests',
       styling: s,

@@ -194,9 +194,8 @@ class ContactComponent {
             text: value,
             styling: styling,
             size: iconSize,
-            style: showIcons
-                ? ContactIconStyle.inline
-                : ContactIconStyle.iconOnly,
+            style:
+                showIcons ? ContactIconStyle.inline : ContactIconStyle.iconOnly,
           ),
         );
       }

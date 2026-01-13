@@ -1,0 +1,47 @@
+# Cover Letter Template - English
+# This file contains a Homer Simpson themed cover letter for testing
+
+language: english
+version: current
+
+# Metadata
+metadata:
+  author: Homer J. Simpson
+  last_updated: 2026-01-11
+
+# Template content with Homer style
+template:
+  greeting: "To ==Mr. Burns (or whoever is in charge) XX,=="
+
+  paragraphs:
+    - |
+      I am writing to apply for the position of ==Beer Taster== at your wonderful company. 
+      I have spent many years perfecting my sitting and watching things skills at the power plant, 
+      and I feel I am ready for a new challenge that involves more snacks and fewer radiation suits. 
+      Woo-hoo!
+
+    - |
+      In my current job as a Safety Inspector, I have successfully avoided hundreds of meltdowns by 
+      simply staying awake for minutes at a time. I am very good at following instructions that 
+      don't require more than three steps, and I have my own work attire (though it has some 
+      mustard stains). I am also a former Grammy winner, so I bring a lot of class to the room. 
+      Mmm... class.
+
+    - |
+      I hope you will consider me for this role. I am willing to work for donuts, Duff beer, or even 
+      actual money. Please contact me soon before I get distracted by a moth or something shiny. 
+      Everything's coming up Homer!
+
+  closing: "Yours truly (I think),"
+  signature: "Homer J. Simpson"
+
+placeholders:
+  - name: boss_name
+    description: "The name of the mean boss"
+    location: "Greeting"
+    example: "Mr. Burns"
+
+  - name: job_title
+    description: "The easy job you want"
+    location: "First paragraph"
+    example: "Chief Snacking Officer"

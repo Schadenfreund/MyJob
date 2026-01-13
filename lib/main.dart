@@ -48,11 +48,11 @@ void main() async {
     await windowManager.setResizable(true); // Ensure window is resizable
   });
 
-  runApp(const MyLifeApp());
+  runApp(const MyJobApp());
 }
 
-class MyLifeApp extends StatelessWidget {
-  const MyLifeApp({super.key});
+class MyJobApp extends StatelessWidget {
+  const MyJobApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +69,7 @@ class MyLifeApp extends StatelessWidget {
       child: Consumer<SettingsService>(
         builder: (context, settings, _) {
           return MaterialApp(
-            title: 'MyLife',
+            title: 'MyJob',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme(settings.accentColor),
             darkTheme: AppTheme.darkTheme(settings.accentColor),
@@ -139,7 +139,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         children: [
           // Custom titlebar with integrated tabs
           CustomTitleBar(
-            title: 'MyLife',
+            title: 'MyJob',
             iconAssetPath: 'assets/Icon.png',
             accentColor: settings.accentColor,
             isDarkMode: settings.themeMode == ThemeMode.dark,

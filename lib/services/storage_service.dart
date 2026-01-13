@@ -451,8 +451,10 @@ class StorageService {
       debugPrint('[Clone] === Profile Picture Cloning ===');
       debugPrint('[Clone] Has PersonalInfo: ${profile.personalInfo != null}');
       if (profile.personalInfo != null) {
-        debugPrint('[Clone] Profile picture path: "${profile.personalInfo!.profilePicturePath}"');
-        debugPrint('[Clone] Has profile picture: ${profile.personalInfo!.hasProfilePicture}');
+        debugPrint(
+            '[Clone] Profile picture path: "${profile.personalInfo!.profilePicturePath}"');
+        debugPrint(
+            '[Clone] Has profile picture: ${profile.personalInfo!.hasProfilePicture}');
       }
 
       // Copy profile picture if it exists in master profile
@@ -488,14 +490,16 @@ class StorageService {
 
             debugPrint('[Clone] ✓ CV data updated with new path');
           } else {
-            debugPrint('[Clone] ✗ Source profile picture not found: $sourcePath');
+            debugPrint(
+                '[Clone] ✗ Source profile picture not found: $sourcePath');
           }
         } catch (e) {
           debugPrint('[Clone] ✗ Error copying profile picture: $e');
           // Continue without profile picture - not a critical error
         }
       } else {
-        debugPrint('[Clone] No profile picture to copy (path is null or empty)');
+        debugPrint(
+            '[Clone] No profile picture to copy (path is null or empty)');
       }
 
       final cvFile = File(p.join(folderPath, 'cv_data.json'));
@@ -503,16 +507,25 @@ class StorageService {
         JsonConstants.prettyEncoder.convert(cvData.toJson()),
       );
 
-      // Clone cover letter with defaults
-      debugPrint('[Clone] Default cover letter body length: ${profile.defaultCoverLetterBody.length}');
-      debugPrint('[Clone] Default cover letter preview: "${profile.defaultCoverLetterBody.length > 50 ? '${profile.defaultCoverLetterBody.substring(0, 50)}...' : profile.defaultCoverLetterBody}"');
+      // Clone cover letter with defaults from profile
+      debugPrint(
+          '[Clone] Default cover letter body length: ${profile.defaultCoverLetterBody.length}');
+      debugPrint(
+          '[Clone] Default cover letter preview: "${profile.defaultCoverLetterBody.length > 50 ? '${profile.defaultCoverLetterBody.substring(0, 50)}...' : profile.defaultCoverLetterBody}"');
+      debugPrint('[Clone] Default greeting: "${profile.defaultGreeting}"');
+      debugPrint('[Clone] Default closing: "${profile.defaultClosing}"');
 
       final coverLetter = JobCoverLetter.fromDefault(
         defaultBody: profile.defaultCoverLetterBody,
         companyName: application.company,
+        defaultGreeting: profile.defaultGreeting,
+        defaultClosing: profile.defaultClosing,
       );
 
-      debugPrint('[Clone] JobCoverLetter body length: ${coverLetter.body.length}');
+      debugPrint(
+          '[Clone] JobCoverLetter body length: ${coverLetter.body.length}');
+      debugPrint('[Clone] JobCoverLetter greeting: "${coverLetter.greeting}"');
+      debugPrint('[Clone] JobCoverLetter closing: "${coverLetter.closing}"');
 
       final clFile = File(p.join(folderPath, 'cl_data.json'));
       await clFile.writeAsString(
@@ -599,19 +612,25 @@ class StorageService {
     }
   }
 
-  /// Load job-specific PDF settings
+  /// Load job-specific PDF settings (legacy - loads CV settings)
   Future<(TemplateStyle?, TemplateCustomization?)> loadJobPdfSettings(
       String folderPath) async {
+    return loadJobCvPdfSettings(folderPath);
+  }
+
+  /// Load job-specific CV PDF settings
+  Future<(TemplateStyle?, TemplateCustomization?)> loadJobCvPdfSettings(
+      String folderPath) async {
     try {
-      final file = File(p.join(folderPath, 'pdf_settings.json'));
+      final file = File(p.join(folderPath, 'cv_pdf_settings.json'));
       if (!file.existsSync()) {
-        return (null, null);
+        // Try loading from legacy file
+        return _loadLegacyPdfSettings(folderPath);
       }
 
       final content = await file.readAsString();
       final json = jsonDecode(content) as Map<String, dynamic>;
 
-      // Load both style and customization from the same file
       final style = json.containsKey('style')
           ? TemplateStyle.fromJson(json['style'] as Map<String, dynamic>)
           : null;
@@ -623,19 +642,88 @@ class StorageService {
 
       return (style, customization);
     } catch (e) {
-      debugPrint('Error loading job PDF settings: $e');
+      debugPrint('Error loading job CV PDF settings: $e');
       return (null, null);
     }
   }
 
-  /// Save job-specific PDF settings
+  /// Load job-specific Cover Letter PDF settings
+  Future<(TemplateStyle?, TemplateCustomization?)> loadJobClPdfSettings(
+      String folderPath) async {
+    try {
+      final file = File(p.join(folderPath, 'cl_pdf_settings.json'));
+      if (!file.existsSync()) {
+        // Try loading from legacy file, or return defaults
+        final legacy = await _loadLegacyPdfSettings(folderPath);
+        if (legacy.$1 != null || legacy.$2 != null) {
+          return legacy;
+        }
+        return (null, null);
+      }
+
+      final content = await file.readAsString();
+      final json = jsonDecode(content) as Map<String, dynamic>;
+
+      final style = json.containsKey('style')
+          ? TemplateStyle.fromJson(json['style'] as Map<String, dynamic>)
+          : null;
+
+      final customization = json.containsKey('customization')
+          ? TemplateCustomization.fromJson(
+              json['customization'] as Map<String, dynamic>)
+          : null;
+
+      return (style, customization);
+    } catch (e) {
+      debugPrint('Error loading job CL PDF settings: $e');
+      return (null, null);
+    }
+  }
+
+  /// Load legacy PDF settings (before CV/CL split)
+  Future<(TemplateStyle?, TemplateCustomization?)> _loadLegacyPdfSettings(
+      String folderPath) async {
+    try {
+      final file = File(p.join(folderPath, 'pdf_settings.json'));
+      if (!file.existsSync()) {
+        return (null, null);
+      }
+
+      final content = await file.readAsString();
+      final json = jsonDecode(content) as Map<String, dynamic>;
+
+      final style = json.containsKey('style')
+          ? TemplateStyle.fromJson(json['style'] as Map<String, dynamic>)
+          : null;
+
+      final customization = json.containsKey('customization')
+          ? TemplateCustomization.fromJson(
+              json['customization'] as Map<String, dynamic>)
+          : null;
+
+      return (style, customization);
+    } catch (e) {
+      return (null, null);
+    }
+  }
+
+  /// Save job-specific PDF settings (legacy - saves to CV)
   Future<void> saveJobPdfSettings(
     String folderPath,
     TemplateStyle style,
     TemplateCustomization customization,
   ) async {
+    await saveJobCvPdfSettings(folderPath, style, customization);
+  }
+
+  /// Save job-specific CV PDF settings
+  Future<void> saveJobCvPdfSettings(
+    String folderPath,
+    TemplateStyle style,
+    TemplateCustomization customization,
+  ) async {
     try {
-      final file = File(p.join(folderPath, 'pdf_settings.json'));
+      final file = File(p.join(folderPath, 'cv_pdf_settings.json'));
       final settings = {
         'style': style.toJson(),
         'customization': customization.toJson(),
@@ -643,9 +731,31 @@ class StorageService {
       await file.writeAsString(
         JsonConstants.prettyEncoder.convert(settings),
       );
-      debugPrint('Job PDF settings saved');
+      debugPrint('Job CV PDF settings saved');
     } catch (e) {
-      debugPrint('Error saving job PDF settings: $e');
+      debugPrint('Error saving job CV PDF settings: $e');
+      rethrow;
+    }
+  }
+
+  /// Save job-specific Cover Letter PDF settings
+  Future<void> saveJobClPdfSettings(
+    String folderPath,
+    TemplateStyle style,
+    TemplateCustomization customization,
+  ) async {
+    try {
+      final file = File(p.join(folderPath, 'cl_pdf_settings.json'));
+      final settings = {
+        'style': style.toJson(),
+        'customization': customization.toJson(),
+      };
+      await file.writeAsString(
+        JsonConstants.prettyEncoder.convert(settings),
+      );
+      debugPrint('Job CL PDF settings saved');
+    } catch (e) {
+      debugPrint('Error saving job CL PDF settings: $e');
       rethrow;
     }
   }

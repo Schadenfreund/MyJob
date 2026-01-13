@@ -10,6 +10,7 @@ class PdfEditorSidebar extends StatelessWidget {
     required this.availableFonts,
     this.additionalSections = const [],
     this.hideCvLayoutPresets = false,
+    this.hidePhotoOptions = false,
     this.customPresetsBuilder,
     super.key,
   });
@@ -18,6 +19,7 @@ class PdfEditorSidebar extends StatelessWidget {
   final List<PdfFontFamily> availableFonts;
   final List<Widget> additionalSections;
   final bool hideCvLayoutPresets;
+  final bool hidePhotoOptions;
   final Widget? Function()? customPresetsBuilder;
 
   // Accent color presets (matching PDF styling presets)
@@ -97,8 +99,9 @@ class PdfEditorSidebar extends StatelessWidget {
               // Preset-specific adjustments
               _buildPresetAdjustmentsSection(),
 
-              // Photo Options (always show when photo is enabled - works on all presets)
-              if (controller.customization.showProfilePhoto) ...[
+              // Photo Options (only show when not hidden AND photo is enabled)
+              if (!hidePhotoOptions &&
+                  controller.customization.showProfilePhoto) ...[
                 const SizedBox(height: 28),
                 _buildPhotoOptionsSection(),
               ],
@@ -680,11 +683,12 @@ class PdfEditorSidebar extends StatelessWidget {
           const SizedBox(height: 16),
           _buildSubsectionHeader('Display Options'),
           const SizedBox(height: 8),
-          _buildToggle(
-            'Show Profile Photo',
-            controller.customization.showProfilePhoto,
-            () => _toggleShowProfilePhoto(),
-          ),
+          if (!hidePhotoOptions)
+            _buildToggle(
+              'Show Profile Photo',
+              controller.customization.showProfilePhoto,
+              () => _toggleShowProfilePhoto(),
+            ),
         ]);
         break;
 
@@ -693,11 +697,12 @@ class PdfEditorSidebar extends StatelessWidget {
           const SizedBox(height: 16),
           _buildSubsectionHeader('Display Options'),
           const SizedBox(height: 8),
-          _buildToggle(
-            'Show Profile Photo',
-            controller.customization.showProfilePhoto,
-            () => _toggleShowProfilePhoto(),
-          ),
+          if (!hidePhotoOptions)
+            _buildToggle(
+              'Show Profile Photo',
+              controller.customization.showProfilePhoto,
+              () => _toggleShowProfilePhoto(),
+            ),
         ]);
         break;
 
@@ -706,11 +711,12 @@ class PdfEditorSidebar extends StatelessWidget {
           const SizedBox(height: 16),
           _buildSubsectionHeader('Display Options'),
           const SizedBox(height: 8),
-          _buildToggle(
-            'Show Profile Photo',
-            controller.customization.showProfilePhoto,
-            () => _toggleShowProfilePhoto(),
-          ),
+          if (!hidePhotoOptions)
+            _buildToggle(
+              'Show Profile Photo',
+              controller.customization.showProfilePhoto,
+              () => _toggleShowProfilePhoto(),
+            ),
           _buildToggle(
             'Uppercase Headers',
             controller.customization.uppercaseHeaders,
@@ -736,11 +742,12 @@ class PdfEditorSidebar extends StatelessWidget {
           const SizedBox(height: 16),
           _buildSubsectionHeader('Display Options'),
           const SizedBox(height: 8),
-          _buildToggle(
-            'Show Profile Photo',
-            controller.customization.showProfilePhoto,
-            () => _toggleShowProfilePhoto(),
-          ),
+          if (!hidePhotoOptions)
+            _buildToggle(
+              'Show Profile Photo',
+              controller.customization.showProfilePhoto,
+              () => _toggleShowProfilePhoto(),
+            ),
         ]);
         break;
     }

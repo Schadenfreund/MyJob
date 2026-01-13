@@ -53,11 +53,13 @@ class TemplatesStorageService {
   ///
   /// Copies the image file to UserData/profiles/{language}/ and returns the new path.
   /// The filename is 'profile_picture.[extension]' (overwrites existing).
-  Future<String?> saveProfilePicture(String sourcePath, {DocumentLanguage? language}) async {
+  Future<String?> saveProfilePicture(String sourcePath,
+      {DocumentLanguage? language}) async {
     try {
       debugPrint('[TemplatesStorage] === Saving Profile Picture ===');
       debugPrint('[TemplatesStorage] Source path: "$sourcePath"');
-      debugPrint('[TemplatesStorage] Language: ${language?.code ?? "not specified"}');
+      debugPrint(
+          '[TemplatesStorage] Language: ${language?.code ?? "not specified"}');
 
       final sourceFile = File(sourcePath);
       if (!sourceFile.existsSync()) {
@@ -80,7 +82,8 @@ class TemplatesStorageService {
         destPath = p.join(profileDir, 'profile_picture$extension');
         debugPrint('[TemplatesStorage] Saving to profile folder: $destPath');
       } else {
-        final filename = 'profile_${DateTime.now().millisecondsSinceEpoch}$extension';
+        final filename =
+            'profile_${DateTime.now().millisecondsSinceEpoch}$extension';
         destPath = p.join(userDataPath, 'profile_pictures', filename);
         debugPrint('[TemplatesStorage] Saving to generic folder: $destPath');
       }

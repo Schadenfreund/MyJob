@@ -1,6 +1,6 @@
 /// Application-wide constants and configurations
 ///
-/// This file provides centralized configuration for MyLife app.
+/// This file provides centralized configuration for MyJob app.
 library;
 
 /// HTTP request configuration
@@ -26,10 +26,10 @@ class FileConfig {
 
 /// Application metadata
 class AppInfo {
-  static const String appName = 'MyLife';
+  static const String appName = 'MyJob';
   static const String version = '1.0.0';
   static const String description = 'Job Application Management Tool';
-  static const String supportEmail = 'support@mylife.app';
+  static const String supportEmail = 'support@myjob.app';
 }
 
 /// Application status for job applications

@@ -119,7 +119,8 @@ class PersonalInfoSection extends StatelessWidget {
             ProfilePicturePicker(
               imagePath: info.profilePicturePath,
               size: 90,
-              placeholderInitial: info.fullName.isNotEmpty ? info.fullName[0] : null,
+              placeholderInitial:
+                  info.fullName.isNotEmpty ? info.fullName[0] : null,
               backgroundColor: theme.colorScheme.primary,
               onImageSelected: (selectedPath) async {
                 await _handleProfilePictureUpdate(
@@ -303,8 +304,10 @@ class PersonalInfoSection extends StatelessWidget {
         if (!isAlreadyStored) {
           // Copy to UserData folder (language-specific)
           final currentLanguage = provider.currentLanguage;
-          debugPrint('[PersonalInfoSection] Copying to UserData folder for language: ${currentLanguage.code}');
-          final copiedPath = await storage.saveProfilePicture(newPath, language: currentLanguage);
+          debugPrint(
+              '[PersonalInfoSection] Copying to UserData folder for language: ${currentLanguage.code}');
+          final copiedPath = await storage.saveProfilePicture(newPath,
+              language: currentLanguage);
           debugPrint('[PersonalInfoSection] Copied to: "$copiedPath"');
           if (copiedPath != null) {
             storedPath = copiedPath;
@@ -317,10 +320,13 @@ class PersonalInfoSection extends StatelessWidget {
       }
 
       // Update the personal info with new picture path
-      debugPrint('[PersonalInfoSection] Updating PersonalInfo with path: "$storedPath"');
+      debugPrint(
+          '[PersonalInfoSection] Updating PersonalInfo with path: "$storedPath"');
       final updatedInfo = info.copyWith(profilePicturePath: storedPath ?? '');
-      debugPrint('[PersonalInfoSection] Updated info has picture: ${updatedInfo.hasProfilePicture}');
-      debugPrint('[PersonalInfoSection] Updated info path: "${updatedInfo.profilePicturePath}"');
+      debugPrint(
+          '[PersonalInfoSection] Updated info has picture: ${updatedInfo.hasProfilePicture}');
+      debugPrint(
+          '[PersonalInfoSection] Updated info path: "${updatedInfo.profilePicturePath}"');
 
       await provider.updatePersonalInfo(updatedInfo);
 

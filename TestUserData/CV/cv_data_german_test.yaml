@@ -1,0 +1,100 @@
+# CV Data Template - Deutsch
+# Diese Datei enthält fiktive Daten basierend auf Homer Simpson für Testzwecke
+
+personal_info:
+  full_name: Homer J. Simpson
+  email: chunkylover53@aol.com
+  phone: "555-7334"
+  address: 742 Evergreen Terrace
+  city: Springfield
+  country: USA
+  profile_summary: |
+    Erfahrener Sicherheitsinspektor mit einer langen (und bunten) Geschichte im Atomkraftwerk Springfield. 
+    Experte für den Verzehr von Donuts, Entspannung auf der Couch und das Drücken der "Any"-Taste. 
+    Suche eine Position, die hohe Belohnungen bei minimalem körperlichem oder geistigem Aufwand bietet. Nein! (D'oh!)
+
+skills:
+  - name: Atomsicherheit-Inspektion
+    category: Beruflich
+    level: beginner
+
+  - name: Donut-Qualitätskontrolle
+    category: Beruflich
+    level: expert
+
+  - name: TV-Fernbedienungs-Bedienung
+    category: Technisch
+    level: expert
+
+  - name: Nickerchen (Vertikal & Horizontal)
+    category: Beruflich
+    level: expert
+
+  - name: Bowling
+    category: Beruflich
+    level: advanced
+
+  - name: Verantwortungsvermeidung
+    category: Beruflich
+    level: expert
+
+languages:
+  - name: Englisch
+    proficiency: native
+
+  - name: Schlechtes Spanisch
+    proficiency: beginner
+
+  - name: Grunzen
+    proficiency: fluent
+
+interests:
+  - name: Bowling im Barney's Bowlarama
+    category: Sport
+
+  - name: Zeit verbringen in Moe's Taverne
+    category: Sozial
+
+  - name: Fernsehen
+    category: Unterhaltung
+
+  - name: Koteletts essen
+    category: Essen
+
+work_experience:
+  - company: Atomkraftwerk Springfield
+    position: Sicherheitsinspektor (Sektor 7-G)
+    start_date: 1989-12-17
+    end_date: null
+    is_current: true
+    location: Springfield
+    description: Verantwortlich für die Vermeidung von Kernschmelzen (meistens).
+    responsibilities:
+      - Überwachung des Reaktorkerns über ein Bedienfeld, auf dem ich oft schlafe
+      - Essen von rosa glasierten Donuts mit Streuseln aus dem Pausenraum
+      - Geschäftig aussehen, wenn Mr. Burns oder Waylon Smithers vorbeikommen
+      - Drücken verschiedener Knöpfe, meistens derer, die rot leuchten
+
+  - company: Die Überspitzen (The Be Sharps)
+    position: Bariton-Sänger
+    start_date: 1985-06-01
+    end_date: 1986-08-01
+    is_current: false
+    location: Welttournee
+    description: Mitglied eines weltberühmten, Grammy-prämierten Barbershop-Quartetts.
+    responsibilities:
+      - Singen von klugen Texten über "Baby an Bord"
+      - Tragen einer gestreiften Weste und eines Strohhuts
+      - Autogramme geben für begeisterte Fans, bis der Hype vorbei war
+
+  - company: Barney's Bowlarama
+    position: Pin-Monkey
+    start_date: 1995-01-01
+    end_date: 1995-02-01
+    is_current: false
+    location: Springfield
+    description: Mein Traumberuf, bevor ich wegen Maggie zurück ins Kraftwerk musste.
+    responsibilities:
+      - Räumen der Pins von den Bahnen
+      - Genießen des Geruchs in der Bowlingbahn
+      - Auszahlung in Bowlingkugeln (metaphorisch)

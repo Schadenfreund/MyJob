@@ -141,7 +141,8 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
     }
 
     if (interviewingDate != null) {
-      timeline.add('Interviewing: ${AppDateUtils.formatNumeric(interviewingDate)}');
+      timeline
+          .add('Interviewing: ${AppDateUtils.formatNumeric(interviewingDate)}');
     }
 
     // Show final status (only one of these should be present)
@@ -150,7 +151,8 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
     } else if (rejectedDate != null) {
       timeline.add('Rejected: ${AppDateUtils.formatNumeric(rejectedDate)}');
     } else if (noResponseDate != null) {
-      timeline.add('No Response: ${AppDateUtils.formatNumeric(noResponseDate)}');
+      timeline
+          .add('No Response: ${AppDateUtils.formatNumeric(noResponseDate)}');
     }
 
     return timeline.join(' | ');

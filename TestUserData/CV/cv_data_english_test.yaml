@@ -1,0 +1,100 @@
+# CV Data Template - English
+# This file contains imaginary data based on Homer Simpson for testing purposes
+
+personal_info:
+  full_name: Homer J. Simpson
+  email: chunkylover53@aol.com
+  phone: "555-7334"
+  address: 742 Evergreen Terrace
+  city: Springfield
+  country: USA
+  profile_summary: |
+    Experienced Safety Inspector with a long (and colorful) history at the Springfield Nuclear Power Plant. 
+    Expert in donut consumption, couch-based relaxation, and pressing the "Any" key. 
+    Seeking a position that offers high rewards with minimal physical or mental effort. D'oh!
+
+skills:
+  - name: Nuclear Safety Inspection
+    category: Professional
+    level: beginner
+
+  - name: Donut Quality Control
+    category: Professional
+    level: expert
+
+  - name: TV Remote Operation
+    category: Technical
+    level: expert
+
+  - name: Napping (Vertical & Horizontal)
+    category: Professional
+    level: expert
+
+  - name: Bowling
+    category: Professional
+    level: advanced
+
+  - name: Avoiding Responsibility
+    category: Professional
+    level: expert
+
+languages:
+  - name: English
+    proficiency: native
+
+  - name: Bad Spanish
+    proficiency: beginner
+
+  - name: Grunting
+    proficiency: fluent
+
+interests:
+  - name: Bowling at Barney's Bowlarama
+    category: Sports
+
+  - name: Hanging out at Moe's Tavern
+    category: Social
+
+  - name: Watching TV
+    category: Entertainment
+
+  - name: Eating Pork Chops
+    category: Food
+
+work_experience:
+  - company: Springfield Nuclear Power Plant
+    position: Safety Inspector (Sector 7-G)
+    start_date: 1989-12-17
+    end_date: null
+    is_current: true
+    location: Springfield
+    description: Responsible for preventing nuclear meltdowns (usually).
+    responsibilities:
+      - Monitoring the nuclear reactor core via a control panel I often nap on
+      - Eating pink frosted donuts with sprinkles provided by the breakroom
+      - Looking busy when Mr. Burns or Waylon Smithers walks by
+      - Pressing various buttons, mostly the ones that glow red
+
+  - company: The Be Sharps
+    position: Baritone Singer
+    start_date: 1985-06-01
+    end_date: 1986-08-01
+    is_current: false
+    location: Global Tour
+    description: Member of a world-famous Grammy-winning barbershop quartet.
+    responsibilities:
+      - Singing clever lyrics about "Baby on Board"
+      - Wearing a striped vest and boater hat
+      - Signing autographs for adoring fans until the fad ended
+
+  - company: Barney's Bowlarama
+    position: Pin Monkey
+    start_date: 1995-01-01
+    end_date: 1995-02-01
+    is_current: false
+    location: Springfield
+    description: My dream job before I had to go back to the plant for Maggie.
+    responsibilities:
+      - Clearing the pins from the lanes
+      - Enjoying the smell of the bowling alley
+      - Getting paid in bowling balls (metaphorically)

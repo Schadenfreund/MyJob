@@ -71,13 +71,30 @@ class CvTranslations {
       'December': 'Dezember',
     };
 
-    // Replace each month (careful with order - longer strings first to avoid partial replacements)
+    // Convert American date format (Month DD, YYYY) to German format (DD. Month YYYY)
+    // Regex to match: "Month DD, YYYY" where Month is a full month name
+    final fullDatePattern = RegExp(
+        r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),\s+(\d{4})');
+
+    translated = translated.replaceAllMapped(fullDatePattern, (match) {
+      final month = match.group(1)!;
+      final day = match.group(2)!;
+      final year = match.group(3)!;
+      final germanMonth = monthTranslations[month] ?? month;
+      return '$day. $germanMonth $year';
+    });
+
+    // Replace remaining month names (for abbreviated formats like "Jan 2020")
+    // Do this after the full date conversion to avoid conflicts
     final sortedKeys = monthTranslations.keys.toList()
       ..sort((a, b) => b.length.compareTo(a.length));
 
     for (final eng in sortedKeys) {
       final ger = monthTranslations[eng]!;
-      translated = translated.replaceAll(eng, ger);
+      // Only replace if not already converted in full date format
+      if (!translated.contains('$ger ')) {
+        translated = translated.replaceAll(eng, ger);
+      }
     }
 
     return translated;

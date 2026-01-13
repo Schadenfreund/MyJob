@@ -183,6 +183,9 @@ abstract class BaseTemplatePdfPreviewDialogState<
   /// Hide CV layout presets section (for cover letters)
   bool get hideCvLayoutPresets => false;
 
+  /// Hide photo options section (for cover letters)
+  bool get hidePhotoOptions => false;
+
   // ============================================================================
   // PDF GENERATION
   // ============================================================================
@@ -300,6 +303,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
                     availableFonts: _availableFonts,
                     additionalSections: buildAdditionalSidebarSections(),
                     hideCvLayoutPresets: hideCvLayoutPresets,
+                    hidePhotoOptions: hidePhotoOptions,
                     customPresetsBuilder: buildCustomPresets,
                   ),
                 ],

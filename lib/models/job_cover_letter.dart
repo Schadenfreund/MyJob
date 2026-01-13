@@ -23,16 +23,18 @@ class JobCoverLetter {
     );
   }
 
-  /// Create from default cover letter body
+  /// Create from default cover letter body with greeting and closing
   factory JobCoverLetter.fromDefault({
     required String defaultBody,
     String? companyName,
+    String defaultGreeting = 'Dear Hiring Manager,',
+    String defaultClosing = 'Kind regards,',
   }) {
     return JobCoverLetter(
       companyName: companyName ?? '',
-      greeting: 'Dear Hiring Manager,',
+      greeting: defaultGreeting,
       body: defaultBody,
-      closing: 'Sincerely,',
+      closing: defaultClosing,
       signature: '',
     );
   }

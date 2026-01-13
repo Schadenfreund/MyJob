@@ -58,18 +58,24 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
 
   void _loadExpandedStates() {
     setState(() {
-      _statsExpanded = _prefs.getBool(_prefKeyStatsExpanded, defaultValue: true);
-      _activeExpanded = _prefs.getBool(_prefKeyActiveExpanded, defaultValue: true);
-      _successfulExpanded = _prefs.getBool(_prefKeySuccessfulExpanded, defaultValue: true);
-      _noResponseExpanded = _prefs.getBool(_prefKeyNoResponseExpanded, defaultValue: true);
-      _rejectedExpanded = _prefs.getBool(_prefKeyRejectedExpanded, defaultValue: false);
+      _statsExpanded =
+          _prefs.getBool(_prefKeyStatsExpanded, defaultValue: true);
+      _activeExpanded =
+          _prefs.getBool(_prefKeyActiveExpanded, defaultValue: true);
+      _successfulExpanded =
+          _prefs.getBool(_prefKeySuccessfulExpanded, defaultValue: true);
+      _noResponseExpanded =
+          _prefs.getBool(_prefKeyNoResponseExpanded, defaultValue: true);
+      _rejectedExpanded =
+          _prefs.getBool(_prefKeyRejectedExpanded, defaultValue: false);
 
       // Load card states
       final keys = _prefs.getKeys();
       for (final key in keys) {
         if (key.startsWith(_prefKeyCardPrefix)) {
           final cardId = key.substring(_prefKeyCardPrefix.length);
-          _cardExpandedStates[cardId] = _prefs.getBool(key, defaultValue: false);
+          _cardExpandedStates[cardId] =
+              _prefs.getBool(key, defaultValue: false);
         }
       }
     });
@@ -86,24 +92,24 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
   }
 
   /// Save stats section expanded state
-  Future<void> _saveStatsExpanded(bool value) =>
-      _saveExpandedState(_prefKeyStatsExpanded, value, (v) => _statsExpanded = v);
+  Future<void> _saveStatsExpanded(bool value) => _saveExpandedState(
+      _prefKeyStatsExpanded, value, (v) => _statsExpanded = v);
 
   /// Save active section expanded state
-  Future<void> _saveActiveExpanded(bool value) =>
-      _saveExpandedState(_prefKeyActiveExpanded, value, (v) => _activeExpanded = v);
+  Future<void> _saveActiveExpanded(bool value) => _saveExpandedState(
+      _prefKeyActiveExpanded, value, (v) => _activeExpanded = v);
 
   /// Save successful section expanded state
-  Future<void> _saveSuccessfulExpanded(bool value) =>
-      _saveExpandedState(_prefKeySuccessfulExpanded, value, (v) => _successfulExpanded = v);
+  Future<void> _saveSuccessfulExpanded(bool value) => _saveExpandedState(
+      _prefKeySuccessfulExpanded, value, (v) => _successfulExpanded = v);
 
   /// Save no response section expanded state
-  Future<void> _saveNoResponseExpanded(bool value) =>
-      _saveExpandedState(_prefKeyNoResponseExpanded, value, (v) => _noResponseExpanded = v);
+  Future<void> _saveNoResponseExpanded(bool value) => _saveExpandedState(
+      _prefKeyNoResponseExpanded, value, (v) => _noResponseExpanded = v);
 
   /// Save rejected section expanded state
-  Future<void> _saveRejectedExpanded(bool value) =>
-      _saveExpandedState(_prefKeyRejectedExpanded, value, (v) => _rejectedExpanded = v);
+  Future<void> _saveRejectedExpanded(bool value) => _saveExpandedState(
+      _prefKeyRejectedExpanded, value, (v) => _rejectedExpanded = v);
 
   /// Save individual card expanded state
   Future<void> _saveCardExpanded(String cardId, bool value) async {
@@ -733,7 +739,8 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                     children: apps
                         .map((app) => Padding(
                               padding: const EdgeInsets.only(bottom: 12),
-                              child: _buildApplicationCard(context, app, provider),
+                              child:
+                                  _buildApplicationCard(context, app, provider),
                             ))
                         .toList(),
                   ),
@@ -765,7 +772,8 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
       onStatusChange: (newStatus) =>
           _changeApplicationStatus(context, application, newStatus, provider),
       initiallyExpanded: _cardExpandedStates[application.id] ?? false,
-      onExpandedChanged: (expanded) => _saveCardExpanded(application.id, expanded),
+      onExpandedChanged: (expanded) =>
+          _saveCardExpanded(application.id, expanded),
     );
   }
 

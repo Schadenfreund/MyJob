@@ -134,7 +134,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
 
   Widget _buildHeader(BuildContext context) {
     final theme = Theme.of(context);
-    final fileName = _selectedFile?.path.split(Platform.pathSeparator).last ?? '';
+    final fileName =
+        _selectedFile?.path.split(Platform.pathSeparator).last ?? '';
     final userDataProvider = context.watch<UserDataProvider>();
     final currentLang = userDataProvider.currentLanguage;
 
@@ -219,7 +220,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                 'Target Language:',
                 style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                  color:
+                      theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(width: 12),
@@ -304,7 +306,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected
                       ? theme.colorScheme.primary
-                      : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                      : theme.textTheme.bodyMedium?.color
+                          ?.withValues(alpha: 0.7),
                   letterSpacing: 0.5,
                 ),
               ),
@@ -352,7 +355,6 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
     );
   }
 
-
   Widget _buildInfoBanner(BuildContext context, String message, IconData icon) {
     final theme = Theme.of(context);
 
@@ -391,7 +393,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
             child: Text(
               message,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.85),
+                color:
+                    theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.85),
                 height: 1.4,
               ),
             ),
@@ -400,7 +403,6 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
       ),
     );
   }
-
 
   Widget _buildPreview(BuildContext context) {
     final theme = Theme.of(context);
@@ -627,9 +629,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
   }) {
     final theme = Theme.of(context);
     final isActive = selected && enabled;
-    final chipColor = enabled
-        ? theme.colorScheme.primary
-        : theme.colorScheme.outline;
+    final chipColor =
+        enabled ? theme.colorScheme.primary : theme.colorScheme.outline;
 
     return Material(
       color: Colors.transparent,
@@ -668,7 +669,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                   size: 14,
                   color: isActive
                       ? chipColor
-                      : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                      : theme.textTheme.bodyMedium?.color
+                          ?.withValues(alpha: 0.5),
                 ),
               ),
               const SizedBox(width: 8),
@@ -680,8 +682,10 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                   color: isActive
                       ? chipColor
                       : (enabled
-                          ? theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)
-                          : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4)),
+                          ? theme.textTheme.bodyMedium?.color
+                              ?.withValues(alpha: 0.7)
+                          : theme.textTheme.bodyMedium?.color
+                              ?.withValues(alpha: 0.4)),
                 ),
               ),
               if (isActive) ...[
@@ -698,7 +702,6 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
       ),
     );
   }
-
 
   Widget _buildError(BuildContext context) {
     final theme = Theme.of(context);
@@ -748,7 +751,6 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
       ),
     );
   }
-
 
   Widget _buildActions(BuildContext context) {
     final theme = Theme.of(context);
@@ -809,7 +811,6 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
       ),
     );
   }
-
 
   Future<void> _parseFile(File file) async {
     setState(() {

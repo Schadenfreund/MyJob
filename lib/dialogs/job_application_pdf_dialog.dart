@@ -77,9 +77,10 @@ class _JobApplicationPdfDialogState
     if (widget.application.folderPath == null) return;
 
     try {
-      final settings = await _storage.loadJobPdfSettings(
-        widget.application.folderPath!,
-      );
+      // Load settings based on document type (CV or Cover Letter)
+      final settings = widget.isCV
+          ? await _storage.loadJobCvPdfSettings(widget.application.folderPath!)
+          : await _storage.loadJobClPdfSettings(widget.application.folderPath!);
 
       if (settings != null && mounted) {
         final (style, customization) = settings;
@@ -131,12 +132,20 @@ class _JobApplicationPdfDialogState
     if (widget.application.folderPath == null) return;
 
     try {
-      // Save both style and customization
-      await _storage.saveJobPdfSettings(
-        widget.application.folderPath!,
-        selectedStyle,
-        controller.customization,
-      );
+      // Save to correct file based on document type (CV or Cover Letter)
+      if (widget.isCV) {
+        await _storage.saveJobCvPdfSettings(
+          widget.application.folderPath!,
+          selectedStyle,
+          controller.customization,
+        );
+      } else {
+        await _storage.saveJobClPdfSettings(
+          widget.application.folderPath!,
+          selectedStyle,
+          controller.customization,
+        );
+      }
     } catch (e) {
       debugPrint('Failed to save PDF settings: $e');
     }
@@ -144,6 +153,148 @@ class _JobApplicationPdfDialogState
 
   @override
   bool get useSidebarLayout => true;
+
+  @override
+  bool get hidePhotoOptions =>
+      !widget.isCV; // Hide photo options for cover letters
+
+  @override
+  Widget? buildCustomPresets() {
+    // For cover letters, show all presets except Two-Column
+    if (!widget.isCV) {
+      final coverLetterPresets = LayoutPreset.values
+          .where((preset) => preset != LayoutPreset.twoColumn)
+          .toList();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.style, color: controller.style.accentColor, size: 18),
+              const SizedBox(width: 8),
+              const Text(
+                'DESIGN PRESET',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Choose a layout style for your cover letter',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.5),
+              fontSize: 10,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...coverLetterPresets.map((preset) {
+            final isSelected = controller.customization.layoutMode ==
+                preset.toCustomization().layoutMode;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => controller.setLayoutPreset(preset),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? controller.style.accentColor.withValues(alpha: 0.15)
+                          : Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected
+                            ? controller.style.accentColor
+                            : Colors.white.withValues(alpha: 0.1),
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? controller.style.accentColor
+                                : Colors.white.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            _getIconForPreset(preset),
+                            color: isSelected ? Colors.black : Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                preset.displayName,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                preset.description,
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? controller.style.accentColor
+                                      : Colors.white.withValues(alpha: 0.6),
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (isSelected)
+                          Icon(
+                            Icons.check_circle,
+                            color: controller.style.accentColor,
+                            size: 20,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      );
+    }
+    // For CV, use default presets (all of them)
+    return null;
+  }
+
+  IconData _getIconForPreset(LayoutPreset preset) {
+    switch (preset) {
+      case LayoutPreset.modern:
+        return Icons.auto_awesome;
+      case LayoutPreset.compact:
+        return Icons.compress;
+      case LayoutPreset.traditional:
+        return Icons.article;
+      case LayoutPreset.twoColumn:
+        return Icons.view_column;
+    }
+  }
 
   @override
   String getDocumentName() {
@@ -180,7 +331,8 @@ class _JobApplicationPdfDialogState
           profileImageBytes = await file.readAsBytes();
           debugPrint('[PDF Gen] Loaded profile picture: $profilePicturePath');
         } else {
-          debugPrint('[PDF Gen] Profile picture file not found: $profilePicturePath');
+          debugPrint(
+              '[PDF Gen] Profile picture file not found: $profilePicturePath');
         }
       } catch (e) {
         debugPrint('[PDF Gen] Error loading profile picture: $e');
@@ -238,7 +390,8 @@ class _JobApplicationPdfDialogState
         '[PDF Gen] Application language: ${widget.application.baseLanguage}');
     debugPrint('[PDF Gen] Customization language: ${customization.language}');
     debugPrint('[PDF Gen] CvData.language: ${cvData.language}');
-    debugPrint('[PDF Gen] Profile picture loaded: ${profileImageBytes != null}');
+    debugPrint(
+        '[PDF Gen] Profile picture loaded: ${profileImageBytes != null}');
 
     return await PdfService.instance.generateCvPdf(
       cvData,
@@ -253,6 +406,12 @@ class _JobApplicationPdfDialogState
       return Uint8List(0);
     }
 
+    // Create placeholders map for template variables
+    final placeholders = <String, String>{
+      'COMPANY': widget.application.company,
+      'POSITION': widget.application.position,
+    };
+
     // Convert JobCoverLetter to CoverLetter format
     final coverLetter = CoverLetter(
       id: widget.application.id,
@@ -265,6 +424,7 @@ class _JobApplicationPdfDialogState
       body: getFieldValue('body', widget.coverLetter!.body),
       closing: getFieldValue('closing', widget.coverLetter!.closing),
       senderName: widget.cvData.personalInfo?.fullName,
+      placeholders: placeholders,
     );
 
     return await PdfService.instance.generateCoverLetterPdf(

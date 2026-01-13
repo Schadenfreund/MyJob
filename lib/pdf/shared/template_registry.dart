@@ -46,7 +46,8 @@ class PdfTemplateRegistry {
 
   /// All available CV templates
   static final List<BasePdfTemplate<CvData>> cvTemplates = [
-    ProfessionalCvTemplate.instance, // New unified professional template (recommended)
+    ProfessionalCvTemplate
+        .instance, // New unified professional template (recommended)
     ElectricCvTemplate.instance, // Legacy template (kept for compatibility)
     // Add more CV templates here:
     // ModernCvTemplate.instance,
@@ -83,7 +84,8 @@ class PdfTemplateRegistry {
 
   /// All available cover letter templates
   static final List<BasePdfTemplate<CoverLetter>> coverLetterTemplates = [
-    ProfessionalCoverLetterTemplate.instance, // New professional template (recommended)
+    ProfessionalCoverLetterTemplate
+        .instance, // New professional template (recommended)
     // ElectricCoverLetterTemplate.instance, // Legacy - not compatible with BasePdfTemplate
     // Add more cover letter templates here:
   ];
@@ -93,7 +95,8 @@ class PdfTemplateRegistry {
       ProfessionalCoverLetterTemplate.instance;
 
   /// Get cover letter template by name
-  static BasePdfTemplate<CoverLetter>? getCoverLetterTemplateByName(String name) {
+  static BasePdfTemplate<CoverLetter>? getCoverLetterTemplateByName(
+      String name) {
     try {
       return coverLetterTemplates.firstWhere(
         (t) => t.templateName.toLowerCase() == name.toLowerCase(),
@@ -144,7 +147,8 @@ class PdfTemplateRegistry {
   }
 
   /// Get cover letter templates by tag
-  static List<BasePdfTemplate<CoverLetter>> getCoverLetterTemplatesByTag(String tag) {
+  static List<BasePdfTemplate<CoverLetter>> getCoverLetterTemplatesByTag(
+      String tag) {
     return coverLetterTemplates
         .where((t) => t.info.previewTags.contains(tag.toLowerCase()))
         .toList();

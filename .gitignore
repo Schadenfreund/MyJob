@@ -30,6 +30,7 @@ desktop.ini
 *.exe
 *.dll
 *.pdb
+releases/
 
 # Logs
 *.log
@@ -40,3 +41,11 @@ desktop.ini
 
 # Test coverage
 coverage/
+
+# AI
+.gemini/
+.claude/
+
+# .md files
+
+GITHUB_RELEASE_GUIDE.md

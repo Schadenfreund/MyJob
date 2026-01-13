@@ -31,6 +31,7 @@ class JobCvEditorScreen extends StatefulWidget {
 
 class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
   late JobCvData _currentCvData;
+  dynamic _currentCoverLetter; // JobCoverLetter
   bool _hasUnsavedChanges = false;
   bool _isSaving = false;
   int _currentTabIndex = 0; // Track current tab (0-7, where 7 is Cover Letter)
@@ -40,6 +41,29 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
   void initState() {
     super.initState();
     _currentCvData = widget.cvData;
+    _currentCoverLetter = widget.coverLetter;
+
+    // Reload cover letter from storage to ensure we have the latest data
+    _reloadCoverLetter();
+  }
+
+  /// Reload cover letter from storage
+  Future<void> _reloadCoverLetter() async {
+    if (widget.application.folderPath == null) return;
+
+    try {
+      final coverLetter = await _storage.loadJobCoverLetter(
+        widget.application.folderPath!,
+      );
+
+      if (mounted && coverLetter != null) {
+        setState(() {
+          _currentCoverLetter = coverLetter;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to reload cover letter: $e');
+    }
   }
 
   /// Handle CV data changes from the editor widget
@@ -168,6 +192,9 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
       await _save();
     }
 
+    // Reload cover letter to ensure we have the latest changes
+    await _reloadCoverLetter();
+
     if (!mounted) return;
 
     // Determine if user is on Cover Letter tab (index 7)
@@ -179,7 +206,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
       builder: (context) => JobApplicationPdfDialog(
         application: widget.application,
         cvData: _currentCvData,
-        coverLetter: widget.coverLetter,
+        coverLetter: _currentCoverLetter,
         isCV: !isCoverLetterTab, // Show cover letter PDF if on cover letter tab
       ),
     );
@@ -338,11 +365,16 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
           onChanged: _onCvDataChanged,
           applicationContext: widget.application,
           onApplicationChanged: _onApplicationChanged,
-          coverLetter: widget.coverLetter,
+          coverLetter: _currentCoverLetter,
           onTabChanged: (index) {
             setState(() {
               _currentTabIndex = index;
             });
+
+            // Reload cover letter when switching to cover letter tab (tab 7)
+            if (index == 7) {
+              _reloadCoverLetter();
+            }
           },
         ),
       ),

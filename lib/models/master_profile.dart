@@ -17,6 +17,8 @@ class MasterProfile {
     this.languages = const [],
     this.interests = const [],
     this.defaultCoverLetterBody = '',
+    this.defaultGreeting = 'Dear Hiring Manager,',
+    this.defaultClosing = 'Kind regards,',
   });
 
   /// Create from JSON
@@ -48,6 +50,9 @@ class MasterProfile {
               .toList() ??
           [],
       defaultCoverLetterBody: json['defaultCoverLetterBody'] as String? ?? '',
+      defaultGreeting:
+          json['defaultGreeting'] as String? ?? 'Dear Hiring Manager,',
+      defaultClosing: json['defaultClosing'] as String? ?? 'Kind regards,',
     );
   }
 
@@ -60,6 +65,8 @@ class MasterProfile {
   final List<Language> languages;
   final List<Interest> interests;
   final String defaultCoverLetterBody;
+  final String defaultGreeting;
+  final String defaultClosing;
 
   /// Convert to JSON
   Map<String, dynamic> toJson() => {
@@ -72,6 +79,8 @@ class MasterProfile {
         'languages': languages.map((e) => e.toJson()).toList(),
         'interests': interests.map((e) => e.toJson()).toList(),
         'defaultCoverLetterBody': defaultCoverLetterBody,
+        'defaultGreeting': defaultGreeting,
+        'defaultClosing': defaultClosing,
       };
 
   /// Create a copy with updated fields
@@ -85,6 +94,8 @@ class MasterProfile {
     List<Language>? languages,
     List<Interest>? interests,
     String? defaultCoverLetterBody,
+    String? defaultGreeting,
+    String? defaultClosing,
   }) {
     return MasterProfile(
       language: language ?? this.language,
@@ -97,6 +108,8 @@ class MasterProfile {
       interests: interests ?? this.interests,
       defaultCoverLetterBody:
           defaultCoverLetterBody ?? this.defaultCoverLetterBody,
+      defaultGreeting: defaultGreeting ?? this.defaultGreeting,
+      defaultClosing: defaultClosing ?? this.defaultClosing,
     );
   }
 
@@ -112,6 +125,8 @@ class MasterProfile {
       languages: [],
       interests: [],
       defaultCoverLetterBody: '',
+      defaultGreeting: 'Dear Hiring Manager,',
+      defaultClosing: 'Kind regards,',
     );
   }
 }

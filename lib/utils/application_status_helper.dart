@@ -74,9 +74,7 @@ class ApplicationStatusHelper {
       case ApplicationStatus.applied:
         return Icons.send_outlined;
       case ApplicationStatus.interviewing:
-        return variant == 'badge'
-            ? Icons.people_outline
-            : Icons.chat_outlined;
+        return variant == 'badge' ? Icons.people_outline : Icons.chat_outlined;
       case ApplicationStatus.successful:
         return Icons.check_circle_outline;
       case ApplicationStatus.rejected:

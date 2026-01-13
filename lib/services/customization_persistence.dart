@@ -88,7 +88,8 @@ class CustomizationPersistence {
       final filePath = await _getFilePath();
       await _safeDeleteFile(File(filePath));
     } catch (e) {
-      debugPrint('[CustomizationPersistence] Failed to delete corrupted file: $e');
+      debugPrint(
+          '[CustomizationPersistence] Failed to delete corrupted file: $e');
     }
   }
 }

@@ -526,8 +526,8 @@ class _ProfileSections extends StatelessWidget {
                               color: theme.colorScheme.primary,
                               child: Center(
                                 child: Text(
-                                  userDataProvider.personalInfo!.fullName
-                                          .isNotEmpty
+                                  userDataProvider
+                                          .personalInfo!.fullName.isNotEmpty
                                       ? userDataProvider
                                           .personalInfo!.fullName[0]
                                           .toUpperCase()

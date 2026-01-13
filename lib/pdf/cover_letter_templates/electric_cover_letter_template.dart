@@ -90,7 +90,7 @@ class ElectricCoverLetterTemplate {
                     pw.SizedBox(height: s.space4),
 
                     // Letter body with electric accents
-                    _buildLetterBody(coverLetter.body, s),
+                    _buildLetterBody(coverLetter.processedBody, s),
 
                     pw.SizedBox(height: s.sectionGapMinor),
 
@@ -263,6 +263,7 @@ class ElectricCoverLetterTemplate {
       children: [
         // Date with accent
         pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.end, // Right-align the date
           children: [
             pw.Container(
               width: 4,
@@ -327,8 +328,14 @@ class ElectricCoverLetterTemplate {
 
   /// Build letter body with paragraph styling and bullet points
   static pw.Widget _buildLetterBody(String body, PdfStyling s) {
+    // Normalize line breaks for proper paragraph formatting
+    String normalizedBody = body;
+    normalizedBody = normalizedBody.replaceAll(RegExp(r'\n\s*\n+'), '§PARA§');
+    normalizedBody = normalizedBody.replaceAll(RegExp(r'\n'), ' ');
+    normalizedBody = normalizedBody.replaceAll('§PARA§', '\n\n');
+
     final paragraphs =
-        body.split('\n\n').where((p) => p.trim().isNotEmpty).toList();
+        normalizedBody.split('\n\n').where((p) => p.trim().isNotEmpty).toList();
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,

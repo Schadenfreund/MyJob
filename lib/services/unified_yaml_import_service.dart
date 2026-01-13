@@ -66,7 +66,9 @@ class UnifiedYamlImportService {
     // If not specified, try to detect from file path
     if (detectedLanguage == null) {
       final fileName = filePath.toLowerCase();
-      if (fileName.contains('german') || fileName.contains('deutsch') || fileName.contains('_de')) {
+      if (fileName.contains('german') ||
+          fileName.contains('deutsch') ||
+          fileName.contains('_de')) {
         detectedLanguage = 'german';
       } else if (fileName.contains('english') || fileName.contains('_en')) {
         detectedLanguage = 'english';
@@ -178,7 +180,9 @@ class UnifiedYamlImportService {
     // If not specified, try to detect from file path
     if (detectedLanguage == null) {
       final fileName = filePath.toLowerCase();
-      if (fileName.contains('german') || fileName.contains('deutsch') || fileName.contains('_de')) {
+      if (fileName.contains('german') ||
+          fileName.contains('deutsch') ||
+          fileName.contains('_de')) {
         detectedLanguage = 'german';
       } else if (fileName.contains('english') || fileName.contains('_en')) {
         detectedLanguage = 'english';

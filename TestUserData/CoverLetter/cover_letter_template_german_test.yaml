@@ -1,0 +1,47 @@
+# Cover Letter Template - Deutsch
+# Diese Datei enthält eine fiktive Anschreibenvorlage im Homer-Simpson-Stil
+
+language: german
+version: current
+
+# Metadaten
+metadata:
+  author: Homer J. Simpson
+  last_updated: 2026-01-11
+
+# Vorlageninhalt im Homer-Stil
+template:
+  greeting: "An ==Herrn Burns (oder wer auch immer das Sagen hat) XX,=="
+
+  paragraphs:
+    - |
+      ich schreibe Ihnen, um mich für die Stelle als ==Bierverkoster== in Ihrer wunderbaren Firma zu bewerben. 
+      Ich habe viele Jahre damit verbracht, meine Fähigkeiten im Sitzen und Beobachten im Kraftwerk zu perfektionieren, 
+      und ich fühle mich bereit für eine neue Herausforderung, die mehr Snacks und weniger Strahlenschutzanzüge beinhaltet. 
+      Juchhu! (Woo-hoo!)
+
+    - |
+      In meinem derzeitigen Job als Sicherheitsinspektor habe ich Hunderte von Kernschmelzen erfolgreich vermieden, 
+      indem ich einfach mehrere Minuten am Stück wach geblieben bin. Ich bin sehr gut darin, Anweisungen zu befolgen, 
+      die nicht mehr als drei Schritte erfordern, und ich habe meine eigene Arbeitskleidung (obwohl sie einige 
+      Senfflecken hat). Außerdem bin ich ehemaliger Grammy-Preisträger, also bringe ich eine Menge Klasse in den Raum. 
+      Mmh... Klasse.
+
+    - |
+      Ich hoffe, Sie werden mich für diese Rolle in Betracht ziehen. Ich bin bereit, für Donuts, Duff-Bier oder sogar 
+      echtes Geld zu arbeiten. Bitte kontaktieren Sie mich bald, bevor ich von einer Motte oder etwas Glänzendem 
+      abgelenkt werde. Alles läuft super für Homer!
+
+  closing: "Dein treuer (denke ich),"
+  signature: "Homer J. Simpson"
+
+placeholders:
+  - name: boss_name
+    description: "Der Name des gemeinen Chefs"
+    location: "Anrede"
+    example: "Herr Burns"
+
+  - name: job_title
+    description: "Der einfache Job, den du willst"
+    location: "Erster Absatz"
+    example: "Snack-Beauftragter"

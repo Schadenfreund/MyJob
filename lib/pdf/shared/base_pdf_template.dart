@@ -70,7 +70,7 @@ mixin PdfTemplateHelpers {
     return pw.Document(
       compress: true,
       title: title ?? 'Generated Document',
-      author: author ?? 'MyLife',
+      author: author ?? 'MyJob',
     );
   }
 

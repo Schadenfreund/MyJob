@@ -75,7 +75,10 @@ void main() async {
     }
 
     // If we're past flutter section and haven't written assets, add them
-    if (inFlutterSection && !assetsWritten && !line.startsWith(' ') && line.isNotEmpty) {
+    if (inFlutterSection &&
+        !assetsWritten &&
+        !line.startsWith(' ') &&
+        line.isNotEmpty) {
       newLines.add('');
       newLines.add('  assets:');
       for (final assetPath in assetPaths.toList()..sort()) {

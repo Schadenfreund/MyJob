@@ -34,7 +34,8 @@ class StatusBadge extends StatelessWidget {
         padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 6);
     }
 
-    final color = ApplicationStatusHelper.getColor(status, useThemeColors: true);
+    final color =
+        ApplicationStatusHelper.getColor(status, useThemeColors: true);
     final icon = ApplicationStatusHelper.getIcon(status, variant: 'badge');
 
     return Container(

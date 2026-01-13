@@ -47,7 +47,7 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
   }) async {
     final pdf = createDocument(
       title: 'Cover Letter - ${coverLetter.name}',
-      author: coverLetter.senderName ?? 'MyLife',
+      author: coverLetter.senderName ?? 'MyJob',
     );
 
     final fonts = await loadFonts(style);
@@ -150,6 +150,7 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
     final formattedDate = _formatDate(now);
 
     return pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.end, // Right-align the date
       children: [
         pw.Container(
           width: 4,
@@ -221,9 +222,23 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
 
   /// Build letter body with paragraph styling
   pw.Widget _buildLetterBody(String body, PdfStyling s) {
+    // Normalize line breaks: convert single newlines within paragraphs to spaces,
+    // and preserve double newlines as paragraph breaks
+    // Also handle cases where user uses single newlines for each paragraph
+    String normalizedBody = body;
+
+    // Replace multiple consecutive newlines with a paragraph marker
+    normalizedBody = normalizedBody.replaceAll(RegExp(r'\n\s*\n+'), '§PARA§');
+
+    // Replace remaining single newlines with spaces (they're line wraps within a paragraph)
+    normalizedBody = normalizedBody.replaceAll(RegExp(r'\n'), ' ');
+
+    // Restore paragraph breaks
+    normalizedBody = normalizedBody.replaceAll('§PARA§', '\n\n');
+
     // Split into paragraphs
     final paragraphs =
-        body.split('\n\n').where((p) => p.trim().isNotEmpty).toList();
+        normalizedBody.split('\n\n').where((p) => p.trim().isNotEmpty).toList();
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,

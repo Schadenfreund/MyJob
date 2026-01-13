@@ -106,6 +106,47 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   }
 
   @override
+  void didUpdateWidget(JobCvEditorWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Update CV data if it changed
+    if (widget.cvData != oldWidget.cvData) {
+      setState(() {
+        _cvData = widget.cvData;
+      });
+    }
+
+    // Update cover letter controllers if the cover letter data changed
+    if (widget.coverLetter != oldWidget.coverLetter) {
+      final newCoverLetter = widget.coverLetter as JobCoverLetter?;
+      _jobCoverLetter = newCoverLetter;
+
+      // Update controller text without triggering listeners
+      _recipientNameController.removeListener(_updateCoverLetter);
+      _recipientTitleController.removeListener(_updateCoverLetter);
+      _greetingController.removeListener(_updateCoverLetter);
+      _bodyController.removeListener(_updateCoverLetter);
+      _closingController.removeListener(_updateCoverLetter);
+
+      _recipientNameController.text = newCoverLetter?.recipientName ??
+          widget.applicationContext?.contactPerson ??
+          '';
+      _recipientTitleController.text = newCoverLetter?.recipientTitle ?? '';
+      _greetingController.text =
+          newCoverLetter?.greeting ?? 'Dear Hiring Manager,';
+      _bodyController.text = newCoverLetter?.body ?? '';
+      _closingController.text = newCoverLetter?.closing ?? 'Kind regards,';
+
+      // Re-add listeners
+      _recipientNameController.addListener(_updateCoverLetter);
+      _recipientTitleController.addListener(_updateCoverLetter);
+      _greetingController.addListener(_updateCoverLetter);
+      _bodyController.addListener(_updateCoverLetter);
+      _closingController.addListener(_updateCoverLetter);
+    }
+  }
+
+  @override
   void dispose() {
     _tabController.dispose();
     _recipientNameController.dispose();
@@ -128,7 +169,9 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     final updatedCoverLetter = JobCoverLetter(
       recipientName: _recipientNameController.text.trim(),
       recipientTitle: _recipientTitleController.text.trim(),
-      companyName: _jobCoverLetter?.companyName ?? widget.applicationContext?.company ?? '',
+      companyName: _jobCoverLetter?.companyName ??
+          widget.applicationContext?.company ??
+          '',
       greeting: _greetingController.text,
       body: _bodyController.text,
       closing: _closingController.text,
@@ -706,9 +749,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
             child: ProfilePicturePicker(
               imagePath: info?.profilePicturePath,
               size: 120,
-              placeholderInitial: info?.fullName.isNotEmpty ?? false
-                  ? info!.fullName[0]
-                  : null,
+              placeholderInitial:
+                  info?.fullName.isNotEmpty ?? false ? info!.fullName[0] : null,
               backgroundColor: theme.colorScheme.primary,
               onImageSelected: (selectedPath) =>
                   _handleProfilePictureSelected(selectedPath),

@@ -43,7 +43,7 @@ class ClassicCoverLetterTemplate extends BasePdfTemplate<CoverLetter> {
   }) async {
     final pdf = pw.Document(
       title: 'Cover Letter - ${coverLetter.name}',
-      author: coverLetter.senderName ?? 'MyLife',
+      author: coverLetter.senderName ?? 'MyJob',
     );
 
     final fonts = await PdfFontService.getFonts(style.fontFamily);
@@ -205,8 +205,14 @@ class ClassicCoverLetterTemplate extends BasePdfTemplate<CoverLetter> {
 
   /// Build letter body with paragraph styling
   pw.Widget _buildLetterBody(String body, PdfStyling s) {
+    // Normalize line breaks for proper paragraph formatting
+    String normalizedBody = body;
+    normalizedBody = normalizedBody.replaceAll(RegExp(r'\n\s*\n+'), '§PARA§');
+    normalizedBody = normalizedBody.replaceAll(RegExp(r'\n'), ' ');
+    normalizedBody = normalizedBody.replaceAll('§PARA§', '\n\n');
+
     final paragraphs =
-        body.split('\n\n').where((p) => p.trim().isNotEmpty).toList();
+        normalizedBody.split('\n\n').where((p) => p.trim().isNotEmpty).toList();
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,

@@ -1,0 +1,162 @@
+# Windows Release Build Script Template
+# ==========================================
+# This script automates the release build process for Flutter Windows apps.
+# 
+# Features:
+# - Auto-reads version from pubspec.yaml
+# - Cleans and builds release
+# - Creates portable package with UserData structure
+# - Generates ZIP archive ready for GitHub Release
+#
+# Usage:
+#   .\build-release.ps1
+#
+# Prerequisites:
+#   - Flutter SDK in PATH
+#   - PowerShell 5.0+
+
+$ErrorActionPreference = "Stop"
+
+# ============== CONFIGURATION ==============
+# Update these for your project
+$AppName = "MyJob"  # Change to your app name
+$ExeName = "$AppName.exe"
+
+# ============== AUTO-DETECT VERSION ==============
+$pubspecContent = Get-Content "pubspec.yaml" -Raw
+if ($pubspecContent -match 'version:\s*(\d+\.\d+\.\d+)') {
+    $Version = $matches[1]
+    Write-Host "📦 Detected version: $Version from pubspec.yaml" -ForegroundColor Cyan
+}
+else {
+    Write-Host "❌ Could not find version in pubspec.yaml" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  $AppName Release Builder v$Version" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Configuration
+$ReleaseName = "$AppName-v$Version-windows"
+$BuildPath = "build\windows\x64\runner\Release"
+$OutputPath = "releases\$ReleaseName"
+
+# Step 1: Clean previous builds
+Write-Host "[1/6] Cleaning previous builds..." -ForegroundColor Yellow
+if (Test-Path "build") {
+    Remove-Item -Recurse -Force "build"
+}
+if (Test-Path "releases\$ReleaseName") {
+    Remove-Item -Recurse -Force "releases\$ReleaseName"
+}
+
+# Step 2: Run flutter clean
+Write-Host "[2/6] Running flutter clean..." -ForegroundColor Yellow
+flutter clean
+
+# Step 3: Get dependencies and build release
+Write-Host "[3/6] Building Windows release (this may take a while)..." -ForegroundColor Yellow
+flutter pub get
+flutter build windows --release
+
+if (-not (Test-Path "$BuildPath\$ExeName")) {
+    Write-Host "❌ Build failed! $ExeName not found." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "✅ Build successful!" -ForegroundColor Green
+
+# Step 4: Create release directory structure
+Write-Host "[4/6] Creating release package..." -ForegroundColor Yellow
+New-Item -ItemType Directory -Force -Path $OutputPath | Out-Null
+
+# Copy executable and DLLs
+Write-Host "  - Copying executable and DLLs..." -ForegroundColor Gray
+Copy-Item "$BuildPath\$ExeName" $OutputPath
+Get-ChildItem "$BuildPath\*.dll" | Copy-Item -Destination $OutputPath
+
+# Copy data folder (flutter assets)
+Write-Host "  - Copying app resources..." -ForegroundColor Gray
+Copy-Item "$BuildPath\data" $OutputPath -Recurse
+
+# Copy documentation
+Write-Host "  - Copying documentation..." -ForegroundColor Gray
+Copy-Item "README.md" $OutputPath -ErrorAction SilentlyContinue
+Copy-Item "LICENSE" $OutputPath -ErrorAction SilentlyContinue
+Copy-Item "CHANGELOG.md" $OutputPath -ErrorAction SilentlyContinue
+Copy-Item "QUICK_START.md" $OutputPath -ErrorAction SilentlyContinue
+
+# Create UserData structure (for portable app)
+Write-Host "  - Creating UserData structure..." -ForegroundColor Gray
+New-Item -ItemType Directory -Force -Path "$OutputPath\UserData" | Out-Null
+
+# Create UserData README
+@"
+# UserData Folder
+
+This folder contains your personal settings and configurations.
+
+## What's Stored Here:
+- user_data.json → Your app configuration, profile and application data
+
+## Important Notes:
+✅ **This folder is preserved during updates!**
+   When updating the app, your settings remain intact.
+
+✅ **Portable Installation:**
+   UserData is stored alongside the executable.
+
+✅ **Backup Recommended:**
+   Consider backing up this folder before major updates.
+"@ | Out-File "$OutputPath\UserData\README.txt" -Encoding UTF8
+
+Write-Host "✅ Release package created!" -ForegroundColor Green
+
+# Step 5: Create ZIP archive
+Write-Host "[5/6] Creating ZIP archive..." -ForegroundColor Yellow
+$ZipPath = "releases\$ReleaseName.zip"
+if (Test-Path $ZipPath) {
+    Remove-Item $ZipPath
+}
+
+Compress-Archive -Path $OutputPath -DestinationPath $ZipPath -CompressionLevel Optimal
+
+# Get file size
+$ZipSize = (Get-Item $ZipPath).Length / 1MB
+Write-Host "✅ ZIP created: $ZipPath ($([math]::Round($ZipSize, 2)) MB)" -ForegroundColor Green
+
+# Step 6: Summary
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  Release Package Summary" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Version:      $Version" -ForegroundColor White
+Write-Host "Package:      $ZipPath" -ForegroundColor White
+Write-Host "Size:         $([math]::Round($ZipSize, 2)) MB" -ForegroundColor White
+Write-Host "Folder:       $OutputPath" -ForegroundColor White
+Write-Host ""
+
+# List contents
+Write-Host "Package Contents:" -ForegroundColor Yellow
+Get-ChildItem $OutputPath -Recurse -File | Select-Object -ExpandProperty FullName | ForEach-Object {
+    $relativePath = $_.Substring((Get-Item $OutputPath).FullName.Length + 1)
+    Write-Host "  - $relativePath" -ForegroundColor Gray
+}
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  Next Steps" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "1. Test the release package on a clean system" -ForegroundColor White
+Write-Host "2. Create Git tag:" -ForegroundColor White
+Write-Host "   git tag -a v$Version -m `"Release v$Version`"" -ForegroundColor Gray
+Write-Host "3. Push tag:" -ForegroundColor White
+Write-Host "   git push origin v$Version" -ForegroundColor Gray
+Write-Host "4. Create GitHub Release at:" -ForegroundColor White
+Write-Host "   https://github.com/Schadenfreund/MyJob/releases/new" -ForegroundColor Gray
+Write-Host "5. Upload: $ZipPath" -ForegroundColor White
+Write-Host ""
+Write-Host "✅ Release build complete!" -ForegroundColor Green

@@ -219,7 +219,8 @@ class SettingsScreen extends StatelessWidget {
                 // About Section - Non-collapsible with statistics inside
                 Consumer<ApplicationsProvider>(
                   builder: (context, applicationsProvider, _) {
-                    final totalApps = applicationsProvider.allApplications.length;
+                    final totalApps =
+                        applicationsProvider.allApplications.length;
 
                     return Container(
                       decoration: BoxDecoration(
@@ -247,7 +248,8 @@ class SettingsScreen extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withOpacity(0.1),
+                                    color: theme.colorScheme.primary
+                                        .withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
@@ -267,7 +269,8 @@ class SettingsScreen extends StatelessWidget {
                                 Text(
                                   'Version ${AppInfo.version}',
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+                                    color: theme.textTheme.bodySmall?.color
+                                        ?.withOpacity(0.6),
                                   ),
                                 ),
                               ],
@@ -303,7 +306,8 @@ class SettingsScreen extends StatelessWidget {
                                   const SizedBox(width: 16),
                                   Text(
                                     totalApps.toString(),
-                                    style: theme.textTheme.displayMedium?.copyWith(
+                                    style:
+                                        theme.textTheme.displayMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: settings.accentColor,
                                     ),
@@ -358,10 +362,12 @@ class SettingsScreen extends StatelessWidget {
                       // Support button (no icon)
                       FilledButton(
                         onPressed: () => _openSupportLink(),
-                        style: UIConstants.getPrimaryButtonStyle(context).copyWith(
+                        style:
+                            UIConstants.getPrimaryButtonStyle(context).copyWith(
                           backgroundColor:
                               WidgetStateProperty.all(settings.accentColor),
-                          foregroundColor: WidgetStateProperty.all(Colors.white),
+                          foregroundColor:
+                              WidgetStateProperty.all(Colors.white),
                           padding: WidgetStateProperty.all(
                             const EdgeInsets.symmetric(
                               horizontal: 32,
