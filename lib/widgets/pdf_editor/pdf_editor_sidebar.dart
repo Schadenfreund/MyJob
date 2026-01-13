@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/pdf_font_family.dart';
+import '../../models/pdf_preset.dart';
 import '../../models/template_customization.dart';
+import '../../providers/pdf_presets_provider.dart';
 import 'pdf_editor_controller.dart';
 
 /// Sidebar for PDF editor with styling and layout controls
@@ -53,6 +56,10 @@ class PdfEditorSidebar extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              // User-Saved Presets
+              _buildSavedPresetsSection(context),
+              const SizedBox(height: 28),
+
               // Design Presets - Custom or CV layout presets
               () {
                 // Try custom presets first
@@ -796,47 +803,13 @@ class PdfEditorSidebar extends StatelessWidget {
     required double max,
     required ValueChanged<double> onChanged,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.8),
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              value.toStringAsFixed(2),
-              style: TextStyle(
-                color: controller.style.accentColor,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        SliderTheme(
-          data: SliderThemeData(
-            activeTrackColor: controller.style.accentColor,
-            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
-            thumbColor: controller.style.accentColor,
-            overlayColor: controller.style.accentColor.withValues(alpha: 0.2),
-            trackHeight: 2,
-          ),
-          child: Slider(
-            value: value,
-            min: min,
-            max: max,
-            onChanged: onChanged,
-          ),
-        ),
-      ],
+    return _PdfSlider(
+      label: label,
+      value: value,
+      min: min,
+      max: max,
+      onChanged: onChanged,
+      accentColor: controller.style.accentColor,
     );
   }
 
@@ -875,6 +848,330 @@ class PdfEditorSidebar extends StatelessWidget {
     );
   }
 
+  Widget _buildSavedPresetsSection(BuildContext context) {
+    final presetsProvider = context.watch<PdfPresetsProvider>();
+    final presets = presetsProvider.presets;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.bookmarks,
+                    color: controller.style.accentColor, size: 18),
+                const SizedBox(width: 8),
+                const Text(
+                  'SAVED PRESETS',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
+            IconButton(
+              icon: Icon(Icons.add_circle_outline,
+                  color: controller.style.accentColor, size: 20),
+              onPressed: () => _showSavePresetDialog(context),
+              tooltip: 'Save Current as Preset',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (presets.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+            child: Text(
+              'No saved presets yet. Click + to save current style.',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 10,
+              ),
+            ),
+          )
+        else
+          ...presets.map((preset) {
+            // Check if current style matches preset
+            final isStyleMatch = controller.style.type == preset.style.type &&
+                controller.style.accentColor.toARGB32() ==
+                    preset.style.accentColor.toARGB32() &&
+                controller.style.fontFamily == preset.style.fontFamily;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    controller.updateStyle(preset.style);
+                    controller.updateCustomization(preset.customization);
+                  },
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isStyleMatch
+                          ? controller.style.accentColor.withValues(alpha: 0.1)
+                          : Colors.white.withValues(alpha: 0.03),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: isStyleMatch
+                            ? controller.style.accentColor
+                            : Colors.white.withValues(alpha: 0.05),
+                        width: isStyleMatch ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                preset.name,
+                                style: TextStyle(
+                                  color: isStyleMatch
+                                      ? Colors.white
+                                      : Colors.white70,
+                                  fontSize: 11,
+                                  fontWeight: isStyleMatch
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (preset.basedOnPresetName != null)
+                                Text(
+                                  preset.basedOnPresetName!,
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                    fontSize: 9,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                            ],
+                          ),
+                        ),
+                        if (isStyleMatch)
+                          Icon(Icons.check,
+                              color: controller.style.accentColor, size: 14),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined,
+                              color: Colors.white38, size: 14),
+                          onPressed: () =>
+                              _showEditPresetDialog(context, preset),
+                          tooltip: 'Edit Preset',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                        const SizedBox(width: 2),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: Colors.white38, size: 14),
+                          onPressed: () =>
+                              presetsProvider.deletePreset(preset.id),
+                          tooltip: 'Delete Preset',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
+  void _showSavePresetDialog(BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Save Preset', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Save current styling and layout settings for reuse.',
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              style: const TextStyle(color: Colors.white),
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'Preset Name',
+                labelStyle: TextStyle(color: this.controller.style.accentColor),
+                enabledBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white24),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide:
+                      BorderSide(color: this.controller.style.accentColor),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child:
+                const Text('Cancel', style: TextStyle(color: Colors.white38)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: this.controller.style.accentColor,
+              foregroundColor: Colors.black,
+            ),
+            onPressed: () {
+              final name = controller.text.trim();
+              if (name.isNotEmpty) {
+                context.read<PdfPresetsProvider>().savePreset(
+                      name,
+                      this.controller.style,
+                      this.controller.customization,
+                      basedOnPresetName:
+                          this.controller.currentLayoutPresetName,
+                    );
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Preset "$name" saved'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditPresetDialog(BuildContext context, PdfPreset preset) {
+    final nameController = TextEditingController(text: preset.name);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Edit Preset', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: nameController,
+              style: const TextStyle(color: Colors.white),
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'Preset Name',
+                labelStyle: TextStyle(color: controller.style.accentColor),
+                enabledBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white24),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: controller.style.accentColor),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'You can also update this preset with the current style settings from the editor.',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child:
+                const Text('Cancel', style: TextStyle(color: Colors.white38)),
+          ),
+          TextButton(
+            onPressed: () {
+              final newName = nameController.text.trim();
+              if (newName.isNotEmpty) {
+                final updatedPreset = PdfPreset(
+                  id: preset.id,
+                  name: newName,
+                  basedOnPresetName: controller.currentLayoutPresetName,
+                  style: controller.style,
+                  customization: controller.customization,
+                  createdAt: preset.createdAt,
+                );
+                context.read<PdfPresetsProvider>().updatePreset(updatedPreset);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content:
+                        Text('Preset "$newName" updated with current style'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            child: Text(
+              'Update Style & Save',
+              style: TextStyle(color: controller.style.accentColor),
+            ),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: controller.style.accentColor,
+              foregroundColor: Colors.black,
+            ),
+            onPressed: () {
+              final newName = nameController.text.trim();
+              if (newName.isNotEmpty) {
+                final updatedPreset = PdfPreset(
+                  id: preset.id,
+                  name: newName,
+                  basedOnPresetName: preset.basedOnPresetName,
+                  style: preset.style,
+                  customization: preset.customization,
+                  createdAt: preset.createdAt,
+                );
+                context.read<PdfPresetsProvider>().updatePreset(updatedPreset);
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Rename Only'),
+          ),
+        ],
+      ),
+    );
+  }
+
   IconData _getIconForPreset(LayoutPreset preset) {
     switch (preset) {
       case LayoutPreset.modern:
@@ -886,5 +1183,95 @@ class PdfEditorSidebar extends StatelessWidget {
       case LayoutPreset.twoColumn:
         return Icons.view_sidebar;
     }
+  }
+}
+
+class _PdfSlider extends StatefulWidget {
+  final String label;
+  final double value;
+  final double min;
+  final double max;
+  final ValueChanged<double> onChanged;
+  final Color accentColor;
+
+  const _PdfSlider({
+    required this.label,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+    required this.accentColor,
+  });
+
+  @override
+  State<_PdfSlider> createState() => _PdfSliderState();
+}
+
+class _PdfSliderState extends State<_PdfSlider> {
+  late double _localValue;
+
+  @override
+  void initState() {
+    super.initState();
+    _localValue = widget.value;
+  }
+
+  @override
+  void didUpdateWidget(_PdfSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      _localValue = widget.value;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              widget.label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.8),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Text(
+              _localValue.toStringAsFixed(2),
+              style: TextStyle(
+                color: widget.accentColor,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        SliderTheme(
+          data: SliderThemeData(
+            activeTrackColor: widget.accentColor,
+            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
+            thumbColor: widget.accentColor,
+            overlayColor: widget.accentColor.withValues(alpha: 0.2),
+            trackHeight: 2,
+          ),
+          child: Slider(
+            value: _localValue,
+            min: widget.min,
+            max: widget.max,
+            onChanged: (val) {
+              setState(() => _localValue = val);
+            },
+            onChangeEnd: (val) {
+              widget.onChanged(val);
+            },
+          ),
+        ),
+      ],
+    );
   }
 }

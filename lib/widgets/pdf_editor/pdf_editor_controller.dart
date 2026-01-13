@@ -68,7 +68,9 @@ class PdfEditorController extends ChangeNotifier {
   bool _isEditMode = false;
   int _pdfVersion = 0;
   Timer? _debounceTimer;
+  Timer? _saveTimer;
   bool _needsRegeneration = false;
+  LayoutPreset? _lastAppliedPreset;
 
   // ============================================================================
   // GETTERS
@@ -97,6 +99,23 @@ class PdfEditorController extends ChangeNotifier {
 
   /// Whether the PDF needs to be regenerated
   bool get needsRegeneration => _needsRegeneration;
+
+  /// The name of the last applied layout preset
+  String? get currentLayoutPresetName {
+    if (_lastAppliedPreset != null) {
+      switch (_lastAppliedPreset!) {
+        case LayoutPreset.modern:
+          return 'Modern';
+        case LayoutPreset.compact:
+          return 'Compact';
+        case LayoutPreset.traditional:
+          return 'Traditional';
+        case LayoutPreset.twoColumn:
+          return 'Two Column';
+      }
+    }
+    return null;
+  }
 
   // ============================================================================
   // VIEW MODE
@@ -200,14 +219,18 @@ class PdfEditorController extends ChangeNotifier {
   // CUSTOMIZATION
   // ============================================================================
 
-  /// Update the entire customization
   void updateCustomization(TemplateCustomization newCustomization) {
-    // Always update when copyWith creates a new object
     _customization = newCustomization;
     _scheduleRegeneration();
+    _scheduleSave();
+  }
 
-    // Auto-save settings
-    CustomizationPersistence.save(newCustomization);
+  /// Internal helper to schedule a debounced save to disk
+  void _scheduleSave() {
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(seconds: 2), () {
+      CustomizationPersistence.save(_customization);
+    });
   }
 
   // ============================================================================
@@ -230,6 +253,7 @@ class PdfEditorController extends ChangeNotifier {
 
   /// Apply a layout preset
   void setLayoutPreset(LayoutPreset preset) {
+    _lastAppliedPreset = preset;
     _customization = preset.toCustomization();
     _scheduleRegeneration();
   }
@@ -248,7 +272,7 @@ class PdfEditorController extends ChangeNotifier {
     if (_customization.spacingScale != clamped) {
       _customization = _customization.copyWith(spacingScale: clamped);
       _scheduleRegeneration();
-      CustomizationPersistence.save(_customization);
+      _scheduleSave();
     }
   }
 
@@ -258,7 +282,7 @@ class PdfEditorController extends ChangeNotifier {
     if (_customization.fontSizeScale != clamped) {
       _customization = _customization.copyWith(fontSizeScale: clamped);
       _scheduleRegeneration();
-      CustomizationPersistence.save(_customization);
+      _scheduleSave();
     }
   }
 
@@ -268,7 +292,7 @@ class PdfEditorController extends ChangeNotifier {
     if (_customization.lineHeight != clamped) {
       _customization = _customization.copyWith(lineHeight: clamped);
       _scheduleRegeneration();
-      CustomizationPersistence.save(_customization);
+      _scheduleSave();
     }
   }
 
@@ -458,6 +482,7 @@ class PdfEditorController extends ChangeNotifier {
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    _saveTimer?.cancel();
     super.dispose();
   }
 }

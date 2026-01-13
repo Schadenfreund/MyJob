@@ -499,51 +499,7 @@ class _JobApplicationPdfDialogState
       _buildJobInfoSection(),
       const SizedBox(height: 16),
       _buildStyleInfoSection(),
-      const SizedBox(height: 16),
-      _buildSaveAndCloseButton(),
     ];
-  }
-
-  Widget _buildSaveAndCloseButton() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ElevatedButton.icon(
-        onPressed: () async {
-          // If in edit mode, save edits first
-          if (controller.isEditMode) {
-            controller.setEditMode(false);
-            controller.regenerate();
-            // Wait a moment for saves to complete
-            await Future.delayed(const Duration(milliseconds: 300));
-          }
-
-          // Show feedback
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('All changes saved'),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 1),
-              ),
-            );
-          }
-
-          // Close dialog after a brief delay to show the snackbar
-          await Future.delayed(const Duration(milliseconds: 500));
-          if (mounted) {
-            Navigator.pop(context);
-          }
-        },
-        icon: const Icon(Icons.check_circle, size: 18),
-        label: const Text('Save & Close'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green.shade700,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          minimumSize: const Size(double.infinity, 48),
-        ),
-      ),
-    );
   }
 
   @override

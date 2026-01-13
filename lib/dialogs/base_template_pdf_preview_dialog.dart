@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
 import 'package:printing/printing.dart';
@@ -342,74 +343,90 @@ abstract class BaseTemplatePdfPreviewDialogState<
           ),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
+      child: Stack(
         children: [
-          Container(
-            width: 4,
-            height: 32,
-            decoration: BoxDecoration(
-              color: _controller.style.accentColor,
-              borderRadius: BorderRadius.circular(2),
+          // Make entire bar draggable
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onPanStart: (details) => windowManager.startDragging(),
+              child: const SizedBox.expand(),
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // Content
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
               children: [
-                const Text(
-                  'PDF PREVIEW & EDITOR',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
+                Container(
+                  width: 4,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: _controller.style.accentColor,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                Text(
-                  getDocumentName(),
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    fontSize: 12,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'PDF PREVIEW & EDITOR',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      Text(
+                        getDocumentName(),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 12,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  overflow: TextOverflow.ellipsis,
+                ),
+                if (_controller.isGenerating)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(
+                            _controller.style.accentColor),
+                      ),
+                    ),
+                  ),
+                ElevatedButton.icon(
+                  onPressed: _controller.isGenerating ? null : _handleExport,
+                  icon: const Icon(Icons.download, size: 18),
+                  label: const Text('Export PDF'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _controller.style.accentColor,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
+                    disabledBackgroundColor: Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  tooltip: 'Close',
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.1),
+                  ),
                 ),
               ],
-            ),
-          ),
-          if (_controller.isGenerating)
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor:
-                      AlwaysStoppedAnimation(_controller.style.accentColor),
-                ),
-              ),
-            ),
-          ElevatedButton.icon(
-            onPressed: _controller.isGenerating ? null : _handleExport,
-            icon: const Icon(Icons.download, size: 18),
-            label: const Text('Export PDF'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _controller.style.accentColor,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              disabledBackgroundColor: Colors.grey.shade700,
-            ),
-          ),
-          const SizedBox(width: 12),
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close, color: Colors.white),
-            tooltip: 'Close',
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withValues(alpha: 0.1),
             ),
           ),
         ],

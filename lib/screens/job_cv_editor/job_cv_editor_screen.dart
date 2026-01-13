@@ -8,6 +8,7 @@ import '../../providers/applications_provider.dart';
 import '../../constants/app_constants.dart';
 import '../../widgets/job_cv_editor_widget.dart';
 import '../../dialogs/job_application_pdf_dialog.dart';
+import '../../widgets/draggable_dialog_wrapper.dart';
 
 /// Full content editor for job-specific CV
 ///
@@ -203,11 +204,15 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => JobApplicationPdfDialog(
-        application: widget.application,
-        cvData: _currentCvData,
-        coverLetter: _currentCoverLetter,
-        isCV: !isCoverLetterTab, // Show cover letter PDF if on cover letter tab
+      barrierColor: Colors.black54,
+      builder: (context) => DraggableDialogWrapper(
+        child: JobApplicationPdfDialog(
+          application: widget.application,
+          cvData: _currentCvData,
+          coverLetter: _currentCoverLetter,
+          isCV:
+              !isCoverLetterTab, // Show cover letter PDF if on cover letter tab
+        ),
       ),
     );
   }

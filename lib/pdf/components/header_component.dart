@@ -124,7 +124,7 @@ class HeaderComponent {
         // Full-width accent header bar (extends beyond page margins)
         pw.Container(
           width: double.infinity,
-          height: 130, // Fixed height for MultiPage compatibility
+          height: 130 * styling.customization.profilePhotoSize,
           // Negative margin to extend to page edges
           margin: pw.EdgeInsets.only(
             left: -margins.left,

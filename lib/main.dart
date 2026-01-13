@@ -6,6 +6,7 @@ import 'providers/app_state.dart';
 import 'providers/applications_provider.dart';
 import 'providers/templates_provider.dart';
 import 'providers/user_data_provider.dart';
+import 'providers/pdf_presets_provider.dart';
 import 'services/settings_service.dart';
 import 'services/log_service.dart';
 import 'services/migration_service.dart';
@@ -65,6 +66,8 @@ class MyJobApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TemplatesProvider()..loadAll()),
         ChangeNotifierProvider(
             create: (_) => ApplicationsProvider()..loadApplications()),
+        ChangeNotifierProvider(
+            create: (_) => PdfPresetsProvider()..loadPresets()),
       ],
       child: Consumer<SettingsService>(
         builder: (context, settings, _) {

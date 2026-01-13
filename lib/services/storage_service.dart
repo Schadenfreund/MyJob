@@ -38,6 +38,7 @@ class StorageService {
       'profiles/en',
       'profiles/de',
       'applications',
+      'pdf_presets',
       'cvs', // Legacy
       'cover_letters' // Legacy
     ]) {

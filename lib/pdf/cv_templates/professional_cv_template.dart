@@ -968,12 +968,13 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
       // SQUARE PHOTOS: Magazine-style, flush left corner, full header height
       if (shape == ProfilePhotoShape.square) {
+        final barHeight = 150 * styling.customization.profilePhotoSize;
         return pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Container(
               width: double.infinity,
-              height: 140, // Added fixed height to match photo
+              height: barHeight,
               margin: pw.EdgeInsets.only(
                 left: -margins.left,
                 right: -margins.right,
@@ -985,8 +986,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
                 children: [
                   // Square photo - flush left, full height, no border
                   pw.Container(
-                    width: 140 * styling.customization.profilePhotoSize,
-                    height: 140 * styling.customization.profilePhotoSize,
+                    width: barHeight,
+                    height: barHeight,
                     child: pw.Image(profileImage, fit: pw.BoxFit.cover),
                   ),
 
@@ -1035,12 +1036,13 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
       }
 
       // CIRCLE/ROUNDED: Full height photo aligned with content below
+      final circleBarHeight = 140 * styling.customization.profilePhotoSize;
       return pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Container(
             width: double.infinity,
-            height: 130, // Fixed height for MultiPage compatibility
+            height: circleBarHeight,
             margin: pw.EdgeInsets.only(
               left: -margins.left,
               right: -margins.right,
@@ -1054,16 +1056,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
                 pw.SizedBox(width: margins.left),
 
                 // Full-height profile photo - aligned with content
-                // If rounded, make it 10% smaller (117x117 instead of 130x130)
-                pw.Column(
-                  mainAxisAlignment: pw.MainAxisAlignment.center,
-                  children: [
-                    pw.Container(
-                      width: 130 * styling.customization.profilePhotoSize,
-                      height: 130 * styling.customization.profilePhotoSize,
-                      child: _buildFullHeightPhoto(profileImage, styling),
-                    ),
-                  ],
+                pw.Container(
+                  width: circleBarHeight,
+                  height: circleBarHeight,
+                  child: _buildFullHeightPhoto(profileImage, styling),
                 ),
                 pw.SizedBox(width: styling.space5),
 

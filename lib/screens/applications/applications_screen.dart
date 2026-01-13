@@ -900,16 +900,16 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
 
     if (!context.mounted) return;
 
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => JobApplicationPdfDialog(
-        application: application,
-        cvData: cvData,
-        coverLetter: coverLetter,
-        isCV: true,
-        templateStyle: templateStyle,
-        templateCustomization: customization,
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => JobApplicationPdfDialog(
+          application: application,
+          cvData: cvData,
+          coverLetter: coverLetter,
+          isCV: true,
+          templateStyle: templateStyle,
+          templateCustomization: customization,
+        ),
       ),
     );
   }
@@ -955,16 +955,16 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
 
     if (!context.mounted) return;
 
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => JobApplicationPdfDialog(
-        application: application,
-        cvData: cvData,
-        coverLetter: coverLetter,
-        isCV: false,
-        templateStyle: templateStyle,
-        templateCustomization: customization,
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => JobApplicationPdfDialog(
+          application: application,
+          cvData: cvData,
+          coverLetter: coverLetter,
+          isCV: false,
+          templateStyle: templateStyle,
+          templateCustomization: customization,
+        ),
       ),
     );
   }
