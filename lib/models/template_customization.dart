@@ -192,6 +192,10 @@ class TemplateCustomization {
   /// Profile photo color style (color or grayscale)
   final ProfilePhotoStyle profilePhotoStyle;
 
+  /// Custom scale factor for profile photo size
+  /// Range: 0.8 to 1.2, default: 1.0
+  final double profilePhotoSize;
+
   /// Show icons next to contact information
   final bool showContactIcons;
 
@@ -233,6 +237,7 @@ class TemplateCustomization {
     this.showProfilePhoto = true,
     this.profilePhotoShape = ProfilePhotoShape.square,
     this.profilePhotoStyle = ProfilePhotoStyle.color,
+    this.profilePhotoSize = 1.0,
     this.showContactIcons = true,
     this.showSkillLevels = true,
     this.showProficiencyBars = true,
@@ -263,6 +268,7 @@ class TemplateCustomization {
       'showProfilePhoto': showProfilePhoto,
       'profilePhotoShape': profilePhotoShape.name,
       'profilePhotoStyle': profilePhotoStyle.name,
+      'profilePhotoSize': profilePhotoSize,
       'showContactIcons': showContactIcons,
       'showSkillLevels': showSkillLevels,
       'showProficiencyBars': showProficiencyBars,
@@ -310,6 +316,7 @@ class TemplateCustomization {
         (e) => e.name == json['profilePhotoStyle'],
         orElse: () => ProfilePhotoStyle.color,
       ),
+      profilePhotoSize: (json['profilePhotoSize'] as num?)?.toDouble() ?? 1.0,
       showContactIcons: json['showContactIcons'] as bool? ?? true,
       showSkillLevels: json['showSkillLevels'] as bool? ?? true,
       showProficiencyBars: json['showProficiencyBars'] as bool? ?? true,
@@ -445,6 +452,7 @@ class TemplateCustomization {
     bool? showProfilePhoto,
     ProfilePhotoShape? profilePhotoShape,
     ProfilePhotoStyle? profilePhotoStyle,
+    double? profilePhotoSize,
     bool? showContactIcons,
     bool? showSkillLevels,
     bool? showProficiencyBars,
@@ -467,6 +475,7 @@ class TemplateCustomization {
       showProfilePhoto: showProfilePhoto ?? this.showProfilePhoto,
       profilePhotoShape: profilePhotoShape ?? this.profilePhotoShape,
       profilePhotoStyle: profilePhotoStyle ?? this.profilePhotoStyle,
+      profilePhotoSize: profilePhotoSize ?? this.profilePhotoSize,
       showContactIcons: showContactIcons ?? this.showContactIcons,
       showSkillLevels: showSkillLevels ?? this.showSkillLevels,
       showProficiencyBars: showProficiencyBars ?? this.showProficiencyBars,

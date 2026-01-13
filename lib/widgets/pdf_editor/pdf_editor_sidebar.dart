@@ -646,6 +646,18 @@ class PdfEditorSidebar extends StatelessWidget {
             );
           }).toList(),
         ),
+        const SizedBox(height: 16),
+        _buildSliderControl(
+          label: 'Image Size',
+          value: controller.customization.profilePhotoSize,
+          min: 0.8,
+          max: 1.2,
+          onChanged: (value) {
+            controller.updateCustomization(
+              controller.customization.copyWith(profilePhotoSize: value),
+            );
+          },
+        ),
         // Style selector removed - only one option (color) exists, so no need to show UI
       ],
     );

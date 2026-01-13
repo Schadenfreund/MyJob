@@ -135,7 +135,7 @@ class HeaderComponent {
             color: styling.accent,
           ),
           child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
               // Left padding to align photo with content below
               if (profileImage != null) pw.SizedBox(width: margins.left),
@@ -143,8 +143,8 @@ class HeaderComponent {
               // Profile image (if provided) - aligned with content
               if (profileImage != null) ...[
                 pw.Container(
-                  width: 130,
-                  height: 130,
+                  width: 130 * styling.customization.profilePhotoSize,
+                  height: 130 * styling.customization.profilePhotoSize,
                   child: pw.ClipOval(
                     child: pw.Image(profileImage, fit: pw.BoxFit.cover),
                   ),
@@ -216,8 +216,8 @@ class HeaderComponent {
         // Profile image (if provided)
         if (profileImage != null) ...[
           pw.Container(
-            width: 105,
-            height: 105,
+            width: 105 * styling.customization.profilePhotoSize,
+            height: 105 * styling.customization.profilePhotoSize,
             decoration: pw.BoxDecoration(
               shape: pw.BoxShape.circle,
               border: pw.Border.all(color: styling.accent, width: 4),
@@ -291,8 +291,8 @@ class HeaderComponent {
               // Profile image (if provided)
               if (profileImage != null) ...[
                 pw.Container(
-                  width: 105,
-                  height: 105,
+                  width: 85 * styling.customization.profilePhotoSize,
+                  height: 85 * styling.customization.profilePhotoSize,
                   decoration: pw.BoxDecoration(
                     shape: pw.BoxShape.circle,
                     border: pw.Border.all(color: styling.accent, width: 4),

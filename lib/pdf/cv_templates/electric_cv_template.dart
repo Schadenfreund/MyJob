@@ -110,8 +110,8 @@ class ElectricCvTemplate extends BasePdfTemplate<CvData>
           // Photo
           if (profileImage != null) ...[
             pw.Container(
-              width: 90,
-              height: 90,
+              width: 90 * s.customization.profilePhotoSize,
+              height: 90 * s.customization.profilePhotoSize,
               decoration: pw.BoxDecoration(
                 shape: pw.BoxShape.circle,
                 border: pw.Border.all(color: s.accent, width: 3),

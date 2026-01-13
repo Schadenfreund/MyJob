@@ -158,25 +158,13 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
       height: double.infinity,
       color: s.background,
       child: pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
         children: [
-          // Sidebar column - accent background, no padding (photo will be full width)
+          // Sidebar column - accent background
           pw.Container(
-            width: PdfPageFormat.a4.width * sidebarRatio,
+            width: PdfPageFormat.a4.width * sidebarRatio + 3, // Combined width
             color: s.accent, // Accent background
-            child: pw.Column(
-              crossAxisAlignment:
-                  pw.CrossAxisAlignment.center, // Center sidebar content
-              mainAxisSize: pw.MainAxisSize.max,
-              children: [
-                _buildSidebarColumn(cv, s, profileImage),
-              ],
-            ),
-          ),
-          // Accent divider
-          pw.Container(
-            width: 3,
-            color: s.accent,
+            child: _buildSidebarColumn(cv, s, profileImage),
           ),
           // Main content column - increased top margin
           pw.Expanded(
@@ -203,16 +191,38 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   ) {
     return pw.Column(
       crossAxisAlignment:
-          pw.CrossAxisAlignment.center, // Center all sidebar content
+          pw.CrossAxisAlignment.stretch, // Stretch to fill sidebar width
       mainAxisSize: pw.MainAxisSize.min,
       children: [
-        // Profile photo - FULL WIDTH for all shapes
+        // Profile photo - respects shape settings
         if (profileImage != null) ...[
-          pw.Container(
-            width: double.infinity,
-            height: 250, // Increased height
-            child: pw.Image(profileImage, fit: pw.BoxFit.cover),
-          ),
+          () {
+            final shape = s.customization.profilePhotoShape;
+
+            if (shape == ProfilePhotoShape.square) {
+              // Square: Full width to match accent column
+              return pw.Container(
+                width: double.infinity,
+                height: 220, // Adjusted height for better proportions
+                child: pw.Image(profileImage, fit: pw.BoxFit.cover),
+              );
+            } else {
+              // Circle/Rounded: Centered with padding, slightly smaller
+              return pw.Container(
+                padding: pw.EdgeInsets.symmetric(
+                  vertical: s.space4,
+                  horizontal: s.space2,
+                ),
+                width: double.infinity,
+                alignment: pw.Alignment.center,
+                child: pw.Container(
+                  width: 150 * s.customization.profilePhotoSize,
+                  height: 150 * s.customization.profilePhotoSize,
+                  child: _buildFullHeightPhoto(profileImage, s),
+                ),
+              );
+            }
+          }(),
           pw.SizedBox(height: s.space4),
         ],
 
@@ -963,6 +973,7 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
           children: [
             pw.Container(
               width: double.infinity,
+              height: 140, // Added fixed height to match photo
               margin: pw.EdgeInsets.only(
                 left: -margins.left,
                 right: -margins.right,
@@ -970,12 +981,12 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
               ),
               decoration: pw.BoxDecoration(color: styling.accent),
               child: pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
                   // Square photo - flush left, full height, no border
                   pw.Container(
-                    width: 140,
-                    height: 140,
+                    width: 140 * styling.customization.profilePhotoSize,
+                    height: 140 * styling.customization.profilePhotoSize,
                     child: pw.Image(profileImage, fit: pw.BoxFit.cover),
                   ),
 
@@ -1037,16 +1048,22 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
             ),
             decoration: pw.BoxDecoration(color: styling.accent),
             child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
                 // Left padding to align photo with content below
                 pw.SizedBox(width: margins.left),
 
                 // Full-height profile photo - aligned with content
-                pw.Container(
-                  width: 130,
-                  height: 130,
-                  child: _buildFullHeightPhoto(profileImage, styling),
+                // If rounded, make it 10% smaller (117x117 instead of 130x130)
+                pw.Column(
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  children: [
+                    pw.Container(
+                      width: 130 * styling.customization.profilePhotoSize,
+                      height: 130 * styling.customization.profilePhotoSize,
+                      child: _buildFullHeightPhoto(profileImage, styling),
+                    ),
+                  ],
                 ),
                 pw.SizedBox(width: styling.space5),
 
@@ -2153,6 +2170,7 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     double size = 80,
     bool useWhiteBorder = false,
   }) {
+    final scaledSize = size * s.customization.profilePhotoSize;
     final shape = s.customization.profilePhotoShape;
 
     // Determine border radius based on shape and size
@@ -2161,12 +2179,12 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     switch (shape) {
       case ProfilePhotoShape.circle:
         boxShape = pw.BoxShape.circle;
-        borderRadius = size / 2;
+        borderRadius = scaledSize / 2;
         break;
       case ProfilePhotoShape.rounded:
         boxShape = pw.BoxShape.rectangle;
         // Scale border radius with size for better proportions
-        borderRadius = size * 0.15; // 15% of size
+        borderRadius = scaledSize * 0.15; // 15% of size
         break;
       case ProfilePhotoShape.square:
         boxShape = pw.BoxShape.rectangle;
@@ -2184,8 +2202,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     // Build container with appropriate shape
     if (boxShape == pw.BoxShape.circle) {
       return pw.Container(
-        width: size,
-        height: size,
+        width: scaledSize,
+        height: scaledSize,
         decoration: pw.BoxDecoration(
           shape: pw.BoxShape.circle,
           border: pw.Border.all(color: borderColor, width: borderWidth),
@@ -2196,8 +2214,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
       );
     } else {
       return pw.Container(
-        width: size,
-        height: size,
+        width: scaledSize,
+        height: scaledSize,
         decoration: pw.BoxDecoration(
           borderRadius:
               borderRadius > 0 ? pw.BorderRadius.circular(borderRadius) : null,
