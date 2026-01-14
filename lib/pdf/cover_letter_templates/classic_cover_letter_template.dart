@@ -88,8 +88,23 @@ class ClassicCoverLetterTemplate extends BasePdfTemplate<CoverLetter> {
           pw.SizedBox(height: s.space6),
 
           // Recipient details (if provided)
-          if (_hasRecipientInfo(coverLetter)) ...[
+          if (s.customization.showRecipient &&
+              _hasRecipientInfo(coverLetter)) ...[
             _buildRecipientSection(coverLetter, s),
+            pw.SizedBox(height: s.space6),
+          ],
+
+          // Subject Line (Bold, matching standard)
+          if (s.customization.showSubject &&
+              (coverLetter.subject?.isNotEmpty ?? false)) ...[
+            pw.Text(
+              coverLetter.subject!,
+              style: pw.TextStyle(
+                fontSize: s.fontSizeBody,
+                fontWeight: pw.FontWeight.bold,
+                color: s.textPrimary,
+              ),
+            ),
             pw.SizedBox(height: s.space6),
           ],
 

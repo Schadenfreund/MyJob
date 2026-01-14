@@ -4,6 +4,7 @@ class JobCoverLetter {
     this.recipientName = '',
     this.recipientTitle = '',
     this.companyName = '',
+    this.subject = '',
     this.greeting = '',
     this.body = '',
     this.closing = '',
@@ -16,6 +17,7 @@ class JobCoverLetter {
       recipientName: json['recipientName'] as String? ?? '',
       recipientTitle: json['recipientTitle'] as String? ?? '',
       companyName: json['companyName'] as String? ?? '',
+      subject: json['subject'] as String? ?? '',
       greeting: json['greeting'] as String? ?? '',
       body: json['body'] as String? ?? '',
       closing: json['closing'] as String? ?? '',
@@ -27,11 +29,13 @@ class JobCoverLetter {
   factory JobCoverLetter.fromDefault({
     required String defaultBody,
     String? companyName,
+    String? subject,
     String defaultGreeting = 'Dear Hiring Manager,',
     String defaultClosing = 'Kind regards,',
   }) {
     return JobCoverLetter(
       companyName: companyName ?? '',
+      subject: subject ?? '',
       greeting: defaultGreeting,
       body: defaultBody,
       closing: defaultClosing,
@@ -42,6 +46,7 @@ class JobCoverLetter {
   final String recipientName;
   final String recipientTitle;
   final String companyName;
+  final String subject;
   final String greeting;
   final String body;
   final String closing;
@@ -52,6 +57,7 @@ class JobCoverLetter {
         'recipientName': recipientName,
         'recipientTitle': recipientTitle,
         'companyName': companyName,
+        'subject': subject,
         'greeting': greeting,
         'body': body,
         'closing': closing,
@@ -63,6 +69,7 @@ class JobCoverLetter {
     String? recipientName,
     String? recipientTitle,
     String? companyName,
+    String? subject,
     String? greeting,
     String? body,
     String? closing,
@@ -72,6 +79,7 @@ class JobCoverLetter {
       recipientName: recipientName ?? this.recipientName,
       recipientTitle: recipientTitle ?? this.recipientTitle,
       companyName: companyName ?? this.companyName,
+      subject: subject ?? this.subject,
       greeting: greeting ?? this.greeting,
       body: body ?? this.body,
       closing: closing ?? this.closing,

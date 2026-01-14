@@ -548,53 +548,60 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
 
                         // Actions
                         const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: [
-                            if (widget.application.folderPath != null) ...[
-                              FilledButton.icon(
-                                onPressed: widget.onEditContent,
-                                icon: const Icon(Icons.edit_document, size: 16),
-                                label: const Text('Edit'),
-                                style:
-                                    UIConstants.getPrimaryButtonStyle(context),
-                              ),
-                              FilledButton.tonalIcon(
-                                onPressed: widget.onViewPdf,
-                                icon:
-                                    const Icon(Icons.picture_as_pdf, size: 16),
-                                label: const Text('CV'),
-                                style: UIConstants.getSecondaryButtonStyle(
-                                    context),
-                              ),
-                              FilledButton.tonalIcon(
-                                onPressed: widget.onViewCoverLetter,
-                                icon:
-                                    const Icon(Icons.email_outlined, size: 16),
-                                label: const Text('Letter'),
-                                style: UIConstants.getSecondaryButtonStyle(
-                                    context),
-                              ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            alignment: WrapAlignment.start,
+                            crossAxisAlignment: WrapCrossAlignment.start,
+                            children: [
+                              if (widget.application.folderPath != null) ...[
+                                FilledButton.icon(
+                                  onPressed: widget.onEditContent,
+                                  icon:
+                                      const Icon(Icons.edit_document, size: 16),
+                                  label: const Text('Edit'),
+                                  style: UIConstants.getPrimaryButtonStyle(
+                                      context),
+                                ),
+                                FilledButton.tonalIcon(
+                                  onPressed: widget.onViewPdf,
+                                  icon: const Icon(Icons.picture_as_pdf,
+                                      size: 16),
+                                  label: const Text('CV'),
+                                  style: UIConstants.getSecondaryButtonStyle(
+                                      context),
+                                ),
+                                FilledButton.tonalIcon(
+                                  onPressed: widget.onViewCoverLetter,
+                                  icon: const Icon(Icons.email_outlined,
+                                      size: 16),
+                                  label: const Text('Letter'),
+                                  style: UIConstants.getSecondaryButtonStyle(
+                                      context),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: widget.onOpenFolder,
+                                  icon: const Icon(Icons.folder_open, size: 16),
+                                  label: const Text('Folder'),
+                                  style: UIConstants.getSecondaryButtonStyle(
+                                      context),
+                                ),
+                              ],
                               OutlinedButton.icon(
-                                onPressed: widget.onOpenFolder,
-                                icon: const Icon(Icons.folder_open, size: 16),
-                                label: const Text('Folder'),
-                                style: UIConstants.getSecondaryButtonStyle(
-                                    context),
-                              ),
-                            ],
-                            OutlinedButton.icon(
-                              onPressed: widget.onDelete,
-                              icon: const Icon(Icons.delete_outline, size: 16),
-                              label: const Text('Delete'),
-                              style: ButtonStyle(
-                                foregroundColor: WidgetStateProperty.all(
-                                  theme.colorScheme.error,
+                                onPressed: widget.onDelete,
+                                icon:
+                                    const Icon(Icons.delete_outline, size: 16),
+                                label: const Text('Delete'),
+                                style: ButtonStyle(
+                                  foregroundColor: WidgetStateProperty.all(
+                                    theme.colorScheme.error,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),

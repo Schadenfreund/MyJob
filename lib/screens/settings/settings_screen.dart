@@ -9,6 +9,8 @@ import '../../constants/app_constants.dart';
 import '../../constants/ui_constants.dart';
 import '../../widgets/profile_section_card.dart';
 import '../../utils/dialog_utils.dart';
+import '../../services/backup_service.dart';
+import 'package:file_picker/file_picker.dart';
 
 /// Settings screen - Consistent card design with other tabs
 class SettingsScreen extends StatelessWidget {
@@ -162,54 +164,139 @@ class SettingsScreen extends StatelessWidget {
                       color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
                     ),
                   ),
-                  content: Row(
+                  content: Column(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.error.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.restore,
-                          color: theme.colorScheme.error,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Reset Settings',
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                      // Backup Folder Selection
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: settings.accentColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Reset all settings to default values',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.textTheme.bodySmall?.color
-                                    ?.withOpacity(0.7),
-                              ),
+                            child: Icon(
+                              Icons.folder_outlined,
+                              color: settings.accentColor,
+                              size: 20,
                             ),
-                          ],
-                        ),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () => _confirmReset(context, settings),
-                        icon: const Icon(Icons.restore, size: 18),
-                        label: const Text('Reset'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: theme.colorScheme.error,
-                          side: BorderSide(
-                            color: theme.colorScheme.error.withOpacity(0.5),
                           ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Backup Destination',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  settings.backupPath ??
+                                      'No backup location defined',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.textTheme.bodySmall?.color
+                                        ?.withOpacity(
+                                            settings.backupPath == null
+                                                ? 0.4
+                                                : 0.7),
+                                    fontStyle: settings.backupPath == null
+                                        ? FontStyle.italic
+                                        : FontStyle.normal,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () => _pickBackupPath(context, settings),
+                            icon: const Icon(Icons.folder_open, size: 18),
+                            label: const Text('Select'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: settings.accentColor,
+                              side: BorderSide(
+                                color: settings.accentColor.withOpacity(0.5),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: settings.backupPath == null
+                              ? null
+                              : () => _performBackup(context, settings),
+                          icon: const Icon(Icons.archive_outlined),
+                          label: const Text('Create Backup Zip'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: settings.accentColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
                         ),
+                      ),
+                      const SizedBox(height: 32),
+                      // Restore
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: settings.accentColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.settings_backup_restore,
+                              color: settings.accentColor,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Restore Backup',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Restore entire UserData from a zip file',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.textTheme.bodySmall?.color
+                                        ?.withOpacity(0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () =>
+                                _pickRestoreFile(context, settings),
+                            icon:
+                                const Icon(Icons.unarchive_outlined, size: 18),
+                            label: const Text('Restore Zip'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: settings.accentColor,
+                              side: BorderSide(
+                                color: settings.accentColor.withOpacity(0.5),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -405,18 +492,143 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
-  void _confirmReset(BuildContext context, SettingsService settings) async {
+  void _pickBackupPath(BuildContext context, SettingsService settings) async {
+    final path = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: 'Select Backup Destination',
+      initialDirectory: settings.backupPath,
+    );
+
+    if (path != null) {
+      settings.setBackupPath(path);
+    }
+  }
+
+  void _performBackup(BuildContext context, SettingsService settings) async {
+    final backupPath = settings.backupPath;
+    if (backupPath == null) return;
+
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Creating backup zip...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final file = await BackupService.instance.createBackup(backupPath);
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+
+        if (file != null) {
+          context.showSuccessSnackBar(
+              'Backup created successfully: ${file.path.split(Platform.pathSeparator).last}');
+        } else {
+          context.showErrorSnackBar('Failed to create backup');
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        context.showErrorSnackBar('Error: $e');
+      }
+    }
+  }
+
+  void _pickRestoreFile(BuildContext context, SettingsService settings) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['zip'],
+      dialogTitle: 'Select Backup Zip to Restore',
+    );
+
+    if (result == null || result.files.single.path == null) return;
+
+    if (!context.mounted) return;
+
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
-      title: 'Reset Settings?',
-      message: 'This will reset all settings to their default values.',
-      confirmLabel: 'Reset',
-      icon: Icons.restore,
+      title: 'Restore Backup?',
+      message:
+          'This will overwrite ALL current profile data, job applications, and presets with the data from the backup. This action cannot be undone.',
+      confirmLabel: 'Restore & Restart',
+      icon: Icons.settings_backup_restore,
     );
 
     if (confirmed && context.mounted) {
-      settings.resetSettings();
-      context.showSuccessSnackBar('Settings reset to defaults');
+      _performRestore(context, result.files.single.path!);
+    }
+  }
+
+  void _performRestore(BuildContext context, String zipPath) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Restoring backup...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final success = await BackupService.instance.restoreBackup(zipPath);
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+
+        if (success) {
+          // Since we overwritten everything, the app state is now invalid
+          // Most robust thing is to tell the user to restart
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('Restore Successful'),
+              content: const Text(
+                  'Your data has been restored. The application needs to be restarted to load the new data.'),
+              actions: [
+                FilledButton(
+                  onPressed: () => exit(0),
+                  child: const Text('Close Application'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          context.showErrorSnackBar('Failed to restore backup');
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        context.showErrorSnackBar('Error during restore: $e');
+      }
     }
   }
 }

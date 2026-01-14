@@ -10,6 +10,7 @@ class CoverLetter {
     this.recipientTitle,
     this.companyName,
     this.jobTitle,
+    this.subject,
     this.greeting = 'Dear Hiring Manager,',
     this.body = '',
     this.closing = 'Kind regards,',
@@ -30,6 +31,7 @@ class CoverLetter {
       recipientTitle: json['recipientTitle'] as String?,
       companyName: json['companyName'] as String?,
       jobTitle: json['jobTitle'] as String?,
+      subject: json['subject'] as String?,
       greeting: json['greeting'] as String? ?? 'Dear Hiring Manager,',
       body: json['body'] as String? ?? '',
       closing: json['closing'] as String? ?? 'Kind regards,',
@@ -50,6 +52,7 @@ class CoverLetter {
   final String? recipientTitle;
   final String? companyName;
   final String? jobTitle;
+  final String? subject;
   final String greeting;
   final String body;
   final String closing;
@@ -65,6 +68,7 @@ class CoverLetter {
         'recipientTitle': recipientTitle,
         'companyName': companyName,
         'jobTitle': jobTitle,
+        'subject': subject,
         'greeting': greeting,
         'body': body,
         'closing': closing,
@@ -96,6 +100,7 @@ class CoverLetter {
       recipientTitle: recipientTitle ?? this.recipientTitle,
       companyName: companyName ?? this.companyName,
       jobTitle: jobTitle ?? this.jobTitle,
+      subject: subject ?? this.subject,
       greeting: greeting ?? this.greeting,
       body: body ?? this.body,
       closing: closing ?? this.closing,

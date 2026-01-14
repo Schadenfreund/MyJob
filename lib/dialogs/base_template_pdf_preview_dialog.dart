@@ -7,6 +7,7 @@ import 'package:printing/printing.dart';
 import '../models/template_style.dart';
 import '../models/template_customization.dart';
 import '../models/pdf_font_family.dart';
+import '../models/pdf_document_type.dart';
 import '../services/pdf_font_service.dart';
 import '../services/log_service.dart';
 import '../widgets/pdf_editor/pdf_editor_controller.dart';
@@ -43,6 +44,9 @@ abstract class BaseTemplatePdfPreviewDialog extends StatefulWidget {
   TemplateStyle getDefaultStyle() => TemplateStyle.electric;
   TemplateCustomization getDefaultCustomization() =>
       const TemplateCustomization();
+
+  /// Get the document type for this dialog (CV or Cover Letter)
+  PdfDocumentType getDocumentType();
 }
 
 abstract class BaseTemplatePdfPreviewDialogState<
@@ -306,6 +310,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
                     hideCvLayoutPresets: hideCvLayoutPresets,
                     hidePhotoOptions: hidePhotoOptions,
                     customPresetsBuilder: buildCustomPresets,
+                    documentType: widget.getDocumentType(),
                   ),
                 ],
                 Expanded(

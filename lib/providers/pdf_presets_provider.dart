@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
+import '../models/pdf_document_type.dart';
 import '../models/pdf_preset.dart';
 import '../services/storage_service.dart';
 import '../constants/json_constants.dart';
@@ -13,6 +14,11 @@ class PdfPresetsProvider extends ChangeNotifier {
 
   List<PdfPreset> get presets => _presets;
   bool get isLoading => _isLoading;
+
+  /// Get presets filtered by document type
+  List<PdfPreset> getPresetsByType(PdfDocumentType type) {
+    return _presets.where((p) => p.type == type).toList();
+  }
 
   PdfPresetsProvider() {
     loadPresets();
@@ -69,6 +75,7 @@ class PdfPresetsProvider extends ChangeNotifier {
     String name,
     dynamic style,
     dynamic customization, {
+    required PdfDocumentType type,
     String? basedOnPresetName,
   }) async {
     final presetsPath = await _getPresetsPath();
@@ -76,6 +83,7 @@ class PdfPresetsProvider extends ChangeNotifier {
     final preset = PdfPreset(
       id: id,
       name: name,
+      type: type,
       basedOnPresetName: basedOnPresetName,
       style: style,
       customization: customization,

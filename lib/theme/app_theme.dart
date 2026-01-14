@@ -48,7 +48,7 @@ class AppTheme {
   // ============================================================================
 
   static const Color statusDraft = Color(0xFF9CA3AF);
-  static const Color statusApplied = Color(0xFF3B82F6);
+  static const Color statusApplied = Color(0xFFF59E0B);
   static const Color statusInterviewing = Color(0xFFF59E0B);
   static const Color statusOffered = Color(0xFF8B5CF6);
   static const Color statusAccepted = Color(0xFF10B981);

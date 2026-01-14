@@ -74,6 +74,20 @@ class ElectricCoverLetterTemplate {
 
                     pw.SizedBox(height: s.sectionGapMinor),
 
+                    // Subject Line (Bold, matching standard)
+                    if (s.customization.showSubject &&
+                        (coverLetter.subject?.isNotEmpty ?? false)) ...[
+                      pw.Text(
+                        coverLetter.subject!,
+                        style: pw.TextStyle(
+                          fontSize: s.fontSizeBody,
+                          fontWeight: pw.FontWeight.bold,
+                          color: s.textPrimary,
+                        ),
+                      ),
+                      pw.SizedBox(height: s.sectionGapMinor),
+                    ],
+
                     // Greeting
                     pw.Text(
                       CvTranslations.translateGreeting(
@@ -285,7 +299,7 @@ class ElectricCoverLetterTemplate {
           ],
         ),
 
-        if (hasRecipient) ...[
+        if (hasRecipient && s.customization.showRecipient) ...[
           pw.SizedBox(height: s.sectionGapMinor),
 
           // Recipient details

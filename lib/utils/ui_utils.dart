@@ -133,25 +133,26 @@ class UIUtils {
           const SizedBox(width: spacingMd),
         ],
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 4,
             children: [
               Text(
                 title,
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.5,
+                  color: Colors.white,
                 ),
               ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 4),
+              if (subtitle != null)
                 Text(
                   subtitle,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                    color: Colors.white.withOpacity(0.6),
                   ),
                 ),
-              ],
             ],
           ),
         ),

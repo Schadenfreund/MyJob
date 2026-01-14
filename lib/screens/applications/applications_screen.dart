@@ -159,23 +159,86 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header with Add Button
-            Row(
-              children: [
-                Expanded(
-                  child: UIUtils.buildSectionHeader(
-                    context,
-                    title: 'Job Applications',
-                    subtitle: 'Track and manage all your job applications',
-                    icon: Icons.work_history_outlined,
-                  ),
+            // Job Applications Card (Matching Profile Import/Export style)
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.primary.withOpacity(0.08),
+                    theme.colorScheme.primary.withOpacity(0.04),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                UIUtils.buildPrimaryButton(
-                  label: 'Add Application',
-                  onPressed: () => _showAddDialog(context),
-                  icon: Icons.add,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withOpacity(0.3),
+                  width: 2,
                 ),
-              ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  children: [
+                    // Icon with accent
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.work_history_outlined,
+                        color: theme.colorScheme.primary,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    // Text content
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Job Applications',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Track and manage all your job applications in one place',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withOpacity(0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    // Action button
+                    FilledButton.tonalIcon(
+                      onPressed: () => _showAddDialog(context),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Add Application'),
+                      style:
+                          UIConstants.getPrimaryButtonStyle(context).copyWith(
+                        backgroundColor: WidgetStateProperty.all(
+                          theme.colorScheme.primary.withOpacity(0.15),
+                        ),
+                        foregroundColor: WidgetStateProperty.all(
+                          theme.colorScheme.primary,
+                        ),
+                        padding: WidgetStateProperty.all(
+                          const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             SizedBox(height: UIUtils.spacingMd),
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../models/job_application.dart';
+import '../models/master_profile.dart';
 import '../constants/app_constants.dart';
 import '../services/storage_service.dart';
 
@@ -8,6 +9,8 @@ import '../services/storage_service.dart';
 class ApplicationsProvider extends ChangeNotifier {
   final StorageService _storage = StorageService.instance;
   final Uuid _uuid = const Uuid();
+
+  StorageService get storage => _storage;
 
   List<JobApplication> _applications = [];
   bool _isLoading = false;
@@ -85,6 +88,7 @@ class ApplicationsProvider extends ChangeNotifier {
     String? contactEmail,
     String? notes,
     String? salary,
+    MasterProfile? masterProfile,
   }) async {
     final application = JobApplication(
       id: _uuid.v4(),
@@ -102,18 +106,18 @@ class ApplicationsProvider extends ChangeNotifier {
       salary: salary,
     );
 
-    // Load the master profile for the selected language
-    final masterProfile = await _storage.loadMasterProfile(baseLanguage);
+    // Load the master profile for the selected language if not provided
+    final profileToUse =
+        masterProfile ?? await _storage.loadMasterProfile(baseLanguage);
 
     debugPrint('[CreateApp] Language selected: $baseLanguage');
-    debugPrint('[CreateApp] Master profile loaded: ${masterProfile != null}');
-    if (masterProfile != null) {
-      debugPrint(
-          '[CreateApp] Profile summary in master: "${masterProfile.profileSummary}"');
-    }
+    debugPrint(
+        '[CreateApp] Profile summary in master: "${profileToUse.profileSummary}"');
+    debugPrint(
+        '[CreateApp] Cover letter body in master (chars: ${profileToUse.defaultCoverLetterBody.length})');
 
     // Clone the profile data to the job application folder
-    await _storage.cloneProfileToApplication(masterProfile, application);
+    await _storage.cloneProfileToApplication(profileToUse, application);
 
     // Reload the application to get the updated folderPath
     final applications = await _storage.loadApplications();

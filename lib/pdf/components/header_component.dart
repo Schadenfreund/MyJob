@@ -137,8 +137,8 @@ class HeaderComponent {
           child: pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              // Left padding to align photo with content below
-              if (profileImage != null) pw.SizedBox(width: margins.left),
+              // Always add left margin to align content with text below
+              pw.SizedBox(width: margins.left),
 
               // Profile image (if provided) - aligned with content
               if (profileImage != null) ...[
@@ -155,9 +155,11 @@ class HeaderComponent {
               // Name and title
               pw.Expanded(
                 child: pw.Padding(
-                  padding: pw.EdgeInsets.symmetric(
-                    horizontal: styling.space4,
-                    vertical: styling.space5,
+                  padding: pw.EdgeInsets.only(
+                    left: profileImage != null ? styling.space4 : 0,
+                    right: styling.space4,
+                    top: styling.space5,
+                    bottom: styling.space5,
                   ),
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,

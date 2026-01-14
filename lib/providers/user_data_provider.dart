@@ -34,6 +34,25 @@ class UserDataProvider with ChangeNotifier {
   String get defaultCoverLetterBody =>
       currentProfile?.defaultCoverLetterBody ?? '';
 
+  bool get hasData {
+    final profile = currentProfile;
+    if (profile == null) return false;
+
+    return profile.personalInfo != null ||
+        profile.experiences.isNotEmpty ||
+        profile.education.isNotEmpty ||
+        profile.skills.isNotEmpty ||
+        profile.languages.isNotEmpty ||
+        profile.interests.isNotEmpty ||
+        profile.profileSummary.isNotEmpty ||
+        profile.defaultCoverLetterBody.isNotEmpty;
+  }
+
+  /// Get the profile for a specific language
+  MasterProfile? getProfileForLanguage(DocumentLanguage language) {
+    return language == DocumentLanguage.en ? _enProfile : _deProfile;
+  }
+
   /// Get the current active profile
   MasterProfile? _getCurrentProfile() {
     return _currentLanguage == DocumentLanguage.en ? _enProfile : _deProfile;
@@ -271,6 +290,12 @@ class UserDataProvider with ChangeNotifier {
 
     await _storage.saveMasterProfile(profile);
     notifyListeners();
+  }
+
+  /// Clear current profile data (language specific)
+  Future<void> clearCurrentProfile() async {
+    final empty = MasterProfile.empty(_currentLanguage);
+    await _saveProfile(empty);
   }
 
   /// Get skills by category

@@ -45,9 +45,9 @@ class ApplicationStatusHelper {
   static Color _getDirectColor(ApplicationStatus status) {
     switch (status) {
       case ApplicationStatus.draft:
-        return Colors.blue;
+        return Colors.grey;
       case ApplicationStatus.applied:
-        return Colors.lightBlue;
+        return Colors.orange;
       case ApplicationStatus.interviewing:
         return Colors.orange;
       case ApplicationStatus.successful:

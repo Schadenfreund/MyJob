@@ -13,7 +13,11 @@ class ProfilePicturePicker extends StatelessWidget {
     this.placeholderInitial,
     this.backgroundColor,
     this.borderColor,
+    this.masterProfilePicturePath,
   });
+
+  /// Optional path to the master profile picture for syncing
+  final String? masterProfilePicturePath;
 
   /// Path to the current profile picture
   final String? imagePath;
@@ -161,6 +165,17 @@ class ProfilePicturePicker extends StatelessWidget {
                 _pickImage(context);
               },
             ),
+            if (masterProfilePicturePath != null &&
+                masterProfilePicturePath!.isNotEmpty &&
+                masterProfilePicturePath != imagePath)
+              ListTile(
+                leading: const Icon(Icons.sync_alt),
+                title: const Text('Use picture from Master Profile'),
+                onTap: () {
+                  Navigator.pop(context);
+                  onImageSelected?.call(masterProfilePicturePath!);
+                },
+              ),
             if (hasImage)
               ListTile(
                 leading: Icon(

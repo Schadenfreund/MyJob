@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import '../models/pdf_document_type.dart';
 import '../models/cover_letter_template.dart';
 import '../models/cv_data.dart';
 import '../models/template_style.dart';
@@ -27,6 +28,9 @@ class CoverLetterTemplatePdfPreviewDialog extends BaseTemplatePdfPreviewDialog {
   @override
   TemplateStyle getDefaultStyle() =>
       coverLetterTemplate.templateStyle ?? TemplateStyle.electric;
+
+  @override
+  PdfDocumentType getDocumentType() => PdfDocumentType.coverLetter;
 }
 
 class _CoverLetterTemplatePdfPreviewDialogState

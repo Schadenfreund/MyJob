@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/pdf_font_family.dart';
+import '../../models/pdf_document_type.dart';
 import '../../models/pdf_preset.dart';
 import '../../models/template_customization.dart';
 import '../../providers/pdf_presets_provider.dart';
@@ -15,6 +16,7 @@ class PdfEditorSidebar extends StatelessWidget {
     this.hideCvLayoutPresets = false,
     this.hidePhotoOptions = false,
     this.customPresetsBuilder,
+    required this.documentType,
     super.key,
   });
 
@@ -24,6 +26,7 @@ class PdfEditorSidebar extends StatelessWidget {
   final bool hideCvLayoutPresets;
   final bool hidePhotoOptions;
   final Widget? Function()? customPresetsBuilder;
+  final PdfDocumentType documentType;
 
   // Accent color presets (matching PDF styling presets)
   static const List<Color> _accentColorPresets = [
@@ -477,7 +480,7 @@ class PdfEditorSidebar extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
-                          _getIconForPreset(preset),
+                          preset.icon,
                           color: isSelected ? Colors.black : Colors.white,
                           size: 20,
                         ),
@@ -708,6 +711,26 @@ class PdfEditorSidebar extends StatelessWidget {
               controller.customization.showProfilePhoto,
               () => _toggleShowProfilePhoto(),
             ),
+          if (documentType == PdfDocumentType.coverLetter) ...[
+            _buildToggle(
+              'Show Recipient Info',
+              controller.customization.showRecipient,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showRecipient: !controller.customization.showRecipient,
+                ),
+              ),
+            ),
+            _buildToggle(
+              'Show Subject Line',
+              controller.customization.showSubject,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showSubject: !controller.customization.showSubject,
+                ),
+              ),
+            ),
+          ],
         ]);
         break;
 
@@ -722,6 +745,26 @@ class PdfEditorSidebar extends StatelessWidget {
               controller.customization.showProfilePhoto,
               () => _toggleShowProfilePhoto(),
             ),
+          if (documentType == PdfDocumentType.coverLetter) ...[
+            _buildToggle(
+              'Show Recipient Info',
+              controller.customization.showRecipient,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showRecipient: !controller.customization.showRecipient,
+                ),
+              ),
+            ),
+            _buildToggle(
+              'Show Subject Line',
+              controller.customization.showSubject,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showSubject: !controller.customization.showSubject,
+                ),
+              ),
+            ),
+          ],
         ]);
         break;
 
@@ -736,6 +779,26 @@ class PdfEditorSidebar extends StatelessWidget {
               controller.customization.showProfilePhoto,
               () => _toggleShowProfilePhoto(),
             ),
+          if (documentType == PdfDocumentType.coverLetter) ...[
+            _buildToggle(
+              'Show Recipient Info',
+              controller.customization.showRecipient,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showRecipient: !controller.customization.showRecipient,
+                ),
+              ),
+            ),
+            _buildToggle(
+              'Show Subject Line',
+              controller.customization.showSubject,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showSubject: !controller.customization.showSubject,
+                ),
+              ),
+            ),
+          ],
           _buildToggle(
             'Uppercase Headers',
             controller.customization.uppercaseHeaders,
@@ -767,6 +830,26 @@ class PdfEditorSidebar extends StatelessWidget {
               controller.customization.showProfilePhoto,
               () => _toggleShowProfilePhoto(),
             ),
+          if (documentType == PdfDocumentType.coverLetter) ...[
+            _buildToggle(
+              'Show Recipient Info',
+              controller.customization.showRecipient,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showRecipient: !controller.customization.showRecipient,
+                ),
+              ),
+            ),
+            _buildToggle(
+              'Show Subject Line',
+              controller.customization.showSubject,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showSubject: !controller.customization.showSubject,
+                ),
+              ),
+            ),
+          ],
         ]);
         break;
     }
@@ -850,7 +933,7 @@ class PdfEditorSidebar extends StatelessWidget {
 
   Widget _buildSavedPresetsSection(BuildContext context) {
     final presetsProvider = context.watch<PdfPresetsProvider>();
-    final presets = presetsProvider.presets;
+    final presets = presetsProvider.getPresetsByType(documentType);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1056,6 +1139,7 @@ class PdfEditorSidebar extends StatelessWidget {
                       name,
                       this.controller.style,
                       this.controller.customization,
+                      type: documentType,
                       basedOnPresetName:
                           this.controller.currentLayoutPresetName,
                     );
@@ -1170,19 +1254,6 @@ class PdfEditorSidebar extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  IconData _getIconForPreset(LayoutPreset preset) {
-    switch (preset) {
-      case LayoutPreset.modern:
-        return Icons.view_agenda;
-      case LayoutPreset.compact:
-        return Icons.compress;
-      case LayoutPreset.traditional:
-        return Icons.article;
-      case LayoutPreset.twoColumn:
-        return Icons.view_sidebar;
-    }
   }
 }
 

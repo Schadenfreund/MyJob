@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,7 +12,6 @@ import '../../constants/app_constants.dart';
 import '../../dialogs/unified_import_dialog.dart';
 import '../../utils/ui_utils.dart';
 import '../../utils/dialog_utils.dart';
-import '../../widgets/collapsible_card.dart';
 import '../../dialogs/interest_edit_dialog.dart';
 import '../templates/sections/personal_info_section.dart';
 import '../templates/sections/skills_section.dart';
@@ -22,6 +20,7 @@ import '../templates/sections/education_section.dart';
 import '../templates/sections/languages_section.dart';
 import '../../constants/ui_constants.dart';
 import '../../widgets/profile_section_card.dart';
+import '../../widgets/profile_long_text_editor.dart';
 
 /// Profile Screen - Central hub for all user data
 ///
@@ -85,6 +84,25 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 16),
+
+        // Delete Button (only if data exists)
+        if (userDataProvider.hasData) ...[
+          IconButton.filledTonal(
+            onPressed: () => _confirmDeleteProfile(context),
+            icon: const Icon(Icons.delete_outline, size: 20),
+            tooltip: 'Clear ${currentLang.code.toUpperCase()} Profile',
+            style: IconButton.styleFrom(
+              backgroundColor: theme.colorScheme.error.withOpacity(0.1),
+              foregroundColor: theme.colorScheme.error,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: const EdgeInsets.all(10),
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
+
         // Language Switcher
         Container(
           decoration: BoxDecoration(
@@ -160,43 +178,39 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(width: 20),
             // Text content
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 12,
+                runSpacing: 4,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Import & Export',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'START HERE',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: theme.colorScheme.onPrimary,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Import & Export',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
                   ),
-                  const SizedBox(height: 6),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'START HERE',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onPrimary,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
                   Text(
                     'Import YAML files to populate your profile data, or export your current profile for backup',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.textTheme.bodySmall?.color?.withOpacity(0.8),
+                      color: Colors.white.withOpacity(0.6),
                     ),
                   ),
                 ],
@@ -219,7 +233,6 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
                 OutlinedButton.icon(
                   onPressed: () => _showExportDialog(context),
                   icon: const Icon(Icons.download, size: 18),
@@ -479,6 +492,27 @@ class ProfileScreen extends StatelessWidget {
 
     return buffer.toString();
   }
+
+  void _confirmDeleteProfile(BuildContext context) async {
+    final provider = context.read<UserDataProvider>();
+    final lang = provider.currentLanguage;
+
+    final confirmed = await DialogUtils.showDeleteConfirmation(
+      context,
+      title: 'Delete ${lang.code.toUpperCase()} Profile?',
+      message:
+          'This will permanently clear all personal info, work experience, skills, and other data for the ${lang.code.toUpperCase()} profile. This cannot be undone.',
+      confirmLabel: 'Delete Profile',
+    );
+
+    if (confirmed && context.mounted) {
+      await provider.clearCurrentProfile();
+      if (context.mounted) {
+        context.showSuccessSnackBar(
+            '${lang.code.toUpperCase()} profile data cleared');
+      }
+    }
+  }
 }
 
 /// Profile sections with collapsible cards
@@ -576,6 +610,10 @@ class _ProfileSections extends StatelessWidget {
                 ),
           content: const PersonalInfoSection(showHeader: false),
         ),
+        const SizedBox(height: 16),
+
+        // Profile Summary Section
+        _buildProfileSummarySection(context),
         const SizedBox(height: 16),
 
         // Work Experience Section - Wrapped
@@ -959,45 +997,31 @@ class _ProfileSections extends StatelessWidget {
     final userDataProvider = context.watch<UserDataProvider>();
     final profileSummary = userDataProvider.profileSummary;
     final theme = Theme.of(context);
-    final controller = TextEditingController(text: profileSummary);
 
-    return CollapsibleCard(
+    return ProfileSectionCard(
       title: 'Profile Summary',
-      subtitle: 'Default summary for new job applications',
-      cardDecoration: UIUtils.getCardDecoration(context),
-      collapsedSummary: Text(
+      icon: Icons.description_outlined,
+      count: profileSummary.isNotEmpty ? 1 : 0,
+      actionLabel: '',
+      onActionPressed: null,
+      collapsedPreview: Text(
         profileSummary.isEmpty
             ? 'No profile summary set'
-            : '${profileSummary.split('\n').first.substring(0, profileSummary.split('\n').first.length > 50 ? 50 : profileSummary.split('\n').first.length)}...',
-        style: theme.textTheme.bodySmall,
+            : '${profileSummary.split('\n').first.substring(0, profileSummary.split('\n').first.length > 50 ? 50 : profileSummary.split('\n').first.length)}${profileSummary.length > 50 ? '...' : ''}',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+        ),
       ),
-      expandedContent: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
+      content: ProfileLongTextEditor(
+        initialValue: profileSummary,
+        onSave: (val) => userDataProvider.updateProfileSummary(val),
+        hintText: 'Enter your professional summary...\n\n'
+            'Example: Experienced professional with 5+ years in software development, '
+            'specializing in full-stack solutions and team leadership.',
+        helpText:
             'This summary will be used as the starting point for all new job applications. '
             'You can customize it for each specific job.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: controller,
-            maxLines: 4,
-            decoration: InputDecoration(
-              hintText: 'Enter your professional summary...\n\n'
-                  'Example: Experienced professional with 5+ years in software development, '
-                  'specializing in full-stack solutions and team leadership.',
-              border: const OutlineInputBorder(),
-              filled: true,
-              fillColor: theme.colorScheme.surface,
-            ),
-            onChanged: (value) {
-              userDataProvider.updateProfileSummary(value);
-            },
-          ),
-        ],
+        minLines: 4,
       ),
     );
   }
@@ -1006,7 +1030,6 @@ class _ProfileSections extends StatelessWidget {
     final userDataProvider = context.watch<UserDataProvider>();
     final coverLetterBody = userDataProvider.defaultCoverLetterBody;
     final theme = Theme.of(context);
-    final controller = TextEditingController(text: coverLetterBody);
     final paragraphCount =
         coverLetterBody.split('\n\n').where((p) => p.trim().isNotEmpty).length;
 
@@ -1024,34 +1047,16 @@ class _ProfileSections extends StatelessWidget {
           color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
         ),
       ),
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
+      content: ProfileLongTextEditor(
+        initialValue: coverLetterBody,
+        onSave: (val) => userDataProvider.updateDefaultCoverLetterBody(val),
+        hintText: 'Enter your default cover letter body...\n\n'
+            'Example:\nDear Hiring Manager,\n\n'
+            'I am writing to express my interest in the [Position] role at [Company]...',
+        helpText:
             'This text will be used as the default body for new cover letters. '
             'You can customize it for each job application later.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: controller,
-            minLines: 8,
-            maxLines: null,
-            decoration: InputDecoration(
-              hintText: 'Enter your default cover letter body...\n\n'
-                  'Example:\nDear Hiring Manager,\n\n'
-                  'I am writing to express my interest in the [Position] role at [Company]...',
-              border: const OutlineInputBorder(),
-              filled: true,
-              fillColor: theme.colorScheme.surface,
-            ),
-            onChanged: (value) {
-              userDataProvider.updateDefaultCoverLetterBody(value);
-            },
-          ),
-        ],
+        minLines: 8,
       ),
     );
   }

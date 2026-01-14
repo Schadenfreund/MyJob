@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
+import '../providers/user_data_provider.dart';
 import '../models/job_application.dart';
 import '../models/job_cv_data.dart';
 import '../models/job_cover_letter.dart';
@@ -54,6 +56,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   // Cover letter text controllers
   late TextEditingController _recipientNameController;
   late TextEditingController _recipientTitleController;
+  late TextEditingController _subjectController;
   late TextEditingController _greetingController;
   late TextEditingController _bodyController;
   late TextEditingController _closingController;
@@ -87,6 +90,9 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     _recipientTitleController = TextEditingController(
       text: _jobCoverLetter?.recipientTitle ?? '',
     );
+    _subjectController = TextEditingController(
+      text: _jobCoverLetter?.subject ?? '',
+    );
     _greetingController = TextEditingController(
       text: _jobCoverLetter?.greeting ?? 'Dear Hiring Manager,',
     );
@@ -100,6 +106,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     // Add listeners for auto-save
     _recipientNameController.addListener(_updateCoverLetter);
     _recipientTitleController.addListener(_updateCoverLetter);
+    _subjectController.addListener(_updateCoverLetter);
     _greetingController.addListener(_updateCoverLetter);
     _bodyController.addListener(_updateCoverLetter);
     _closingController.addListener(_updateCoverLetter);
@@ -124,6 +131,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       // Update controller text without triggering listeners
       _recipientNameController.removeListener(_updateCoverLetter);
       _recipientTitleController.removeListener(_updateCoverLetter);
+      _subjectController.removeListener(_updateCoverLetter);
       _greetingController.removeListener(_updateCoverLetter);
       _bodyController.removeListener(_updateCoverLetter);
       _closingController.removeListener(_updateCoverLetter);
@@ -132,6 +140,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
           widget.applicationContext?.contactPerson ??
           '';
       _recipientTitleController.text = newCoverLetter?.recipientTitle ?? '';
+      _subjectController.text = newCoverLetter?.subject ?? '';
       _greetingController.text =
           newCoverLetter?.greeting ?? 'Dear Hiring Manager,';
       _bodyController.text = newCoverLetter?.body ?? '';
@@ -140,6 +149,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       // Re-add listeners
       _recipientNameController.addListener(_updateCoverLetter);
       _recipientTitleController.addListener(_updateCoverLetter);
+      _subjectController.addListener(_updateCoverLetter);
       _greetingController.addListener(_updateCoverLetter);
       _bodyController.addListener(_updateCoverLetter);
       _closingController.addListener(_updateCoverLetter);
@@ -151,6 +161,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     _tabController.dispose();
     _recipientNameController.dispose();
     _recipientTitleController.dispose();
+    _subjectController.dispose();
     _greetingController.dispose();
     _bodyController.dispose();
     _closingController.dispose();
@@ -169,6 +180,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     final updatedCoverLetter = JobCoverLetter(
       recipientName: _recipientNameController.text.trim(),
       recipientTitle: _recipientTitleController.text.trim(),
+      subject: _subjectController.text.trim(),
       companyName: _jobCoverLetter?.companyName ??
           widget.applicationContext?.company ??
           '',
@@ -705,10 +717,15 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     );
   }
 
-  /// Personal Info Tab - Contact details and basic info
   Widget _buildPersonalInfoTab() {
     final theme = Theme.of(context);
     final info = _cvData.personalInfo;
+    final userData = context.watch<UserDataProvider>();
+    final masterProfile = widget.applicationContext != null
+        ? userData
+            .getProfileForLanguage(widget.applicationContext!.baseLanguage)
+        : null;
+    final masterPicturePath = masterProfile?.personalInfo?.profilePicturePath;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -748,6 +765,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
           Center(
             child: ProfilePicturePicker(
               imagePath: info?.profilePicturePath,
+              masterProfilePicturePath: masterPicturePath,
               size: 120,
               placeholderInitial:
                   info?.fullName.isNotEmpty ?? false ? info!.fullName[0] : null,
@@ -1399,6 +1417,22 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                       hintText: 'e.g., HR Manager',
                       prefixIcon: Icon(Icons.badge),
                       border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _subjectController,
+                    decoration: InputDecoration(
+                      labelText: widget.applicationContext?.baseLanguage ==
+                              DocumentLanguage.de
+                          ? 'Betreff'
+                          : 'Subject',
+                      hintText: widget.applicationContext?.baseLanguage ==
+                              DocumentLanguage.de
+                          ? 'Bewerbung als ...'
+                          : 'Application for ...',
+                      prefixIcon: const Icon(Icons.subject),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),

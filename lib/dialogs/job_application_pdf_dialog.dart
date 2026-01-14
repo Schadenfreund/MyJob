@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 
+import '../models/pdf_document_type.dart';
 import '../models/job_application.dart';
 import '../models/job_cv_data.dart';
 import '../models/job_cover_letter.dart';
@@ -48,6 +49,10 @@ class JobApplicationPdfDialog extends BaseTemplatePdfPreviewDialog {
 
   @override
   TemplateStyle getDefaultStyle() => TemplateStyle.defaultStyle;
+
+  @override
+  PdfDocumentType getDocumentType() =>
+      isCV ? PdfDocumentType.cv : PdfDocumentType.coverLetter;
 }
 
 class _JobApplicationPdfDialogState
@@ -230,7 +235,7 @@ class _JobApplicationPdfDialogState
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
-                            _getIconForPreset(preset),
+                            preset.icon,
                             color: isSelected ? Colors.black : Colors.white,
                             size: 20,
                           ),
@@ -281,19 +286,6 @@ class _JobApplicationPdfDialogState
     }
     // For CV, use default presets (all of them)
     return null;
-  }
-
-  IconData _getIconForPreset(LayoutPreset preset) {
-    switch (preset) {
-      case LayoutPreset.modern:
-        return Icons.auto_awesome;
-      case LayoutPreset.compact:
-        return Icons.compress;
-      case LayoutPreset.traditional:
-        return Icons.article;
-      case LayoutPreset.twoColumn:
-        return Icons.view_column;
-    }
   }
 
   @override
@@ -420,6 +412,7 @@ class _JobApplicationPdfDialogState
           getFieldValue('recipientName', widget.coverLetter!.recipientName),
       companyName:
           getFieldValue('companyName', widget.coverLetter!.companyName),
+      subject: getFieldValue('subject', widget.coverLetter!.subject),
       greeting: getFieldValue('greeting', widget.coverLetter!.greeting),
       body: getFieldValue('body', widget.coverLetter!.body),
       closing: getFieldValue('closing', widget.coverLetter!.closing),
@@ -427,9 +420,17 @@ class _JobApplicationPdfDialogState
       placeholders: placeholders,
     );
 
+    // Create contact details from personal info for the header
+    final contactDetails = widget.cvData.personalInfo != null
+        ? DataConverters.personalInfoToContactDetails(
+            widget.cvData.personalInfo!,
+          )
+        : null;
+
     return await PdfService.instance.generateCoverLetterPdf(
       coverLetter,
       selectedStyle,
+      contactDetails: contactDetails,
       customization: customization,
     );
   }
@@ -571,6 +572,18 @@ class _JobApplicationPdfDialogState
           onChanged: (value) => updateFieldValue('companyName', value),
           maxLines: 1,
           hint: 'Company name',
+        ),
+        EditableField(
+          id: 'subject',
+          label: widget.application.baseLanguage == DocumentLanguage.de
+              ? 'Betreff'
+              : 'Subject',
+          value: getFieldValue('subject', widget.coverLetter?.subject ?? ''),
+          onChanged: (value) => updateFieldValue('subject', value),
+          maxLines: 1,
+          hint: widget.application.baseLanguage == DocumentLanguage.de
+              ? 'Bewerbung als ...'
+              : 'Application for ...',
         ),
         EditableField(
           id: 'greeting',

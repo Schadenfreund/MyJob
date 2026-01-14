@@ -205,6 +205,12 @@ class TemplateCustomization {
   /// Show visual proficiency bars for skills
   final bool showProficiencyBars;
 
+  /// Show subject line in cover letters
+  final bool showSubject;
+
+  /// Show recipient name and title in cover letters
+  final bool showRecipient;
+
   // -------------------------------------------------------------------------
   // LANGUAGE OPTIONS
   // -------------------------------------------------------------------------
@@ -241,6 +247,8 @@ class TemplateCustomization {
     this.showContactIcons = true,
     this.showSkillLevels = true,
     this.showProficiencyBars = true,
+    this.showSubject = true,
+    this.showRecipient = true,
     // Language
     this.language = CvLanguage.english,
   });
@@ -272,6 +280,8 @@ class TemplateCustomization {
       'showContactIcons': showContactIcons,
       'showSkillLevels': showSkillLevels,
       'showProficiencyBars': showProficiencyBars,
+      'showSubject': showSubject,
+      'showRecipient': showRecipient,
       'language': language.name,
     };
   }
@@ -320,6 +330,8 @@ class TemplateCustomization {
       showContactIcons: json['showContactIcons'] as bool? ?? true,
       showSkillLevels: json['showSkillLevels'] as bool? ?? true,
       showProficiencyBars: json['showProficiencyBars'] as bool? ?? true,
+      showSubject: json['showSubject'] as bool? ?? true,
+      showRecipient: json['showRecipient'] as bool? ?? true,
       language: CvLanguage.values.firstWhere(
         (e) => e.name == json['language'],
         orElse: () => CvLanguage.english,
@@ -456,6 +468,8 @@ class TemplateCustomization {
     bool? showContactIcons,
     bool? showSkillLevels,
     bool? showProficiencyBars,
+    bool? showSubject,
+    bool? showRecipient,
     CvLanguage? language,
   }) {
     return TemplateCustomization(
@@ -479,6 +493,8 @@ class TemplateCustomization {
       showContactIcons: showContactIcons ?? this.showContactIcons,
       showSkillLevels: showSkillLevels ?? this.showSkillLevels,
       showProficiencyBars: showProficiencyBars ?? this.showProficiencyBars,
+      showSubject: showSubject ?? this.showSubject,
+      showRecipient: showRecipient ?? this.showRecipient,
       language: language ?? this.language,
     );
   }

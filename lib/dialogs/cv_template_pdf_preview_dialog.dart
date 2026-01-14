@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/pdf_document_type.dart';
 import '../models/cv_template.dart';
 import '../models/template_style.dart';
 import '../providers/user_data_provider.dart';
@@ -27,6 +28,9 @@ class CvTemplatePdfPreviewDialog extends BaseTemplatePdfPreviewDialog {
   @override
   TemplateStyle getDefaultStyle() =>
       cvTemplate.templateStyle ?? TemplateStyle.electric;
+
+  @override
+  PdfDocumentType getDocumentType() => PdfDocumentType.cv;
 }
 
 class _CvTemplatePdfPreviewDialogState

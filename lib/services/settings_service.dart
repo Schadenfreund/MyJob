@@ -13,10 +13,12 @@ class SettingsService extends ChangeNotifier {
   Color _accentColor = defaultAccentColor;
   TemplateStyle _defaultCvTemplate = TemplateStyle.electric;
   TemplateStyle _defaultCoverLetterTemplate = TemplateStyle.electric;
+  String? _backupPath;
 
   ThemeMode get themeMode => _themeMode;
   Color get accentColor => _accentColor;
   bool get isDarkMode => _themeMode == ThemeMode.dark;
+  String? get backupPath => _backupPath;
   TemplateStyle get defaultCvTemplate => _defaultCvTemplate;
   TemplateStyle get defaultCoverLetterTemplate => _defaultCoverLetterTemplate;
 
@@ -75,6 +77,8 @@ class SettingsService extends ChangeNotifier {
         );
       }
 
+      _backupPath = json['backupPath'] as String?;
+
       debugPrint('Settings loaded successfully');
       notifyListeners();
     } catch (e) {
@@ -91,6 +95,7 @@ class SettingsService extends ChangeNotifier {
         'accentColor': _accentColor.toARGB32(),
         'defaultCvTemplate': _defaultCvTemplate.toJson(),
         'defaultCoverLetterTemplate': _defaultCoverLetterTemplate.toJson(),
+        'backupPath': _backupPath,
       };
 
       await file.writeAsString(
@@ -135,11 +140,18 @@ class SettingsService extends ChangeNotifier {
     await _saveSettings();
   }
 
+  Future<void> setBackupPath(String? path) async {
+    _backupPath = path;
+    notifyListeners();
+    await _saveSettings();
+  }
+
   Future<void> resetSettings() async {
     _themeMode = ThemeMode.dark;
     _accentColor = defaultAccentColor;
     _defaultCvTemplate = TemplateStyle.electric;
     _defaultCoverLetterTemplate = TemplateStyle.electric;
+    _backupPath = null;
 
     notifyListeners();
     await _saveSettings();

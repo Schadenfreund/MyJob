@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/applications_provider.dart';
 import '../../providers/templates_provider.dart';
+import '../../providers/user_data_provider.dart';
 import '../../models/job_application.dart';
 
 import '../../constants/app_constants.dart';
@@ -30,6 +31,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
   final _contactEmailController = TextEditingController();
   final _notesController = TextEditingController();
   final _salaryController = TextEditingController();
+  final _subjectController = TextEditingController();
 
   ApplicationStatus _status = ApplicationStatus.draft;
   DocumentLanguage _baseLanguage = DocumentLanguage.en; // Default to English
@@ -39,13 +41,18 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
   @override
   void initState() {
     super.initState();
+
+    // Set default language from current active language
+    final userDataProvider = context.read<UserDataProvider>();
+    _baseLanguage = userDataProvider.currentLanguage;
+
     if (widget.applicationId != null) {
       _isEditing = true;
       _loadApplication();
     }
   }
 
-  void _loadApplication() {
+  Future<void> _loadApplication() async {
     final provider = context.read<ApplicationsProvider>();
     _existingApplication = provider.getApplicationById(widget.applicationId!);
     if (_existingApplication != null) {
@@ -58,6 +65,17 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
       _notesController.text = _existingApplication!.notes ?? '';
       _salaryController.text = _existingApplication!.salary ?? '';
       _status = _existingApplication!.status;
+      _baseLanguage = _existingApplication!.baseLanguage;
+
+      // Load cover letter to get subject
+      if (_existingApplication!.folderPath != null) {
+        final cl = await provider.storage
+            .loadJobCoverLetter(_existingApplication!.folderPath!);
+        if (cl != null) {
+          _subjectController.text = cl.subject;
+        }
+      }
+      if (mounted) setState(() {});
     }
   }
 
@@ -71,6 +89,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
     _contactEmailController.dispose();
     _notesController.dispose();
     _salaryController.dispose();
+    _subjectController.dispose();
     super.dispose();
   }
 
@@ -169,6 +188,21 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 16),
+
+                // Subject / Reference
+                TextFormField(
+                  controller: _subjectController,
+                  decoration: InputDecoration(
+                    labelText: _baseLanguage == DocumentLanguage.de
+                        ? 'Betreff / Referenz'
+                        : 'Subject / Reference',
+                    hintText: _baseLanguage == DocumentLanguage.de
+                        ? 'z.B. Bewerbung als ...'
+                        : 'e.g. Application for ...',
+                    prefixIcon: const Icon(Icons.subject, size: 20),
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -349,15 +383,31 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
         ),
       );
 
+      // Save subject to cover letter if it changed
+      if (_existingApplication!.folderPath != null) {
+        final cl = await applicationsProvider.storage
+            .loadJobCoverLetter(_existingApplication!.folderPath!);
+        if (cl != null) {
+          await applicationsProvider.storage.saveJobCoverLetter(
+            _existingApplication!.folderPath!,
+            cl.copyWith(subject: _subjectController.text),
+          );
+        }
+      }
+
       if (mounted) {
         Navigator.pop(context);
       }
     } else {
       // Create new application - profile data is automatically cloned
+      final userDataProvider = context.read<UserDataProvider>();
+      final profile = userDataProvider.getProfileForLanguage(_baseLanguage);
+
       final newApp = await applicationsProvider.createApplication(
         company: _companyController.text,
         position: _positionController.text,
         baseLanguage: _baseLanguage,
+        masterProfile: profile,
         location:
             _locationController.text.isEmpty ? null : _locationController.text,
         jobUrl: _jobUrlController.text.isEmpty ? null : _jobUrlController.text,
@@ -370,6 +420,18 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
         notes: _notesController.text.isEmpty ? null : _notesController.text,
         salary: _salaryController.text.isEmpty ? null : _salaryController.text,
       );
+
+      // Save subject to newly created cover letter if provided
+      if (_subjectController.text.isNotEmpty && newApp.folderPath != null) {
+        final cl = await applicationsProvider.storage
+            .loadJobCoverLetter(newApp.folderPath!);
+        if (cl != null) {
+          await applicationsProvider.storage.saveJobCoverLetter(
+            newApp.folderPath!,
+            cl.copyWith(subject: _subjectController.text),
+          );
+        }
+      }
 
       // Close this dialog and return the created application
       // The caller will open the PDF editor
