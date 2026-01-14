@@ -596,12 +596,12 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ],
               ),
             );
-          }).toList(),
+          }),
           pw.SizedBox(height: s.space3),
         ],
 
@@ -655,155 +655,13 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
                 ],
               ),
             );
-          }).toList(),
-        ],
-      ],
-    );
-  }
-
-  /// Build main column section header
-  pw.Widget _buildMainSectionHeader(String title, PdfStyling s) {
-    return pw.Row(
-      children: [
-        pw.Container(
-          width: 4,
-          height: 14,
-          decoration: pw.BoxDecoration(
-            color: s.accent,
-            borderRadius: pw.BorderRadius.circular(2),
-          ),
-        ),
-        pw.SizedBox(width: s.space2),
-        pw.Text(
-          s.customization.uppercaseHeaders ? title.toUpperCase() : title,
-          style: pw.TextStyle(
-            fontSize: s.fontSizeH3,
-            fontWeight: pw.FontWeight.bold,
-            color: s.textPrimary,
-            letterSpacing: s.letterSpacingWide,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Build compact experience entry for two-column layout
-  pw.Widget _buildCompactExperienceEntry(Experience exp, PdfStyling s) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        // Title and date on same row
-        pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Expanded(
-              child: pw.Text(
-                exp.title,
-                style: pw.TextStyle(
-                  fontSize: s.fontSizeTiny,
-                  fontWeight: pw.FontWeight.bold,
-                  color: s.textPrimary,
-                ),
-              ),
-            ),
-            pw.SizedBox(width: s.space2),
-            pw.Text(
-              exp.dateRange,
-              style: pw.TextStyle(
-                fontSize: s.fontSizeTiny * 0.9,
-                color: s.textSecondary,
-              ),
-            ),
-          ],
-        ),
-        // Company
-        pw.Text(
-          exp.company,
-          style: pw.TextStyle(
-            fontSize: s.fontSizeTiny * 0.9,
-            color: s.accent,
-          ),
-        ),
-        // Bullets (max 2, very compact)
-        if (exp.bullets.isNotEmpty) ...[
-          pw.SizedBox(height: s.space1 * 0.5),
-          ...exp.bullets.take(2).map((bullet) {
-            return pw.Padding(
-              padding: pw.EdgeInsets.only(bottom: s.space1 * 0.5),
-              child: pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Container(
-                    margin: pw.EdgeInsets.only(top: 2),
-                    width: 3,
-                    height: 3,
-                    decoration: pw.BoxDecoration(
-                      color: s.accent,
-                      shape: pw.BoxShape.circle,
-                    ),
-                  ),
-                  pw.SizedBox(width: s.space1),
-                  pw.Expanded(
-                    child: pw.Text(
-                      bullet,
-                      style: pw.TextStyle(
-                        fontSize: s.fontSizeTiny * 0.85,
-                        color: s.textSecondary,
-                        lineSpacing: 1.2,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
           }),
         ],
       ],
     );
   }
 
-  /// Build compact education entry for two-column layout
-  pw.Widget _buildCompactEducationEntry(Education edu, PdfStyling s) {
-    return pw.Row(
-      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Expanded(
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                edu.degree,
-                style: pw.TextStyle(
-                  fontSize: s.fontSizeTiny,
-                  fontWeight: pw.FontWeight.bold,
-                  color: s.textPrimary,
-                ),
-              ),
-              pw.Text(
-                edu.institution,
-                style: pw.TextStyle(
-                  fontSize: s.fontSizeTiny * 0.9,
-                  color: s.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        pw.SizedBox(width: s.space2),
-        pw.Text(
-          edu.dateRange,
-          style: pw.TextStyle(
-            fontSize: s.fontSizeTiny * 0.9,
-            color: s.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Modern layout - Optimized single column with side-by-side skills/interests
+  ///Modern layout - Optimized single column with side-by-side skills/interests
   List<pw.Widget> _buildModernLayout(
     CvData cv,
     PdfStyling s,

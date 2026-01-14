@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// Centralized dialog utilities for consistent dialog behavior across the app
 class DialogUtils {
@@ -18,20 +19,18 @@ class DialogUtils {
     String cancelLabel = 'Cancel',
     IconData icon = Icons.delete_outline,
   }) async {
-    final theme = Theme.of(context);
-
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         icon: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: theme.colorScheme.error.withValues(alpha: 0.1),
+            color: AppColors.lightDanger.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
             icon,
-            color: theme.colorScheme.error,
+            color: AppColors.lightDanger,
             size: 28,
           ),
         ),
@@ -45,8 +44,8 @@ class DialogUtils {
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
+              backgroundColor: AppColors.lightDanger,
+              foregroundColor: Colors.white,
             ),
             child: Text(confirmLabel),
           ),
@@ -69,21 +68,21 @@ class DialogUtils {
     Color? iconColor,
   }) async {
     final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
 
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         icon: icon != null
             ? Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: (iconColor ?? theme.colorScheme.primary)
-                      .withValues(alpha: 0.1),
+                  color: (iconColor ?? primaryColor).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   icon,
-                  color: iconColor ?? theme.colorScheme.primary,
+                  color: iconColor ?? primaryColor,
                   size: 28,
                 ),
               )
@@ -119,19 +118,20 @@ class DialogUtils {
     IconData icon = Icons.info_outline,
   }) async {
     final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
 
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         icon: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            color: primaryColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
             icon,
-            color: theme.colorScheme.primary,
+            color: primaryColor,
             size: 28,
           ),
         ),
@@ -154,20 +154,18 @@ class DialogUtils {
     required String message,
     String buttonLabel = 'OK',
   }) async {
-    final theme = Theme.of(context);
-
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         icon: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: theme.colorScheme.error.withValues(alpha: 0.1),
+            color: AppColors.lightDanger.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
+          child: const Icon(
             Icons.error_outline,
-            color: theme.colorScheme.error,
+            color: AppColors.lightDanger,
             size: 28,
           ),
         ),
@@ -177,8 +175,8 @@ class DialogUtils {
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
             style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
+              backgroundColor: AppColors.lightDanger,
+              foregroundColor: Colors.white,
             ),
             child: Text(buttonLabel),
           ),
@@ -194,21 +192,18 @@ class DialogUtils {
     required String message,
     String buttonLabel = 'OK',
   }) async {
-    final colorScheme = Theme.of(context).colorScheme;
-    const successColor = Colors.green;
-
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         icon: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: successColor.withValues(alpha: 0.1),
+            color: AppColors.lightSuccess.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(
             Icons.check_circle_outline,
-            color: successColor,
+            color: AppColors.lightSuccess,
             size: 28,
           ),
         ),
@@ -218,8 +213,8 @@ class DialogUtils {
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
             style: FilledButton.styleFrom(
-              backgroundColor: successColor,
-              foregroundColor: colorScheme.onPrimary,
+              backgroundColor: AppColors.lightSuccess,
+              foregroundColor: Colors.white,
             ),
             child: Text(buttonLabel),
           ),
@@ -261,7 +256,7 @@ class DialogUtils {
             children: [
               if (message != null) ...[
                 Text(message),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.md),
               ],
               TextFormField(
                 controller: controller,
@@ -270,7 +265,6 @@ class DialogUtils {
                 keyboardType: keyboardType,
                 decoration: InputDecoration(
                   hintText: hintText,
-                  border: const OutlineInputBorder(),
                 ),
                 validator: validator,
                 onFieldSubmitted: (_) {
@@ -324,7 +318,7 @@ class DialogUtils {
             children: [
               const CircularProgressIndicator(),
               if (message != null) ...[
-                const SizedBox(width: 24),
+                const SizedBox(width: AppSpacing.lg),
                 Flexible(child: Text(message)),
               ],
             ],
@@ -342,7 +336,7 @@ class DialogUtils {
 }
 
 // ============================================================================
-// SNACKBAR UTILITIES
+// SNACKBAR UTILITIES (DEPRECATED - Use UIUtils)
 // ============================================================================
 
 /// Extension on BuildContext for easy SnackBar display
@@ -358,17 +352,18 @@ extension SnackBarExtension on BuildContext {
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: AppColors.lightSuccess,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(AppDimensions.inputBorderRadius)),
+        margin: const EdgeInsets.all(AppSpacing.md),
       ),
     );
   }
 
   /// Show an error snackbar
   void showErrorSnackBar(String message) {
-    final theme = Theme.of(this);
     ScaffoldMessenger.of(this).showSnackBar(
       SnackBar(
         content: Row(
@@ -378,10 +373,12 @@ extension SnackBarExtension on BuildContext {
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: theme.colorScheme.error,
+        backgroundColor: AppColors.lightDanger,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(AppDimensions.inputBorderRadius)),
+        margin: const EdgeInsets.all(AppSpacing.md),
       ),
     );
   }
@@ -393,16 +390,17 @@ extension SnackBarExtension on BuildContext {
       SnackBar(
         content: Row(
           children: [
-            Icon(Icons.info_outline,
-                color: theme.colorScheme.onPrimary, size: 20),
+            const Icon(Icons.info_outline, color: Colors.white, size: 20),
             const SizedBox(width: 12),
             Expanded(child: Text(message)),
           ],
         ),
         backgroundColor: theme.colorScheme.primary,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(AppDimensions.inputBorderRadius)),
+        margin: const EdgeInsets.all(AppSpacing.md),
       ),
     );
   }
@@ -413,18 +411,19 @@ extension SnackBarExtension on BuildContext {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.warning_amber, color: Colors.black87, size: 20),
+            const Icon(Icons.warning_amber, color: Colors.white, size: 20),
             const SizedBox(width: 12),
             Expanded(
-              child:
-                  Text(message, style: const TextStyle(color: Colors.black87)),
+              child: Text(message, style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
-        backgroundColor: Colors.amber,
+        backgroundColor: AppColors.lightWarning,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(AppDimensions.inputBorderRadius)),
+        margin: const EdgeInsets.all(AppSpacing.md),
       ),
     );
   }

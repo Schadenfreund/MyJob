@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/user_data_provider.dart';
@@ -183,49 +182,6 @@ class PersonalInfoSection extends StatelessWidget {
                 _buildInfoRow(
                     context, Icons.language, 'Website', info.website!),
               ],
-              if (info.profileSummary != null &&
-                  info.profileSummary!.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.brightness == Brightness.dark
-                        ? Colors.white.withValues(alpha: 0.03)
-                        : Colors.black.withValues(alpha: 0.02),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.description_outlined,
-                            size: 16,
-                            color: theme.textTheme.bodySmall?.color
-                                ?.withValues(alpha: 0.6),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Profile Summary',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        info.profileSummary!,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.textTheme.bodySmall?.color
-                              ?.withValues(alpha: 0.8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -386,7 +342,6 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
   late TextEditingController _countryController;
   late TextEditingController _linkedinController;
   late TextEditingController _websiteController;
-  late TextEditingController _summaryController;
   String? _profilePicturePath;
 
   @override
@@ -402,8 +357,6 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
     _countryController = TextEditingController(text: info?.country ?? '');
     _linkedinController = TextEditingController(text: info?.linkedin ?? '');
     _websiteController = TextEditingController(text: info?.website ?? '');
-    _summaryController =
-        TextEditingController(text: info?.profileSummary ?? '');
     _profilePicturePath = info?.profilePicturePath;
   }
 
@@ -418,7 +371,6 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
     _countryController.dispose();
     _linkedinController.dispose();
     _websiteController.dispose();
-    _summaryController.dispose();
     super.dispose();
   }
 
@@ -571,18 +523,6 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-
-              // Profile summary
-              TextField(
-                controller: _summaryController,
-                decoration: const InputDecoration(
-                  labelText: 'Profile Summary',
-                  prefixIcon: Icon(Icons.description),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 4,
-              ),
             ],
           ),
         ),
@@ -646,7 +586,6 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
           country: trimOrNull(_countryController.text),
           linkedin: trimOrNull(_linkedinController.text),
           website: trimOrNull(_websiteController.text),
-          profileSummary: trimOrNull(_summaryController.text),
         ) ??
         PersonalInfo(
           fullName: _nameController.text.trim(),
@@ -659,7 +598,6 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
           country: trimOrNull(_countryController.text),
           linkedin: trimOrNull(_linkedinController.text),
           website: trimOrNull(_websiteController.text),
-          profileSummary: trimOrNull(_summaryController.text),
         );
 
     await widget.onSave(newInfo);

@@ -7,13 +7,14 @@ import '../../widgets/collapsible_card.dart';
 import '../../widgets/document_template_card.dart';
 import '../../dialogs/cv_template_pdf_preview_launcher.dart';
 import '../../dialogs/cover_letter_template_pdf_preview_dialog.dart';
+import '../../theme/app_theme.dart';
 import '../../utils/ui_utils.dart';
 import '../../utils/dialog_utils.dart';
 import '../cv_template_editor/cv_template_editor_screen.dart';
 import '../cover_letter_template_editor/cover_letter_template_editor_screen.dart';
+import '../../widgets/app_card.dart';
 
 /// Main Documents screen - YAML-first workflow for CV/Cover Letter creation
-/// Refactored to use CollapsibleCard pattern for better organization
 class DocumentsScreen extends StatelessWidget {
   const DocumentsScreen({super.key});
 
@@ -25,23 +26,79 @@ class DocumentsScreen extends StatelessWidget {
     return Container(
       color: theme.colorScheme.surface,
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(UIUtils.spacingLg),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            UIUtils.buildSectionHeader(
-              context,
-              title: 'Documents',
-              subtitle:
-                  'Manage CV and Cover Letter templates • Import data in Profile',
-              icon: Icons.description,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Document Templates',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Manage and customize your CV and Cover Letter styles',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.textTheme.bodySmall?.color,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: UIUtils.spacingXl),
+            const SizedBox(height: AppSpacing.lg),
 
-            // CV Templates Section - CollapsibleCard
+            // Top Action Card - Refactored for quick creation
+            AppCardContainer(
+              useAccentBorder: true,
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.add_circle_outline,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      'Create new template?',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  AppCardActionButton(
+                    onPressed: () => _createNewCv(context),
+                    icon: Icons.add,
+                    label: 'CV',
+                    isFilled: true,
+                  ),
+                  const SizedBox(width: 8),
+                  AppCardActionButton(
+                    onPressed: () => _createNewCoverLetter(context),
+                    icon: Icons.add,
+                    label: 'Letter',
+                    isFilled: true,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+
+            // CV Templates Section
             CollapsibleCard(
-              cardDecoration: UIUtils.getCardDecoration(context),
+              cardId: 'documents_cv_templates',
               title: 'CV Templates',
               subtitle:
                   '${templatesProvider.cvTemplates.length} template${templatesProvider.cvTemplates.length == 1 ? '' : 's'}',
@@ -56,15 +113,15 @@ class DocumentsScreen extends StatelessWidget {
                     size: 20,
                     color: theme.colorScheme.primary,
                   ),
-                  SizedBox(width: UIUtils.spacingSm),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       templatesProvider.cvTemplates.isEmpty
                           ? 'No CV templates yet. Import or create one to get started.'
                           : '${templatesProvider.cvTemplates.length} ${templatesProvider.cvTemplates.length == 1 ? 'template' : 'templates'} ready to use',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.textTheme.bodySmall?.color
-                            ?.withValues(alpha: 0.7),
+                        color:
+                            theme.textTheme.bodySmall?.color?.withOpacity(0.7),
                       ),
                     ),
                   ),
@@ -73,9 +130,8 @@ class DocumentsScreen extends StatelessWidget {
               expandedContent: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Template Cards
                   if (templatesProvider.cvTemplates.isEmpty)
-                    _buildEmptyState(
+                    _buildInnerEmptyState(
                       context,
                       'No CV templates yet',
                       'Import a CV YAML file or create a new template',
@@ -100,24 +156,23 @@ class DocumentsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                  // Add New Button
-                  SizedBox(height: UIUtils.spacingSm),
-                  UIUtils.buildOutlinedButton(
+                  const SizedBox(height: AppSpacing.sm),
+                  AppCardActionButton(
                     label: 'New CV Template',
                     onPressed: () => _createNewCv(context),
                     icon: Icons.add,
-                    fullWidth: true,
+                    isFullWidth: true,
+                    isFilled: false,
                   ),
                 ],
               ),
             ),
 
-            SizedBox(height: UIUtils.spacingMd),
+            const SizedBox(height: AppSpacing.md),
 
-            // Cover Letter Templates Section - CollapsibleCard
+            // Cover Letter Templates Section
             CollapsibleCard(
-              cardDecoration: UIUtils.getCardDecoration(context),
+              cardId: 'documents_cover_letter_templates',
               title: 'Cover Letter Templates',
               subtitle:
                   '${templatesProvider.coverLetterTemplates.length} template${templatesProvider.coverLetterTemplates.length == 1 ? '' : 's'}',
@@ -133,15 +188,15 @@ class DocumentsScreen extends StatelessWidget {
                     size: 20,
                     color: theme.colorScheme.primary,
                   ),
-                  SizedBox(width: UIUtils.spacingSm),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       templatesProvider.coverLetterTemplates.isEmpty
                           ? 'No cover letter templates yet. Import or create one to get started.'
                           : '${templatesProvider.coverLetterTemplates.length} ${templatesProvider.coverLetterTemplates.length == 1 ? 'template' : 'templates'} ready to use',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.textTheme.bodySmall?.color
-                            ?.withValues(alpha: 0.7),
+                        color:
+                            theme.textTheme.bodySmall?.color?.withOpacity(0.7),
                       ),
                     ),
                   ),
@@ -150,9 +205,8 @@ class DocumentsScreen extends StatelessWidget {
               expandedContent: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Template Cards
                   if (templatesProvider.coverLetterTemplates.isEmpty)
-                    _buildEmptyState(
+                    _buildInnerEmptyState(
                       context,
                       'No cover letter templates yet',
                       'Import a cover letter YAML file or create a new template',
@@ -180,14 +234,13 @@ class DocumentsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                  // Add New Button
-                  SizedBox(height: UIUtils.spacingSm),
-                  UIUtils.buildOutlinedButton(
+                  const SizedBox(height: AppSpacing.sm),
+                  AppCardActionButton(
                     label: 'New Cover Letter Template',
                     onPressed: () => _createNewCoverLetter(context),
                     icon: Icons.add,
-                    fullWidth: true,
+                    isFullWidth: true,
+                    isFilled: false,
                   ),
                 ],
               ),
@@ -198,30 +251,51 @@ class DocumentsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(
+  Widget _buildInnerEmptyState(
     BuildContext context,
     String title,
     String subtitle,
     IconData icon,
   ) {
-    return UIUtils.buildEmptyState(
-      context,
-      icon: icon,
-      title: title,
-      message: subtitle,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 48,
+              color: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.color
+                  ?.withOpacity(0.3),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   // CV Template Methods
-  /// STREAMLINED UX: Direct preview with integrated style selector
-  /// Eliminates redundant style picker dialog - users can now change styles
-  /// in real-time within the preview dialog
-  /// Opens a floating window that can exist outside the main app
   void _generateCvPdf(BuildContext context, CvTemplate template) {
     CvTemplatePdfPreviewLauncher.openPreview(
       context: context,
       cvTemplate: template,
-      templateStyle: template.templateStyle, // Use saved style as default
+      templateStyle: template.templateStyle,
     );
   }
 
@@ -245,7 +319,6 @@ class DocumentsScreen extends StatelessWidget {
         contactDetails: template.contactDetails,
       );
 
-      // Copy additional data
       await templatesProvider.updateCvTemplate(
         newTemplate.copyWith(
           languages: List.from(template.languages),
@@ -256,65 +329,40 @@ class DocumentsScreen extends StatelessWidget {
       );
 
       if (context.mounted) {
-        context.showSuccessSnackBar('${template.name} duplicated');
+        UIUtils.showSuccess(context, '${template.name} duplicated');
       }
     } catch (e) {
       if (context.mounted) {
-        context.showErrorSnackBar('Error duplicating template: $e');
+        UIUtils.showError(context, 'Error duplicating template: $e');
       }
     }
   }
 
   void _renameCvTemplate(BuildContext context, CvTemplate template) async {
-    final controller = TextEditingController(text: template.name);
-    final newName = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Rename Template'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Template Name',
-            hintText: 'Enter new name',
-          ),
-          autofocus: true,
-          onSubmitted: (value) => Navigator.of(context).pop(value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Rename'),
-          ),
-        ],
-      ),
+    final name = await DialogUtils.showTextInput(
+      context,
+      title: 'Rename Template',
+      initialValue: template.name,
+      hintText: 'Enter new name',
+      confirmLabel: 'Rename',
     );
 
-    if (newName != null &&
-        newName.isNotEmpty &&
-        newName != template.name &&
+    if (name != null &&
+        name.isNotEmpty &&
+        name != template.name &&
         context.mounted) {
       final templatesProvider = context.read<TemplatesProvider>();
       try {
-        await templatesProvider
-            .updateCvTemplate(template.copyWith(name: newName));
+        await templatesProvider.updateCvTemplate(template.copyWith(name: name));
         if (context.mounted) {
-          context.showSuccessSnackBar('Template renamed to "$newName"');
+          UIUtils.showSuccess(context, 'Template renamed to "$name"');
         }
       } catch (e) {
         if (context.mounted) {
-          context.showErrorSnackBar('Error renaming template: $e');
+          UIUtils.showError(context, 'Error renaming template: $e');
         }
       }
     }
-
-    // Dispose controller after dialog animation completes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.dispose();
-    });
   }
 
   void _deleteCvTemplate(BuildContext context, CvTemplate template) async {
@@ -331,11 +379,11 @@ class DocumentsScreen extends StatelessWidget {
       try {
         await templatesProvider.deleteCvTemplate(template.id);
         if (context.mounted) {
-          context.showSuccessSnackBar('${template.name} deleted');
+          UIUtils.showSuccess(context, '${template.name} deleted');
         }
       } catch (e) {
         if (context.mounted) {
-          context.showErrorSnackBar('Error deleting template: $e');
+          UIUtils.showError(context, 'Error deleting template: $e');
         }
       }
     }
@@ -351,27 +399,24 @@ class DocumentsScreen extends StatelessWidget {
       );
 
       if (context.mounted) {
-        context.showSuccessSnackBar('New CV template created');
+        UIUtils.showSuccess(context, 'New CV template created');
       }
     } catch (e) {
       if (context.mounted) {
-        context.showErrorSnackBar('Error creating template: $e');
+        UIUtils.showError(context, 'Error creating template: $e');
       }
     }
   }
 
   // Cover Letter Template Methods
-  /// STREAMLINED UX: Direct preview with integrated style selector
-  /// Eliminates redundant style picker dialog - users can now change styles
-  /// in real-time within the preview dialog
   void _generateCoverLetterPdf(
       BuildContext context, CoverLetterTemplate template) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => CoverLetterTemplatePdfPreviewDialog(
           coverLetterTemplate: template,
-          contactDetails: null, // Could extract from template if needed
-          templateStyle: template.templateStyle, // Use saved style as default
+          contactDetails: null,
+          templateStyle: template.templateStyle,
         ),
       ),
     );
@@ -401,66 +446,42 @@ class DocumentsScreen extends StatelessWidget {
       );
 
       if (context.mounted) {
-        context.showSuccessSnackBar('${template.name} duplicated');
+        UIUtils.showSuccess(context, '${template.name} duplicated');
       }
     } catch (e) {
       if (context.mounted) {
-        context.showErrorSnackBar('Error duplicating template: $e');
+        UIUtils.showError(context, 'Error duplicating template: $e');
       }
     }
   }
 
   void _renameCoverLetterTemplate(
       BuildContext context, CoverLetterTemplate template) async {
-    final controller = TextEditingController(text: template.name);
-    final newName = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Rename Template'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Template Name',
-            hintText: 'Enter new name',
-          ),
-          autofocus: true,
-          onSubmitted: (value) => Navigator.of(context).pop(value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Rename'),
-          ),
-        ],
-      ),
+    final name = await DialogUtils.showTextInput(
+      context,
+      title: 'Rename Template',
+      initialValue: template.name,
+      hintText: 'Enter new name',
+      confirmLabel: 'Rename',
     );
 
-    if (newName != null &&
-        newName.isNotEmpty &&
-        newName != template.name &&
+    if (name != null &&
+        name.isNotEmpty &&
+        name != template.name &&
         context.mounted) {
       final templatesProvider = context.read<TemplatesProvider>();
       try {
         await templatesProvider
-            .updateCoverLetterTemplate(template.copyWith(name: newName));
+            .updateCoverLetterTemplate(template.copyWith(name: name));
         if (context.mounted) {
-          context.showSuccessSnackBar('Template renamed to "$newName"');
+          UIUtils.showSuccess(context, 'Template renamed to "$name"');
         }
       } catch (e) {
         if (context.mounted) {
-          context.showErrorSnackBar('Error renaming template: $e');
+          UIUtils.showError(context, 'Error renaming template: $e');
         }
       }
     }
-
-    // Dispose controller after dialog animation completes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.dispose();
-    });
   }
 
   void _deleteCoverLetterTemplate(
@@ -478,11 +499,11 @@ class DocumentsScreen extends StatelessWidget {
       try {
         await templatesProvider.deleteCoverLetterTemplate(template.id);
         if (context.mounted) {
-          context.showSuccessSnackBar('${template.name} deleted');
+          UIUtils.showSuccess(context, '${template.name} deleted');
         }
       } catch (e) {
         if (context.mounted) {
-          context.showErrorSnackBar('Error deleting template: $e');
+          UIUtils.showError(context, 'Error deleting template: $e');
         }
       }
     }
@@ -500,17 +521,17 @@ class DocumentsScreen extends StatelessWidget {
       );
 
       if (context.mounted) {
-        context.showSuccessSnackBar('New cover letter template created');
+        UIUtils.showSuccess(context, 'New cover letter template created');
       }
     } catch (e) {
       if (context.mounted) {
-        context.showErrorSnackBar('Error creating template: $e');
+        UIUtils.showError(context, 'Error creating template: $e');
       }
     }
   }
 }
 
-/// Document type enum
+/// Document type enum (redefined if not available elsewhere, but usually in models)
 enum DocumentType {
   cv,
   coverLetter,

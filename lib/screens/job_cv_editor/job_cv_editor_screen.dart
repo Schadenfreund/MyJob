@@ -5,7 +5,6 @@ import '../../models/job_application.dart';
 import '../../models/job_cv_data.dart';
 import '../../services/storage_service.dart';
 import '../../providers/applications_provider.dart';
-import '../../constants/app_constants.dart';
 import '../../widgets/job_cv_editor_widget.dart';
 import '../../dialogs/job_application_pdf_dialog.dart';
 import '../../widgets/draggable_dialog_wrapper.dart';

@@ -52,9 +52,7 @@ class JobCvData {
   factory JobCvData.fromMasterProfile(MasterProfile profile) {
     return JobCvData(
       personalInfo: profile.personalInfo,
-      // CORRECT: Copy from PersonalInfo.profileSummary (where it's actually stored)
-      professionalSummary:
-          profile.personalInfo?.profileSummary ?? profile.profileSummary,
+      professionalSummary: profile.profileSummary,
       experiences: List.from(profile.experiences),
       education: List.from(profile.education),
       skills: List.from(profile.skills),

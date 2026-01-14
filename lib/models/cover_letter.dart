@@ -100,7 +100,7 @@ class CoverLetter {
       recipientTitle: recipientTitle ?? this.recipientTitle,
       companyName: companyName ?? this.companyName,
       jobTitle: jobTitle ?? this.jobTitle,
-      subject: subject ?? this.subject,
+      subject: subject ?? subject,
       greeting: greeting ?? this.greeting,
       body: body ?? this.body,
       closing: closing ?? this.closing,

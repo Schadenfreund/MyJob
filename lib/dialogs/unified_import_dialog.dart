@@ -875,7 +875,12 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
       await userDataProvider.updatePersonalInfo(result.personalInfo!);
     }
 
-    // Always replace (clear existing data before import)
+    // Import profile summary
+    if (result.profileSummary.isNotEmpty) {
+      await userDataProvider.updateProfileSummary(result.profileSummary);
+    }
+
+    //Always replace (clear existing data before import)
     if (_importSkills && result.skills.isNotEmpty) {
       for (final skill in userDataProvider.skills) {
         await userDataProvider.deleteSkill(skill.id);

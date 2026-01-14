@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 import '../../services/settings_service.dart';
 import '../../providers/applications_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../constants/app_constants.dart';
-import '../../constants/ui_constants.dart';
-import '../../widgets/profile_section_card.dart';
 import '../../utils/dialog_utils.dart';
 import '../../services/backup_service.dart';
+import '../../widgets/app_card.dart';
 import 'package:file_picker/file_picker.dart';
 
 /// Settings screen - Consistent card design with other tabs
@@ -25,449 +23,342 @@ class SettingsScreen extends StatelessWidget {
         return Container(
           color: theme.colorScheme.surface,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Settings',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Customize your experience',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.textTheme.bodySmall?.color,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      'Settings',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Customize your experience',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.textTheme.bodySmall?.color,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.lg),
 
                 // Accent Color Section
-                ProfileSectionCard(
+                AppCard(
                   title: 'Accent Color',
                   icon: Icons.palette_outlined,
-                  count: 1,
-                  actionLabel: '',
-                  onActionPressed: null,
-                  initiallyExpanded: true,
-                  collapsedPreview: Row(
-                    children: [
-                      Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: settings.accentColor,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: theme.dividerColor,
-                            width: 2,
-                          ),
+                  children: [
+                    Text(
+                      'Choose your preferred accent color. This color will be used throughout the app for highlights and interactive elements.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color:
+                            theme.textTheme.bodySmall?.color?.withOpacity(0.8),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _ColorButton(
+                          color: AppColors.lightPrimary,
+                          isSelected: settings.accentColor.toARGB32() ==
+                              AppColors.lightPrimary.toARGB32(),
+                          onTap: () =>
+                              settings.setAccentColor(AppColors.lightPrimary),
+                          label: 'Blue',
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Selected color',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color
-                              ?.withOpacity(0.6),
+                        _ColorButton(
+                          color: AppColors.lightSuccess,
+                          isSelected: settings.accentColor.toARGB32() ==
+                              AppColors.lightSuccess.toARGB32(),
+                          onTap: () =>
+                              settings.setAccentColor(AppColors.lightSuccess),
+                          label: 'Green',
                         ),
-                      ),
-                    ],
-                  ),
-                  content: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Choose your preferred accent color. This color will be used throughout the app for highlights and interactive elements.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color
-                              ?.withOpacity(0.7),
+                        _ColorButton(
+                          color: AppColors.lightInfo,
+                          isSelected: settings.accentColor.toARGB32() ==
+                              AppColors.lightInfo.toARGB32(),
+                          onTap: () =>
+                              settings.setAccentColor(AppColors.lightInfo),
+                          label: 'Cyan',
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          _ColorButton(
-                            color: AppTheme.lightPrimary,
-                            isSelected: settings.accentColor.toARGB32() ==
-                                AppTheme.lightPrimary.toARGB32(),
-                            onTap: () =>
-                                settings.setAccentColor(AppTheme.lightPrimary),
-                            label: 'Blue',
-                          ),
-                          _ColorButton(
-                            color: AppTheme.lightSuccess,
-                            isSelected: settings.accentColor.toARGB32() ==
-                                AppTheme.lightSuccess.toARGB32(),
-                            onTap: () =>
-                                settings.setAccentColor(AppTheme.lightSuccess),
-                            label: 'Green',
-                          ),
-                          _ColorButton(
-                            color: AppTheme.lightInfo,
-                            isSelected: settings.accentColor.toARGB32() ==
-                                AppTheme.lightInfo.toARGB32(),
-                            onTap: () =>
-                                settings.setAccentColor(AppTheme.lightInfo),
-                            label: 'Cyan',
-                          ),
-                          _ColorButton(
-                            color: AppTheme.lightWarning,
-                            isSelected: settings.accentColor.toARGB32() ==
-                                AppTheme.lightWarning.toARGB32(),
-                            onTap: () =>
-                                settings.setAccentColor(AppTheme.lightWarning),
-                            label: 'Orange',
-                          ),
-                          _ColorButton(
-                            color: AppTheme.lightDanger,
-                            isSelected: settings.accentColor.toARGB32() ==
-                                AppTheme.lightDanger.toARGB32(),
-                            onTap: () =>
-                                settings.setAccentColor(AppTheme.lightDanger),
-                            label: 'Red',
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                        _ColorButton(
+                          color: AppColors.lightWarning,
+                          isSelected: settings.accentColor.toARGB32() ==
+                              AppColors.lightWarning.toARGB32(),
+                          onTap: () =>
+                              settings.setAccentColor(AppColors.lightWarning),
+                          label: 'Orange',
+                        ),
+                        _ColorButton(
+                          color: AppColors.lightDanger,
+                          isSelected: settings.accentColor.toARGB32() ==
+                              AppColors.lightDanger.toARGB32(),
+                          onTap: () =>
+                              settings.setAccentColor(AppColors.lightDanger),
+                          label: 'Red',
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
 
                 // Data Management Section
-                ProfileSectionCard(
+                AppCard(
                   title: 'Data Management',
                   icon: Icons.storage_outlined,
-                  count: 1,
-                  actionLabel: '',
-                  onActionPressed: null,
-                  initiallyExpanded: false,
-                  collapsedPreview: Text(
-                    'Reset settings and manage data',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
-                    ),
-                  ),
-                  content: Column(
-                    children: [
-                      // Backup Folder Selection
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: settings.accentColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.folder_outlined,
-                              color: settings.accentColor,
-                              size: 20,
-                            ),
+                  children: [
+                    // Backup Folder Selection
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: settings.accentColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(
+                                AppDimensions.inputBorderRadius),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Backup Destination',
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  settings.backupPath ??
-                                      'No backup location defined',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.textTheme.bodySmall?.color
-                                        ?.withOpacity(
-                                            settings.backupPath == null
-                                                ? 0.4
-                                                : 0.7),
-                                    fontStyle: settings.backupPath == null
-                                        ? FontStyle.italic
-                                        : FontStyle.normal,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: () => _pickBackupPath(context, settings),
-                            icon: const Icon(Icons.folder_open, size: 18),
-                            label: const Text('Select'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: settings.accentColor,
-                              side: BorderSide(
-                                color: settings.accentColor.withOpacity(0.5),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: settings.backupPath == null
-                              ? null
-                              : () => _performBackup(context, settings),
-                          icon: const Icon(Icons.archive_outlined),
-                          label: const Text('Create Backup Zip'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: settings.accentColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Icon(
+                            Icons.folder_outlined,
+                            color: settings.accentColor,
+                            size: 20,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 32),
-                      // Restore
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: settings.accentColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.settings_backup_restore,
-                              color: settings.accentColor,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Restore Backup',
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Backup Destination',
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Restore entire UserData from a zip file',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.textTheme.bodySmall?.color
-                                        ?.withOpacity(0.7),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: () =>
-                                _pickRestoreFile(context, settings),
-                            icon:
-                                const Icon(Icons.unarchive_outlined, size: 18),
-                            label: const Text('Restore Zip'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: settings.accentColor,
-                              side: BorderSide(
-                                color: settings.accentColor.withOpacity(0.5),
                               ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
-                            ),
+                              const SizedBox(height: 4),
+                              Text(
+                                settings.backupPath ??
+                                    'No backup location defined',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.textTheme.bodySmall?.color
+                                      ?.withOpacity(settings.backupPath == null
+                                          ? 0.4
+                                          : 0.7),
+                                  fontStyle: settings.backupPath == null
+                                      ? FontStyle.italic
+                                      : FontStyle.normal,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
+                        AppCardActionButton(
+                          onPressed: () => _pickBackupPath(context, settings),
+                          icon: Icons.folder_open,
+                          label: 'Select',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    SizedBox(
+                      width: double.infinity,
+                      child: AppCardActionButton(
+                        onPressed: settings.backupPath == null
+                            ? () {} // Need non-null to not be disabled visually in my custom button if I didn't handle null
+                            : () => _performBackup(context, settings),
+                        icon: Icons.archive_outlined,
+                        label: 'Create Backup Zip',
+                        isFilled: settings.backupPath != null,
+                        color: settings.backupPath == null
+                            ? theme.disabledColor
+                            : settings.accentColor,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    // Restore
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: settings.accentColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(
+                                AppDimensions.inputBorderRadius),
+                          ),
+                          child: Icon(
+                            Icons.settings_backup_restore,
+                            color: settings.accentColor,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Restore Backup',
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Restore entire UserData from a zip file',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.textTheme.bodySmall?.color
+                                      ?.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        AppCardActionButton(
+                          onPressed: () => _pickRestoreFile(context, settings),
+                          icon: Icons.unarchive_outlined,
+                          label: 'Restore Zip',
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xl),
 
-                // About Section - Non-collapsible with statistics inside
+                // About Section - Using AppCardContainer for premium look
                 Consumer<ApplicationsProvider>(
                   builder: (context, applicationsProvider, _) {
                     final totalApps =
                         applicationsProvider.allApplications.length;
 
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: theme.colorScheme.outline.withOpacity(0.2),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                    return AppCardContainer(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Column(
+                        children: [
+                          // Header
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: settings.accentColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.work_outline,
+                                  color: settings.accentColor,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                AppInfo.appName,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Version ${AppInfo.version}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.textTheme.bodySmall?.color
+                                      ?.withOpacity(0.6),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            // Header
-                            Row(
+                          const SizedBox(height: AppSpacing.lg),
+
+                          // Statistics
+                          Container(
+                            padding: const EdgeInsets.all(AppSpacing.lg),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  settings.accentColor.withOpacity(0.1),
+                                  settings.accentColor.withOpacity(0.04),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                  AppDimensions.cardBorderRadius),
+                              border: Border.all(
+                                color: settings.accentColor.withOpacity(0.2),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary
-                                        .withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(
-                                    Icons.work_outline,
-                                    color: theme.colorScheme.primary,
-                                    size: 20,
+                                Icon(
+                                  Icons.work,
+                                  size: 32,
+                                  color: settings.accentColor,
+                                ),
+                                const SizedBox(width: AppSpacing.md),
+                                Text(
+                                  totalApps.toString(),
+                                  style:
+                                      theme.textTheme.displayMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: settings.accentColor,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: AppSpacing.md),
                                 Text(
-                                  AppInfo.appName,
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Version ${AppInfo.version}',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.textTheme.bodySmall?.color
-                                        ?.withOpacity(0.6),
+                                  'Job Application${totalApps == 1 ? '' : 's'} Created',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    color: theme.textTheme.bodyMedium?.color,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 20),
-
-                            // Statistics - Styled like mockup
-                            Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    settings.accentColor.withOpacity(0.1),
-                                    settings.accentColor.withOpacity(0.05),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: settings.accentColor.withOpacity(0.3),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.work,
-                                    size: 32,
-                                    color: settings.accentColor,
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Text(
-                                    totalApps.toString(),
-                                    style:
-                                        theme.textTheme.displayMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: settings.accentColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Text(
-                                    'Job Application${totalApps == 1 ? '' : 's'} Created',
-                                    style: theme.textTheme.titleLarge?.copyWith(
-                                      color: theme.textTheme.bodyMedium?.color,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     );
                   },
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xl),
 
-                // Support message and button - Outside the card, centered
+                // Support message and button
                 Center(
                   child: Column(
                     children: [
-                      // Footer message with heart icon - single line
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
                             'Made with ',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.textTheme.bodyMedium?.color,
-                            ),
+                            style: theme.textTheme.bodyMedium,
                           ),
                           Icon(
                             Icons.favorite,
-                            size: 18,
+                            size: 16,
                             color: settings.accentColor,
-                          ),
-                          Text(
-                            ' for you to enjoy. Please consider supporting the development.',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.textTheme.bodyMedium?.color,
-                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
-
-                      // Support button (no icon)
-                      FilledButton(
+                      const SizedBox(height: AppSpacing.md),
+                      AppCardActionButton(
                         onPressed: () => _openSupportLink(),
-                        style:
-                            UIConstants.getPrimaryButtonStyle(context).copyWith(
-                          backgroundColor:
-                              WidgetStateProperty.all(settings.accentColor),
-                          foregroundColor:
-                              WidgetStateProperty.all(Colors.white),
-                          padding: WidgetStateProperty.all(
-                            const EdgeInsets.symmetric(
-                              horizontal: 32,
-                              vertical: 14,
-                            ),
-                          ),
-                        ),
-                        child: const Text('Support'),
+                        label: 'Support',
+                        isFilled: true,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.xl),
               ],
             ),
           ),
@@ -479,7 +370,6 @@ class SettingsScreen extends StatelessWidget {
   void _openSupportLink() async {
     const url = 'https://www.paypal.com/paypalme/ivburic';
     try {
-      // On Windows, use cmd to open the URL
       if (Platform.isWindows) {
         await Process.run('cmd', ['/c', 'start', url]);
       } else if (Platform.isMacOS) {
@@ -507,32 +397,14 @@ class SettingsScreen extends StatelessWidget {
     final backupPath = settings.backupPath;
     if (backupPath == null) return;
 
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: Card(
-          child: Padding(
-            padding: EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Creating backup zip...'),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+    final closeLoading =
+        DialogUtils.showLoading(context, message: 'Creating backup zip...');
 
     try {
       final file = await BackupService.instance.createBackup(backupPath);
 
       if (context.mounted) {
-        Navigator.pop(context); // Close loading dialog
+        closeLoading();
 
         if (file != null) {
           context.showSuccessSnackBar(
@@ -543,7 +415,7 @@ class SettingsScreen extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.pop(context);
+        closeLoading();
         context.showErrorSnackBar('Error: $e');
       }
     }
@@ -575,36 +447,16 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _performRestore(BuildContext context, String zipPath) async {
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: Card(
-          child: Padding(
-            padding: EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Restoring backup...'),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+    final closeLoading =
+        DialogUtils.showLoading(context, message: 'Restoring backup...');
 
     try {
       final success = await BackupService.instance.restoreBackup(zipPath);
 
       if (context.mounted) {
-        Navigator.pop(context); // Close loading dialog
+        closeLoading();
 
         if (success) {
-          // Since we overwritten everything, the app state is now invalid
-          // Most robust thing is to tell the user to restart
           showDialog(
             context: context,
             barrierDismissible: false,
@@ -626,7 +478,7 @@ class SettingsScreen extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.pop(context);
+        closeLoading();
         context.showErrorSnackBar('Error during restore: $e');
       }
     }
@@ -653,15 +505,20 @@ class _ColorButton extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: Container(
+      child: AnimatedContainer(
+        duration: AppDurations.quick,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? color.withOpacity(0.15)
-              : theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              ? color.withOpacity(0.12)
+              : theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? color : theme.dividerColor.withOpacity(0.3),
+            color: isSelected
+                ? color
+                : AppColors.getColor(
+                        context, AppColors.lightBorder, AppColors.darkBorder)
+                    .withOpacity(0.5),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -669,25 +526,25 @@ class _ColorButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
                 color: color,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withOpacity(0.4),
                   width: 2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withOpacity(0.4),
-                    blurRadius: 8,
-                    spreadRadius: 1,
+                    color: color.withOpacity(0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
               child: isSelected
-                  ? const Icon(Icons.check, color: Colors.white, size: 18)
+                  ? const Icon(Icons.check, color: Colors.white, size: 16)
                   : null,
             ),
             const SizedBox(width: 10),

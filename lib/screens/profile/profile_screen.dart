@@ -1,26 +1,25 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../providers/user_data_provider.dart';
-import '../../models/user_data/interest.dart';
 import '../../models/user_data/skill.dart';
 import '../../models/user_data/language.dart';
 import '../../models/master_profile.dart';
 import '../../constants/app_constants.dart';
 import '../../dialogs/unified_import_dialog.dart';
-import '../../utils/ui_utils.dart';
-import '../../utils/dialog_utils.dart';
-import '../../dialogs/interest_edit_dialog.dart';
-import '../templates/sections/personal_info_section.dart';
-import '../templates/sections/skills_section.dart';
-import '../templates/sections/work_experience_section.dart';
-import '../templates/sections/education_section.dart';
-import '../templates/sections/languages_section.dart';
-import '../../constants/ui_constants.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/app_card.dart';
 import '../../widgets/profile_section_card.dart';
 import '../../widgets/profile_long_text_editor.dart';
+import '../../utils/ui_utils.dart';
+import '../../utils/dialog_utils.dart';
+import '../templates/sections/personal_info_section.dart';
+import '../templates/sections/work_experience_section.dart';
+import '../templates/sections/skills_section.dart';
+import '../templates/sections/languages_section.dart';
+import '../templates/sections/education_section.dart';
+import '../templates/sections/interests_section.dart';
 
 /// Profile Screen - Central hub for all user data
 ///
@@ -36,17 +35,17 @@ class ProfileScreen extends StatelessWidget {
     return Container(
       color: theme.colorScheme.surface,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header - Simple title with language switcher
             _buildHeader(context),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.lg),
 
             // Import/Export Card - Accent colored "Start Here" card
             _buildImportExportCard(context),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
 
             // Profile Sections
             const _ProfileSections(),
@@ -61,58 +60,35 @@ class ProfileScreen extends StatelessWidget {
     final userDataProvider = context.watch<UserDataProvider>();
     final currentLang = userDataProvider.currentLanguage;
 
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Profile Templates',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+    return UIUtils.buildSectionHeader(
+      context,
+      title: 'Profile Template',
+      subtitle:
+          'Master CV and Cover Letter data for all your future job applications.',
+      icon: Icons.account_circle_outlined,
+      action: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Delete Button (only if data exists)
+          if (userDataProvider.hasData) ...[
+            IconButton.filledTonal(
+              onPressed: () => _confirmDeleteProfile(context),
+              icon: const Icon(Icons.delete_outline, size: 20),
+              tooltip: 'Clear ${currentLang.code.toUpperCase()} Profile',
+              style: IconButton.styleFrom(
+                backgroundColor: theme.colorScheme.error.withValues(alpha: 0.1),
+                foregroundColor: theme.colorScheme.error,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                padding: const EdgeInsets.all(10),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Master CV data for all your job applications',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.textTheme.bodySmall?.color,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-
-        // Delete Button (only if data exists)
-        if (userDataProvider.hasData) ...[
-          IconButton.filledTonal(
-            onPressed: () => _confirmDeleteProfile(context),
-            icon: const Icon(Icons.delete_outline, size: 20),
-            tooltip: 'Clear ${currentLang.code.toUpperCase()} Profile',
-            style: IconButton.styleFrom(
-              backgroundColor: theme.colorScheme.error.withOpacity(0.1),
-              foregroundColor: theme.colorScheme.error,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: const EdgeInsets.all(10),
             ),
-          ),
-          const SizedBox(width: 12),
-        ],
+            const SizedBox(width: 12),
+          ],
 
-        // Language Switcher
-        Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: theme.colorScheme.outline.withOpacity(0.2),
-            ),
-          ),
-          child: Row(
+          // Language Switcher
+          Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildLanguageToggle(
@@ -121,11 +97,7 @@ class ProfileScreen extends StatelessWidget {
                 DocumentLanguage.en,
                 currentLang == DocumentLanguage.en,
               ),
-              Container(
-                width: 1,
-                height: 32,
-                color: theme.colorScheme.outline.withOpacity(0.2),
-              ),
+              const SizedBox(width: 4),
               _buildLanguageToggle(
                 context,
                 userDataProvider,
@@ -134,122 +106,112 @@ class ProfileScreen extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildImportExportCard(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary.withOpacity(0.08),
-            theme.colorScheme.primary.withOpacity(0.04),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return AppCardContainer(
+      padding: EdgeInsets.zero,
+      useAccentBorder: true,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primary.withOpacity(0.08),
+              theme.colorScheme.primary.withOpacity(0.02),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppDimensions.cardBorderRadius),
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.3),
-          width: 2,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Row(
-          children: [
-            // Icon with accent
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Row(
+            children: [
+              // Icon with accent
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.15),
+                  borderRadius:
+                      BorderRadius.circular(AppDimensions.inputBorderRadius),
+                ),
+                child: Icon(
+                  Icons.upload_file,
+                  color: theme.colorScheme.primary,
+                  size: 28,
+                ),
               ),
-              child: Icon(
-                Icons.upload_file,
-                color: theme.colorScheme.primary,
-                size: 28,
-              ),
-            ),
-            const SizedBox(width: 20),
-            // Text content
-            Expanded(
-              child: Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 12,
-                runSpacing: 4,
-                children: [
-                  Text(
-                    'Import & Export',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+              const SizedBox(width: AppSpacing.lg),
+              // Text content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Import & Export',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'START HERE',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: theme.colorScheme.onPrimary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'START HERE',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: theme.colorScheme.onPrimary,
-                        letterSpacing: 0.5,
+                    const SizedBox(height: 4),
+                    Text(
+                      'Import YAML files to populate your profile data, or export your current profile for backup',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color:
+                            theme.textTheme.bodySmall?.color?.withOpacity(0.8),
                       ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.lg),
+              // Action buttons
+              Row(
+                children: [
+                  AppCardActionButton(
+                    label: 'Import',
+                    icon: Icons.upload,
+                    onPressed: () => _showImportDialog(context),
+                    isFilled: true,
                   ),
-                  Text(
-                    'Import YAML files to populate your profile data, or export your current profile for backup',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white.withOpacity(0.6),
-                    ),
+                  const SizedBox(width: AppSpacing.sm),
+                  AppCardActionButton(
+                    label: 'Export',
+                    icon: Icons.download,
+                    onPressed: () => _showExportDialog(context),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(width: 20),
-            // Action buttons
-            Row(
-              children: [
-                FilledButton.tonalIcon(
-                  onPressed: () => _showImportDialog(context),
-                  icon: const Icon(Icons.upload, size: 18),
-                  label: const Text('Import'),
-                  style: UIConstants.getPrimaryButtonStyle(context).copyWith(
-                    backgroundColor: WidgetStateProperty.all(
-                      theme.colorScheme.primary.withOpacity(0.15),
-                    ),
-                    foregroundColor: WidgetStateProperty.all(
-                      theme.colorScheme.primary,
-                    ),
-                  ),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => _showExportDialog(context),
-                  icon: const Icon(Icons.download, size: 18),
-                  label: const Text('Export'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: theme.colorScheme.primary,
-                    side: BorderSide(
-                      color: theme.colorScheme.primary.withOpacity(0.5),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    minimumSize: const Size(0, 44),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -263,48 +225,43 @@ class ProfileScreen extends StatelessWidget {
   ) {
     final theme = Theme.of(context);
 
-    return Material(
-      color: isSelected
-          ? theme.colorScheme.primary.withOpacity(0.12)
-          : Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: () => provider.switchLanguage(language),
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Flag with subtle background
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? theme.colorScheme.primary.withOpacity(0.1)
-                      : theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  language.flag,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Language label
-              Text(
-                language.code.toUpperCase(),
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
+    return OutlinedButton(
+      onPressed: () => provider.switchLanguage(language),
+      style: OutlinedButton.styleFrom(
+        backgroundColor: isSelected
+            ? theme.colorScheme.primary.withOpacity(0.08)
+            : Colors.transparent,
+        foregroundColor: isSelected
+            ? theme.colorScheme.primary
+            : theme.textTheme.bodyMedium?.color,
+        side: BorderSide(
+          color: isSelected
+              ? theme.colorScheme.primary
+              : theme.colorScheme.outline.withOpacity(0.3),
+          width: isSelected ? 1.5 : 1,
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            language.flag,
+            style: const TextStyle(fontSize: 16),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            language.code.toUpperCase(),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -332,12 +289,12 @@ class ProfileScreen extends StatelessWidget {
         );
 
         if (result == true && context.mounted) {
-          context.showSuccessSnackBar('Profile data imported successfully!');
+          UIUtils.showSuccess(context, 'Profile data imported successfully!');
         }
       }
     } catch (e) {
       if (context.mounted) {
-        context.showErrorSnackBar('Error selecting file: $e');
+        UIUtils.showError(context, 'Error selecting file: $e');
       }
     }
   }
@@ -348,7 +305,7 @@ class ProfileScreen extends StatelessWidget {
 
     if (profile == null) {
       if (context.mounted) {
-        context.showErrorSnackBar('No profile data to export');
+        UIUtils.showError(context, 'No profile data to export');
       }
       return;
     }
@@ -393,14 +350,18 @@ class ProfileScreen extends StatelessWidget {
       if (info.address != null) buffer.writeln('  address: "${info.address}"');
       if (info.city != null) buffer.writeln('  city: "${info.city}"');
       if (info.country != null) buffer.writeln('  country: "${info.country}"');
-      if (info.linkedin != null)
+      if (info.linkedin != null) {
         buffer.writeln('  linkedin: "${info.linkedin}"');
+      }
       if (info.website != null) buffer.writeln('  website: "${info.website}"');
-      if (info.jobTitle != null)
+      if (info.jobTitle != null) {
         buffer.writeln('  job_title: "${info.jobTitle}"');
-      if (info.profileSummary != null && info.profileSummary!.isNotEmpty) {
+      }
+
+      // Profile summary is stored at MasterProfile level, not in PersonalInfo
+      if (profile.profileSummary.isNotEmpty) {
         buffer.writeln('  profile_summary: |');
-        for (final line in info.profileSummary!.split('\n')) {
+        for (final line in profile.profileSummary.split('\n')) {
           buffer.writeln('    $line');
         }
       }
@@ -413,8 +374,9 @@ class ProfileScreen extends StatelessWidget {
       for (final exp in profile.experiences) {
         buffer.writeln('  - position: "${exp.position}"');
         buffer.writeln('    company: "${exp.company}"');
-        if (exp.location != null)
+        if (exp.location != null) {
           buffer.writeln('    location: "${exp.location}"');
+        }
         buffer.writeln(
             '    start_date: "${exp.startDate.year}-${exp.startDate.month.toString().padLeft(2, '0')}-${exp.startDate.day.toString().padLeft(2, '0')}"');
         if (exp.endDate != null) {
@@ -455,10 +417,12 @@ class ProfileScreen extends StatelessWidget {
       buffer.writeln('skills:');
       for (final skill in profile.skills) {
         buffer.writeln('  - name: "${skill.name}"');
-        if (skill.category != null)
+        if (skill.category != null) {
           buffer.writeln('    category: "${skill.category}"');
-        if (skill.level != null)
+        }
+        if (skill.level != null) {
           buffer.writeln('    level: "${skill.level!.name}"');
+        }
       }
       buffer.writeln();
     }
@@ -529,6 +493,7 @@ class _ProfileSections extends StatelessWidget {
       children: [
         // Personal Info Section - Wrapped (has Add button in inner widget)
         ProfileSectionCard(
+          cardId: 'personal_info',
           title: 'Personal Information',
           icon: Icons.person_outline,
           count: userDataProvider.personalInfo != null ? 1 : 0,
@@ -618,6 +583,7 @@ class _ProfileSections extends StatelessWidget {
 
         // Work Experience Section - Wrapped
         ProfileSectionCard(
+          cardId: 'work_experience',
           title: 'Work Experience',
           icon: Icons.work_outline,
           count: userDataProvider.experiences.length,
@@ -684,6 +650,7 @@ class _ProfileSections extends StatelessWidget {
 
         // Skills Section - Wrapped
         ProfileSectionCard(
+          cardId: 'skills',
           title: 'Skills',
           icon: Icons.psychology_outlined,
           count: userDataProvider.skills.length,
@@ -744,6 +711,7 @@ class _ProfileSections extends StatelessWidget {
 
         // Languages Section - Wrapped
         ProfileSectionCard(
+          cardId: 'languages',
           title: 'Languages',
           icon: Icons.language,
           count: userDataProvider.languages.length,
@@ -803,7 +771,48 @@ class _ProfileSections extends StatelessWidget {
         const SizedBox(height: 16),
 
         // Interests Section
-        _buildInterestsSection(context),
+        ProfileSectionCard(
+          cardId: 'interests',
+          title: 'Interests',
+          icon: Icons.interests_outlined,
+          count: userDataProvider.interests.length,
+          actionLabel: 'Add',
+          actionIcon: Icons.add,
+          onActionPressed: () => InterestsSection.showAddDialog(context),
+          collapsedPreview: userDataProvider.interests.isEmpty
+              ? Text(
+                  'No interests added yet',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+                  ),
+                )
+              : Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: userDataProvider.interests.take(10).map((i) {
+                    final color = theme.colorScheme.primary;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: color.withOpacity(0.4),
+                        ),
+                      ),
+                      child: Text(
+                        i.name,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: color,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+          content: const InterestsSection(showHeader: false),
+        ),
         const SizedBox(height: 16),
 
         // Education Section - Wrapped
@@ -833,6 +842,7 @@ class _ProfileSections extends StatelessWidget {
     final theme = Theme.of(context);
 
     return ProfileSectionCard(
+      cardId: title.toLowerCase().replaceAll(' ', '_'),
       title: title,
       icon: icon,
       count: count,
@@ -883,122 +893,13 @@ class _ProfileSections extends StatelessWidget {
     }
   }
 
-  Widget _buildInterestsSection(BuildContext context) {
-    final userDataProvider = context.watch<UserDataProvider>();
-    final interests = userDataProvider.interests;
-    final theme = Theme.of(context);
-
-    return ProfileSectionCard(
-      title: 'Interests',
-      icon: Icons.interests_outlined,
-      count: interests.length,
-      actionLabel: 'Add',
-      actionIcon: Icons.add,
-      onActionPressed: () => _addInterest(context, userDataProvider),
-      collapsedPreview: interests.isEmpty
-          ? Text(
-              'No interests added yet',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
-              ),
-            )
-          : Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: interests.take(8).map((i) {
-                final color = theme.colorScheme.primary;
-                return Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: color.withOpacity(0.4),
-                    ),
-                  ),
-                  child: Text(
-                    i.name,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: color,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-      content: interests.isEmpty
-          ? UIUtils.buildEmptyState(
-              context,
-              icon: Icons.interests_outlined,
-              title: 'No Interests Added',
-              message: 'Add your hobbies and interests to personalize your CV.',
-              action: FilledButton.icon(
-                onPressed: () => _addInterest(context, userDataProvider),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add Interest'),
-              ),
-            )
-          : Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: interests.map((interest) {
-                final color = theme.colorScheme.primary;
-                return Container(
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: color.withOpacity(0.4),
-                    ),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () =>
-                          _editInterest(context, userDataProvider, interest),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              interest.name,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: color,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            InkWell(
-                              onTap: () => _deleteInterest(
-                                  context, userDataProvider, interest),
-                              child: Icon(
-                                Icons.close,
-                                size: 14,
-                                color: color.withOpacity(0.6),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-    );
-  }
-
   Widget _buildProfileSummarySection(BuildContext context) {
     final userDataProvider = context.watch<UserDataProvider>();
     final profileSummary = userDataProvider.profileSummary;
     final theme = Theme.of(context);
 
     return ProfileSectionCard(
+      cardId: 'profile_summary',
       title: 'Profile Summary',
       icon: Icons.description_outlined,
       count: profileSummary.isNotEmpty ? 1 : 0,
@@ -1034,6 +935,7 @@ class _ProfileSections extends StatelessWidget {
         coverLetterBody.split('\n\n').where((p) => p.trim().isNotEmpty).length;
 
     return ProfileSectionCard(
+      cardId: 'default_cover_letter',
       title: 'Default Cover Letter',
       icon: Icons.article_outlined,
       count: paragraphCount,
@@ -1042,7 +944,7 @@ class _ProfileSections extends StatelessWidget {
       collapsedPreview: Text(
         coverLetterBody.isEmpty
             ? 'No default cover letter set'
-            : '${paragraphCount} paragraph${paragraphCount == 1 ? '' : 's'}',
+            : '$paragraphCount paragraph${paragraphCount == 1 ? '' : 's'}',
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
         ),
@@ -1059,66 +961,5 @@ class _ProfileSections extends StatelessWidget {
         minLines: 8,
       ),
     );
-  }
-
-  // Interest management helpers
-  Future<void> _addInterest(
-    BuildContext context,
-    UserDataProvider provider,
-  ) async {
-    final result = await showDialog<Interest>(
-      context: context,
-      builder: (context) => const InterestEditDialog(),
-    );
-
-    if (result != null) {
-      provider.addInterest(result);
-    }
-  }
-
-  Future<void> _editInterest(
-    BuildContext context,
-    UserDataProvider provider,
-    Interest interest,
-  ) async {
-    final result = await showDialog<Interest>(
-      context: context,
-      builder: (context) => InterestEditDialog(interest: interest),
-    );
-
-    if (result != null) {
-      provider.updateInterest(result);
-    }
-  }
-
-  Future<void> _deleteInterest(
-    BuildContext context,
-    UserDataProvider provider,
-    Interest interest,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Interest'),
-        content: Text('Remove "${interest.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      provider.deleteInterest(interest.id);
-    }
   }
 }

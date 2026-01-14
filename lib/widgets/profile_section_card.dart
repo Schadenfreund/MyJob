@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+import '../services/preferences_service.dart';
+import 'app_card.dart';
 
 /// Reusable collapsible section card for profile data
 ///
@@ -7,12 +10,14 @@ import 'package:flutter/material.dart';
 /// - Action button in header
 /// - Smooth expand/collapse animation
 /// - Accent color support for highlighting
+/// - Persistence of expansion state via PreferencesService
 class ProfileSectionCard extends StatefulWidget {
   const ProfileSectionCard({
     required this.title,
     required this.icon,
     required this.count,
     required this.content,
+    this.cardId,
     this.actionLabel = 'Add',
     this.actionIcon = Icons.add,
     this.onActionPressed,
@@ -26,6 +31,7 @@ class ProfileSectionCard extends StatefulWidget {
   final IconData icon;
   final int count;
   final Widget content;
+  final String? cardId;
   final String actionLabel;
   final IconData actionIcon;
   final VoidCallback? onActionPressed;
@@ -39,11 +45,44 @@ class ProfileSectionCard extends StatefulWidget {
 
 class _ProfileSectionCardState extends State<ProfileSectionCard> {
   late bool _isExpanded;
+  final _prefs = PreferencesService.instance;
 
   @override
   void initState() {
     super.initState();
+    // Initialize with default value immediately to prevent LateInitializationError
     _isExpanded = widget.initiallyExpanded;
+    // Then load saved state asynchronously
+    _loadSavedState();
+  }
+
+  /// Load expansion state from preferences
+  Future<void> _loadSavedState() async {
+    if (widget.cardId == null) return;
+
+    await _prefs.initialize();
+    final prefKey = 'profile_section_${widget.cardId}';
+    final savedState =
+        _prefs.getBool(prefKey, defaultValue: widget.initiallyExpanded);
+
+    if (mounted && savedState != _isExpanded) {
+      setState(() {
+        _isExpanded = savedState;
+      });
+    }
+  }
+
+  /// Toggle expansion and save to preferences
+  void _toggleExpanded() async {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+
+    // Save expanded state to preferences if card has an ID
+    if (widget.cardId != null) {
+      final prefKey = 'profile_section_${widget.cardId}';
+      await _prefs.setBool(prefKey, _isExpanded);
+    }
   }
 
   @override
@@ -52,113 +91,86 @@ class _ProfileSectionCardState extends State<ProfileSectionCard> {
     final accentColor =
         widget.useAccentColor ? theme.colorScheme.primary : null;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: widget.useAccentColor
-              ? theme.colorScheme.primary.withOpacity(0.3)
-              : theme.colorScheme.outline.withOpacity(0.2),
-          width: widget.useAccentColor ? 2 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return AppCardContainer(
+      padding: EdgeInsets.zero,
+      useAccentBorder: widget.useAccentColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          Material(
-            color: widget.useAccentColor
-                ? theme.colorScheme.primary.withOpacity(0.08)
-                : Colors.transparent,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: InkWell(
-              onTap: () => setState(() => _isExpanded = !_isExpanded),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    // Icon
+          InkWell(
+            onTap: _toggleExpanded,
+            borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppDimensions.cardBorderRadius)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+              child: Row(
+                children: [
+                  // Icon
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: (accentColor ?? theme.colorScheme.primary)
+                          .withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(
+                          AppDimensions.inputBorderRadius),
+                    ),
+                    child: Icon(
+                      widget.icon,
+                      color: accentColor ?? theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  // Title
+                  Text(
+                    widget.title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: accentColor,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Count badge
+                  if (widget.count > 0)
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: (accentColor ?? theme.colorScheme.primary)
-                            .withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                            .withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(
-                        widget.icon,
-                        color: accentColor ?? theme.colorScheme.primary,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Title
-                    Text(
-                      widget.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: accentColor,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Count badge
-                    if (widget.count > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: (accentColor ?? theme.colorScheme.primary)
-                              .withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '${widget.count}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: accentColor ?? theme.colorScheme.primary,
-                          ),
+                      child: Text(
+                        '${widget.count}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: accentColor ?? theme.colorScheme.primary,
                         ),
                       ),
-                    const Spacer(),
-                    // Action button
-                    if (widget.onActionPressed != null)
-                      OutlinedButton.icon(
-                        onPressed: widget.onActionPressed,
-                        icon: Icon(widget.actionIcon, size: 16),
-                        label: Text(widget.actionLabel),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor:
-                              accentColor ?? theme.colorScheme.primary,
-                          side: BorderSide(
-                            color: (accentColor ?? theme.colorScheme.primary)
-                                .withOpacity(0.5),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          minimumSize: const Size(0, 36),
-                        ),
-                      ),
-                    const SizedBox(width: 8),
-                    // Expand/collapse icon
-                    Icon(
-                      _isExpanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
                     ),
-                  ],
-                ),
+                  const Spacer(),
+                  // Action button
+                  if (widget.onActionPressed != null)
+                    AppCardActionButton(
+                      label: widget.actionLabel,
+                      icon: widget.actionIcon,
+                      onPressed: widget.onActionPressed!,
+                      color: accentColor,
+                    ),
+                  const SizedBox(width: AppSpacing.sm),
+                  // Expand/collapse icon
+                  Icon(
+                    _isExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+                    size: 20,
+                  ),
+                ],
               ),
             ),
           ),
@@ -169,12 +181,14 @@ class _ProfileSectionCardState extends State<ProfileSectionCard> {
               children: [
                 if (widget.collapsedPreview != null && !_isExpanded) ...[
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
                     child: widget.collapsedPreview,
                   ),
                 ] else if (_isExpanded) ...[
                   Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
                     child: widget.content,
                   ),
                 ],
@@ -185,7 +199,7 @@ class _ProfileSectionCardState extends State<ProfileSectionCard> {
                 : (widget.collapsedPreview != null
                     ? CrossFadeState.showSecond
                     : CrossFadeState.showFirst),
-            duration: const Duration(milliseconds: 200),
+            duration: AppDurations.medium,
           ),
         ],
       ),

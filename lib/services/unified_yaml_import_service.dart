@@ -79,6 +79,7 @@ class UnifiedYamlImportService {
     detectedLanguage ??= 'english';
 
     PersonalInfo? personalInfo;
+    String profileSummary = '';
     List<Skill> skills = [];
     List<Language> languages = [];
     List<Interest> interests = [];
@@ -97,8 +98,10 @@ class UnifiedYamlImportService {
         country: piData['country'] as String?,
         linkedin: piData['linkedin'] as String?,
         website: piData['website'] as String?,
-        profileSummary: piData['profile_summary'] as String?,
       );
+
+      // Extract profile summary separately for MasterProfile
+      profileSummary = piData['profile_summary'] as String? ?? '';
     }
 
     // Parse skills
@@ -165,6 +168,7 @@ class UnifiedYamlImportService {
       filePath: filePath,
       language: detectedLanguage,
       personalInfo: personalInfo,
+      profileSummary: profileSummary,
       skills: skills,
       languages: languages,
       interests: interests,
@@ -311,6 +315,7 @@ class UnifiedImportResult {
 
   // CV Data fields
   final PersonalInfo? personalInfo;
+  final String profileSummary;
   final List<Skill> skills;
   final List<Language> languages;
   final List<Interest> interests;
@@ -332,6 +337,7 @@ class UnifiedImportResult {
     required this.fileType,
     this.filePath,
     this.personalInfo,
+    this.profileSummary = '',
     this.skills = const [],
     this.languages = const [],
     this.interests = const [],
@@ -351,6 +357,7 @@ class UnifiedImportResult {
     required String filePath,
     String? language,
     PersonalInfo? personalInfo,
+    String profileSummary = '',
     List<Skill> skills = const [],
     List<Language> languages = const [],
     List<Interest> interests = const [],
@@ -362,6 +369,7 @@ class UnifiedImportResult {
       filePath: filePath,
       language: language,
       personalInfo: personalInfo,
+      profileSummary: profileSummary,
       skills: skills,
       languages: languages,
       interests: interests,

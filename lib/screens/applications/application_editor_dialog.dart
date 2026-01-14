@@ -6,6 +6,7 @@ import '../../providers/user_data_provider.dart';
 import '../../models/job_application.dart';
 
 import '../../constants/app_constants.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/status_badge.dart';
 
 class ApplicationEditorDialog extends StatefulWidget {
@@ -147,7 +148,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                     }).toList(),
                   ),
                   const SizedBox(height: 24),
-                  Divider(color: theme.dividerColor),
+                  const SizedBox(height: AppSpacing.md),
                   const SizedBox(height: 24),
                 ],
 
@@ -242,7 +243,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
 
                 // Language Selection (only for new applications)
                 if (!_isEditing) ...[
-                  Divider(color: theme.dividerColor),
+                  const SizedBox(height: AppSpacing.md),
                   const SizedBox(height: 24),
                   Text('Application Language',
                       style: theme.textTheme.titleMedium
@@ -291,7 +292,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                 ],
 
                 // Contact section
-                Divider(color: theme.dividerColor),
+                const SizedBox(height: AppSpacing.md),
                 const SizedBox(height: 24),
                 Text('Contact Person (Optional)',
                     style: theme.textTheme.titleMedium
@@ -320,7 +321,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                 const SizedBox(height: 24),
 
                 // Notes
-                Divider(color: theme.dividerColor),
+                const SizedBox(height: AppSpacing.md),
                 const SizedBox(height: 24),
                 TextFormField(
                   controller: _notesController,

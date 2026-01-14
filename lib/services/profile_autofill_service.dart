@@ -48,7 +48,9 @@ class ProfileAutofillService {
 
   /// Get profile summary
   String? getProfileSummary() {
-    return userDataProvider.personalInfo?.profileSummary;
+    return userDataProvider.profileSummary.isNotEmpty
+        ? userDataProvider.profileSummary
+        : null;
   }
 
   /// Auto-fill CV template with profile data
@@ -209,8 +211,7 @@ class ProfileAutofillService {
       'email': info?.email != null && info!.email!.isNotEmpty,
       'phone': info?.phone != null && info!.phone!.isNotEmpty,
       'address': info?.address != null && info!.address!.isNotEmpty,
-      'profileSummary':
-          info?.profileSummary != null && info!.profileSummary!.isNotEmpty,
+      'profileSummary': userDataProvider.profileSummary.isNotEmpty,
       'skills': userDataProvider.skills.isNotEmpty,
       'interests': userDataProvider.interests.isNotEmpty,
       'languages': userDataProvider.languages.isNotEmpty,

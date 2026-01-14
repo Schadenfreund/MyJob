@@ -5,7 +5,6 @@ class PersonalInfo {
   final String id;
   final String fullName;
   final String? jobTitle;
-  final String? profileSummary;
   final String? profilePicturePath;
   final String? email;
   final String? phone;
@@ -21,7 +20,6 @@ class PersonalInfo {
     String? id,
     required this.fullName,
     this.jobTitle,
-    this.profileSummary,
     this.profilePicturePath,
     this.email,
     this.phone,
@@ -42,7 +40,6 @@ class PersonalInfo {
   PersonalInfo copyWith({
     String? fullName,
     String? jobTitle,
-    String? profileSummary,
     String? profilePicturePath,
     String? email,
     String? phone,
@@ -57,7 +54,6 @@ class PersonalInfo {
       id: id,
       fullName: fullName ?? this.fullName,
       jobTitle: jobTitle ?? this.jobTitle,
-      profileSummary: profileSummary ?? this.profileSummary,
       profilePicturePath: profilePicturePath ?? this.profilePicturePath,
       email: email ?? this.email,
       phone: phone ?? this.phone,
@@ -76,7 +72,6 @@ class PersonalInfo {
       'id': id,
       'fullName': fullName,
       'jobTitle': jobTitle,
-      'profileSummary': profileSummary,
       'profilePicturePath': profilePicturePath,
       'email': email,
       'phone': phone,
@@ -95,7 +90,6 @@ class PersonalInfo {
       id: json['id'] as String,
       fullName: json['fullName'] as String,
       jobTitle: json['jobTitle'] as String?,
-      profileSummary: json['profileSummary'] as String?,
       profilePicturePath: json['profilePicturePath'] as String?,
       email: json['email'] as String?,
       phone: json['phone'] as String?,

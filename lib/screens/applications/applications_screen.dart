@@ -4,17 +4,16 @@ import 'dart:io';
 import '../../providers/applications_provider.dart';
 import '../../models/job_application.dart';
 import '../../constants/app_constants.dart';
-import '../../constants/ui_constants.dart';
+import '../../theme/app_theme.dart';
 import '../../utils/ui_utils.dart';
 import '../../utils/dialog_utils.dart';
-import '../../services/storage_service.dart';
 import '../../services/preferences_service.dart';
-import '../../models/template_style.dart';
-import '../../models/template_customization.dart';
+import '../../services/storage_service.dart';
 import 'application_editor_dialog.dart';
 import '../../dialogs/job_application_pdf_dialog.dart';
 import '../job_cv_editor/job_cv_editor_screen.dart';
 import 'widgets/compact_application_card.dart';
+import '../../widgets/app_card.dart';
 
 /// Applications Screen - Modern job application tracking with statistics
 class ApplicationsScreen extends StatefulWidget {
@@ -32,16 +31,12 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
   bool _rejectedExpanded = false;
   String _timeRange = 'all';
 
-  // Track individual card expanded states
-  final Map<String, bool> _cardExpandedStates = {};
-
   // Preference keys
   static const String _prefKeyStatsExpanded = 'apps_stats_expanded';
   static const String _prefKeyActiveExpanded = 'apps_active_expanded';
   static const String _prefKeySuccessfulExpanded = 'apps_successful_expanded';
   static const String _prefKeyNoResponseExpanded = 'apps_noresponse_expanded';
   static const String _prefKeyRejectedExpanded = 'apps_rejected_expanded';
-  static const String _prefKeyCardPrefix = 'apps_card_';
 
   final _prefs = PreferencesService.instance;
 
@@ -68,16 +63,6 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
           _prefs.getBool(_prefKeyNoResponseExpanded, defaultValue: true);
       _rejectedExpanded =
           _prefs.getBool(_prefKeyRejectedExpanded, defaultValue: false);
-
-      // Load card states
-      final keys = _prefs.getKeys();
-      for (final key in keys) {
-        if (key.startsWith(_prefKeyCardPrefix)) {
-          final cardId = key.substring(_prefKeyCardPrefix.length);
-          _cardExpandedStates[cardId] =
-              _prefs.getBool(key, defaultValue: false);
-        }
-      }
     });
   }
 
@@ -111,13 +96,8 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
   Future<void> _saveRejectedExpanded(bool value) => _saveExpandedState(
       _prefKeyRejectedExpanded, value, (v) => _rejectedExpanded = v);
 
-  /// Save individual card expanded state
-  Future<void> _saveCardExpanded(String cardId, bool value) async {
-    await _prefs.setBool('$_prefKeyCardPrefix$cardId', value);
-    setState(() => _cardExpandedStates[cardId] = value);
-  }
-
-  List<dynamic> _filterApplicationsByTimeRange(List<dynamic> apps) {
+  List<JobApplication> _filterApplicationsByTimeRange(
+      List<JobApplication> apps) {
     if (_timeRange == 'all') return apps;
 
     final now = DateTime.now();
@@ -155,102 +135,123 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     return Container(
       color: theme.colorScheme.surface,
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(UIUtils.spacingLg),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Job Applications Card (Matching Profile Import/Export style)
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    theme.colorScheme.primary.withOpacity(0.08),
-                    theme.colorScheme.primary.withOpacity(0.04),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            // Header
+            UIUtils.buildSectionHeader(
+              context,
+              title: 'Job Applications',
+              subtitle:
+                  'Track and manage all your job applications in one place',
+              icon: Icons.assignment_outlined,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+
+            // Top Action Card - Refactored to match Profile style
+            AppCardContainer(
+              padding: EdgeInsets.zero,
+              useAccentBorder: true,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary.withOpacity(0.08),
+                      theme.colorScheme.primary.withOpacity(0.02),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius:
+                      BorderRadius.circular(AppDimensions.cardBorderRadius),
                 ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
-                  width: 2,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Row(
-                  children: [
-                    // Icon with accent
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Row(
+                    children: [
+                      // Icon with accent
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(
+                              AppDimensions.inputBorderRadius),
+                        ),
+                        child: Icon(
+                          Icons.add_task_outlined,
+                          color: theme.colorScheme.primary,
+                          size: 28,
+                        ),
                       ),
-                      child: Icon(
-                        Icons.work_history_outlined,
-                        color: theme.colorScheme.primary,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    // Text content
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Job Applications',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                      const SizedBox(width: AppSpacing.lg),
+                      // Text content
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  'Found a new opportunity?',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    'ADD HERE',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: theme.colorScheme.onPrimary,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Track and manage all your job applications in one place',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withOpacity(0.6),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Track where you send your documents and keep notes on each application',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.textTheme.bodySmall?.color
+                                    ?.withOpacity(0.8),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    // Action button
-                    FilledButton.tonalIcon(
-                      onPressed: () => _showAddDialog(context),
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Add Application'),
-                      style:
-                          UIConstants.getPrimaryButtonStyle(context).copyWith(
-                        backgroundColor: WidgetStateProperty.all(
-                          theme.colorScheme.primary.withOpacity(0.15),
-                        ),
-                        foregroundColor: WidgetStateProperty.all(
-                          theme.colorScheme.primary,
-                        ),
-                        padding: WidgetStateProperty.all(
-                          const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 12),
+                          ],
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: AppSpacing.lg),
+                      AppCardActionButton(
+                        onPressed: () => _showAddDialog(context),
+                        icon: Icons.add,
+                        label: 'Add New',
+                        isFilled: true,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-            SizedBox(height: UIUtils.spacingMd),
+            const SizedBox(height: AppSpacing.md),
 
-            // Search and Filter Bar
+            // Search Bar
             _buildSearchBar(context, applicationsProvider),
-            SizedBox(height: UIUtils.spacingMd),
+            const SizedBox(height: AppSpacing.md),
 
             // Applications List
             _buildApplicationsList(context, applicationsProvider),
-            SizedBox(height: UIUtils.spacingLg),
+            const SizedBox(height: AppSpacing.lg),
 
-            // Statistics Dashboard - at bottom
+            // Statistics Dashboard
             _buildStatisticsCard(context, applicationsProvider),
           ],
         ),
@@ -264,7 +265,6 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     final allApps = provider.allApplications;
     final apps = _filterApplicationsByTimeRange(allApps);
 
-    // Calculate statistics based on new simplified statuses
     final total = apps.length;
     final draft =
         apps.where((app) => app.status == ApplicationStatus.draft).length;
@@ -280,188 +280,174 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     final noResponse =
         apps.where((app) => app.status == ApplicationStatus.noResponse).length;
 
-    // Active = draft + applied + interviewing
     final active = draft + applied + interviewing;
 
-    return Container(
-      decoration: UIConstants.getCardDecoration(context),
+    return AppCardContainer(
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Compact Header with collapse button
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _saveStatsExpanded(!_statsExpanded),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.analytics_outlined,
-                      color: theme.colorScheme.primary,
-                      size: 18,
+          InkWell(
+            onTap: () => _saveStatsExpanded(!_statsExpanded),
+            borderRadius: BorderRadius.circular(AppDimensions.cardBorderRadius),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.analytics_outlined,
+                    color: theme.colorScheme.primary,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Statistics',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Statistics',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const Spacer(),
-                    Icon(
-                      _statsExpanded ? Icons.expand_less : Icons.expand_more,
-                      color: theme.colorScheme.primary,
-                      size: 20,
-                    ),
-                  ],
-                ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    _statsExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: theme.colorScheme.primary,
+                    size: 20,
+                  ),
+                ],
               ),
             ),
           ),
-
-          // Animated content with AnimatedCrossFade
-          AnimatedCrossFade(
-            firstChild: const SizedBox(width: double.infinity),
-            secondChild: Column(
-              children: [
-                if (!_statsExpanded) ...[
-                  // Collapsed preview - inline stats (like language toggle)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: theme.colorScheme.outline.withOpacity(0.2),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildInlineStat(context, total.toString(), 'Total',
-                              theme.colorScheme.primary),
-                          _buildStatDivider(theme),
-                          _buildInlineStat(context, active.toString(), 'Active',
-                              Colors.orange),
-                          _buildStatDivider(theme),
-                          _buildInlineStat(context, successful.toString(),
-                              'Success', Colors.green),
-                          _buildStatDivider(theme),
-                          _buildInlineStat(context, rejected.toString(),
-                              'Rejected', Colors.red.withOpacity(0.7)),
-                          _buildStatDivider(theme),
-                          _buildInlineStat(context, noResponse.toString(),
-                              'No Response', Colors.grey),
-                        ],
-                      ),
+          if (!_statsExpanded) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildCompactStatItem(
+                      context,
+                      label: 'Total',
+                      value: total.toString(),
+                      icon: Icons.folder_outlined,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
-                ] else ...[
-                  // Expanded content
-                  Divider(
-                      height: 1, color: theme.dividerColor.withOpacity(0.3)),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Time range filters
-                        Row(
-                          children: [
-                            Text(
-                              'Period:',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.textTheme.bodySmall?.color
-                                    ?.withOpacity(0.7),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            _buildTimeRangeButton(context, 'All', 'all'),
-                            const SizedBox(width: 6),
-                            _buildTimeRangeButton(context, 'Month', 'month'),
-                            const SizedBox(width: 6),
-                            _buildTimeRangeButton(
-                                context, 'Quarter', 'quarter'),
-                            const SizedBox(width: 6),
-                            _buildTimeRangeButton(context, 'Year', 'year'),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Compact Statistics - Single Row
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildCompactStatItem(
-                                context,
-                                label: 'Total',
-                                value: total.toString(),
-                                icon: Icons.folder_outlined,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _buildCompactStatItem(
-                                context,
-                                label: 'Active',
-                                value: active.toString(),
-                                icon: Icons.pending_actions,
-                                color: Colors.orange,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _buildCompactStatItem(
-                                context,
-                                label: 'Successful',
-                                value: successful.toString(),
-                                icon: Icons.check_circle_outline,
-                                color: Colors.green,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _buildCompactStatItem(
-                                context,
-                                label: 'Rejected',
-                                value: rejected.toString(),
-                                icon: Icons.cancel_outlined,
-                                color: Colors.red.withOpacity(0.7),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _buildCompactStatItem(
-                                context,
-                                label: 'No Response',
-                                value: noResponse.toString(),
-                                icon: Icons.schedule,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildCompactStatItem(
+                      context,
+                      label: 'Active',
+                      value: active.toString(),
+                      icon: Icons.pending_actions,
+                      color: AppColors.statusApplied,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildCompactStatItem(
+                      context,
+                      label: 'Success',
+                      value: successful.toString(),
+                      icon: Icons.check_circle_outline,
+                      color: AppColors.statusAccepted,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildCompactStatItem(
+                      context,
+                      label: 'Rejected',
+                      value: rejected.toString(),
+                      icon: Icons.cancel_outlined,
+                      color: AppColors.statusRejected,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildCompactStatItem(
+                      context,
+                      label: 'No Reply',
+                      value: noResponse.toString(),
+                      icon: Icons.schedule,
+                      color: AppColors.statusWithdrawn,
                     ),
                   ),
                 ],
-              ],
+              ),
             ),
-            crossFadeState: _statsExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showSecond, // Always show second for preview
-            duration: const Duration(milliseconds: 200),
-          ),
+          ] else ...[
+            const SizedBox.shrink(),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Period:',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.textTheme.bodySmall?.color
+                              ?.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildTimeRangeButton(context, 'All', 'all'),
+                      const SizedBox(width: 6),
+                      _buildTimeRangeButton(context, 'Month', 'month'),
+                      const SizedBox(width: 6),
+                      _buildTimeRangeButton(context, 'Quarter', 'quarter'),
+                      const SizedBox(width: 6),
+                      _buildTimeRangeButton(context, 'Year', 'year'),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildCompactStatItem(
+                          context,
+                          label: 'Total',
+                          value: total.toString(),
+                          icon: Icons.folder_outlined,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildCompactStatItem(
+                          context,
+                          label: 'Active',
+                          value: active.toString(),
+                          icon: Icons.pending_actions,
+                          color: AppColors.statusApplied,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildCompactStatItem(
+                          context,
+                          label: 'Successful',
+                          value: successful.toString(),
+                          icon: Icons.check_circle_outline,
+                          color: AppColors.statusAccepted,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildCompactStatItem(
+                          context,
+                          label: 'Rejected',
+                          value: rejected.toString(),
+                          icon: Icons.cancel_outlined,
+                          color: AppColors.statusRejected,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -475,7 +461,8 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     return InkWell(
       onTap: () => setState(() => _timeRange = value),
       borderRadius: BorderRadius.circular(6),
-      child: Container(
+      child: AnimatedContainer(
+        duration: AppDurations.quick,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected
@@ -550,44 +537,6 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     );
   }
 
-  Widget _buildInlineStat(
-    BuildContext context,
-    String value,
-    String label,
-    Color color,
-  ) {
-    final theme = Theme.of(context);
-
-    return Column(
-      children: [
-        Text(
-          value,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: color,
-            fontSize: 16,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
-            fontSize: 9,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatDivider(ThemeData theme) {
-    return Container(
-      width: 1,
-      height: 24,
-      color: theme.dividerColor.withOpacity(0.3),
-    );
-  }
-
   Widget _buildSearchBar(BuildContext context, ApplicationsProvider provider) {
     final theme = Theme.of(context);
 
@@ -626,15 +575,15 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         icon: Icons.work_outline,
         title: 'No applications yet',
         message: 'Track where you send your CV and cover letters',
-        action: UIUtils.buildPrimaryButton(
+        action: AppCardActionButton(
           label: 'Add Your First Application',
           onPressed: () => _showAddDialog(context),
           icon: Icons.add,
+          isFilled: true,
         ),
       );
     }
 
-    // Group by status - include successful
     final activeApps = apps
         .where((app) =>
             app.status == ApplicationStatus.draft ||
@@ -656,62 +605,55 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Active Applications - Collapsible
         if (activeApps.isNotEmpty) ...[
           _buildCollapsibleSection(
             context,
             title: 'Active',
             count: activeApps.length,
             icon: Icons.pending_actions,
-            color: Colors.orange,
+            color: AppColors.statusApplied,
             isExpanded: _activeExpanded,
             onToggle: () => _saveActiveExpanded(!_activeExpanded),
             apps: activeApps,
             provider: provider,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.md),
         ],
-
-        // Successful Applications - Collapsible
         if (successfulApps.isNotEmpty) ...[
           _buildCollapsibleSection(
             context,
             title: 'Successful',
             count: successfulApps.length,
             icon: Icons.check_circle,
-            color: Colors.green,
+            color: AppColors.statusAccepted,
             isExpanded: _successfulExpanded,
             onToggle: () => _saveSuccessfulExpanded(!_successfulExpanded),
             apps: successfulApps,
             provider: provider,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.md),
         ],
-
-        // No Response Applications - Collapsible
         if (noResponseApps.isNotEmpty) ...[
           _buildCollapsibleSection(
             context,
             title: 'No Response',
             count: noResponseApps.length,
             icon: Icons.schedule,
-            color: Colors.grey,
+            color: AppColors.statusWithdrawn,
             isExpanded: _noResponseExpanded,
             onToggle: () => _saveNoResponseExpanded(!_noResponseExpanded),
             apps: noResponseApps,
             provider: provider,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.md),
         ],
-
-        // Rejected Applications - Collapsible (collapsed by default)
         if (rejectedApps.isNotEmpty) ...[
           _buildCollapsibleSection(
             context,
             title: 'Rejected',
             count: rejectedApps.length,
             icon: Icons.cancel,
-            color: Colors.red.withOpacity(0.7),
+            color: AppColors.statusRejected,
             isExpanded: _rejectedExpanded,
             onToggle: () => _saveRejectedExpanded(!_rejectedExpanded),
             apps: rejectedApps,
@@ -730,22 +672,21 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     required Color color,
     required bool isExpanded,
     required VoidCallback onToggle,
-    required List<dynamic> apps,
+    required List<JobApplication> apps,
     required ApplicationsProvider provider,
   }) {
     final theme = Theme.of(context);
 
-    return Container(
-      decoration: UIConstants.getCardDecoration(context),
+    return AppCardContainer(
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Collapsible Header
           InkWell(
             onTap: onToggle,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            borderRadius: BorderRadius.circular(AppDimensions.cardBorderRadius),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.md),
               child: Row(
                 children: [
                   Container(
@@ -789,255 +730,193 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
               ),
             ),
           ),
-
-          // Expanded Content with smooth animation
-          AnimatedCrossFade(
-            firstChild: const SizedBox(width: double.infinity),
-            secondChild: Column(
-              children: [
-                Divider(height: 1, color: theme.dividerColor.withOpacity(0.3)),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: apps
-                        .map((app) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child:
-                                  _buildApplicationCard(context, app, provider),
-                            ))
-                        .toList(),
-                  ),
-                ),
-              ],
+          if (isExpanded) ...[
+            const SizedBox.shrink(),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: apps.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: AppSpacing.md),
+                itemBuilder: (context, index) {
+                  final application = apps[index];
+                  return CompactApplicationCard(
+                    application: application,
+                    onEdit: () => _showEditDialog(context, application),
+                    onDelete: () => _confirmDelete(context, application),
+                    onEditContent: () => _editContent(context, application),
+                    onViewPdf: () => _viewPdf(context, application),
+                    onViewCoverLetter: () =>
+                        _viewCoverLetter(context, application),
+                    onOpenFolder: () => _openFolder(context, application),
+                    onStatusChange: (status) =>
+                        provider.updateStatus(application.id, status),
+                  );
+                },
+              ),
             ),
-            crossFadeState: isExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 200),
-          ),
+          ],
         ],
       ),
     );
   }
 
-  // Dead code removed - replaced by _buildCollapsibleSection
-
-  Widget _buildApplicationCard(BuildContext context, JobApplication application,
-      ApplicationsProvider provider) {
-    return CompactApplicationCard(
-      application: application,
-      onEdit: () => _showEditDialog(context, application, provider),
-      onDelete: () => _deleteApplication(context, application.id, provider),
-      onEditContent: () => _editContent(context, application),
-      onViewPdf: () => _viewPdf(context, application),
-      onViewCoverLetter: () => _viewCoverLetterPdf(context, application),
-      onOpenFolder: () => _openJobFolder(application),
-      onStatusChange: (newStatus) =>
-          _changeApplicationStatus(context, application, newStatus, provider),
-      initiallyExpanded: _cardExpandedStates[application.id] ?? false,
-      onExpandedChanged: (expanded) =>
-          _saveCardExpanded(application.id, expanded),
-    );
-  }
-
-  Future<void> _changeApplicationStatus(
-    BuildContext context,
-    JobApplication application,
-    ApplicationStatus newStatus,
-    ApplicationsProvider provider,
-  ) async {
-    // Update application with new status and track history
-    final updatedApplication = application.withStatusChange(newStatus);
-    await provider.updateApplication(updatedApplication);
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Status changed to ${newStatus.name}',
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
   void _showAddDialog(BuildContext context) async {
-    // Open the application creation dialog
-    final newApplication = await showDialog(
+    final result = await showDialog<JobApplication>(
       context: context,
       builder: (context) => const ApplicationEditorDialog(),
     );
 
-    // If an application was created, open PDF editor for the new application
-    if (newApplication != null && mounted) {
-      await _editContent(context, newApplication);
+    if (result != null && context.mounted) {
+      UIUtils.showSuccess(context, 'Application added successfully');
     }
   }
 
-  void _showEditDialog(BuildContext context, JobApplication application,
-      ApplicationsProvider provider) {
-    showDialog(
+  void _showEditDialog(BuildContext context, JobApplication application) async {
+    final result = await showDialog<JobApplication>(
       context: context,
       builder: (context) =>
           ApplicationEditorDialog(applicationId: application.id),
     );
+
+    if (result != null && context.mounted) {
+      UIUtils.showSuccess(context, 'Application updated');
+    }
   }
 
-  Future<void> _deleteApplication(
-      BuildContext context, String id, ApplicationsProvider provider) async {
+  void _confirmDelete(BuildContext context, JobApplication application) async {
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
       title: 'Delete Application',
       message:
-          'Are you sure you want to delete this application?\n\nThis action cannot be undone.',
+          'Are you sure you want to delete this application for ${application.company}?\nThis will NOT delete the exported PDF or tailoring data folder.',
     );
 
     if (confirmed && context.mounted) {
-      await provider.deleteApplication(id);
+      context.read<ApplicationsProvider>().deleteApplication(application.id);
+      UIUtils.showSuccess(context, 'Application deleted');
     }
   }
 
-  Future<void> _editContent(
+  void _editContent(BuildContext context, JobApplication application) async {
+    if (application.folderPath == null) {
+      UIUtils.showError(context, 'Application folder not found');
+      return;
+    }
+
+    final closeLoading =
+        DialogUtils.showLoading(context, message: 'Opening editor...');
+
+    try {
+      final storage = StorageService.instance;
+      final cvData = await storage.loadJobCvData(application.folderPath!);
+      final coverLetter =
+          await storage.loadJobCoverLetter(application.folderPath!);
+
+      if (context.mounted) {
+        closeLoading();
+
+        if (cvData == null) {
+          UIUtils.showError(context, 'Failed to load CV data');
+          return;
+        }
+
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => JobCvEditorScreen(
+              application: application,
+              cvData: cvData,
+              coverLetter: coverLetter,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        closeLoading();
+        UIUtils.showError(context, 'Error loading data: $e');
+      }
+    }
+  }
+
+  void _viewPdf(BuildContext context, JobApplication application) async {
+    _openPdfDialog(context, application, true);
+  }
+
+  void _viewCoverLetter(
       BuildContext context, JobApplication application) async {
-    if (application.folderPath == null) return;
-
-    final storage = StorageService.instance;
-
-    // Load CV data and cover letter
-    final cvData = await storage.loadJobCvData(application.folderPath!);
-    final coverLetter =
-        await storage.loadJobCoverLetter(application.folderPath!);
-
-    if (cvData == null) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('No CV data found for this application')),
-        );
-      }
-      return;
-    }
-
-    if (!context.mounted) return;
-
-    // Navigate to CV editor with cover letter data
-    final editor = JobCvEditorScreen(
-      application: application,
-      cvData: cvData,
-      coverLetter: coverLetter,
-    );
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => editor),
-    );
+    _openPdfDialog(context, application, false);
   }
 
-  Future<void> _viewPdf(
-      BuildContext context, JobApplication application) async {
-    if (application.folderPath == null) return;
-
-    final storage = StorageService.instance;
-
-    // Load CV and cover letter data
-    final cvData = await storage.loadJobCvData(application.folderPath!);
-    final coverLetter =
-        await storage.loadJobCoverLetter(application.folderPath!);
-
-    // Load PDF settings
-    final (loadedStyle, loadedCustomization) =
-        await storage.loadJobPdfSettings(application.folderPath!);
-
-    final templateStyle = loadedStyle ?? TemplateStyle.defaultStyle;
-    final customization = loadedCustomization ?? const TemplateCustomization();
-
-    if (cvData == null) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('No CV data found for this application')),
-        );
-      }
+  Future<void> _openPdfDialog(
+      BuildContext context, JobApplication application, bool isCV) async {
+    if (application.folderPath == null) {
+      UIUtils.showError(context, 'Application folder not found');
       return;
     }
 
-    if (!context.mounted) return;
+    final closeLoading =
+        DialogUtils.showLoading(context, message: 'Loading document data...');
 
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => JobApplicationPdfDialog(
-          application: application,
-          cvData: cvData,
-          coverLetter: coverLetter,
-          isCV: true,
-          templateStyle: templateStyle,
-          templateCustomization: customization,
-        ),
-      ),
-    );
+    try {
+      final storage = StorageService.instance;
+      final cvData = await storage.loadJobCvData(application.folderPath!);
+      final coverLetter =
+          await storage.loadJobCoverLetter(application.folderPath!);
+
+      if (context.mounted) {
+        closeLoading();
+
+        if (cvData == null) {
+          UIUtils.showError(context, 'Failed to load CV data');
+          return;
+        }
+
+        showDialog(
+          context: context,
+          builder: (context) => JobApplicationPdfDialog(
+            application: application,
+            cvData: cvData,
+            coverLetter: coverLetter,
+            isCV: isCV,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        closeLoading();
+        UIUtils.showError(context, 'Error loading data: $e');
+      }
+    }
   }
 
-  Future<void> _viewCoverLetterPdf(
-      BuildContext context, JobApplication application) async {
-    if (application.folderPath == null) return;
-
-    final storage = StorageService.instance;
-
-    // Load CV and cover letter data
-    final cvData = await storage.loadJobCvData(application.folderPath!);
-    final coverLetter =
-        await storage.loadJobCoverLetter(application.folderPath!);
-
-    // Load PDF settings
-    final (loadedStyle, loadedCustomization) =
-        await storage.loadJobPdfSettings(application.folderPath!);
-
-    final templateStyle = loadedStyle ?? TemplateStyle.defaultStyle;
-    final customization = loadedCustomization ?? const TemplateCustomization();
-
-    if (coverLetter == null) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('No cover letter data found for this application')),
-        );
-      }
+  void _openFolder(BuildContext context, JobApplication application) async {
+    final folderPath = application.folderPath;
+    if (folderPath == null) {
+      UIUtils.showError(context, 'Folder path not found');
       return;
     }
 
-    // cvData is also needed for the dialog structure
-    if (cvData == null) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('No CV data found for this application')),
-        );
-      }
+    final directory = Directory(folderPath);
+    if (!await directory.exists()) {
+      UIUtils.showError(context, 'Tailoring folder does not exist yet');
       return;
     }
 
-    if (!context.mounted) return;
-
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => JobApplicationPdfDialog(
-          application: application,
-          cvData: cvData,
-          coverLetter: coverLetter,
-          isCV: false,
-          templateStyle: templateStyle,
-          templateCustomization: customization,
-        ),
-      ),
-    );
-  }
-
-  void _openJobFolder(JobApplication application) {
-    if (application.folderPath == null) return;
-
-    final folderPath = application.folderPath!;
-    if (Directory(folderPath).existsSync()) {
-      Process.run('explorer', [folderPath]);
+    try {
+      if (Platform.isWindows) {
+        await Process.run('explorer.exe', [folderPath]);
+      } else if (Platform.isMacOS) {
+        await Process.run('open', [folderPath]);
+      } else if (Platform.isLinux) {
+        await Process.run('xdg-open', [folderPath]);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        UIUtils.showError(context, 'Failed to open folder: $e');
+      }
     }
   }
 }

@@ -1,109 +1,265 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
+import '../services/settings_service.dart';
 
-/// UI Utilities for consistent styling across the app
-/// Based on Design_Template patterns
+/// UI Utilities for consistent styling across the app.
+/// Based on MyTemplate design system patterns.
 class UIUtils {
   UIUtils._();
 
   // ============================================================================
-  // CARD DECORATIONS
+  // SPACING & DIMENSIONS
   // ============================================================================
 
-  /// Get card decoration based on theme brightness (legacy method, maintained for compatibility)
-  static BoxDecoration getCardDecoration(BuildContext context) {
+  static const double spacingXs = AppSpacing.xs;
+  static const double spacingSm = AppSpacing.sm;
+  static const double spacingMd = AppSpacing.md;
+  static const double spacingLg = AppSpacing.lg;
+  static const double spacingXl = AppSpacing.xl;
+  static const double spacingXxl = AppSpacing.xxl;
+
+  static const double cardPadding = AppSpacing.lg;
+  static const double cardInternalGap = AppSpacing.md;
+  static const double fieldVerticalGap = AppSpacing.md;
+
+  // ============================================================================
+  // DECORATIONS
+  // ============================================================================
+
+  /// Returns a standard card decoration with shadow and border.
+  static BoxDecoration getCardDecoration(BuildContext context,
+      {bool useAccentBorder = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final settings = context.read<SettingsService>();
+    final accentColor = settings.accentColor;
+
+    final cardShadow =
+        isDark ? AppTheme.darkCardShadow : AppTheme.lightCardShadow;
 
     return BoxDecoration(
-      color: theme.cardColor,
-      borderRadius: BorderRadius.circular(16),
+      color: theme.colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppDimensions.cardBorderRadius),
       border: Border.all(
-        color: theme.dividerColor.withOpacity(isDark ? 0.3 : 0.2),
-        width: 1,
+        color: useAccentBorder
+            ? accentColor.withOpacity(0.5)
+            : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+        width: useAccentBorder ? 1.5 : 1,
       ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
+      boxShadow: cardShadow,
     );
   }
 
-  /// Primary card decoration with moderate elevation for important cards
-  static BoxDecoration getPrimaryCard(BuildContext context) {
-    return BoxDecoration(
-      color: Theme.of(context).cardColor,
-      borderRadius: BorderRadius.circular(radiusMd),
-      boxShadow: AppTheme.elevation2Shadow(Theme.of(context).colorScheme),
-    );
-  }
-
-  /// Secondary card decoration with subtle elevation for supporting cards
-  static BoxDecoration getSecondaryCard(BuildContext context) {
-    return BoxDecoration(
-      color: Theme.of(context).cardColor,
-      borderRadius: BorderRadius.circular(radiusMd),
-      boxShadow: AppTheme.elevation1Shadow(Theme.of(context).colorScheme),
-    );
-  }
-
-  /// Info card decoration with colored background for informational content
+  /// Returns a decoration for info cards (usually with accent background).
   static BoxDecoration getInfoCard(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     return BoxDecoration(
-      color: colorScheme.primaryContainer.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(radiusSm),
+      color: theme.colorScheme.primary.withOpacity(0.05),
+      borderRadius: BorderRadius.circular(AppDimensions.cardBorderRadius),
       border: Border.all(
-        color: colorScheme.primary.withValues(alpha: 0.3),
+        color: theme.colorScheme.primary.withOpacity(0.15),
         width: 1,
       ),
     );
   }
 
-  /// Get subtle background color for sections
-  static Color getSectionBackground(BuildContext context) {
+  /// Returns a decoration for secondary cards.
+  static BoxDecoration getSecondaryCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    return isDark
-        ? Colors.white.withOpacity(0.03)
-        : Colors.black.withOpacity(0.02);
+    return BoxDecoration(
+      color: isDark
+          ? theme.colorScheme.surfaceContainerHighest
+          : theme.colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(AppDimensions.cardBorderRadius - 4),
+      border: Border.all(
+        color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        width: 1,
+      ),
+    );
   }
 
   // ============================================================================
-  // SPACING CONSTANTS
+  // SNACKBAR HELPERS
   // ============================================================================
 
-  /// Standard spacing constants
-  static const double spacingSm = 8.0;
-  static const double spacingMd = 16.0;
-  static const double spacingLg = 24.0;
-  static const double spacingXl = 32.0;
+  /// Shows a success snackbar with accent color background.
+  static void showSuccess(
+    BuildContext context,
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    final settings = context.read<SettingsService>();
+    _showSnackbar(
+      context,
+      message: message,
+      icon: Icons.check_circle_outline,
+      backgroundColor: settings.accentColor,
+      actionLabel: actionLabel,
+      onAction: onAction,
+      duration: duration,
+    );
+  }
 
-  /// Typography spacing for label-to-input relationships
-  static const double labelTopPadding = 12.0;
-  static const double labelBottomPadding = 8.0;
-  static const double sectionTitleBottom = 12.0;
-  static const double sectionDescriptionBottom = 16.0;
+  /// Shows an info snackbar with accent color background.
+  static void showInfo(
+    BuildContext context,
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    final settings = context.read<SettingsService>();
+    _showSnackbar(
+      context,
+      message: message,
+      icon: Icons.info_outline,
+      backgroundColor: settings.accentColor,
+      actionLabel: actionLabel,
+      onAction: onAction,
+      duration: duration,
+    );
+  }
 
-  /// Form spacing for field relationships
-  static const double fieldVerticalGap = 20.0; // Between form fields
-  static const double sectionGap = 32.0; // Between major sections
+  /// Shows a warning snackbar with orange background.
+  static void showWarning(
+    BuildContext context,
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+    Duration duration = const Duration(seconds: 5),
+  }) {
+    _showSnackbar(
+      context,
+      message: message,
+      icon: Icons.warning_amber_rounded,
+      backgroundColor: Colors.orange.shade700,
+      actionLabel: actionLabel,
+      onAction: onAction,
+      duration: duration,
+    );
+  }
 
-  /// Card spacing for internal padding
-  static const double cardPadding = 20.0;
-  static const double cardInternalGap = 16.0;
+  /// Shows an error snackbar with red background.
+  static void showError(
+    BuildContext context,
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+    Duration duration = const Duration(seconds: 4),
+  }) {
+    _showSnackbar(
+      context,
+      message: message,
+      icon: Icons.error_outline,
+      backgroundColor: AppColors.lightDanger,
+      actionLabel: actionLabel,
+      onAction: onAction,
+      duration: duration,
+    );
+  }
+
+  /// Private method that builds and shows a standardized floating snackbar.
+  static void _showSnackbar(
+    BuildContext context, {
+    required String message,
+    required IconData icon,
+    required Color backgroundColor,
+    Color foregroundColor = Colors.white,
+    String? actionLabel,
+    VoidCallback? onAction,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              icon,
+              color: foregroundColor,
+              size: 20,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: foregroundColor,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: backgroundColor,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.inputBorderRadius),
+        ),
+        duration: duration,
+        action: actionLabel != null && onAction != null
+            ? SnackBarAction(
+                label: actionLabel,
+                textColor: foregroundColor,
+                onPressed: onAction,
+              )
+            : null,
+      ),
+    );
+  }
 
   // ============================================================================
-  // BORDER RADIUS
+  // DIALOG HELPERS
   // ============================================================================
 
-  /// Standard border radius
-  static const double radiusSm = 8.0;
-  static const double radiusMd = 12.0;
-  static const double radiusLg = 16.0;
+  /// Show a confirmation dialog.
+  static Future<bool> showConfirmationDialog(
+    BuildContext context, {
+    required String title,
+    required String message,
+    String confirmLabel = 'Confirm',
+    String cancelLabel = 'Cancel',
+    bool isDangerous = false,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(cancelLabel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: isDangerous
+                ? ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                    foregroundColor: Colors.white,
+                  )
+                : null,
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
+  // ============================================================================
+  // LEGACY HELPERS (Refactored to new constants)
+  // ============================================================================
 
   /// Build a section header widget
   static Widget buildSectionHeader(
@@ -122,36 +278,31 @@ class UIUtils {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius:
+                  BorderRadius.circular(AppDimensions.inputBorderRadius),
             ),
             child: Icon(
               icon,
               color: theme.colorScheme.primary,
-              size: 28,
+              size: 24,
             ),
           ),
-          const SizedBox(width: spacingMd),
+          const SizedBox(width: AppSpacing.md),
         ],
         Expanded(
-          child: Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 12,
-            runSpacing: 4,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: theme.textTheme.headlineMedium?.copyWith(
+                style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
-                  letterSpacing: -0.5,
-                  color: Colors.white,
                 ),
               ),
               if (subtitle != null)
                 Text(
                   subtitle,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withOpacity(0.6),
-                  ),
+                  style: theme.textTheme.bodySmall,
                 ),
             ],
           ),
@@ -173,7 +324,7 @@ class UIUtils {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(spacingXl),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -189,7 +340,7 @@ class UIUtils {
                 color: theme.colorScheme.primary.withOpacity(0.5),
               ),
             ),
-            const SizedBox(height: spacingLg),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               title,
               style: theme.textTheme.titleLarge?.copyWith(
@@ -197,7 +348,7 @@ class UIUtils {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: spacingSm),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               message,
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -206,7 +357,7 @@ class UIUtils {
               textAlign: TextAlign.center,
             ),
             if (action != null) ...[
-              const SizedBox(height: spacingLg),
+              const SizedBox(height: AppSpacing.lg),
               action,
             ],
           ],
@@ -215,158 +366,36 @@ class UIUtils {
     );
   }
 
-  // ============================================================================
-  // STANDARDIZED BUTTONS
-  // ============================================================================
-
-  /// Primary action button - use for main CTAs
-  static Widget buildPrimaryButton({
-    required String label,
-    required VoidCallback onPressed,
-    IconData? icon,
-    bool loading = false,
-  }) {
-    return FilledButton.icon(
-      onPressed: loading ? null : onPressed,
-      icon: loading
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : Icon(icon ?? Icons.check, size: 16),
-      label: Text(label),
-      style: FilledButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        minimumSize: const Size(0, 40),
-      ),
-    );
-  }
-
-  /// Secondary action button - use for less prominent actions
-  static Widget buildSecondaryButton({
-    required String label,
-    required VoidCallback onPressed,
-    IconData? icon,
-  }) {
-    return FilledButton.tonalIcon(
-      onPressed: onPressed,
-      icon: Icon(icon ?? Icons.check, size: 16),
-      label: Text(label),
-      style: FilledButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        minimumSize: const Size(0, 36),
-      ),
-    );
-  }
-
-  /// Compact action button - use for inline actions in cards
-  static Widget buildCompactButton({
-    required String label,
-    required VoidCallback onPressed,
-    IconData? icon,
-  }) {
-    return FilledButton.tonalIcon(
-      onPressed: onPressed,
-      icon: Icon(icon ?? Icons.check, size: 14),
-      label: Text(label),
-      style: FilledButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        minimumSize: const Size(0, 32),
-        textStyle: const TextStyle(fontSize: 13),
-      ),
-    );
-  }
-
-  /// Outlined button - use for tertiary actions
+  /// Build an outlined button with consistent styling.
   static Widget buildOutlinedButton({
     required String label,
     required VoidCallback onPressed,
     IconData? icon,
     bool fullWidth = false,
   }) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon ?? Icons.add, size: 18),
-      label: Text(label),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        minimumSize: Size(fullWidth ? double.infinity : 0, 44),
-      ),
-    );
+    // NOTE: Usually buttons should use AppCardActionButton, but keeping this for compatibility
+    final button = icon != null
+        ? OutlinedButton.icon(
+            onPressed: onPressed,
+            icon: Icon(icon, size: 18),
+            label: Text(label))
+        : OutlinedButton(onPressed: onPressed, child: Text(label));
+
+    if (fullWidth) {
+      return SizedBox(width: double.infinity, child: button);
+    }
+    return button;
   }
 
-  /// Icon-only action button - use for edit/delete/etc actions in cards
-  static Widget buildIconButton({
-    required IconData icon,
+  static Widget buildPrimaryButton({
+    required String label,
     required VoidCallback onPressed,
-    required String tooltip,
-    Color? color,
-    double size = 20,
+    IconData? icon,
   }) {
-    return IconButton(
-      icon: Icon(icon, size: size),
-      onPressed: onPressed,
-      tooltip: tooltip,
-      color: color,
-      visualDensity: VisualDensity.compact,
-    );
-  }
-
-  /// Standard dialog actions (Cancel + Primary action)
-  static List<Widget> buildDialogActions({
-    required VoidCallback onCancel,
-    required VoidCallback onConfirm,
-    required String confirmLabel,
-    IconData confirmIcon = Icons.check,
-    bool loading = false,
-  }) {
-    return [
-      TextButton(
-        onPressed: loading ? null : onCancel,
-        child: const Text('Cancel'),
-      ),
-      FilledButton.icon(
-        onPressed: loading ? null : onConfirm,
-        icon: loading
-            ? const SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : Icon(confirmIcon, size: 16),
-        label: Text(confirmLabel),
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        ),
-      ),
-    ];
-  }
-
-  /// Destructive dialog actions (Cancel + Delete/Remove action)
-  static List<Widget> buildDestructiveDialogActions(
-    BuildContext context, {
-    required VoidCallback onCancel,
-    required VoidCallback onConfirm,
-    required String confirmLabel,
-    IconData confirmIcon = Icons.delete,
-  }) {
-    final theme = Theme.of(context);
-    return [
-      TextButton(
-        onPressed: onCancel,
-        child: const Text('Cancel'),
-      ),
-      FilledButton.icon(
-        onPressed: onConfirm,
-        icon: Icon(confirmIcon, size: 16),
-        label: Text(confirmLabel),
-        style: FilledButton.styleFrom(
-          backgroundColor: theme.colorScheme.error,
-          foregroundColor: theme.colorScheme.onError,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        ),
-      ),
-    ];
+    if (icon != null) {
+      return FilledButton.icon(
+          onPressed: onPressed, icon: Icon(icon, size: 18), label: Text(label));
+    }
+    return FilledButton(onPressed: onPressed, child: Text(label));
   }
 }

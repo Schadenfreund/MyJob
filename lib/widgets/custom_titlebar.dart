@@ -58,20 +58,23 @@ class CustomTitleBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = isDarkMode ? AppTheme.darkSurface : AppTheme.lightSurface;
+    final bgColor = isDarkMode ? AppColors.darkSurface : AppColors.lightSurface;
     final textColor =
-        isDarkMode ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary;
-    final hoverColor = isDarkMode ? AppTheme.darkHover : AppTheme.lightHover;
-    final borderColor = isDarkMode ? AppTheme.darkBorder : AppTheme.lightBorder;
+        isDarkMode ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final hoverColor = isDarkMode ? AppColors.darkHover : AppColors.lightHover;
+    final borderColor =
+        isDarkMode ? AppColors.darkBorder : AppColors.lightBorder;
+    final headerShadow =
+        isDarkMode ? AppTheme.darkHeaderShadow : AppTheme.lightHeaderShadow;
 
     return Container(
-      height: AppTheme.headerHeight,
+      height: AppDimensions.headerHeight,
       decoration: BoxDecoration(
         color: bgColor,
         border: Border(
           bottom: BorderSide(color: borderColor, width: 1),
         ),
-        boxShadow: AppTheme.lightHeaderShadow,
+        boxShadow: headerShadow,
       ),
       child: Row(
         children: [
@@ -81,7 +84,7 @@ class CustomTitleBar extends StatelessWidget {
             onPanStart: (details) => windowManager.startDragging(),
             onDoubleTap: _toggleMaximize,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -94,7 +97,7 @@ class CustomTitleBar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(_iconBorderRadius),
                       boxShadow: [
                         BoxShadow(
-                          color: accentColor.withValues(alpha: 0.3),
+                          color: accentColor.withOpacity(0.3),
                           blurRadius: 8,
                           spreadRadius: 1,
                         ),
@@ -121,12 +124,12 @@ class CustomTitleBar extends StatelessWidget {
           Container(
             height: 24,
             width: 1,
-            color: borderColor.withValues(alpha: 0.5),
+            color: borderColor.withOpacity(0.5),
           ),
 
           // Center: Tabs
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: tabs.asMap().entries.map((entry) {
@@ -237,11 +240,11 @@ class _TabButtonState extends State<_TabButton> {
   Widget build(BuildContext context) {
     final isActive = widget.isSelected || _isHovered;
     final displayColor =
-        isActive ? widget.accentColor : widget.textColor.withValues(alpha: 0.7);
+        isActive ? widget.accentColor : widget.textColor.withOpacity(0.7);
     final backgroundColor = widget.isSelected
-        ? widget.accentColor.withValues(alpha: 0.12)
+        ? widget.accentColor.withOpacity(0.12)
         : _isHovered
-            ? widget.accentColor.withValues(alpha: 0.08)
+            ? widget.accentColor.withOpacity(0.08)
             : Colors.transparent;
 
     return MouseRegion(
@@ -250,7 +253,7 @@ class _TabButtonState extends State<_TabButton> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: AppDurations.quick,
           margin: const EdgeInsets.symmetric(horizontal: 2),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
@@ -313,14 +316,20 @@ class _WindowButtonState extends State<_WindowButton> {
           onTap: widget.onPressed,
           child: Container(
             width: _windowButtonWidth,
-            height: AppTheme.headerHeight,
+            height: AppDimensions.headerHeight,
             decoration: BoxDecoration(
-              color: _isHovered ? widget.hoverColor : Colors.transparent,
+              color: _isHovered
+                  ? (widget.isClose
+                      ? Colors.red.withOpacity(0.8)
+                      : widget.hoverColor)
+                  : Colors.transparent,
             ),
             child: Icon(
               widget.icon,
               size: _windowButtonIconSize,
-              color: widget.iconColor,
+              color: _isHovered && widget.isClose
+                  ? Colors.white
+                  : widget.iconColor,
             ),
           ),
         ),
@@ -354,7 +363,7 @@ class _ThemeToggleButtonState extends State<_ThemeToggleButton>
   void initState() {
     super.initState();
     _rotationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: AppDurations.medium,
       vsync: this,
     );
   }
@@ -381,7 +390,7 @@ class _ThemeToggleButtonState extends State<_ThemeToggleButton>
           onTap: widget.onPressed,
           child: Container(
             width: 46,
-            height: AppTheme.headerHeight,
+            height: AppDimensions.headerHeight,
             decoration: BoxDecoration(
               color: _isHovered ? widget.hoverColor : Colors.transparent,
             ),

@@ -87,7 +87,7 @@ class _JobApplicationPdfDialogState
           ? await _storage.loadJobCvPdfSettings(widget.application.folderPath!)
           : await _storage.loadJobClPdfSettings(widget.application.folderPath!);
 
-      if (settings != null && mounted) {
+      if (mounted) {
         final (style, customization) = settings;
 
         if (style != null && customization != null) {

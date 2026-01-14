@@ -1,32 +1,31 @@
 import 'package:flutter/material.dart';
-import '../models/user_data/interest.dart';
-
+import '../models/user_data/language.dart';
 import '../theme/app_theme.dart';
 
-/// Simple dialog for adding or editing an interest
-class InterestEditDialog extends StatefulWidget {
-  const InterestEditDialog({
-    this.interest,
+/// Dialog for adding or editing a language
+class LanguageEditDialog extends StatefulWidget {
+  const LanguageEditDialog({
+    this.language,
     super.key,
   });
 
-  final Interest? interest;
+  final Language? language;
 
   @override
-  State<InterestEditDialog> createState() => _InterestEditDialogState();
+  State<LanguageEditDialog> createState() => _LanguageEditDialogState();
 }
 
-class _InterestEditDialogState extends State<InterestEditDialog> {
+class _LanguageEditDialogState extends State<LanguageEditDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  InterestLevel? _selectedLevel;
+  LanguageProficiency _proficiency = LanguageProficiency.intermediate;
 
   @override
   void initState() {
     super.initState();
-    if (widget.interest != null) {
-      _nameController.text = widget.interest!.name;
-      _selectedLevel = widget.interest!.level;
+    if (widget.language != null) {
+      _nameController.text = widget.language!.name;
+      _proficiency = widget.language!.proficiency;
     }
   }
 
@@ -39,12 +38,14 @@ class _InterestEditDialogState extends State<InterestEditDialog> {
   void _save() {
     if (!_formKey.currentState!.validate()) return;
 
-    final interest = (widget.interest ?? Interest(name: '')).copyWith(
+    final language = (widget.language ??
+            Language(name: '', proficiency: LanguageProficiency.intermediate))
+        .copyWith(
       name: _nameController.text.trim(),
-      level: _selectedLevel,
+      proficiency: _proficiency,
     );
 
-    Navigator.pop(context, interest);
+    Navigator.pop(context, language);
   }
 
   @override
@@ -71,14 +72,14 @@ class _InterestEditDialogState extends State<InterestEditDialog> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      Icons.interests_outlined,
+                      Icons.translate_outlined,
                       color: theme.colorScheme.primary,
                       size: 20,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    widget.interest == null ? 'Add Interest' : 'Edit Interest',
+                    widget.language == null ? 'Add Language' : 'Edit Language',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -96,13 +97,13 @@ class _InterestEditDialogState extends State<InterestEditDialog> {
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
-                  labelText: 'Interest *',
-                  hintText: 'e.g., Photography, Hiking, Chess',
-                  prefixIcon: Icon(Icons.favorite_outline),
+                  labelText: 'Language *',
+                  hintText: 'e.g., English, German, Spanish',
+                  prefixIcon: Icon(Icons.language_outlined),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter an interest';
+                    return 'Please enter a language';
                   }
                   return null;
                 },
@@ -111,35 +112,34 @@ class _InterestEditDialogState extends State<InterestEditDialog> {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              // Passion Level
+              // Proficiency Level
               Text(
-                'Passion Level (Optional)',
+                'Proficiency Level',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              Wrap(
-                spacing: AppSpacing.sm,
-                children: [
-                  ChoiceChip(
-                    label: const Text('None'),
-                    selected: _selectedLevel == null,
-                    onSelected: (selected) {
-                      if (selected) setState(() => _selectedLevel = null);
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: LanguageProficiency.values.length,
+                itemBuilder: (context, index) {
+                  final level = LanguageProficiency.values[index];
+                  return RadioListTile<LanguageProficiency>(
+                    title: Text(level.displayName),
+                    subtitle: Text(_getProficiencyDescription(level)),
+                    value: level,
+                    groupValue: _proficiency,
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _proficiency = value);
+                      }
                     },
-                  ),
-                  ...InterestLevel.values.map((level) {
-                    final isSelected = _selectedLevel == level;
-                    return ChoiceChip(
-                      label: Text(level.displayName),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) setState(() => _selectedLevel = level);
-                      },
-                    );
-                  }),
-                ],
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                  );
+                },
               ),
               const SizedBox(height: AppSpacing.xl),
 
@@ -155,7 +155,7 @@ class _InterestEditDialogState extends State<InterestEditDialog> {
                   FilledButton.icon(
                     onPressed: _save,
                     icon: const Icon(Icons.check, size: 18),
-                    label: const Text('Save Interest'),
+                    label: const Text('Save Language'),
                   ),
                 ],
               ),
@@ -164,5 +164,20 @@ class _InterestEditDialogState extends State<InterestEditDialog> {
         ),
       ),
     );
+  }
+
+  String _getProficiencyDescription(LanguageProficiency level) {
+    switch (level) {
+      case LanguageProficiency.basic:
+        return 'Elementery knowledge, basic phrases';
+      case LanguageProficiency.intermediate:
+        return 'Can hold conversations and read comfortably';
+      case LanguageProficiency.advanced:
+        return 'Professional working proficiency';
+      case LanguageProficiency.fluent:
+        return 'Full professional proficiency';
+      case LanguageProficiency.native:
+        return 'First language or mother tongue';
+    }
   }
 }

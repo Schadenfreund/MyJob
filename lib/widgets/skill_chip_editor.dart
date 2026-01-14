@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
 import '../models/user_data/skill.dart';
 import '../utils/ui_utils.dart';
+import '../theme/app_theme.dart';
 import 'proficiency_dropdown.dart';
 
 /// Chip-based editor for skills with inline level editing
 class SkillChipEditor extends StatefulWidget {
+  final List<Skill> skills;
+  final ValueChanged<List<Skill>> onChanged;
+  final Function(int)? onEditRequested;
+  final bool showCategories;
+  final bool allowEmpty;
+  final bool hideAddSection;
+
   const SkillChipEditor({
     required this.skills,
     required this.onChanged,
+    this.onEditRequested,
     this.showCategories = false,
     this.allowEmpty = true,
+    this.hideAddSection = false,
     super.key,
   });
-
-  final List<Skill> skills;
-  final ValueChanged<List<Skill>> onChanged;
-  final bool showCategories;
-  final bool allowEmpty;
 
   @override
   State<SkillChipEditor> createState() => _SkillChipEditorState();
@@ -70,16 +75,15 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
 
   /// Get theme-aware color for skill level
   Color _getSkillLevelColor(BuildContext context, SkillLevel level) {
-    final colorScheme = Theme.of(context).colorScheme;
     switch (level) {
-      case SkillLevel.beginner:
-        return colorScheme.outline;
-      case SkillLevel.intermediate:
-        return colorScheme.primary;
-      case SkillLevel.advanced:
-        return colorScheme.tertiary;
       case SkillLevel.expert:
-        return colorScheme.secondary;
+        return Colors.purple;
+      case SkillLevel.advanced:
+        return Colors.orange;
+      case SkillLevel.intermediate:
+        return Colors.green;
+      case SkillLevel.beginner:
+        return Colors.blue;
     }
   }
 
@@ -87,118 +91,177 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // Group skills by category if enabled
+    final categorized = <String, List<Skill>>{};
+    final uncategorized = <Skill>[];
+
+    if (widget.showCategories) {
+      for (final skill in widget.skills) {
+        if (skill.category != null && skill.category!.isNotEmpty) {
+          categorized.putIfAbsent(skill.category!, () => []).add(skill);
+        } else {
+          uncategorized.add(skill);
+        }
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Existing skills as chips
-        if (widget.skills.isNotEmpty)
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: widget.skills.map((skill) {
-              return _buildSkillChip(context, skill);
-            }).toList(),
-          )
-        else
-          Text(
-            'No skills added yet',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
-            ),
-          ),
-
-        SizedBox(height: UIUtils.fieldVerticalGap),
-
-        // Add new skill section
-        Container(
-          decoration: UIUtils.getSecondaryCard(context),
-          padding: const EdgeInsets.all(UIUtils.cardPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Add New Skill',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(height: UIUtils.cardInternalGap),
-              Row(
-                children: [
-                  // Skill name input
-                  Expanded(
-                    flex: 2,
-                    child: TextField(
-                      controller: _nameController,
-                      decoration: InputDecoration(
-                        labelText: 'Skill Name',
-                        hintText: 'e.g., Flutter, Python',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        filled: true,
-                        fillColor: theme.colorScheme.surface,
+        // Existing skills display
+        if (widget.skills.isNotEmpty) ...[
+          if (!widget.showCategories)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: widget.skills.map((skill) {
+                return _buildSkillChip(context, skill);
+              }).toList(),
+            )
+          else ...[
+            // Categorized skills
+            ...categorized.entries.map((entry) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.key,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.textTheme.bodySmall?.color
+                            ?.withValues(alpha: 0.7),
                       ),
-                      onSubmitted: (_) => _addSkill(),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Level dropdown
-                  Expanded(
-                    child: SkillLevelDropdown(
-                      value: _selectedLevel,
-                      onChanged: (level) {
-                        if (level != null) {
-                          setState(() => _selectedLevel = level);
-                        }
-                      },
-                      label: 'Level',
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: entry.value
+                          .map((skill) => _buildSkillChip(context, skill))
+                          .toList(),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              );
+            }),
+            // Uncategorized skills
+            if (uncategorized.isNotEmpty) ...[
+              Text(
+                'Other',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color:
+                      theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                ),
               ),
-
-              // Category input (optional)
-              if (widget.showCategories) ...[
-                SizedBox(height: UIUtils.cardInternalGap),
-                TextField(
-                  controller: _categoryController,
-                  decoration: InputDecoration(
-                    labelText: 'Category (Optional)',
-                    hintText: 'e.g., Programming, Design',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    filled: true,
-                    fillColor: theme.colorScheme.surface,
-                  ),
-                  onSubmitted: (_) => _addSkill(),
-                ),
-              ],
-
-              SizedBox(height: UIUtils.cardInternalGap),
-
-              // Add button
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _addSkill,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add Skill'),
-                ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: uncategorized
+                    .map((skill) => _buildSkillChip(context, skill))
+                    .toList(),
               ),
             ],
+          ],
+        ] else
+          UIUtils.buildEmptyState(
+            context,
+            icon: Icons.psychology_outlined,
+            title: 'No Skills Added',
+            message: 'Add your skills to show recruiters your expertise.',
           ),
-        ),
+
+        const SizedBox(height: AppSpacing.lg),
+
+        // Add new skill section
+        if (!widget.hideAddSection)
+          Container(
+            decoration: UIUtils.getSecondaryCard(context),
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.add_circle_outline,
+                        size: 16, color: theme.colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Add New Skill',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Skill name input
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          labelText: 'Skill Name',
+                          hintText: 'e.g., Flutter, Python',
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
+                        ),
+                        onSubmitted: (_) => _addSkill(),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+
+                    // Level dropdown
+                    Expanded(
+                      child: SkillLevelDropdown(
+                        value: _selectedLevel,
+                        onChanged: (level) {
+                          if (level != null) {
+                            setState(() => _selectedLevel = level);
+                          }
+                        },
+                        label: 'Proficiency',
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Category input (optional)
+                if (widget.showCategories) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  TextField(
+                    controller: _categoryController,
+                    decoration: InputDecoration(
+                      labelText: 'Category (Optional)',
+                      hintText: 'e.g., Programming, Design',
+                      filled: true,
+                      fillColor: theme.colorScheme.surface,
+                      prefixIcon: const Icon(Icons.category_outlined, size: 20),
+                    ),
+                    onSubmitted: (_) => _addSkill(),
+                  ),
+                ],
+
+                const SizedBox(height: AppSpacing.md),
+
+                // Add button
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _addSkill,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Add to List'),
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -206,147 +269,153 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
   Widget _buildSkillChip(BuildContext context, Skill skill) {
     final theme = Theme.of(context);
     final isEditing = _editingSkillId == skill.id;
-    final levelColor = skill.level != null
-        ? _getSkillLevelColor(context, skill.level!)
-        : theme.colorScheme.surfaceContainerHighest;
+    final levelColor =
+        _getSkillLevelColor(context, skill.level ?? SkillLevel.intermediate);
 
-    if (isEditing) {
-      // Show dropdown when editing
-      return IntrinsicWidth(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: theme.colorScheme.primary,
-              width: 2,
+    if (isEditing && !widget.hideAddSection) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: theme.colorScheme.primary,
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Skill name
-              Flexible(
-                child: Text(
-                  skill.name,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              skill.name,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 8),
+            DropdownButton<SkillLevel>(
+              value: skill.level,
+              items: SkillLevel.values.map((level) {
+                final color = _getSkillLevelColor(context, level);
+                return DropdownMenuItem(
+                  value: level,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: color,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        level.displayName,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                );
+              }).toList(),
+              onChanged: (newLevel) {
+                if (newLevel != null) {
+                  _updateSkillLevel(skill.id, newLevel);
+                  setState(() => _editingSkillId = null);
+                }
+              },
+              underline: const SizedBox(),
+              isDense: true,
+              icon: const Icon(Icons.arrow_drop_down, size: 18),
+            ),
+            const SizedBox(width: 4),
+            InkWell(
+              onTap: () => setState(() => _editingSkillId = null),
+              child: Icon(
+                Icons.check,
+                size: 18,
+                color: theme.colorScheme.primary,
               ),
-              const SizedBox(width: 8),
-
-              // Level dropdown (compact)
-              DropdownButton<SkillLevel>(
-                value: skill.level ?? SkillLevel.intermediate,
-                items: SkillLevel.values.map((level) {
-                  return DropdownMenuItem(
-                    value: level,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _getSkillLevelColor(context, level),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          level.displayName,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-                onChanged: (newLevel) {
-                  if (newLevel != null) {
-                    _updateSkillLevel(skill.id, newLevel);
-                    setState(() => _editingSkillId = null);
-                  }
-                },
-                underline: const SizedBox(),
-                isDense: true,
-                icon: const Icon(Icons.arrow_drop_down, size: 18),
-              ),
-
-              const SizedBox(width: 4),
-
-              // Close editing button
-              InkWell(
-                onTap: () => setState(() => _editingSkillId = null),
-                child: Icon(
-                  Icons.close,
-                  size: 18,
-                  color: theme.textTheme.bodySmall?.color,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
 
-    // Normal chip display - tap to edit
-    return Tooltip(
-      message: 'Tap to edit proficiency level',
-      child: InkWell(
-        onTap: () => setState(() => _editingSkillId = skill.id),
-        borderRadius: BorderRadius.circular(20),
-        child: Chip(
-          avatar: Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: levelColor,
-            ),
-          ),
-          label: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
+    return Container(
+      decoration: BoxDecoration(
+        color: levelColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: levelColor.withValues(alpha: 0.3)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            if (widget.hideAddSection && widget.onEditRequested != null) {
+              final index = widget.skills.indexWhere((s) => s.id == skill.id);
+              if (index != -1) widget.onEditRequested!(index);
+            } else {
+              setState(() => _editingSkillId = skill.id);
+            }
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
                   skill.name,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (skill.level != null) ...[
-                const SizedBox(width: 6),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: levelColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: levelColor,
                   ),
-                  child: Text(
-                    skill.level!.displayName,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: levelColor,
+                ),
+                if (skill.level != null) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: levelColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(4),
                     ),
+                    child: Text(
+                      (skill.level ?? SkillLevel.intermediate)
+                          .displayName
+                          .toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: levelColor,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () => _deleteSkill(skill.id),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Icon(
+                    Icons.close,
+                    size: 14,
+                    color: levelColor.withValues(alpha: 0.5),
                   ),
                 ),
               ],
-            ],
-          ),
-          deleteIcon: const Icon(Icons.close, size: 18),
-          onDeleted: () => _deleteSkill(skill.id),
-          backgroundColor: theme.colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(
-              color: theme.colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ),
     );

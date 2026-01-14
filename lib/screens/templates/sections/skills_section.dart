@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import '../../../providers/user_data_provider.dart';
 import '../../../models/user_data/skill.dart';
 import '../../../theme/app_theme.dart';
-import '../../../constants/ui_constants.dart';
+import '../../../widgets/app_card.dart';
+import '../../../utils/ui_utils.dart';
 
 /// Skills management section
 class SkillsSection extends StatelessWidget {
@@ -16,122 +17,42 @@ class SkillsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final userDataProvider = context.watch<UserDataProvider>();
     final skills = userDataProvider.skills;
 
-    final content = Padding(
-      padding: showHeader ? const EdgeInsets.all(20) : EdgeInsets.zero,
-      child: skills.isEmpty
-          ? _buildEmptyState(context)
-          : _buildSkillsList(context, skills),
-    );
+    final content = skills.isEmpty
+        ? _buildEmptyState(context)
+        : _buildSkillsList(context, skills);
 
     if (!showHeader) {
       return content;
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.dividerColor, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    return AppCard(
+      title: 'Skills',
+      icon: Icons.psychology_outlined,
+      description: 'Manage your skills and expertise levels',
+      trailing: AppCardActionButton(
+        label: 'Add Skill',
+        icon: Icons.add,
+        onPressed: () => SkillsSection.showAddSkillDialog(context),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.psychology_outlined,
-                    color: theme.colorScheme.primary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Skills',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (skills.isNotEmpty)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${skills.length}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                const Spacer(),
-                OutlinedButton.icon(
-                  onPressed: () => SkillsSection.showAddSkillDialog(context),
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Add'),
-                  style: UIConstants.getSecondaryButtonStyle(context),
-                ),
-              ],
-            ),
-          ),
-          content,
-        ],
-      ),
+      children: [
+        content,
+      ],
     );
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 32),
-        child: Column(
-          children: [
-            Icon(
-              Icons.psychology_outlined,
-              size: 48,
-              color: theme.textTheme.bodySmall?.color?.withOpacity(0.3),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'No skills added yet',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodySmall?.color,
-              ),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => SkillsSection.showAddSkillDialog(context),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Skill'),
-            ),
-          ],
-        ),
+    return UIUtils.buildEmptyState(
+      context,
+      icon: Icons.psychology_outlined,
+      title: 'No Skills Added',
+      message: 'Add your skills to highlight your expertise and strengths.',
+      action: FilledButton.icon(
+        onPressed: () => SkillsSection.showAddSkillDialog(context),
+        icon: const Icon(Icons.add, size: 18),
+        label: const Text('Add Your First Skill'),
       ),
     );
   }
@@ -248,13 +169,13 @@ class SkillsSection extends StatelessWidget {
     if (level == null) return theme.colorScheme.primary;
     switch (level) {
       case SkillLevel.expert:
-        return AppTheme.statusAccepted;
+        return AppColors.statusAccepted;
       case SkillLevel.advanced:
-        return AppTheme.lightInfo;
+        return AppColors.lightInfo;
       case SkillLevel.intermediate:
         return theme.colorScheme.primary;
       case SkillLevel.beginner:
-        return AppTheme.statusDraft;
+        return AppColors.statusDraft;
     }
   }
 

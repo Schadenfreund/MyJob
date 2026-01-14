@@ -16,8 +16,9 @@ class DataConverters {
       final parts = <String>[];
       if (info.address!.isNotEmpty) parts.add(info.address!);
       if (info.city != null && info.city!.isNotEmpty) parts.add(info.city!);
-      if (info.country != null && info.country!.isNotEmpty)
+      if (info.country != null && info.country!.isNotEmpty) {
         parts.add(info.country!);
+      }
       fullAddress = parts.isNotEmpty ? parts.join(', ') : null;
     }
 
@@ -34,7 +35,6 @@ class DataConverters {
   /// Convert ContactDetails back to PersonalInfo (for migration)
   static PersonalInfo contactDetailsToPersonalInfo(
     ContactDetails contact, {
-    String? profileSummary,
     String? id,
   }) {
     // Try to split address into components
@@ -59,7 +59,6 @@ class DataConverters {
     return PersonalInfo(
       id: id,
       fullName: contact.fullName,
-      profileSummary: profileSummary,
       email: contact.email,
       phone: contact.phone,
       address: address,

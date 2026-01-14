@@ -11,11 +11,11 @@ class ApplicationStatusHelper {
 
   /// Get the color for a given status
   ///
-  /// [useThemeColors] - If true, uses theme-based colors from AppTheme.
-  /// If false, uses direct Material colors.
+  /// [useThemeColors] - If true, uses theme-based colors from AppColors.
+  /// If false, uses direct Material colors (legacy).
   static Color getColor(
     ApplicationStatus status, {
-    bool useThemeColors = false,
+    bool useThemeColors = true,
   }) {
     if (useThemeColors) {
       return _getThemeColor(status);
@@ -23,25 +23,25 @@ class ApplicationStatusHelper {
     return _getDirectColor(status);
   }
 
-  /// Get theme-based color for status (used by StatusBadge)
+  /// Get theme-based color for status
   static Color _getThemeColor(ApplicationStatus status) {
     switch (status) {
       case ApplicationStatus.draft:
-        return AppTheme.statusDraft;
+        return AppColors.statusDraft;
       case ApplicationStatus.applied:
-        return AppTheme.statusApplied;
+        return AppColors.statusApplied;
       case ApplicationStatus.interviewing:
-        return AppTheme.statusInterviewing;
+        return AppColors.statusInterviewing;
       case ApplicationStatus.successful:
-        return AppTheme.statusAccepted;
+        return AppColors.statusAccepted;
       case ApplicationStatus.rejected:
-        return AppTheme.statusRejected;
+        return AppColors.statusRejected;
       case ApplicationStatus.noResponse:
-        return AppTheme.statusWithdrawn;
+        return AppColors.statusWithdrawn;
     }
   }
 
-  /// Get direct Material color for status (used by StatusChip and CompactApplicationCard)
+  /// Get direct Material color for status (legacy)
   static Color _getDirectColor(ApplicationStatus status) {
     switch (status) {
       case ApplicationStatus.draft:
@@ -60,33 +60,27 @@ class ApplicationStatusHelper {
   }
 
   /// Get the icon for a given status
-  ///
-  /// [variant] - Icon style variant:
-  ///   - 'default': Standard icons (chat_outlined for interviewing)
-  ///   - 'badge': Badge variant (people_outline for interviewing)
   static IconData getIcon(
     ApplicationStatus status, {
     String variant = 'default',
   }) {
     switch (status) {
       case ApplicationStatus.draft:
-        return Icons.edit_outlined;
+        return Icons.edit_document;
       case ApplicationStatus.applied:
-        return Icons.send_outlined;
+        return Icons.send_rounded;
       case ApplicationStatus.interviewing:
-        return variant == 'badge' ? Icons.people_outline : Icons.chat_outlined;
+        return variant == 'badge' ? Icons.people_outline : Icons.forum_rounded;
       case ApplicationStatus.successful:
-        return Icons.check_circle_outline;
+        return Icons.check_circle_rounded;
       case ApplicationStatus.rejected:
-        return Icons.cancel_outlined;
+        return Icons.cancel_rounded;
       case ApplicationStatus.noResponse:
-        return Icons.schedule;
+        return Icons.timer_off_rounded;
     }
   }
 
   /// Get the display label for a given status
-  ///
-  /// [short] - If true, returns shorter label for compact displays
   static String getLabel(
     ApplicationStatus status, {
     bool short = false,
@@ -112,7 +106,7 @@ class ApplicationStatusHelper {
     return ApplicationStatus.values;
   }
 
-  /// Check if a status is a terminal state (successful or rejected)
+  /// Check if a status is a terminal state
   static bool isTerminal(ApplicationStatus status) {
     return status == ApplicationStatus.successful ||
         status == ApplicationStatus.rejected ||
