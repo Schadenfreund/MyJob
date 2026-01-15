@@ -365,7 +365,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                   Expanded(
                     child: _buildCompactStatItem(
                       context,
-                      label: 'No Reply',
+                      label: 'No Response',
                       value: noResponse.toString(),
                       icon: Icons.schedule,
                       color: AppColors.statusWithdrawn,
@@ -440,6 +440,16 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                           value: rejected.toString(),
                           icon: Icons.cancel_outlined,
                           color: AppColors.statusRejected,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildCompactStatItem(
+                          context,
+                          label: 'No Response',
+                          value: noResponse.toString(),
+                          icon: Icons.schedule,
+                          color: AppColors.statusWithdrawn,
                         ),
                       ),
                     ],

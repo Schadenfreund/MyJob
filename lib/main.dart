@@ -7,12 +7,14 @@ import 'providers/applications_provider.dart';
 import 'providers/templates_provider.dart';
 import 'providers/user_data_provider.dart';
 import 'providers/pdf_presets_provider.dart';
+import 'providers/notes_provider.dart';
 import 'services/settings_service.dart';
 import 'services/log_service.dart';
 import 'services/migration_service.dart';
 import 'widgets/custom_titlebar.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/applications/applications_screen.dart';
+import 'screens/notes/notes_screen.dart';
 import 'screens/settings/settings_screen.dart';
 // Added based on context of TabInfo usage
 
@@ -68,6 +70,7 @@ class MyJobApp extends StatelessWidget {
             create: (_) => ApplicationsProvider()..loadApplications()),
         ChangeNotifierProvider(
             create: (_) => PdfPresetsProvider()..loadPresets()),
+        ChangeNotifierProvider(create: (_) => NotesProvider()..loadNotes()),
       ],
       child: Consumer<SettingsService>(
         builder: (context, settings, _) {
@@ -108,6 +111,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       activeIcon: Icons.work,
     ),
     TabInfo(
+      label: 'Notes',
+      icon: Icons.sticky_note_2_outlined,
+      activeIcon: Icons.sticky_note_2,
+    ),
+    TabInfo(
       label: 'Settings',
       icon: Icons.settings_outlined,
       activeIcon: Icons.settings,
@@ -123,6 +131,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _screens = [
       const ProfileScreen(),
       const ApplicationsScreen(),
+      const NotesScreen(),
       const SettingsScreen(),
     ];
   }

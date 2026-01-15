@@ -82,22 +82,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
       final provider = context.read<ApplicationsProvider>();
       await provider.updateApplication(updatedApplication);
 
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white, size: 18),
-                SizedBox(width: 8),
-                Text('Application details updated'),
-              ],
-            ),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
+      // Silently saved - no snackbar needed (matches behavior of CV data changes)
     } catch (e) {
       debugPrint('Failed to save application metadata: $e');
       if (context.mounted) {

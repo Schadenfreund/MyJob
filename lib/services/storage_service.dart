@@ -2,12 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
+import 'package:yaml/yaml.dart';
 import '../models/job_application.dart';
 import '../models/cv_data.dart';
 import '../models/cover_letter.dart';
 import '../models/master_profile.dart';
 import '../models/job_cv_data.dart';
 import '../models/job_cover_letter.dart';
+import '../models/notes_data.dart';
 import '../constants/json_constants.dart';
 import '../models/template_customization.dart';
 import '../models/template_style.dart';
@@ -39,6 +41,7 @@ class StorageService {
       'profiles/de',
       'applications',
       'pdf_presets',
+      'notes',
       'cvs', // Legacy
       'cover_letters' // Legacy
     ]) {
@@ -112,9 +115,31 @@ class StorageService {
       final userDataPath = await getUserDataPath();
       final file = File(p.join(userDataPath, 'applications', '$id.json'));
 
+      // Load application to get folder path before deleting
+      JobApplication? application;
+      if (file.existsSync()) {
+        try {
+          final content = await file.readAsString();
+          final json = jsonDecode(content) as Map<String, dynamic>;
+          application = JobApplication.fromJson(json);
+        } catch (e) {
+          debugPrint('Error loading application for deletion: $e');
+        }
+      }
+
+      // Delete the application folder and all its contents
+      if (application?.folderPath != null) {
+        final folderDir = Directory(application!.folderPath!);
+        if (folderDir.existsSync()) {
+          await folderDir.delete(recursive: true);
+          debugPrint('Application folder deleted: ${application.folderPath}');
+        }
+      }
+
+      // Delete the JSON metadata file
       if (file.existsSync()) {
         await file.delete();
-        debugPrint('Application deleted: $id');
+        debugPrint('Application metadata deleted: $id');
       }
     } catch (e) {
       debugPrint('Error deleting application: $e');
@@ -303,6 +328,7 @@ class StorageService {
     final applications = await loadApplications();
     final cvs = await loadCvs();
     final coverLetters = await loadCoverLetters();
+    final notes = await loadNotes();
 
     final exportData = {
       'version': '1.0',
@@ -310,6 +336,7 @@ class StorageService {
       'applications': applications.map((a) => a.toJson()).toList(),
       'cvs': cvs.map((c) => c.toJson()).toList(),
       'coverLetters': coverLetters.map((l) => l.toJson()).toList(),
+      'notes': notes.map((n) => n.toJson()).toList(),
     };
 
     return JsonConstants.prettyEncoder.convert(exportData);
@@ -341,6 +368,14 @@ class StorageService {
           final letter =
               CoverLetter.fromJson(letterJson as Map<String, dynamic>);
           await saveCoverLetter(letter);
+        }
+      }
+
+      // Import notes
+      if (data['notes'] != null) {
+        for (final noteJson in data['notes'] as List) {
+          final note = NoteItem.fromJson(noteJson as Map<String, dynamic>);
+          await saveNote(note);
         }
       }
 
@@ -759,5 +794,125 @@ class StorageService {
       debugPrint('Error saving job CL PDF settings: $e');
       rethrow;
     }
+  }
+
+  // ============================================================================
+  // NOTES
+  // ============================================================================
+
+  /// Load all notes
+  Future<List<NoteItem>> loadNotes() async {
+    try {
+      final userDataPath = await getUserDataPath();
+      final dir = Directory(p.join(userDataPath, 'notes'));
+      final notes = <NoteItem>[];
+
+      if (!dir.existsSync()) return notes;
+
+      for (final file in dir.listSync().whereType<File>()) {
+        if (file.path.endsWith('.yaml') || file.path.endsWith('.yml')) {
+          try {
+            final content = await file.readAsString();
+            final yaml = loadYaml(content) as Map;
+            final json = _yamlToJson(yaml);
+            notes.add(NoteItem.fromJson(json));
+          } catch (e) {
+            debugPrint('Error loading note ${file.path}: $e');
+          }
+        }
+      }
+
+      // Sort by created date, newest first
+      notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      return notes;
+    } catch (e) {
+      debugPrint('Error loading notes: $e');
+      return [];
+    }
+  }
+
+  /// Save a note
+  Future<void> saveNote(NoteItem note) async {
+    try {
+      final userDataPath = await getUserDataPath();
+      final notesDir = Directory(p.join(userDataPath, 'notes'));
+
+      if (!notesDir.existsSync()) {
+        notesDir.createSync(recursive: true);
+      }
+
+      final file = File(p.join(notesDir.path, '${note.id}.yaml'));
+      final yaml = _jsonToYaml(note.toJson());
+
+      await file.writeAsString(yaml);
+      debugPrint('Note saved: ${note.id}');
+    } catch (e) {
+      debugPrint('Error saving note: $e');
+      rethrow;
+    }
+  }
+
+  /// Delete a note
+  Future<void> deleteNote(String id) async {
+    try {
+      final userDataPath = await getUserDataPath();
+      final file = File(p.join(userDataPath, 'notes', '$id.yaml'));
+
+      if (file.existsSync()) {
+        await file.delete();
+        debugPrint('Note deleted: $id');
+      }
+    } catch (e) {
+      debugPrint('Error deleting note: $e');
+      rethrow;
+    }
+  }
+
+  /// Convert YAML map to JSON-compatible map
+  Map<String, dynamic> _yamlToJson(dynamic yaml) {
+    if (yaml is YamlMap) {
+      return yaml.map((key, value) => MapEntry(
+            key.toString(),
+            _yamlToJson(value),
+          ));
+    } else if (yaml is YamlList) {
+      return {'list': yaml.map((e) => _yamlToJson(e)).toList()};
+    } else {
+      return yaml;
+    }
+  }
+
+  /// Convert JSON map to YAML string
+  String _jsonToYaml(Map<String, dynamic> json, [int indent = 0]) {
+    final buffer = StringBuffer();
+    final indentStr = '  ' * indent;
+
+    json.forEach((key, value) {
+      if (value == null) {
+        buffer.writeln('$indentStr$key: null');
+      } else if (value is Map) {
+        buffer.writeln('$indentStr$key:');
+        buffer.write(_jsonToYaml(value as Map<String, dynamic>, indent + 1));
+      } else if (value is List) {
+        buffer.writeln('$indentStr$key:');
+        for (final item in value) {
+          if (item is Map) {
+            buffer.writeln('${indentStr}  -');
+            buffer.write(_jsonToYaml(item as Map<String, dynamic>, indent + 2));
+          } else {
+            buffer.writeln('${indentStr}  - $item');
+          }
+        }
+      } else if (value is String) {
+        // Escape quotes in strings
+        final escaped = value.replaceAll('"', '\\"');
+        buffer.writeln('$indentStr$key: "$escaped"');
+      } else {
+        buffer.writeln('$indentStr$key: $value');
+      }
+    });
+
+    return buffer.toString();
   }
 }

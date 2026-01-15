@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -68,6 +69,16 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   late TextEditingController _bodyController;
   late TextEditingController _closingController;
 
+  // Application details controllers - centralized for immediate saving
+  late TextEditingController _companyController;
+  late TextEditingController _positionController;
+  late TextEditingController _locationController;
+  late TextEditingController _jobUrlController;
+  late TextEditingController _salaryController;
+  late TextEditingController _contactPersonController;
+  late TextEditingController _contactEmailController;
+  late TextEditingController _notesController;
+
   final _storage = StorageService.instance;
 
   // No additional controllers needed for CV sections
@@ -117,6 +128,29 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     _greetingController.addListener(_updateCoverLetter);
     _bodyController.addListener(_updateCoverLetter);
     _closingController.addListener(_updateCoverLetter);
+
+    // Initialize application details controllers
+    final app = widget.applicationContext;
+    _companyController = TextEditingController(text: app?.company ?? '');
+    _positionController = TextEditingController(text: app?.position ?? '');
+    _locationController = TextEditingController(text: app?.location ?? '');
+    _jobUrlController = TextEditingController(text: app?.jobUrl ?? '');
+    _salaryController = TextEditingController(text: app?.salary ?? '');
+    _contactPersonController =
+        TextEditingController(text: app?.contactPerson ?? '');
+    _contactEmailController =
+        TextEditingController(text: app?.contactEmail ?? '');
+    _notesController = TextEditingController(text: app?.notes ?? '');
+
+    // Add debounced save listeners to all application fields
+    _companyController.addListener(_onApplicationFieldChanged);
+    _positionController.addListener(_onApplicationFieldChanged);
+    _locationController.addListener(_onApplicationFieldChanged);
+    _jobUrlController.addListener(_onApplicationFieldChanged);
+    _salaryController.addListener(_onApplicationFieldChanged);
+    _contactPersonController.addListener(_onApplicationFieldChanged);
+    _contactEmailController.addListener(_onApplicationFieldChanged);
+    _notesController.addListener(_onApplicationFieldChanged);
   }
 
   @override
@@ -128,6 +162,41 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       setState(() {
         _cvData = widget.cvData;
       });
+    }
+
+    // Update application details controllers if application context changed
+    if (widget.applicationContext != oldWidget.applicationContext) {
+      final app = widget.applicationContext;
+
+      // Remove listeners temporarily to avoid triggering saves
+      _companyController.removeListener(_onApplicationFieldChanged);
+      _positionController.removeListener(_onApplicationFieldChanged);
+      _locationController.removeListener(_onApplicationFieldChanged);
+      _jobUrlController.removeListener(_onApplicationFieldChanged);
+      _salaryController.removeListener(_onApplicationFieldChanged);
+      _contactPersonController.removeListener(_onApplicationFieldChanged);
+      _contactEmailController.removeListener(_onApplicationFieldChanged);
+      _notesController.removeListener(_onApplicationFieldChanged);
+
+      // Update controller values
+      _companyController.text = app?.company ?? '';
+      _positionController.text = app?.position ?? '';
+      _locationController.text = app?.location ?? '';
+      _jobUrlController.text = app?.jobUrl ?? '';
+      _salaryController.text = app?.salary ?? '';
+      _contactPersonController.text = app?.contactPerson ?? '';
+      _contactEmailController.text = app?.contactEmail ?? '';
+      _notesController.text = app?.notes ?? '';
+
+      // Re-add listeners
+      _companyController.addListener(_onApplicationFieldChanged);
+      _positionController.addListener(_onApplicationFieldChanged);
+      _locationController.addListener(_onApplicationFieldChanged);
+      _jobUrlController.addListener(_onApplicationFieldChanged);
+      _salaryController.addListener(_onApplicationFieldChanged);
+      _contactPersonController.addListener(_onApplicationFieldChanged);
+      _contactEmailController.addListener(_onApplicationFieldChanged);
+      _notesController.addListener(_onApplicationFieldChanged);
     }
 
     // Update cover letter controllers if the cover letter data changed
@@ -151,7 +220,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       _greetingController.text =
           newCoverLetter?.greeting ?? 'Dear Hiring Manager,';
       _bodyController.text = newCoverLetter?.body ?? '';
-      _closingController.text = newCoverLetter?.closing ?? 'Kind regards,';
+      _closingController.text = newCoverLetter?.closing ?? 'Sincerely,';
 
       // Re-add listeners
       _recipientNameController.addListener(_updateCoverLetter);
@@ -172,29 +241,38 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     _greetingController.dispose();
     _bodyController.dispose();
     _closingController.dispose();
+    _companyController.dispose();
+    _positionController.dispose();
+    _locationController.dispose();
+    _jobUrlController.dispose();
+    _salaryController.dispose();
+    _contactPersonController.dispose();
+    _contactEmailController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
   /// Update CV data and notify parent
   void _updateCvData(JobCvData updatedData) {
-    setState(() => _cvData = updatedData);
+    _cvData = updatedData;
     widget.onChanged(updatedData);
   }
 
   /// Update cover letter instance when text changes
   void _updateCoverLetter() {
-    // Update JobCoverLetter with new values
-    final updatedCoverLetter = JobCoverLetter(
-      recipientName: _recipientNameController.text.trim(),
-      recipientTitle: _recipientTitleController.text.trim(),
-      subject: _subjectController.text.trim(),
-      companyName: _jobCoverLetter?.companyName ??
-          widget.applicationContext?.company ??
-          '',
+    if (_jobCoverLetter == null) return;
+
+    final updatedCoverLetter = _jobCoverLetter!.copyWith(
+      recipientName: _recipientNameController.text.isEmpty
+          ? null
+          : _recipientNameController.text,
+      recipientTitle: _recipientTitleController.text.isEmpty
+          ? null
+          : _recipientTitleController.text,
+      subject: _subjectController.text,
       greeting: _greetingController.text,
       body: _bodyController.text,
       closing: _closingController.text,
-      signature: _jobCoverLetter?.signature ?? '',
     );
 
     setState(() {
@@ -216,6 +294,37 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     } catch (e) {
       debugPrint('[CoverLetter] Failed to auto-save: $e');
     }
+  }
+
+  /// Centralized handler for application detail field changes
+  /// Saves immediately like Personal tab (no snackbar shown)
+  void _onApplicationFieldChanged() {
+    final application = widget.applicationContext;
+    if (application == null) return;
+
+    // Build updated application from all controller values
+    final updatedApplication = application.copyWith(
+      company: _companyController.text.isEmpty
+          ? application.company
+          : _companyController.text,
+      position: _positionController.text.isEmpty
+          ? application.position
+          : _positionController.text,
+      location:
+          _locationController.text.isEmpty ? null : _locationController.text,
+      jobUrl: _jobUrlController.text.isEmpty ? null : _jobUrlController.text,
+      salary: _salaryController.text.isEmpty ? null : _salaryController.text,
+      contactPerson: _contactPersonController.text.isEmpty
+          ? null
+          : _contactPersonController.text,
+      contactEmail: _contactEmailController.text.isEmpty
+          ? null
+          : _contactEmailController.text,
+      notes: _notesController.text.isEmpty ? null : _notesController.text,
+    );
+
+    // Call the parent's callback (saves quietly, no snackbar)
+    widget.onApplicationChanged?.call(updatedApplication);
   }
 
   @override
@@ -450,36 +559,22 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
             children: [
               // Company field
               TextFormField(
-                initialValue: application?.company ?? '',
+                controller: _companyController,
                 decoration: const InputDecoration(
                   labelText: 'Company',
                   hintText: 'Company name',
                   prefixIcon: Icon(Icons.business),
                 ),
-                onChanged: (value) {
-                  if (application != null && value.isNotEmpty) {
-                    widget.onApplicationChanged?.call(
-                      application.copyWith(company: value),
-                    );
-                  }
-                },
               ),
               const SizedBox(height: AppSpacing.md),
               // Position field
               TextFormField(
-                initialValue: application?.position ?? '',
+                controller: _positionController,
                 decoration: const InputDecoration(
                   labelText: 'Position',
                   hintText: 'Job title',
                   prefixIcon: Icon(Icons.work_outline),
                 ),
-                onChanged: (value) {
-                  if (application != null && value.isNotEmpty) {
-                    widget.onApplicationChanged?.call(
-                      application.copyWith(position: value),
-                    );
-                  }
-                },
               ),
               const SizedBox(height: AppSpacing.md),
               // Language field (read-only)
@@ -494,95 +589,50 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
-                initialValue: application?.location ?? '',
+                controller: _locationController,
                 decoration: const InputDecoration(
                   labelText: 'Location',
                   hintText: 'City, Country',
                   prefixIcon: Icon(Icons.location_on_outlined),
                 ),
-                onChanged: (value) {
-                  if (application != null) {
-                    widget.onApplicationChanged?.call(
-                      application.copyWith(
-                        location: value.isEmpty ? null : value,
-                      ),
-                    );
-                  }
-                },
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
-                initialValue: application?.jobUrl ?? '',
+                controller: _jobUrlController,
                 decoration: const InputDecoration(
                   labelText: 'Job Posting URL',
                   hintText: 'https://...',
                   prefixIcon: Icon(Icons.link),
                 ),
                 keyboardType: TextInputType.url,
-                onChanged: (value) {
-                  if (application != null) {
-                    widget.onApplicationChanged?.call(
-                      application.copyWith(
-                        jobUrl: value.isEmpty ? null : value,
-                      ),
-                    );
-                  }
-                },
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
-                initialValue: application?.salary ?? '',
+                controller: _salaryController,
                 decoration: const InputDecoration(
                   labelText: 'Salary Range',
                   hintText: 'e.g., \$80k - \$100k',
                   prefixIcon: Icon(Icons.attach_money),
                 ),
-                onChanged: (value) {
-                  if (application != null) {
-                    widget.onApplicationChanged?.call(
-                      application.copyWith(
-                        salary: value.isEmpty ? null : value,
-                      ),
-                    );
-                  }
-                },
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
-                initialValue: application?.contactPerson ?? '',
+                controller: _contactPersonController,
                 decoration: const InputDecoration(
                   labelText: 'Contact Person',
                   hintText: 'Hiring Manager Name',
                   prefixIcon: Icon(Icons.person_outline),
                 ),
-                onChanged: (value) {
-                  if (application != null) {
-                    widget.onApplicationChanged?.call(
-                      application.copyWith(
-                        contactPerson: value.isEmpty ? null : value,
-                      ),
-                    );
-                  }
-                },
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
-                initialValue: application?.contactEmail ?? '',
+                controller: _contactEmailController,
                 decoration: const InputDecoration(
                   labelText: 'Contact Email',
                   hintText: 'hr@company.com',
                   prefixIcon: Icon(Icons.email_outlined),
                 ),
                 keyboardType: TextInputType.emailAddress,
-                onChanged: (value) {
-                  if (application != null) {
-                    widget.onApplicationChanged?.call(
-                      application.copyWith(
-                        contactEmail: value.isEmpty ? null : value,
-                      ),
-                    );
-                  }
-                },
               ),
             ],
           ),
@@ -594,7 +644,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
             icon: Icons.note_outlined,
             children: [
               TextFormField(
-                initialValue: application?.notes ?? '',
+                controller: _notesController,
                 decoration: const InputDecoration(
                   labelText: 'Application Notes',
                   hintText: 'Add any notes about this application...',
@@ -602,15 +652,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                   alignLabelWithHint: true,
                 ),
                 maxLines: 5,
-                onChanged: (value) {
-                  if (application != null) {
-                    widget.onApplicationChanged?.call(
-                      application.copyWith(
-                        notes: value.isEmpty ? null : value,
-                      ),
-                    );
-                  }
-                },
+                // No onChanged - we save on focus loss and during debounce
               ),
             ],
           ),
@@ -1277,13 +1319,6 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
             title: 'Cover Letter',
             subtitle: 'Personalize your cover letter for this application',
             icon: Icons.email_outlined,
-            action: AppCardActionButton(
-              onPressed: () {
-                UIUtils.showInfo(context, 'Template selection coming soon!');
-              },
-              icon: Icons.library_books_outlined,
-              label: 'Templates',
-            ),
           ),
           const SizedBox(height: AppSpacing.lg),
 
