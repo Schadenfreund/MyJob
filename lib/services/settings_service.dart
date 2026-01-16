@@ -7,7 +7,7 @@ import '../constants/json_constants.dart';
 
 /// Portable settings service that stores configuration in a JSON file
 class SettingsService extends ChangeNotifier {
-  static const Color defaultAccentColor = Color(0xFF6366F1);
+  static const Color defaultAccentColor = Color(0xFF10B981); // Green
 
   ThemeMode _themeMode = ThemeMode.dark;
   Color _accentColor = defaultAccentColor;

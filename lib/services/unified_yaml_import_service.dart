@@ -5,6 +5,7 @@ import '../models/user_data/skill.dart';
 import '../models/user_data/work_experience.dart';
 import '../models/user_data/language.dart';
 import '../models/user_data/interest.dart';
+import '../models/master_profile.dart';
 
 /// Unified YAML import service with auto-detection and smart routing
 ///
@@ -84,6 +85,7 @@ class UnifiedYamlImportService {
     List<Language> languages = [];
     List<Interest> interests = [];
     List<WorkExperience> workExperiences = [];
+    List<Education> education = [];
 
     // Parse personal info
     if (yamlData['personal_info'] != null) {
@@ -164,6 +166,26 @@ class UnifiedYamlImportService {
       }
     }
 
+    // Parse education
+    if (yamlData['education'] != null) {
+      final eduList = yamlData['education'] as YamlList;
+      for (final eduData in eduList) {
+        education.add(Education(
+          id: eduData['id'] as String,
+          institution: eduData['institution'] as String,
+          degree: eduData['degree'] as String,
+          fieldOfStudy: eduData['fieldOfStudy'] as String,
+          startDate: DateTime.parse(eduData['startDate'] as String),
+          endDate: eduData['endDate'] != null
+              ? DateTime.parse(eduData['endDate'] as String)
+              : null,
+          isCurrent: eduData['isCurrent'] as bool? ?? false,
+          description: eduData['description'] as String?,
+          grade: eduData['grade'] as String?,
+        ));
+      }
+    }
+
     return UnifiedImportResult.cv(
       filePath: filePath,
       language: detectedLanguage,
@@ -173,6 +195,7 @@ class UnifiedYamlImportService {
       languages: languages,
       interests: interests,
       workExperiences: workExperiences,
+      education: education,
     );
   }
 
@@ -320,6 +343,7 @@ class UnifiedImportResult {
   final List<Language> languages;
   final List<Interest> interests;
   final List<WorkExperience> workExperiences;
+  final List<Education> education;
 
   // Cover Letter fields
   final String? templateName;
@@ -342,6 +366,7 @@ class UnifiedImportResult {
     this.languages = const [],
     this.interests = const [],
     this.workExperiences = const [],
+    this.education = const [],
     this.templateName,
     this.language,
     this.version,
@@ -362,6 +387,7 @@ class UnifiedImportResult {
     List<Language> languages = const [],
     List<Interest> interests = const [],
     List<WorkExperience> workExperiences = const [],
+    List<Education> education = const [],
   }) {
     return UnifiedImportResult._(
       success: true,
@@ -374,6 +400,7 @@ class UnifiedImportResult {
       languages: languages,
       interests: interests,
       workExperiences: workExperiences,
+      education: education,
     );
   }
 
@@ -472,6 +499,14 @@ class UnifiedImportResult {
           label: 'Work Experience',
           detail:
               '${workExperiences.length} position${workExperiences.length == 1 ? '' : 's'}',
+        ));
+      }
+      if (education.isNotEmpty) {
+        items.add(ImportSummaryItem(
+          icon: 'school',
+          label: 'Education',
+          detail:
+              '${education.length} ${education.length == 1 ? 'degree' : 'degrees'}',
         ));
       }
     } else if (isCoverLetter) {

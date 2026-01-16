@@ -1,42 +1,61 @@
 # CV Data Template - English
-# This file contains imaginary data based on Homer Simpson for testing purposes
+# This file contains detailed Homer Simpson data for testing purposes
 
 personal_info:
-  full_name: Homer J. Simpson
+  full_name: Homer Jay Simpson
   email: chunkylover53@aol.com
-  phone: "555-7334"
+  phone: "(555) 7334"
   address: 742 Evergreen Terrace
   city: Springfield
   country: USA
+  linkedin: linkedin.com/in/homer-simpson
   profile_summary: |
-    Experienced Safety Inspector with a long (and colorful) history at the Springfield Nuclear Power Plant. 
-    Expert in donut consumption, couch-based relaxation, and pressing the "Any" key. 
-    Seeking a position that offers high rewards with minimal physical or mental effort. D'oh!
+    Dedicated Safety Inspector with 35+ years of experience at the Springfield Nuclear Power Plant. 
+    Grammy Award-winning barbershop quartet member with proven ability to work under pressure 
+    (literal and metaphorical). Expert in crisis management, strategic napping, and quality assurance 
+    for baked goods. Known for innovative problem-solving approaches and unwavering loyalty to 
+    family values. D'oh!
 
 skills:
   - name: Nuclear Safety Inspection
     category: Professional
     level: beginner
 
-  - name: Donut Quality Control
+  - name: Crisis Management
     category: Professional
+    level: advanced
+
+  - name: Donut Quality Assurance
+    category: Professional
+    level: expert
+
+  - name: Strategic Planning (Naps)
+    category: Management
     level: expert
 
   - name: TV Remote Operation
     category: Technical
     level: expert
 
-  - name: Napping (Vertical & Horizontal)
-    category: Professional
-    level: expert
-
-  - name: Bowling
+  - name: Bowling (Pin Setting & Playing)
     category: Professional
     level: advanced
 
-  - name: Avoiding Responsibility
+  - name: Problem Solving (Unconventional)
     category: Professional
+    level: advanced
+
+  - name: Team Leadership
+    category: Management
+    level: intermediate
+
+  - name: Public Speaking (Grunts & Screams)
+    category: Communication
     level: expert
+
+  - name: Conflict Resolution
+    category: Professional
+    level: beginner
 
 languages:
   - name: English
@@ -45,21 +64,63 @@ languages:
   - name: Bad Spanish
     proficiency: beginner
 
-  - name: Grunting
+  - name: Klingon (Basic Phrases)
+    proficiency: beginner
+
+  - name: Grunting & D'oh-ing
     proficiency: fluent
 
 interests:
   - name: Bowling at Barney's Bowlarama
     category: Sports
 
-  - name: Hanging out at Moe's Tavern
+  - name: Frequenting Moe's Tavern
     category: Social
 
-  - name: Watching TV
+  - name: Television (Channels 6-12)
     category: Entertainment
 
-  - name: Eating Pork Chops
-    category: Food
+  - name: Duff Beer Collection
+    category: Hobby
+
+  - name: Pork Chops & Bacon Appreciation
+    category: Culinary
+
+  - name: Springfield Isotopes Fan Club
+    category: Sports
+
+  - name: Donut Tasting
+    category: Culinary
+
+education:
+  - id: edu_001
+    degree: High School Diploma
+    institution: Springfield High School
+    fieldOfStudy: General Studies
+    startDate: "1970-09-01"
+    endDate: "1974-05-30"
+    isCurrent: false
+    grade: "D-"
+    description: |
+      Completed high school education with focus on minimizing effort and maximizing lunch breaks. 
+      Notable achievements include surviving four years without serious injury. Voted "Most Likely 
+      to Cause a Meltdown" by classmates. Perfect attendance at lunch periods. Member of the food 
+      fight committee.
+
+  - id: edu_002
+    degree: Nuclear Physics Certificate
+    institution: Springfield Technical Institute
+    fieldOfStudy: Nuclear Safety & Donut Science
+    startDate: "1989-01-15"
+    endDate: "1989-12-15"
+    isCurrent: false
+    grade: Pass
+    description: |
+      Intensive training program focused on nuclear reactor safety protocols, emergency procedures, 
+      and critical workplace skills. Successfully completed all required modules. Completed training 
+      without major incidents. Mastered the art of reading safety manuals (first chapter). Successfully 
+      identified all seven emergency buttons.
+
 
 work_experience:
   - company: Springfield Nuclear Power Plant
@@ -67,34 +128,106 @@ work_experience:
     start_date: 1989-12-17
     end_date: null
     is_current: true
-    location: Springfield
-    description: Responsible for preventing nuclear meltdowns (usually).
+    location: Springfield, USA
+    description: |
+      Senior Safety Inspector responsible for monitoring nuclear reactor operations and 
+      preventing catastrophic meltdowns through vigilant observation and quick reflexes 
+      (when awake). Key contributor to the plant's 35-year "mostly safe" operation record.
     responsibilities:
-      - Monitoring the nuclear reactor core via a control panel I often nap on
-      - Eating pink frosted donuts with sprinkles provided by the breakroom
-      - Looking busy when Mr. Burns or Waylon Smithers walks by
-      - Pressing various buttons, mostly the ones that glow red
+      - Monitor reactor core temperature via state-of-the-art control panel (excellent napping surface)
+      - Conduct regular safety inspections while consuming pink frosted donuts with sprinkles
+      - Respond to emergency alarms by pressing appropriate colored buttons (after consulting manual)
+      - Maintain detailed logs of daily donut consumption and TV viewing schedule
+      - Collaborate with Mr. Burns and Smithers on cost-saving initiatives (mostly involving me)
+      - Successfully averted T-437 Safety Connector incident through creative problem-solving
+      - Led employee morale initiatives through strategic water cooler discussions
 
   - company: The Be Sharps
-    position: Baritone Singer
+    position: Baritone Singer & Founding Member
     start_date: 1985-06-01
     end_date: 1986-08-01
     is_current: false
-    location: Global Tour
-    description: Member of a world-famous Grammy-winning barbershop quartet.
+    location: International Tour
+    description: |
+      Grammy Award-winning barbershop quartet member recognized for unique vocal contributions 
+      and stage presence. Achieved international fame with hit single "Baby on Board."
     responsibilities:
-      - Singing clever lyrics about "Baby on Board"
-      - Wearing a striped vest and boater hat
-      - Signing autographs for adoring fans until the fad ended
+      - Performed complex four-part harmonies at venues worldwide
+      - Co-wrote and performed chart-topping barbershop arrangements
+      - Managed public appearances and autograph sessions during peak popularity
+      - Wore regulation striped vest and boater hat with distinction
+      - Collaborated with Barney Gumble, Apu Nahasapeemapetilon, and Principal Skinner
+      - Featured on album cover at Springfield Gorge
+
+  - company: Mr. Plow (Self-Employed)
+    position: Owner & Chief Snow Plow Operator
+    start_date: 1993-12-01
+    end_date: 1994-03-01
+    is_current: false
+    location: Springfield, USA
+    description: |
+      Founded and operated successful snow removal business serving the greater Springfield area.
+      Achieved market leadership through catchy jingle and superior customer service.
+    responsibilities:
+      - Provided 24/7 snow removal services across Springfield
+      - Created and starred in award-winning commercial jingle ("Call Mr. Plow, that's my name...")
+      - Managed client relationships and service scheduling
+      - Competed effectively against Plow King through strategic marketing
+      - Cleared Adam West's driveway (Batman himself!)
 
   - company: Barney's Bowlarama
     position: Pin Monkey
     start_date: 1995-01-01
     end_date: 1995-02-01
     is_current: false
-    location: Springfield
-    description: My dream job before I had to go back to the plant for Maggie.
+    location: Springfield, USA
+    description: |
+      Fulfilled childhood dream of working at beloved bowling establishment. 
+      Gained valuable experience in pin maintenance and customer service.
     responsibilities:
-      - Clearing the pins from the lanes
-      - Enjoying the smell of the bowling alley
-      - Getting paid in bowling balls (metaphorically)
+      - Manually reset bowling pins with speed and accuracy
+      - Maintained pristine lane conditions for optimal bowling experience
+      - Managed equipment inventory (pins, balls, shoes)
+      - Provided technical support to bowlers
+      - Enjoyed therapeutic benefits of bowling alley atmosphere
+
+  - company: Globex Corporation
+    position: Nuclear Safety Supervisor (Brief Tenure)
+    start_date: 1996-06-01
+    end_date: 1996-06-02
+    is_current: false
+    location: Cypress Creek
+    description: |
+      Recruited by Hank Scorpio for high-level position at state-of-the-art facility.
+      Experienced leadership under visionary CEO in innovative work environment.
+    responsibilities:
+      - Supervised nuclear safety operations at cutting-edge facility
+      - Reported directly to CEO Hank Scorpio
+      - Evaluated company culture and employee benefits (hammocks!)
+      - Made difficult family-related career decisions
+      - Received Denver Broncos as parting gift
+
+default_cover_letter: |
+  Dear [RECIPIENT_NAME],
+
+  I am writing to express my enthusiastic interest in the [POSITION] position at [COMPANY_NAME]. 
+  With over three decades of experience in nuclear safety, crisis management, and innovative 
+  problem-solving, I am confident that I would make a valuable addition to your team.
+
+  In my current role as Safety Inspector at Springfield Nuclear Power Plant, I have successfully 
+  managed complex safety protocols and prevented numerous potential incidents through quick thinking 
+  and decisive action. My experience ranges from technical operations to team leadership, and I have 
+  consistently demonstrated the ability to remain calm under pressure (even when the pressure is 
+  several thousand PSI).
+
+  Beyond my technical expertise, I bring a unique perspective shaped by diverse experiences including 
+  Grammy Award-winning musical performance, entrepreneurial ventures, and community leadership. 
+  I am known for my creative approach to challenges and my unwavering commitment to achieving results, 
+  even in the face of seemingly insurmountable obstacles.
+
+  I am excited about the opportunity to bring my skills and experience to [COMPANY_NAME], and I look 
+  forward to discussing how I can contribute to your organization's success. Thank you for considering 
+  my application.
+
+  Sincerely,
+  Homer Jay Simpson

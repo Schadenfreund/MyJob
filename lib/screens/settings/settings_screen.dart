@@ -6,6 +6,7 @@ import '../../providers/applications_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../constants/app_constants.dart';
 import '../../utils/dialog_utils.dart';
+import '../../utils/ui_utils.dart';
 import '../../services/backup_service.dart';
 import '../../widgets/app_card.dart';
 import 'package:file_picker/file_picker.dart';
@@ -28,23 +29,11 @@ class SettingsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Settings',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Customize your experience',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.textTheme.bodySmall?.color,
-                      ),
-                    ),
-                  ],
+                UIUtils.buildSectionHeader(
+                  context,
+                  title: 'Settings',
+                  subtitle: 'Customize your experience',
+                  icon: Icons.settings_outlined,
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
@@ -53,14 +42,80 @@ class SettingsScreen extends StatelessWidget {
                   title: 'Accent Color',
                   icon: Icons.palette_outlined,
                   children: [
-                    Text(
-                      'Choose your preferred accent color. This color will be used throughout the app for highlights and interactive elements.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color:
-                            theme.textTheme.bodySmall?.color?.withOpacity(0.8),
+                    // Current color hex value display
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            settings.accentColor.withValues(alpha: 0.08),
+                            settings.accentColor.withValues(alpha: 0.02),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(
+                            AppDimensions.cardBorderRadius),
+                        border: Border.all(
+                          color: settings.accentColor.withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          // Color preview circle
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: settings.accentColor,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.4),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: settings.accentColor
+                                      .withValues(alpha: 0.3),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          // Hex value
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Current Color',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.textTheme.bodySmall?.color
+                                        ?.withValues(alpha: 0.6),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '#${settings.accentColor.value.toRadixString(16).substring(2).toUpperCase()}',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: settings.accentColor,
+                                    fontFamily: 'monospace',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
+
+                    // Color selection buttons
                     Wrap(
                       spacing: 12,
                       runSpacing: 12,
@@ -347,7 +402,19 @@ class SettingsScreen extends StatelessWidget {
                             size: 16,
                             color: settings.accentColor,
                           ),
+                          Text(
+                            ' for you to enjoy.',
+                            style: theme.textTheme.bodyMedium,
+                          ),
                         ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Please consider supporting the development.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.textTheme.bodySmall?.color
+                              ?.withOpacity(0.7),
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       AppCardActionButton(

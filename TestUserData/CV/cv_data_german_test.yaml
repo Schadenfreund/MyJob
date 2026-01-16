@@ -61,6 +61,37 @@ interests:
   - name: Koteletts essen
     category: Essen
 
+education:
+  - id: edu_001
+    degree: Abitur
+    institution: Springfield Gymnasium
+    fieldOfStudy: Allgemeinbildung
+    startDate: "1970-09-01"
+    endDate: "1974-05-30"
+    isCurrent: false
+    grade: "5" 
+    description: |
+      Abgeschlossene Gymnasialausbildung mit Fokus auf Minimierung der Anstrengung und Maximierung 
+      der Mittagspausen. Bemerkenswerte Leistungen umfassen das Überleben von vier Jahren ohne 
+      schwere Verletzungen. Gewählt als "Am wahrscheinlichsten eine Kernschmelze zu verursachen" 
+      von Klassenkameraden. Perfekte Anwesenheit bei Mittagspausen. Mitglied des 
+      Essensschlacht-Komitees.
+
+  - id: edu_002
+    degree: Kernphysik-Zertifikat
+    institution: Springfield Technisches Institut
+    fieldOfStudy: Nuklearsicherheit & Donut-Wissenschaft
+    startDate: "1989-01-15"
+    endDate: "1989-12-15"
+    isCurrent: false
+    grade: Bestanden
+    description: |
+      Intensives Trainingsprogramm mit Fokus auf Reaktorsicherheitsprotokolle, Notfallverfahren 
+      und kritische Arbeitsplatzfähigkeiten. Erfolgreich alle erforderlichen Module abgeschlossen. 
+      Training ohne größere Zwischenfälle abgeschlossen. Die Kunst des Lesens von 
+      Sicherheitshandbüchern gemeistert (erstes Kapitel). Erfolgreich alle sieben Notfallknöpfe 
+      identifiziert.
+
 work_experience:
   - company: Atomkraftwerk Springfield
     position: Sicherheitsinspektor (Sektor 7-G)

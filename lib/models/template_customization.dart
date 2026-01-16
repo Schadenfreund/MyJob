@@ -112,6 +112,119 @@ enum MarginPreset {
 }
 
 // ===========================================================================
+// SECTION PAGE BREAKS
+// ===========================================================================
+
+/// Page break settings for CV sections
+///
+/// When enabled, a page break is inserted before the section header,
+/// moving that section and its content to the next page. This helps
+/// control PDF layout in edge cases where content awkwardly splits.
+///
+/// **GUI toggles available for:** Experience, Education, Languages
+/// **Code support only (no GUI):** Skills, Interests
+///
+/// Page breaks are applied in multi-page layouts (Modern, Traditional, Compact).
+/// They have no effect in Two-Column preset (single-page layout).
+class SectionPageBreaks {
+  /// Force page break before Experience section
+  final bool beforeExperience;
+
+  /// Force page break before Education section
+  final bool beforeEducation;
+
+  /// Force page break before Languages section
+  final bool beforeLanguages;
+
+  /// Force page break before Skills section
+  /// Note: No GUI toggle - for programmatic use only
+  final bool beforeSkills;
+
+  /// Force page break before Interests section
+  /// Note: No GUI toggle - for programmatic use only
+  final bool beforeInterests;
+
+  const SectionPageBreaks({
+    this.beforeExperience = false,
+    this.beforeEducation = false,
+    this.beforeLanguages = false,
+    this.beforeSkills = false,
+    this.beforeInterests = false,
+  });
+
+  /// Default instance with no page breaks
+  static const SectionPageBreaks none = SectionPageBreaks();
+
+  /// Check if any page break is enabled
+  bool get hasAnyEnabled =>
+      beforeExperience ||
+      beforeEducation ||
+      beforeLanguages ||
+      beforeSkills ||
+      beforeInterests;
+
+  /// Convert to JSON for persistence
+  Map<String, dynamic> toJson() {
+    return {
+      'beforeExperience': beforeExperience,
+      'beforeEducation': beforeEducation,
+      'beforeLanguages': beforeLanguages,
+      'beforeSkills': beforeSkills,
+      'beforeInterests': beforeInterests,
+    };
+  }
+
+  /// Create from JSON
+  factory SectionPageBreaks.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return const SectionPageBreaks();
+    return SectionPageBreaks(
+      beforeExperience: json['beforeExperience'] as bool? ?? false,
+      beforeEducation: json['beforeEducation'] as bool? ?? false,
+      beforeLanguages: json['beforeLanguages'] as bool? ?? false,
+      beforeSkills: json['beforeSkills'] as bool? ?? false,
+      beforeInterests: json['beforeInterests'] as bool? ?? false,
+    );
+  }
+
+  /// Create a copy with updated values
+  SectionPageBreaks copyWith({
+    bool? beforeExperience,
+    bool? beforeEducation,
+    bool? beforeLanguages,
+    bool? beforeSkills,
+    bool? beforeInterests,
+  }) {
+    return SectionPageBreaks(
+      beforeExperience: beforeExperience ?? this.beforeExperience,
+      beforeEducation: beforeEducation ?? this.beforeEducation,
+      beforeLanguages: beforeLanguages ?? this.beforeLanguages,
+      beforeSkills: beforeSkills ?? this.beforeSkills,
+      beforeInterests: beforeInterests ?? this.beforeInterests,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is SectionPageBreaks &&
+        other.beforeExperience == beforeExperience &&
+        other.beforeEducation == beforeEducation &&
+        other.beforeLanguages == beforeLanguages &&
+        other.beforeSkills == beforeSkills &&
+        other.beforeInterests == beforeInterests;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        beforeExperience,
+        beforeEducation,
+        beforeLanguages,
+        beforeSkills,
+        beforeInterests,
+      );
+}
+
+// ===========================================================================
 // TEMPLATE CUSTOMIZATION CLASS
 // ===========================================================================
 
@@ -219,6 +332,14 @@ class TemplateCustomization {
   final CvLanguage language;
 
   // -------------------------------------------------------------------------
+  // PAGE BREAK OPTIONS
+  // -------------------------------------------------------------------------
+
+  /// Section page break settings
+  /// Controls forced page breaks before specific CV sections
+  final SectionPageBreaks sectionPageBreaks;
+
+  // -------------------------------------------------------------------------
   // CONSTRUCTOR
   // -------------------------------------------------------------------------
 
@@ -251,6 +372,8 @@ class TemplateCustomization {
     this.showRecipient = true,
     // Language
     this.language = CvLanguage.english,
+    // Page breaks
+    this.sectionPageBreaks = const SectionPageBreaks(),
   });
 
   // -------------------------------------------------------------------------
@@ -283,6 +406,7 @@ class TemplateCustomization {
       'showSubject': showSubject,
       'showRecipient': showRecipient,
       'language': language.name,
+      'sectionPageBreaks': sectionPageBreaks.toJson(),
     };
   }
 
@@ -335,6 +459,9 @@ class TemplateCustomization {
       language: CvLanguage.values.firstWhere(
         (e) => e.name == json['language'],
         orElse: () => CvLanguage.english,
+      ),
+      sectionPageBreaks: SectionPageBreaks.fromJson(
+        json['sectionPageBreaks'] as Map<String, dynamic>?,
       ),
     );
   }
@@ -471,6 +598,7 @@ class TemplateCustomization {
     bool? showSubject,
     bool? showRecipient,
     CvLanguage? language,
+    SectionPageBreaks? sectionPageBreaks,
   }) {
     return TemplateCustomization(
       spacingScale: spacingScale ?? this.spacingScale,
@@ -496,6 +624,7 @@ class TemplateCustomization {
       showSubject: showSubject ?? this.showSubject,
       showRecipient: showRecipient ?? this.showRecipient,
       language: language ?? this.language,
+      sectionPageBreaks: sectionPageBreaks ?? this.sectionPageBreaks,
     );
   }
 }

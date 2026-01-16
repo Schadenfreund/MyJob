@@ -20,6 +20,7 @@ import '../services/pdf_service.dart';
 import '../services/storage_service.dart';
 import '../utils/data_converters.dart';
 import '../widgets/pdf_editor/template_edit_panel.dart';
+import '../widgets/pdf_editor/pdf_editor_sidebar.dart' show CvSectionAvailability;
 import 'base_template_pdf_preview_dialog.dart';
 
 /// PDF preview and editor for job applications
@@ -162,6 +163,22 @@ class _JobApplicationPdfDialogState
   @override
   bool get hidePhotoOptions =>
       !widget.isCV; // Hide photo options for cover letters
+
+  @override
+  CvSectionAvailability? getCvSectionAvailability() {
+    // Only relevant for CV documents
+    if (!widget.isCV) return null;
+
+    // Build availability based on actual CV data
+    final cvData = widget.cvData;
+    return CvSectionAvailability(
+      hasExperience: cvData.experiences.isNotEmpty,
+      hasEducation: cvData.education.isNotEmpty,
+      hasLanguages: cvData.languages.isNotEmpty,
+      hasSkills: cvData.skills.isNotEmpty,
+      hasInterests: cvData.interests.isNotEmpty,
+    );
+  }
 
   @override
   Widget? buildCustomPresets() {

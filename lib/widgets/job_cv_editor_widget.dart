@@ -384,18 +384,21 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
 
         // Tab content
         Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              _buildApplicationDetailsTab(),
-              _buildPersonalInfoTab(),
-              _buildExperienceTab(),
-              _buildSkillsTab(),
-              _buildLanguagesTab(),
-              _buildInterestsTab(),
-              _buildEducationTab(),
-              _buildCoverLetterTab(),
-            ],
+          child: Container(
+            color: theme.colorScheme.surface,
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildApplicationDetailsTab(),
+                _buildPersonalInfoTab(),
+                _buildExperienceTab(),
+                _buildSkillsTab(),
+                _buildLanguagesTab(),
+                _buildInterestsTab(),
+                _buildEducationTab(),
+                _buildCoverLetterTab(),
+              ],
+            ),
           ),
         ),
       ],

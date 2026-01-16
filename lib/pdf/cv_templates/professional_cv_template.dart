@@ -692,6 +692,9 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     final hasInterests = cv.interests.isNotEmpty;
     final hasSkills = cv.skills.isNotEmpty;
 
+    // Get page break settings
+    final pageBreaks = s.customization.sectionPageBreaks;
+
     // Profile section
     if (cv.profile.isNotEmpty) {
       widgets.add(_buildProfileSection(cv, s));
@@ -699,10 +702,18 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
     // Skills and Interests side by side (if both exist)
     if (hasSkills && hasInterests) {
+      // Page break before Skills (if enabled) when side-by-side
+      if (pageBreaks.beforeSkills) {
+        widgets.add(pw.NewPage());
+      }
       widgets.add(_buildSkillsAndInterestsSideBySide(cv, s));
     } else {
       // Skills alone
       if (hasSkills) {
+        // Page break before Skills if enabled (no GUI toggle)
+        if (pageBreaks.beforeSkills) {
+          widgets.add(pw.NewPage());
+        }
         final isLast =
             !hasInterests && !hasLanguages && !hasExperience && !hasEducation;
         widgets
@@ -710,6 +721,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
       }
       // Interests alone
       if (hasInterests) {
+        // Page break before Interests if enabled (no GUI toggle)
+        if (pageBreaks.beforeInterests) {
+          widgets.add(pw.NewPage());
+        }
         final isLast = !hasLanguages && !hasExperience && !hasEducation;
         widgets.add(_buildInterestsSection(cv, s, addBottomMargin: !isLast));
       }
@@ -717,12 +732,20 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
     // Languages (before Experience - usually shorter)
     if (hasLanguages) {
+      // Page break before Languages if enabled
+      if (pageBreaks.beforeLanguages) {
+        widgets.add(pw.NewPage());
+      }
       final isLast = !hasExperience && !hasEducation;
       widgets.add(_buildLanguagesSection(cv, s, addBottomMargin: !isLast));
     }
 
     // Experience
     if (hasExperience) {
+      // Page break before Experience if enabled
+      if (pageBreaks.beforeExperience) {
+        widgets.add(pw.NewPage());
+      }
       // Only add bottom margin if education follows
       widgets.add(_buildExperienceSection(cv, s, experienceLayout,
           addBottomMargin: hasEducation));
@@ -730,6 +753,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
     // Education (last section - no bottom margin)
     if (hasEducation) {
+      // Page break before Education if enabled
+      if (pageBreaks.beforeEducation) {
+        widgets.add(pw.NewPage());
+      }
       widgets.add(_buildEducationSection(cv, s, false, addBottomMargin: false));
     }
 
@@ -768,6 +795,9 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     final hasSkills = cv.skills.isNotEmpty;
     final hasProfile = cv.profile.isNotEmpty;
 
+    // Get page break settings (code support, no GUI for Compact)
+    final pageBreaks = s.customization.sectionPageBreaks;
+
     // Profile (if exists)
     if (hasProfile) {
       widgets.add(_buildProfileSection(cv, s));
@@ -775,6 +805,9 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
     // Skills
     if (hasSkills) {
+      if (pageBreaks.beforeSkills) {
+        widgets.add(pw.NewPage());
+      }
       final isLast =
           !hasLanguages && !hasInterests && !hasExperience && !hasEducation;
       widgets.add(_buildSkillsSection(cv, s, true, addBottomMargin: !isLast));
@@ -782,18 +815,27 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
     // Languages
     if (hasLanguages) {
+      if (pageBreaks.beforeLanguages) {
+        widgets.add(pw.NewPage());
+      }
       final isLast = !hasInterests && !hasExperience && !hasEducation;
       widgets.add(_buildLanguagesSection(cv, s, addBottomMargin: !isLast));
     }
 
     // Interests
     if (hasInterests) {
+      if (pageBreaks.beforeInterests) {
+        widgets.add(pw.NewPage());
+      }
       final isLast = !hasExperience && !hasEducation;
       widgets.add(_buildInterestsSection(cv, s, addBottomMargin: !isLast));
     }
 
     // Experience
     if (hasExperience) {
+      if (pageBreaks.beforeExperience) {
+        widgets.add(pw.NewPage());
+      }
       final isLast = !hasEducation;
       widgets.add(_buildExperienceSection(cv, s, experienceLayout,
           addBottomMargin: !isLast));
@@ -801,6 +843,9 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
     // Education (last section by default)
     if (hasEducation) {
+      if (pageBreaks.beforeEducation) {
+        widgets.add(pw.NewPage());
+      }
       widgets.add(_buildEducationSection(cv, s, false, addBottomMargin: false));
     }
 
@@ -1442,6 +1487,9 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     final hasExperience = cv.experiences.isNotEmpty;
     final hasEducation = cv.education.isNotEmpty;
 
+    // Get page break settings
+    final pageBreaks = s.customization.sectionPageBreaks;
+
     // Professional Summary (uses 'profile' field from CvData)
     if (hasProfile) {
       final isLast = !hasExperience && !hasEducation;
@@ -1464,6 +1512,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
     // Experience
     if (hasExperience) {
+      // Page break before Experience if enabled
+      if (pageBreaks.beforeExperience) {
+        sections.add(pw.NewPage());
+      }
       final isLast = !hasEducation;
       sections.add(
         SectionComponent.section(
@@ -1481,6 +1533,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
     // Education (last section by default)
     if (hasEducation) {
+      // Page break before Education if enabled
+      if (pageBreaks.beforeEducation) {
+        sections.add(pw.NewPage());
+      }
       sections.add(
         SectionComponent.section(
           title: 'Education',
@@ -1581,6 +1637,9 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
       }
     }
 
+    // Get page break settings
+    final pageBreaks = s.customization.sectionPageBreaks;
+
     for (final sectionName in order) {
       final isLast = sectionName == lastSection;
 
@@ -1593,6 +1652,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
         case 'skills':
           if (cv.skills.isNotEmpty) {
+            // Add page break before Skills if enabled (no GUI toggle)
+            if (pageBreaks.beforeSkills) {
+              sections.add(pw.NewPage());
+            }
             sections.add(_buildSkillsSection(cv, s, isCompact,
                 addBottomMargin: !isLast));
           }
@@ -1600,6 +1663,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
         case 'experience':
           if (cv.experiences.isNotEmpty) {
+            // Add page break before Experience if enabled
+            if (pageBreaks.beforeExperience) {
+              sections.add(pw.NewPage());
+            }
             sections.add(_buildExperienceSection(cv, s, experienceLayout,
                 addBottomMargin: !isLast));
           }
@@ -1607,6 +1674,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
         case 'education':
           if (cv.education.isNotEmpty) {
+            // Add page break before Education if enabled
+            if (pageBreaks.beforeEducation) {
+              sections.add(pw.NewPage());
+            }
             sections.add(_buildEducationSection(cv, s, isCompact,
                 addBottomMargin: !isLast));
           }
@@ -1614,6 +1685,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
         case 'languages':
           if (cv.languages.isNotEmpty) {
+            // Add page break before Languages if enabled
+            if (pageBreaks.beforeLanguages) {
+              sections.add(pw.NewPage());
+            }
             sections
                 .add(_buildLanguagesSection(cv, s, addBottomMargin: !isLast));
           }
@@ -1621,6 +1696,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
 
         case 'interests':
           if (cv.interests.isNotEmpty) {
+            // Add page break before Interests if enabled (no GUI toggle)
+            if (pageBreaks.beforeInterests) {
+              sections.add(pw.NewPage());
+            }
             sections
                 .add(_buildInterestsSection(cv, s, addBottomMargin: !isLast));
           }

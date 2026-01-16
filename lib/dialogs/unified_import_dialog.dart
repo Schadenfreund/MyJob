@@ -37,6 +37,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
   bool _importLanguages = true;
   bool _importInterests = true;
   bool _importWorkExperience = true;
+  bool _importEducation = true;
 
   @override
   void initState() {
@@ -473,6 +474,9 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
       case 'work':
         iconData = Icons.work_rounded;
         break;
+      case 'school':
+        iconData = Icons.school_rounded;
+        break;
       case 'mail':
         iconData = Icons.mail_rounded;
         break;
@@ -611,6 +615,14 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                 selected: _importWorkExperience,
                 onSelected: (v) => setState(() => _importWorkExperience = v),
                 enabled: _parseResult?.workExperiences.isNotEmpty ?? false,
+              ),
+              _buildFilterChip(
+                context,
+                label: 'Education',
+                icon: Icons.school_rounded,
+                selected: _importEducation,
+                onSelected: (v) => setState(() => _importEducation = v),
+                enabled: _parseResult?.education.isNotEmpty ?? false,
               ),
             ],
           ),
@@ -914,6 +926,15 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
       }
       for (final exp in result.workExperiences) {
         await userDataProvider.addExperience(exp);
+      }
+    }
+
+    if (_importEducation && result.education.isNotEmpty) {
+      for (final edu in userDataProvider.education) {
+        await userDataProvider.deleteEducation(edu.id);
+      }
+      for (final edu in result.education) {
+        await userDataProvider.addEducation(edu);
       }
     }
   }

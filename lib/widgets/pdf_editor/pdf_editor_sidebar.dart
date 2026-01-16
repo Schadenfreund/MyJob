@@ -7,6 +7,50 @@ import '../../models/template_customization.dart';
 import '../../providers/pdf_presets_provider.dart';
 import 'pdf_editor_controller.dart';
 
+// =============================================================================
+// CV SECTION AVAILABILITY
+// =============================================================================
+
+/// Tracks which CV sections have content for context-sensitive UI
+///
+/// Used to show/hide page break toggles based on what sections
+/// actually exist in the CV data.
+class CvSectionAvailability {
+  final bool hasExperience;
+  final bool hasEducation;
+  final bool hasLanguages;
+  final bool hasSkills;
+  final bool hasInterests;
+
+  const CvSectionAvailability({
+    this.hasExperience = false,
+    this.hasEducation = false,
+    this.hasLanguages = false,
+    this.hasSkills = false,
+    this.hasInterests = false,
+  });
+
+  /// Default: all sections available (for backwards compatibility)
+  static const CvSectionAvailability all = CvSectionAvailability(
+    hasExperience: true,
+    hasEducation: true,
+    hasLanguages: true,
+    hasSkills: true,
+    hasInterests: true,
+  );
+
+  /// No sections available
+  static const CvSectionAvailability none = CvSectionAvailability();
+
+  /// Check if any section with a GUI toggle is available
+  bool get hasAnyToggleableSections =>
+      hasExperience || hasEducation || hasLanguages;
+}
+
+// =============================================================================
+// PDF EDITOR SIDEBAR
+// =============================================================================
+
 /// Sidebar for PDF editor with styling and layout controls
 class PdfEditorSidebar extends StatelessWidget {
   const PdfEditorSidebar({
@@ -17,6 +61,7 @@ class PdfEditorSidebar extends StatelessWidget {
     this.hidePhotoOptions = false,
     this.customPresetsBuilder,
     required this.documentType,
+    this.cvSectionAvailability,
     super.key,
   });
 
@@ -27,6 +72,10 @@ class PdfEditorSidebar extends StatelessWidget {
   final bool hidePhotoOptions;
   final Widget? Function()? customPresetsBuilder;
   final PdfDocumentType documentType;
+
+  /// CV section availability for context-sensitive page break toggles
+  /// Only relevant when documentType is CV
+  final CvSectionAvailability? cvSectionAvailability;
 
   // Accent color presets (matching PDF styling presets)
   static const List<Color> _accentColorPresets = [
@@ -108,6 +157,12 @@ class PdfEditorSidebar extends StatelessWidget {
 
               // Preset-specific adjustments
               _buildPresetAdjustmentsSection(),
+
+              // Page Breaks section (only for CVs, not Two-Column/Compact)
+              if (_shouldShowPageBreakSection()) ...[
+                const SizedBox(height: 28),
+                _buildPageBreakSection(),
+              ],
 
               // Photo Options (only show when not hidden AND photo is enabled)
               if (!hidePhotoOptions &&
@@ -582,6 +637,164 @@ class PdfEditorSidebar extends StatelessWidget {
         return 'Sidebar with main content area';
     }
   }
+
+  // ===========================================================================
+  // PAGE BREAK SECTION
+  // ===========================================================================
+
+  /// Check if the page break section should be shown
+  ///
+  /// Page breaks are only relevant for:
+  /// - CV documents (not cover letters)
+  /// - Multi-page layouts (not Two-Column - single page layout)
+  /// - When at least one toggleable section exists
+  bool _shouldShowPageBreakSection() {
+    // Only show for CV documents
+    if (documentType != PdfDocumentType.cv) return false;
+
+    // Don't show for Two-Column preset (single-page layout where page breaks don't apply)
+    final preset = LayoutPreset.fromCustomization(controller.customization);
+    if (preset == LayoutPreset.twoColumn) {
+      return false;
+    }
+
+    // Check if any toggleable sections exist
+    final availability = cvSectionAvailability ?? CvSectionAvailability.all;
+    return availability.hasAnyToggleableSections;
+  }
+
+  /// Build the PAGE BREAKS section with context-sensitive toggles
+  Widget _buildPageBreakSection() {
+    final availability = cvSectionAvailability ?? CvSectionAvailability.all;
+    final pageBreaks = controller.customization.sectionPageBreaks;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header
+        Row(
+          children: [
+            Icon(
+              Icons.insert_page_break_outlined,
+              color: controller.style.accentColor,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'PAGE BREAKS',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Force sections to start on a new page',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.5),
+            fontSize: 10,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Experience toggle (if section exists)
+        if (availability.hasExperience)
+          _buildPageBreakToggle(
+            label: 'Before Experience',
+            value: pageBreaks.beforeExperience,
+            onToggle: () => _togglePageBreak('experience'),
+          ),
+
+        // Education toggle (if section exists)
+        if (availability.hasEducation)
+          _buildPageBreakToggle(
+            label: 'Before Education',
+            value: pageBreaks.beforeEducation,
+            onToggle: () => _togglePageBreak('education'),
+          ),
+
+        // Languages toggle (if section exists)
+        if (availability.hasLanguages)
+          _buildPageBreakToggle(
+            label: 'Before Languages',
+            value: pageBreaks.beforeLanguages,
+            onToggle: () => _togglePageBreak('languages'),
+          ),
+      ],
+    );
+  }
+
+  /// Build a single page break toggle
+  Widget _buildPageBreakToggle({
+    required String label,
+    required bool value,
+    required VoidCallback onToggle,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onToggle,
+          borderRadius: BorderRadius.circular(6),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Switch(
+                  value: value,
+                  onChanged: (_) => onToggle(),
+                  activeThumbColor: controller.style.accentColor,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Toggle a specific page break setting
+  void _togglePageBreak(String section) {
+    final current = controller.customization.sectionPageBreaks;
+    SectionPageBreaks updated;
+
+    switch (section) {
+      case 'experience':
+        updated = current.copyWith(beforeExperience: !current.beforeExperience);
+        break;
+      case 'education':
+        updated = current.copyWith(beforeEducation: !current.beforeEducation);
+        break;
+      case 'languages':
+        updated = current.copyWith(beforeLanguages: !current.beforeLanguages);
+        break;
+      default:
+        return;
+    }
+
+    controller.updateCustomization(
+      controller.customization.copyWith(sectionPageBreaks: updated),
+    );
+  }
+
+  // ===========================================================================
+  // PHOTO OPTIONS SECTION
+  // ===========================================================================
 
   /// Build photo options section
   Widget _buildPhotoOptionsSection() {

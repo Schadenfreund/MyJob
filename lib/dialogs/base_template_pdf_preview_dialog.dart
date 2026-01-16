@@ -191,6 +191,10 @@ abstract class BaseTemplatePdfPreviewDialogState<
   /// Hide photo options section (for cover letters)
   bool get hidePhotoOptions => false;
 
+  /// Get CV section availability for context-sensitive page break toggles
+  /// Override in CV dialogs to provide actual section availability
+  CvSectionAvailability? getCvSectionAvailability() => null;
+
   // ============================================================================
   // PDF GENERATION
   // ============================================================================
@@ -311,6 +315,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
                     hidePhotoOptions: hidePhotoOptions,
                     customPresetsBuilder: buildCustomPresets,
                     documentType: widget.getDocumentType(),
+                    cvSectionAvailability: getCvSectionAvailability(),
                   ),
                 ],
                 Expanded(
