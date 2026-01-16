@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 import '../../providers/applications_provider.dart';
+import '../../providers/user_data_provider.dart';
+import '../../providers/app_state.dart';
 import '../../models/job_application.dart';
 import '../../constants/app_constants.dart';
 import '../../theme/app_theme.dart';
@@ -774,6 +776,55 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
   }
 
   void _showAddDialog(BuildContext context) async {
+    // Check if profile has data
+    final userDataProvider = context.read<UserDataProvider>();
+    final profile = userDataProvider.currentProfile;
+
+    final bool isEmpty = profile == null ||
+        (profile.personalInfo == null &&
+            profile.experiences.isEmpty &&
+            profile.education.isEmpty &&
+            profile.skills.isEmpty);
+
+    if (isEmpty) {
+      // Show warning dialog
+      final shouldContinue = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          icon: Icon(
+            Icons.info_outline,
+            color: Theme.of(context).colorScheme.primary,
+            size: 48,
+          ),
+          title: const Text('No Profile Data Found'),
+          content: const Text(
+            'Your master profile appears to be empty.\n\n'
+            'Tip: Fill out your Profile tab first to save time! '
+            'You can populate it once and use that data across all job applications.\n\n'
+            'Would you like to continue creating this job application anyway?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Continue'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+                // Navigate to Profile tab (index 0)
+                context.read<AppState>().setNavIndex(0);
+              },
+              child: const Text('Fill Profile First'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldContinue != true) {
+        return; // User chose not to continue
+      }
+    }
+
     final result = await showDialog<JobApplication>(
       context: context,
       builder: (context) => const ApplicationEditorDialog(),

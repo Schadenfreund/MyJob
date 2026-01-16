@@ -813,11 +813,20 @@ class StorageService {
         if (file.path.endsWith('.yaml') || file.path.endsWith('.yml')) {
           try {
             final content = await file.readAsString();
-            final yaml = loadYaml(content) as Map;
+            final yaml = loadYaml(content);
+
+            if (yaml is! YamlMap) {
+              debugPrint(
+                  'Warning: ${file.path} does not contain a valid YAML map, skipping');
+              continue;
+            }
+
             final json = _yamlToJson(yaml);
             notes.add(NoteItem.fromJson(json));
-          } catch (e) {
+          } catch (e, stackTrace) {
             debugPrint('Error loading note ${file.path}: $e');
+            debugPrint('Stack trace: $stackTrace');
+            // Continue loading other notes even if one fails
           }
         }
       }
@@ -842,11 +851,22 @@ class StorageService {
         notesDir.createSync(recursive: true);
       }
 
-      final file = File(p.join(notesDir.path, '${note.id}.yaml'));
+      // First, delete any existing files for this note ID (in case title changed)
+      for (final entity in notesDir.listSync()) {
+        if (entity is File && entity.path.contains(note.id)) {
+          await entity.delete();
+        }
+      }
+
+      // Create human-readable filename: sanitized title + ID
+      final sanitizedTitle = _sanitizeFileName(note.title);
+      final fileName = '${sanitizedTitle}_${note.id}.yaml';
+      final file = File(p.join(notesDir.path, fileName));
+
       final yaml = _jsonToYaml(note.toJson());
 
       await file.writeAsString(yaml);
-      debugPrint('Note saved: ${note.id}');
+      debugPrint('Note saved: $fileName');
     } catch (e) {
       debugPrint('Error saving note: $e');
       rethrow;
@@ -857,11 +877,15 @@ class StorageService {
   Future<void> deleteNote(String id) async {
     try {
       final userDataPath = await getUserDataPath();
-      final file = File(p.join(userDataPath, 'notes', '$id.yaml'));
+      final notesDir = Directory(p.join(userDataPath, 'notes'));
 
-      if (file.existsSync()) {
-        await file.delete();
-        debugPrint('Note deleted: $id');
+      if (notesDir.existsSync()) {
+        for (final entity in notesDir.listSync()) {
+          if (entity is File && entity.path.contains(id)) {
+            await entity.delete();
+            debugPrint('Note file deleted for ID: $id');
+          }
+        }
       }
     } catch (e) {
       debugPrint('Error deleting note: $e');
@@ -869,17 +893,33 @@ class StorageService {
     }
   }
 
+  String _sanitizeFileName(String name) {
+    // Replace invalid Windows filename characters with underscores
+    return name.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_').trim();
+  }
+
   /// Convert YAML map to JSON-compatible map
   Map<String, dynamic> _yamlToJson(dynamic yaml) {
     if (yaml is YamlMap) {
       return yaml.map((key, value) => MapEntry(
             key.toString(),
-            _yamlToJson(value),
+            _yamlToJsonValue(value),
           ));
-    } else if (yaml is YamlList) {
-      return {'list': yaml.map((e) => _yamlToJson(e)).toList()};
+    }
+    return {};
+  }
+
+  /// Helper to convert individual YAML values to JSON-compatible values
+  dynamic _yamlToJsonValue(dynamic value) {
+    if (value is YamlMap) {
+      return value.map((key, val) => MapEntry(
+            key.toString(),
+            _yamlToJsonValue(val),
+          ));
+    } else if (value is YamlList) {
+      return value.map((e) => _yamlToJsonValue(e)).toList();
     } else {
-      return yaml;
+      return value;
     }
   }
 
@@ -895,13 +935,18 @@ class StorageService {
         buffer.writeln('$indentStr$key:');
         buffer.write(_jsonToYaml(value as Map<String, dynamic>, indent + 1));
       } else if (value is List) {
-        buffer.writeln('$indentStr$key:');
-        for (final item in value) {
-          if (item is Map) {
-            buffer.writeln('${indentStr}  -');
-            buffer.write(_jsonToYaml(item as Map<String, dynamic>, indent + 2));
-          } else {
-            buffer.writeln('${indentStr}  - $item');
+        if (value.isEmpty) {
+          buffer.writeln('$indentStr$key: []');
+        } else {
+          buffer.writeln('$indentStr$key:');
+          for (final item in value) {
+            if (item is Map) {
+              buffer.writeln('${indentStr}  -');
+              buffer
+                  .write(_jsonToYaml(item as Map<String, dynamic>, indent + 2));
+            } else {
+              buffer.writeln('${indentStr}  - $item');
+            }
           }
         }
       } else if (value is String) {

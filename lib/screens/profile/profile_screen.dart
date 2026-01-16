@@ -64,7 +64,7 @@ class ProfileScreen extends StatelessWidget {
       context,
       title: 'Profile Template',
       subtitle:
-          'Master CV and Cover Letter data for all your future job applications.',
+          'Start here! Fill out your master profile data once, then use it for all job applications.',
       icon: Icons.account_circle_outlined,
       action: Row(
         mainAxisSize: MainAxisSize.min,

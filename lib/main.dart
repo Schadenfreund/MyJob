@@ -140,11 +140,25 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     setState(() {
       _currentTabIndex = index;
     });
+    // Also update AppState provider
+    context.read<AppState>().setNavIndex(index);
   }
 
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsService>();
+    final appState = context.watch<AppState>();
+
+    // Sync with AppState changes (e.g., from other parts of the app)
+    if (appState.currentNavIndex != _currentTabIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _currentTabIndex = appState.currentNavIndex;
+          });
+        }
+      });
+    }
 
     return Scaffold(
       body: Column(
