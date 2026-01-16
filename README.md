@@ -2,6 +2,11 @@
 
 A comprehensive job application management tool with CV and cover letter creation.
 
+## Example CV (one of 4 pre-defined, customizable templates)
+
+<img width="742" height="1047" alt="example" src="https://github.com/user-attachments/assets/21b905b1-f61e-4762-84d0-b13bb5c79106" />
+
+
 ## Features
 
 - **Bilingual Profile Management** - Maintain separate English and German profiles
