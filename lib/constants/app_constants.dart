@@ -76,3 +76,23 @@ class DebugConfig {
   static const bool verboseLogging = false;
   static const bool showDebugOverlay = false;
 }
+
+/// Auto-update configuration
+class UpdateConfig {
+  static const String githubOwner = 'Schadenfreund';
+  static const String githubRepo = 'MyJob';
+  static const String releasesApiUrl =
+      'https://api.github.com/repos/$githubOwner/$githubRepo/releases/latest';
+  static const String releasesPageUrl =
+      'https://github.com/$githubOwner/$githubRepo/releases';
+
+  /// Expected asset filename pattern (version will be inserted)
+  static String assetFilename(String version) =>
+      'MyJob-v$version-windows.zip';
+
+  static const Duration checkTimeout = Duration(seconds: 30);
+  static const Duration downloadTimeout = Duration(minutes: 10);
+
+  /// Minimum time between update checks (to respect rate limits)
+  static const Duration minCheckInterval = Duration(hours: 1);
+}

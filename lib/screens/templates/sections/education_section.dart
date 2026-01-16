@@ -80,15 +80,6 @@ class EducationSection extends StatelessWidget {
               edu,
               dateFormat,
             )),
-
-        if (!showHeader) ...[
-          const SizedBox(height: AppSpacing.md),
-          OutlinedButton.icon(
-            onPressed: () => _addEducation(context, provider),
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Add Education'),
-          ),
-        ],
       ],
     );
   }
@@ -256,6 +247,20 @@ class EducationSection extends StatelessWidget {
 
     if (confirmed == true) {
       provider.deleteEducation(edu.id);
+    }
+  }
+
+  /// Static method to show add education dialog from anywhere
+  /// Used by ProfileSectionCard's add button
+  static Future<void> showAddDialog(BuildContext context) async {
+    final provider = context.read<UserDataProvider>();
+    final result = await showDialog<Education>(
+      context: context,
+      builder: (context) => const EducationEditDialog(),
+    );
+
+    if (result != null) {
+      provider.addEducation(result);
     }
   }
 }

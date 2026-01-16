@@ -2,90 +2,108 @@
 
 A comprehensive job application management tool with CV and cover letter creation.
 
-## 🌟 Features
+## Features
 
-### 📝 Bilingual Profile Management
-- Maintain separate **English** and **German** profiles
-- Fill out your master profile once, use it for all applications
-- Edit and customize for each job application
-
-### 📊 Job Application Tracking
-- Track all your job applications in one place
-- Monitor application status (Draft, Applied, Interview, Accepted, Rejected)
-- Add notes, salary expectations, and contact information
-- Time-based filtering (last 7/30/90 days)
-
-### 📓 Notes & Todo System
-- Create notes with priorities and tags
-- Archive completed notes
-- Search by title, description, or tags
-- Collapsible sections for better organization
-
-### 📄 Professional PDF Generation
-- Generate CVs with multiple templates
-- Create tailored cover letters
-- Customize colors, fonts, and layout
-- Live preview before export
-
-### 💾 Backup & Restore
-- Create backup ZIP files of all your data
-- Restore from backup with one click
-- Portable design - move your data anywhere
-
-### 🎨 Customizable Interface
-- Multiple accent colors (Blue, Green, Cyan, Orange, Red)
-- Dark and Light mode support
-- Modern Material Design 3 interface
+- **Bilingual Profile Management** - Maintain separate English and German profiles
+- **Job Application Tracking** - Track status, notes, salary expectations, and contacts
+- **Notes & Todo System** - Organize with priorities, tags, and archiving
+- **Professional PDF Generation** - Multiple CV templates with customizable colors and fonts
+- **Backup & Restore** - Create and restore ZIP backups of all your data
+- **Auto-Update** - Check for updates directly from the app
+- **Dark/Light Mode** - Multiple accent color themes
 
 ---
 
-## 🚀 Getting Started
+## Quick Start
 
-### Requirements
-- **Flutter SDK** >=3.0.0
-- **Windows** (primary target platform)
-- Dart SDK >=3.0.0
+### Download & Run
 
-### Installation
+1. Download the latest release from [Releases](https://github.com/Schadenfreund/MyJob/releases)
+2. Extract the ZIP file to any folder
+3. Run `MyJob.exe`
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/MyJob.git
-   cd MyJob
-   ```
+**That's it!** No installation required. The app is fully portable.
 
-2. **Install dependencies**
-   ```bash
-   flutter pub get
-   ```
+### First Steps
 
-3. **Run the application**
-   ```bash
-   flutter run -d windows
-   ```
-
-### Building for Release
-
-Use the provided PowerShell script for a complete release build:
-
-```powershell
-.\build-release.ps1
-```
-
-This will:
-- Build the Windows executable
-- Create a release folder structure
-- Include the UserData folder
-- Package everything for distribution
+1. **Fill out your Profile** - Go to the Profile tab and add your personal info, work experience, education, skills, and languages
+2. **Create a Job Application** - Go to Job Applications and create your first application
+3. **Generate your CV** - Customize and export a professional PDF
 
 ---
 
-## 📁 User Data Location
+## Importing Your Own CV Data
 
-All user data is stored in: `<executable_location>/UserData/`
+MyJob uses YAML files for CV and cover letter data. Check the **DEMO_DATA** folder included in the release for templates you can use as a starting point.
 
-**Folder structure:**
+### DEMO_DATA Folder Structure
+
+```text
+DEMO_DATA/
+├── CV/
+│   ├── cv_data_english_test.yaml    # English CV template
+│   └── cv_data_german_test.yaml     # German CV template
+└── CoverLetter/
+    ├── cover_letter_template_english_test.yaml
+    └── cover_letter_template_german_test.yaml
 ```
+
+### How to Create Your Own CV File
+
+1. **Copy a template** from `DEMO_DATA/CV/`
+2. **Edit the YAML file** with your own data (use any text editor like Notepad++)
+3. **Import into MyJob**:
+   - Go to the **Profile** tab
+   - Click the **Import** button
+   - Select your edited YAML file
+
+### YAML Format Example
+
+```yaml
+personal_info:
+  first_name: "John"
+  last_name: "Doe"
+  email: "john.doe@email.com"
+  phone: "+1 234 567 890"
+  address: "123 Main Street"
+  city: "New York"
+  postal_code: "10001"
+  country: "USA"
+
+work_experience:
+  - company: "Tech Corp"
+    position: "Software Developer"
+    start_date: "2020-01"
+    end_date: "2024-01"
+    description: "Developed web applications..."
+
+education:
+  - institution: "University of Technology"
+    degree: "Bachelor of Science"
+    field: "Computer Science"
+    start_date: "2016-09"
+    end_date: "2020-06"
+
+skills:
+  - name: "Python"
+    level: "Expert"
+  - name: "JavaScript"
+    level: "Advanced"
+
+languages:
+  - name: "English"
+    level: "Native"
+  - name: "German"
+    level: "Intermediate"
+```
+
+---
+
+## User Data Location
+
+All your data is stored in: `<app folder>/UserData/`
+
+```text
 UserData/
 ├── profiles/
 │   ├── en/          # English profile
@@ -96,107 +114,65 @@ UserData/
 └── settings.json    # App settings
 ```
 
-**Portable by design**: Simply move the entire application folder (including UserData) to backup or transfer to another computer.
+**Portable by design**: Move the entire folder to backup or transfer to another computer.
 
 ---
 
-## 🏗️ Project Structure
+## Updating the App
 
-```
-lib/
-├── constants/       # App-wide constants (colors, spacing, etc.)
-├── dialogs/         # Reusable dialog components
-├── models/          # Data models (Job, Profile, Notes, etc.)
-├── providers/       # State management (Provider pattern)
-├── screens/         # Main application screens
-├── services/        # Business logic & data persistence
-├── theme/           # Design system & theming
-├── utils/           # Helper utilities
-└── widgets/         # Reusable UI components
-```
+1. Go to **Settings** tab
+2. Click **Check for Updates**
+3. If an update is available, click **Download & Install**
+4. The app will restart automatically with the new version
+
+Your `UserData` folder is preserved during updates.
 
 ---
 
-## 🔧 Technologies Used
-
-- **Flutter** - Cross-platform UI framework
-- **Provider** - State management
-- **PDF Package** - PDF generation
-- **Window Manager** - Custom titlebar & window controls
-- **YAML** - Data import/export
-- **Material Design 3** - Modern UI design
-
----
-
-## 💡 Usage Tips
-
-### First Time Setup
-
-1. **Start with the Profile tab** - Fill out your master profile data
-2. Add your work experience, education, skills, and languages
-3. Create your first job application
-4. Customize the CV content for each application
-5. Generate and preview your PDF
-
-### Profile Warning System
-
-When creating a new job application with an empty profile, you'll see a helpful warning guiding you to fill out your Profile tab first.
-
-### Notes Feature
-
-- Use **tags** to organize notes
-- **Archive** completed notes to keep your workspace clean
-- Use **search** to quickly find notes
-- Filter by type: To-Do, Company Lead, General Note, Reminder
-
----
-
-## 🛠️ Backup & Restore
+## Backup & Restore
 
 ### Creating a Backup
 
-1. Go to **Settings** → **Data Management**
+1. Go to **Settings** > **Data Management**
 2. Select a backup destination folder
-3. Click **"Create Backup Zip"**
-4. Your backup will be saved with a timestamp
+3. Click **Create Backup Zip**
 
 ### Restoring from Backup
 
-1. Go to **Settings** → **Data Management**
-2. Click **"Restore Zip"**
+1. Go to **Settings** > **Data Management**
+2. Click **Restore Zip**
 3. Select your backup file
-4. Confirm the restore (⚠️ This will overwrite current data)
-5. Restart the application
+4. Restart the application
 
 ---
 
-## 🐛 Troubleshooting
+## Building from Source
 
-### App won't start
-- Ensure you have Flutter SDK installed
-- Run `flutter doctor` to check your setup
+### Requirements
 
-### Data not saving
-- Check that the UserData folder exists next to the executable
-- Ensure you have write permissions
+- Flutter SDK >=3.0.0
+- Windows 10/11
 
-### PDF generation fails
-- Verify all required fields are filled
-- Check that fonts are properly loaded
+### Build Steps
+
+```bash
+git clone https://github.com/Schadenfreund/MyJob.git
+cd MyJob
+flutter pub get
+flutter run -d windows
+```
+
+### Release Build
+
+```powershell
+.\build-release.ps1              # Build current version
+.\build-release.ps1 -BumpPatch   # Increment version and build
+.\build-release.ps1 -Help        # See all options
+```
 
 ---
 
-## 🤝 Contributing
-
-This is a personal project, but suggestions and feedback are welcome!
-
-If you encounter bugs or have feature requests, please open an issue.
-
----
-
-## 💖 Support
-
-Made with ❤️ for you to enjoy.
+## Support
 
 If you find this tool helpful, please consider supporting the development:
 
@@ -204,27 +180,11 @@ If you find this tool helpful, please consider supporting the development:
 
 ---
 
-## 📄 License
+## License
 
-[Specify your license here - MIT, GPL, etc.]
-
----
-
-## 📧 Contact
-
-For questions or support, reach out via GitHub issues.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🗺️ Roadmap
-
-### v1.1 (Future)
-- Additional CV templates
-- Email integration
-- Application deadline reminders
-- Statistics dashboard
-
----
-
-**Version**: 1.0.0  
-**Last Updated**: January 2026
+**Version**: 1.0.0
+**Author**: Ivan Buric

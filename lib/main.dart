@@ -11,6 +11,7 @@ import 'providers/notes_provider.dart';
 import 'services/settings_service.dart';
 import 'services/log_service.dart';
 import 'services/migration_service.dart';
+import 'services/update_service.dart';
 import 'widgets/custom_titlebar.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/applications/applications_screen.dart';
@@ -71,6 +72,7 @@ class MyJobApp extends StatelessWidget {
         ChangeNotifierProvider(
             create: (_) => PdfPresetsProvider()..loadPresets()),
         ChangeNotifierProvider(create: (_) => NotesProvider()..loadNotes()),
+        ChangeNotifierProvider(create: (_) => UpdateService()),
       ],
       child: Consumer<SettingsService>(
         builder: (context, settings, _) {

@@ -815,49 +815,57 @@ class _ProfileSections extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // Education Section - Wrapped
-        _buildWrappedSection(
-          context,
+        // Education Section
+        ProfileSectionCard(
+          cardId: 'education',
           title: 'Education',
           icon: Icons.school_outlined,
           count: userDataProvider.education.length,
-          child: const EducationSection(showHeader: false),
+          actionLabel: 'Add',
+          actionIcon: Icons.add,
+          onActionPressed: () => EducationSection.showAddDialog(context),
+          collapsedPreview: userDataProvider.education.isEmpty
+              ? Text(
+                  'No education added',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: userDataProvider.education.take(3).map((edu) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.school,
+                            size: 14,
+                            color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${edu.degree} - ${edu.institution}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+          content: const EducationSection(showHeader: false),
         ),
         const SizedBox(height: 16),
 
         // Default Cover Letter Section
         _buildDefaultCoverLetterSection(context),
       ],
-    );
-  }
-
-  Widget _buildWrappedSection(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required int count,
-    required Widget child,
-    VoidCallback? onAdd,
-  }) {
-    final theme = Theme.of(context);
-
-    return ProfileSectionCard(
-      cardId: title.toLowerCase().replaceAll(' ', '_'),
-      title: title,
-      icon: icon,
-      count: count,
-      actionLabel: onAdd != null ? 'Add' : '',
-      actionIcon: Icons.add,
-      onActionPressed: onAdd,
-      collapsedPreview: Text(
-        count == 0
-            ? 'No ${title.toLowerCase()} added'
-            : '$count item${count == 1 ? '' : 's'}',
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
-        ),
-      ),
-      content: child,
     );
   }
 

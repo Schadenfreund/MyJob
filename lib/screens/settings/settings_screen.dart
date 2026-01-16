@@ -9,6 +9,7 @@ import '../../utils/dialog_utils.dart';
 import '../../utils/ui_utils.dart';
 import '../../services/backup_service.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/update_card.dart';
 import 'package:file_picker/file_picker.dart';
 
 /// Settings screen - Consistent card design with other tabs
@@ -287,6 +288,10 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Software Updates Section
+                const UpdateCard(),
                 const SizedBox(height: AppSpacing.xl),
 
                 // About Section - Using AppCardContainer for premium look
