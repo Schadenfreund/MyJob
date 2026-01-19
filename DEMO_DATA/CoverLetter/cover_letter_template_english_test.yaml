@@ -1,5 +1,6 @@
 # Cover Letter Template - English
 # Homer Simpson themed cover letter with proper placeholder examples
+# Placeholders use the format ==PLACEHOLDER_NAME== (double equals on each side)
 
 language: english
 version: current
@@ -7,117 +8,114 @@ version: current
 # Metadata
 metadata:
   author: Homer Jay Simpson
-  last_updated: 2026-01-16
+  last_updated: 2026-01-19
   description: Professional cover letter template with customizable placeholders
 
 # Template content demonstrating placeholder usage
-default_cover_letter: |
-  Dear [RECIPIENT_NAME],
-
-  I am writing to express my strong interest in the [POSITION] position at [COMPANY_NAME]. 
-  With over 35 years of experience as a Safety Inspector at the Springfield Nuclear Power Plant, 
-  I have developed a unique skill set that combines technical expertise with creative problem-solving 
-  and unwavering dedication.
-
-  Throughout my career, I have successfully managed [KEY_RESPONSIBILITY] while maintaining the highest 
-  standards of safety and efficiency. My experience includes crisis management, team leadership, and 
-  innovative approaches to complex challenges. I am particularly drawn to [COMPANY_NAME] because of 
-  your commitment to [COMPANY_VALUE], which aligns perfectly with my professional values and work ethic.
-
-  In addition to my nuclear safety expertise, I bring diverse experience from roles including Grammy 
-  Award-winning musician, entrepreneur (Mr. Plow Snow Removal), and community leader. This breadth 
-  of experience has taught me the importance of adaptability, perseverance, and maintaining a positive 
-  attitude even in challenging situations.
-
-  I am excited about the opportunity to contribute to [COMPANY_NAME]'s continued success and would 
-  welcome the chance to discuss how my skills and experience align with your needs for the [POSITION] 
-  role. I am available for an interview at your convenience and can be reached at (555) 7334 or 
-  chunkylover53@aol.com.
-
-  Thank you for considering my application. I look forward to the possibility of joining your team 
-  and contributing to [SPECIFIC_GOAL].
-
-  Sincerely,
-  Homer Jay Simpson
+template:
+  greeting: "Dear ==RECIPIENT_NAME==,"
+  
+  paragraphs:
+    - "I am writing to express my strong interest in the ==POSITION== position at ==COMPANY==. With over 35 years of experience as a Safety Inspector at the Springfield Nuclear Power Plant, I have developed a unique skill set that combines technical expertise with creative problem-solving and unwavering dedication."
+    
+    - "Throughout my career, I have successfully managed ==KEY_RESPONSIBILITY== while maintaining the highest standards of safety and efficiency. My experience includes crisis management, team leadership, and innovative approaches to complex challenges. I am particularly drawn to ==COMPANY== because of your commitment to ==COMPANY_VALUE==, which aligns perfectly with my professional values and work ethic."
+    
+    - "In addition to my nuclear safety expertise, I bring diverse experience from roles including Grammy Award-winning musician, entrepreneur (Mr. Plow Snow Removal), and community leader. This breadth of experience has taught me the importance of adaptability, perseverance, and maintaining a positive attitude even in challenging situations."
+    
+    - "I am excited about the opportunity to contribute to ==COMPANY=='s continued success and would welcome the chance to discuss how my skills and experience align with your needs for the ==POSITION== role. I am available for an interview at your convenience and can be reached at (555) 7334 or chunkylover53@aol.com."
+    
+    - "Thank you for considering my application. I look forward to the possibility of joining your team and contributing to ==SPECIFIC_GOAL==."
+  
+  closing: "Sincerely,"
+  signature: "Homer Jay Simpson"
 
 # Placeholder definitions and examples
+# These are for documentation purposes - the actual placeholders in the template use ==NAME== format
 placeholders:
   - name: RECIPIENT_NAME
     description: "The name of the hiring manager or recipient"
     location: "Greeting (first line)"
     example: "Mr. Burns"
+    default: "Hiring Manager"
+    required: true
+
+  - name: COMPANY
+    description: "The name of the company you're applying to"
+    location: "Throughout letter"
+    example: "Globex Corporation"
+    default: "[Company Name]"
     required: true
 
   - name: POSITION
     description: "The job title you're applying for"
     location: "First paragraph and closing"
     example: "Senior Safety Inspector"
-    required: true
-
-  - name: COMPANY_NAME
-    description: "The name of the company you're applying to"
-    location: "Throughout letter"
-    example: "Globex Corporation"
+    default: "[Position]"
     required: true
 
   - name: KEY_RESPONSIBILITY
     description: "Main responsibility from the job description"
     location: "Second paragraph"
     example: "nuclear reactor monitoring and safety protocol implementation"
+    default: "key responsibilities"
     required: false
 
   - name: COMPANY_VALUE
     description: "A company value or mission that resonates with you"
     location: "Second paragraph"
     example: "innovation and employee empowerment"
+    default: "your values and mission"
     required: false
 
   - name: SPECIFIC_GOAL
     description: "Specific goal or project of the company"
     location: "Closing paragraph"
     example: "achieving carbon neutrality by 2030"
+    default: "your organizational goals"
     required: false
 
-# Example filled letter for reference
-example_filled_letter: |
-  Dear Hank Scorpio,
-
-  I am writing to express my strong interest in the Nuclear Safety Supervisor position at Globex Corporation. 
-  With over 35 years of experience as a Safety Inspector at the Springfield Nuclear Power Plant, 
-  I have developed a unique skill set that combines technical expertise with creative problem-solving 
-  and unwavering dedication.
-
-  Throughout my career, I have successfully managed nuclear reactor monitoring and safety protocol 
-  implementation while maintaining the highest standards of safety and efficiency. My experience includes 
-  crisis management, team leadership, and innovative approaches to complex challenges. I am particularly 
-  drawn to Globex Corporation because of your commitment to innovation and employee empowerment, which 
-  aligns perfectly with my professional values and work ethic.
-
-  In addition to my nuclear safety expertise, I bring diverse experience from roles including Grammy 
-  Award-winning musician, entrepreneur (Mr. Plow Snow Removal), and community leader. This breadth 
-  of experience has taught me the importance of adaptability, perseverance, and maintaining a positive 
-  attitude even in challenging situations.
-
-  I am excited about the opportunity to contribute to Globex Corporation's continued success and would 
-  welcome the chance to discuss how my skills and experience align with your needs for the Nuclear 
-  Safety Supervisor role. I am available for an interview at your convenience and can be reached at 
-  (555) 7334 or chunkylover53@aol.com.
-
-  Thank you for considering my application. I look forward to the possibility of joining your team 
-  and contributing to global domination through superior workplace safety.
-
-  Sincerely,
-  Homer Jay Simpson
-
-# Notes for users
+# Usage notes for understanding placeholder system
 usage_notes: |
   This cover letter template demonstrates how to use placeholders effectively:
   
-  1. Required placeholders (RECIPIENT_NAME, POSITION, COMPANY_NAME) should always be filled
-  2. Optional placeholders can be removed if not applicable
+  PLACEHOLDER FORMAT:
+  - Placeholders use the format ==PLACEHOLDER_NAME== (with double equals on each side)
+  - Example: ==COMPANY==, ==POSITION==, ==RECIPIENT_NAME==
+  
+  WHEN IMPORTED:
+  - The template text is imported into your master profile as the default cover letter body
+  - When you create a job application, this default body is cloned to that specific application
+  - You can then edit the cover letter for that job and replace placeholders with actual values
+  
+  AVAILABLE JOB DATA:
+  - When viewing a job application, you have access to:
+    * Company name (from application.company)
+    * Position (from application.position)
+    * Contact person (from application.contactPerson)
+    * Location (from application.location)
+  
+  BEST PRACTICES:
+  1. Use required placeholders (RECIPIENT_NAME, POSITION, COMPANY) consistently
+  2. Optional placeholders can be removed or replaced if not applicable
   3. Customize the content while maintaining professional tone
-  4. Placeholders are marked with [BRACKETS] for easy identification
-  5. Replace all placeholders before sending the final letter
+  4. Always replace ALL remaining placeholders before sending the final letter
   
   The template balances professionalism with personality, showcasing both technical 
   competence and unique experiences.
+
+# Example of how the template looks when filled (for reference only)
+example_filled_letter: |
+  Dear Hank Scorpio,
+
+  I am writing to express my strong interest in the Nuclear Safety Supervisor position at Globex Corporation. With over 35 years of experience as a Safety Inspector at the Springfield Nuclear Power Plant, I have developed a unique skill set that combines technical expertise with creative problem-solving and unwavering dedication.
+
+  Throughout my career, I have successfully managed nuclear reactor monitoring and safety protocol implementation while maintaining the highest standards of safety and efficiency. My experience includes crisis management, team leadership, and innovative approaches to complex challenges. I am particularly drawn to Globex Corporation because of your commitment to innovation and employee empowerment, which aligns perfectly with my professional values and work ethic.
+
+  In addition to my nuclear safety expertise, I bring diverse experience from roles including Grammy Award-winning musician, entrepreneur (Mr. Plow Snow Removal), and community leader. This breadth of experience has taught me the importance of adaptability, perseverance, and maintaining a positive attitude even in challenging situations.
+
+  I am excited about the opportunity to contribute to Globex Corporation's continued success and would welcome the chance to discuss how my skills and experience align with your needs for the Nuclear Safety Supervisor role. I am available for an interview at your convenience and can be reached at (555) 7334 or chunkylover53@aol.com.
+
+  Thank you for considering my application. I look forward to the possibility of joining your team and contributing to global domination through superior workplace safety.
+
+  Sincerely,
+  Homer Jay Simpson

@@ -1,5 +1,6 @@
 # Cover Letter Template - Deutsch
-# Diese Datei enthält eine fiktive Anschreibenvorlage im Homer-Simpson-Stil
+# Homer Simpson Anschreibenvorlage mit korrekten Platzhaltern
+# Platzhalter verwenden das Format ==PLATZHALTER_NAME== (doppelte Gleichheitszeichen auf jeder Seite)
 
 language: german
 version: current
@@ -7,41 +8,114 @@ version: current
 # Metadaten
 metadata:
   author: Homer J. Simpson
-  last_updated: 2026-01-11
+  last_updated: 2026-01-19
+  description: Professionelle Anschreibenvorlage mit anpassbaren Platzhaltern
 
-# Vorlageninhalt im Homer-Stil
+# Vorlageninhalt mit Platzhaltern
 template:
-  greeting: "An ==Herrn Burns (oder wer auch immer das Sagen hat) XX,=="
+  greeting: "Sehr geehrte/r ==EMPFAENGER_NAME==,"
 
   paragraphs:
-    - |
-      ich schreibe Ihnen, um mich für die Stelle als ==Bierverkoster== in Ihrer wunderbaren Firma zu bewerben. 
-      Ich habe viele Jahre damit verbracht, meine Fähigkeiten im Sitzen und Beobachten im Kraftwerk zu perfektionieren, 
-      und ich fühle mich bereit für eine neue Herausforderung, die mehr Snacks und weniger Strahlenschutzanzüge beinhaltet. 
-      Juchhu! (Woo-hoo!)
+    - "ich schreibe Ihnen, um mein starkes Interesse an der Position ==POSITION== bei ==FIRMA== zum Ausdruck zu bringen. Mit über 35 Jahren Erfahrung als Sicherheitsinspektor im Kernkraftwerk Springfield habe ich ein einzigartiges Kompetenzprofil entwickelt, das technische Expertise mit kreativem Problemlösen und unerschütterlichem Engagement verbindet."
 
-    - |
-      In meinem derzeitigen Job als Sicherheitsinspektor habe ich Hunderte von Kernschmelzen erfolgreich vermieden, 
-      indem ich einfach mehrere Minuten am Stück wach geblieben bin. Ich bin sehr gut darin, Anweisungen zu befolgen, 
-      die nicht mehr als drei Schritte erfordern, und ich habe meine eigene Arbeitskleidung (obwohl sie einige 
-      Senfflecken hat). Außerdem bin ich ehemaliger Grammy-Preisträger, also bringe ich eine Menge Klasse in den Raum. 
-      Mmh... Klasse.
+    - "Im Laufe meiner Karriere habe ich erfolgreich ==HAUPTVERANTWORTUNG== verwaltet und dabei stets höchste Sicherheits- und Effizienzstandards eingehalten. Meine Erfahrung umfasst Krisenmanagement, Teamführung und innovative Ansätze für komplexe Herausforderungen. Ich fühle mich besonders zu ==FIRMA== hingezogen, da Ihr Engagement für ==FIRMENWERT== perfekt mit meinen beruflichen Werten und meiner Arbeitsethik übereinstimmt."
 
-    - |
-      Ich hoffe, Sie werden mich für diese Rolle in Betracht ziehen. Ich bin bereit, für Donuts, Duff-Bier oder sogar 
-      echtes Geld zu arbeiten. Bitte kontaktieren Sie mich bald, bevor ich von einer Motte oder etwas Glänzendem 
-      abgelenkt werde. Alles läuft super für Homer!
+    - "Neben meiner Expertise im Bereich Nuklearsicherheit bringe ich vielfältige Erfahrungen aus verschiedenen Rollen mit, darunter Grammy-prämierter Musiker, Unternehmer (Mr. Plow Schneeräumdienst) und Gemeindevorsteher. Diese Vielfalt an Erfahrungen hat mich gelehrt, wie wichtig Anpassungsfähigkeit, Ausdauer und eine positive Einstellung auch in schwierigen Situationen sind."
 
-  closing: "Dein treuer (denke ich),"
+    - "Ich freue mich auf die Möglichkeit, zum anhaltenden Erfolg von ==FIRMA== beizutragen, und würde gerne besprechen, wie meine Fähigkeiten und Erfahrungen den Anforderungen der ==POSITION== entsprechen. Ich stehe für ein Vorstellungsgespräch zu Ihrer Verfügung und bin unter (555) 7334 oder chunkylover53@aol.com erreichbar."
+
+    - "Vielen Dank für die Berücksichtigung meiner Bewerbung. Ich freue mich darauf, Teil Ihres Teams zu werden und zu ==SPEZIFISCHES_ZIEL== beizutragen."
+
+  closing: "Mit freundlichen Grüßen,"
   signature: "Homer J. Simpson"
 
+# Platzhalterdefinitionen und Beispiele
+# Diese dienen der Dokumentation - die tatsächlichen Platzhalter im Template verwenden das ==NAME== Format
 placeholders:
-  - name: boss_name
-    description: "Der Name des gemeinen Chefs"
-    location: "Anrede"
+  - name: EMPFAENGER_NAME
+    description: "Name des Personalverantwortlichen oder Empfängers"
+    location: "Anrede (erste Zeile)"
     example: "Herr Burns"
+    default: "Damen und Herren"
+    required: true
 
-  - name: job_title
-    description: "Der einfache Job, den du willst"
-    location: "Erster Absatz"
-    example: "Snack-Beauftragter"
+  - name: FIRMA
+    description: "Name des Unternehmens, bei dem Sie sich bewerben"
+    location: "Im gesamten Brief"
+    example: "Globex Corporation"
+    default: "[Firmenname]"
+    required: true
+
+  - name: POSITION
+    description: "Stellenbezeichnung, auf die Sie sich bewerben"
+    location: "Erster Absatz und Schluss"
+    example: "Senior-Sicherheitsinspektor"
+    default: "[Position]"
+    required: true
+
+  - name: HAUPTVERANTWORTUNG
+    description: "Hauptverantwortung aus der Stellenbeschreibung"
+    location: "Zweiter Absatz"
+    example: "Reaktorüberwachung und Implementierung von Sicherheitsprotokollen"
+    default: "wichtige Verantwortlichkeiten"
+    required: false
+
+  - name: FIRMENWERT
+    description: "Ein Unternehmenswert oder eine Mission, die Sie anspricht"
+    location: "Zweiter Absatz"
+    example: "Innovation und Mitarbeiterförderung"
+    default: "Ihre Werte und Mission"
+    required: false
+
+  - name: SPEZIFISCHES_ZIEL
+    description: "Spezifisches Ziel oder Projekt des Unternehmens"
+    location: "Schlussabsatz"
+    example: "Erreichung der Klimaneutralität bis 2030"
+    default: "Ihre Unternehmensziele"
+    required: false
+
+# Verwendungshinweise zum Verständnis des Platzhaltensystems
+usage_notes: |
+  Diese Anschreibenvorlage zeigt, wie Platzhalter effektiv zu verwenden sind:
+  
+  PLATZHALTERFORMAT:
+  - Platzhalter verwenden das Format ==PLATZHALTER_NAME== (mit doppelten Gleichheitszeichen auf jeder Seite)
+  - Beispiel: ==FIRMA==, ==POSITION==, ==EMPFAENGER_NAME==
+  
+  BEIM IMPORT:
+  - Der Vorlagentext wird in Ihr Masterprofil als Standard-Anschreiben-Text importiert
+  - Wenn Sie eine Bewerbung erstellen, wird dieser Standardtext in diese spezifische Bewerbung geklont
+  - Sie können dann das Anschreiben für diese Stelle bearbeiten und Platzhalter durch tatsächliche Werte ersetzen
+  
+  VERFÜGBARE BEWERBUNGSDATEN:
+  - Beim Ansehen einer Bewerbung haben Sie Zugriff auf:
+    * Firmenname (aus application.company)
+    * Position (aus application.position)
+    * Kontaktperson (aus application.contactPerson)
+    * Standort (aus application.location)
+  
+  BEST PRACTICES:
+  1. Verwenden Sie erforderliche Platzhalter (EMPFAENGER_NAME, POSITION, FIRMA) konsistent
+  2. Optionale Platzhalter können entfernt oder ersetzt werden, wenn nicht zutreffend
+  3. Passen Sie den Inhalt an, behalten Sie dabei einen professionellen Ton bei
+  4. Ersetzen Sie ALLE verbleibenden Platzhalter, bevor Sie den finalen Brief versenden
+  
+  Die Vorlage balanciert Professionalität mit Persönlichkeit und zeigt sowohl technische 
+  Kompetenz als auch einzigartige Erfahrungen.
+
+# Beispiel, wie die Vorlage ausgefüllt aussieht (nur zur Referenz)
+example_filled_letter: |
+  Sehr geehrter Herr Scorpio,
+
+  ich schreibe Ihnen, um mein starkes Interesse an der Position Nuklearsicherheits-Supervisor bei Globex Corporation zum Ausdruck zu bringen. Mit über 35 Jahren Erfahrung als Sicherheitsinspektor im Kernkraftwerk Springfield habe ich ein einzigartiges Kompetenzprofil entwickelt, das technische Expertise mit kreativem Problemlösen und unerschütterlichem Engagement verbindet.
+
+  Im Laufe meiner Karriere habe ich erfolgreich Reaktorüberwachung und Implementierung von Sicherheitsprotokollen verwaltet und dabei stets höchste Sicherheits- und Effizienzstandards eingehalten. Meine Erfahrung umfasst Krisenmanagement, Teamführung und innovative Ansätze für komplexe Herausforderungen. Ich fühle mich besonders zu Globex Corporation hingezogen, da Ihr Engagement für Innovation und Mitarbeiterförderung perfekt mit meinen beruflichen Werten und meiner Arbeitsethik übereinstimmt.
+
+  Neben meiner Expertise im Bereich Nuklearsicherheit bringe ich vielfältige Erfahrungen aus verschiedenen Rollen mit, darunter Grammy-prämierter Musiker, Unternehmer (Mr. Plow Schneeräumdienst) und Gemeindevorsteher. Diese Vielfalt an Erfahrungen hat mich gelehrt, wie wichtig Anpassungsfähigkeit, Ausdauer und eine positive Einstellung auch in schwierigen Situationen sind.
+
+  Ich freue mich auf die Möglichkeit, zum anhaltenden Erfolg von Globex Corporation beizutragen, und würde gerne besprechen, wie meine Fähigkeiten und Erfahrungen den Anforderungen der Nuklearsicherheits-Supervisor entsprechen. Ich stehe für ein Vorstellungsgespräch zu Ihrer Verfügung und bin unter (555) 7334 oder chunkylover53@aol.com erreichbar.
+
+  Vielen Dank für die Berücksichtigung meiner Bewerbung. Ich freue mich darauf, Teil Ihres Teams zu werden und zu globaler Dominierung durch überlegene Arbeitsplatzsicherheit beizutragen.
+
+  Mit freundlichen Grüßen,
+  Homer J. Simpson

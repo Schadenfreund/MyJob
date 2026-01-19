@@ -27,7 +27,7 @@ class FileConfig {
 /// Application metadata
 class AppInfo {
   static const String appName = 'MyJob';
-  static const String version = '1.0.0';
+  static const String version = '1.0.2';
   static const String description = 'Job Application Management Tool';
   static const String supportEmail = 'support@myjob.app';
 }
@@ -87,8 +87,7 @@ class UpdateConfig {
       'https://github.com/$githubOwner/$githubRepo/releases';
 
   /// Expected asset filename pattern (version will be inserted)
-  static String assetFilename(String version) =>
-      'MyJob-v$version-windows.zip';
+  static String assetFilename(String version) => 'MyJob-v$version-windows.zip';
 
   static const Duration checkTimeout = Duration(seconds: 30);
   static const Duration downloadTimeout = Duration(minutes: 10);

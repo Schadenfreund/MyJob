@@ -797,6 +797,126 @@ class StorageService {
   }
 
   // ============================================================================
+  // MASTER PROFILE PDF SETTINGS (Default Presets)
+  // ============================================================================
+
+  /// Load master profile CV PDF settings (used as default for new applications)
+  Future<(TemplateStyle?, TemplateCustomization?)>
+      loadMasterProfileCvPdfSettings(DocumentLanguage language) async {
+    try {
+      final userDataPath = await getUserDataPath();
+      final file = File(p.join(
+          userDataPath, 'profiles', language.code, 'cv_pdf_settings.json'));
+
+      if (!file.existsSync()) {
+        return (null, null);
+      }
+
+      final content = await file.readAsString();
+      final json = jsonDecode(content) as Map<String, dynamic>;
+
+      final style = json.containsKey('style')
+          ? TemplateStyle.fromJson(json['style'] as Map<String, dynamic>)
+          : null;
+
+      final customization = json.containsKey('customization')
+          ? TemplateCustomization.fromJson(
+              json['customization'] as Map<String, dynamic>)
+          : null;
+
+      return (style, customization);
+    } catch (e) {
+      debugPrint('Error loading master profile CV PDF settings: $e');
+      return (null, null);
+    }
+  }
+
+  /// Save master profile CV PDF settings (used as default for new applications)
+  Future<void> saveMasterProfileCvPdfSettings(
+    DocumentLanguage language,
+    TemplateStyle style,
+    TemplateCustomization customization,
+  ) async {
+    try {
+      final userDataPath = await getUserDataPath();
+      final file = File(p.join(
+          userDataPath, 'profiles', language.code, 'cv_pdf_settings.json'));
+
+      final settings = {
+        'style': style.toJson(),
+        'customization': customization.toJson(),
+      };
+
+      await file.writeAsString(
+        JsonConstants.prettyEncoder.convert(settings),
+      );
+
+      debugPrint('Master profile CV PDF settings saved (${language.code})');
+    } catch (e) {
+      debugPrint('Error saving master profile CV PDF settings: $e');
+      rethrow;
+    }
+  }
+
+  /// Load master profile Cover Letter PDF settings (used as default for new applications)
+  Future<(TemplateStyle?, TemplateCustomization?)>
+      loadMasterProfileClPdfSettings(DocumentLanguage language) async {
+    try {
+      final userDataPath = await getUserDataPath();
+      final file = File(p.join(
+          userDataPath, 'profiles', language.code, 'cl_pdf_settings.json'));
+
+      if (!file.existsSync()) {
+        return (null, null);
+      }
+
+      final content = await file.readAsString();
+      final json = jsonDecode(content) as Map<String, dynamic>;
+
+      final style = json.containsKey('style')
+          ? TemplateStyle.fromJson(json['style'] as Map<String, dynamic>)
+          : null;
+
+      final customization = json.containsKey('customization')
+          ? TemplateCustomization.fromJson(
+              json['customization'] as Map<String, dynamic>)
+          : null;
+
+      return (style, customization);
+    } catch (e) {
+      debugPrint('Error loading master profile CL PDF settings: $e');
+      return (null, null);
+    }
+  }
+
+  /// Save master profile Cover Letter PDF settings (used as default for new applications)
+  Future<void> saveMasterProfileClPdfSettings(
+    DocumentLanguage language,
+    TemplateStyle style,
+    TemplateCustomization customization,
+  ) async {
+    try {
+      final userDataPath = await getUserDataPath();
+      final file = File(p.join(
+          userDataPath, 'profiles', language.code, 'cl_pdf_settings.json'));
+
+      final settings = {
+        'style': style.toJson(),
+        'customization': customization.toJson(),
+      };
+
+      await file.writeAsString(
+        JsonConstants.prettyEncoder.convert(settings),
+      );
+
+      debugPrint('Master profile CL PDF settings saved (${language.code})');
+    } catch (e) {
+      debugPrint('Error saving master profile CL PDF settings: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================================
   // NOTES
   // ============================================================================
 

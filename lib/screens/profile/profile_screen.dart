@@ -8,6 +8,7 @@ import '../../models/user_data/language.dart';
 import '../../models/master_profile.dart';
 import '../../constants/app_constants.dart';
 import '../../dialogs/unified_import_dialog.dart';
+import '../../dialogs/master_profile_pdf_dialog.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/profile_section_card.dart';
@@ -828,7 +829,8 @@ class _ProfileSections extends StatelessWidget {
               ? Text(
                   'No education added',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                    color: theme.textTheme.bodySmall?.color
+                        ?.withValues(alpha: 0.6),
                   ),
                 )
               : Column(
@@ -841,7 +843,8 @@ class _ProfileSections extends StatelessWidget {
                           Icon(
                             Icons.school,
                             size: 14,
-                            color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.7),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -911,8 +914,11 @@ class _ProfileSections extends StatelessWidget {
       title: 'Profile Summary',
       icon: Icons.description_outlined,
       count: profileSummary.isNotEmpty ? 1 : 0,
-      actionLabel: '',
-      onActionPressed: null,
+      actionLabel: 'Preview PDF',
+      actionIcon: Icons.picture_as_pdf_outlined,
+      onActionPressed: profileSummary.isNotEmpty
+          ? () => _showMasterProfilePdfPreview(context, isCV: true)
+          : null,
       collapsedPreview: Text(
         profileSummary.isEmpty
             ? 'No profile summary set'
@@ -947,8 +953,11 @@ class _ProfileSections extends StatelessWidget {
       title: 'Default Cover Letter',
       icon: Icons.article_outlined,
       count: paragraphCount,
-      actionLabel: '',
-      onActionPressed: null,
+      actionLabel: 'Preview PDF',
+      actionIcon: Icons.picture_as_pdf_outlined,
+      onActionPressed: coverLetterBody.isNotEmpty
+          ? () => _showMasterProfilePdfPreview(context, isCV: false)
+          : null,
       collapsedPreview: Text(
         coverLetterBody.isEmpty
             ? 'No default cover letter set'
@@ -967,6 +976,27 @@ class _ProfileSections extends StatelessWidget {
             'This text will be used as the default body for new cover letters. '
             'You can customize it for each job application later.',
         minLines: 8,
+      ),
+    );
+  }
+
+  static void _showMasterProfilePdfPreview(
+    BuildContext context, {
+    required bool isCV,
+  }) async {
+    final userDataProvider = context.read<UserDataProvider>();
+    final profile = userDataProvider.currentProfile;
+
+    if (profile == null) {
+      UIUtils.showError(context, 'No profile data available');
+      return;
+    }
+
+    await showDialog(
+      context: context,
+      builder: (context) => MasterProfilePdfDialog(
+        profile: profile,
+        isCV: isCV,
       ),
     );
   }

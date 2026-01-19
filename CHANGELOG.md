@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.2] - 2026-01-19
+
+### Added
+
+#### Master Profile PDF Preview
+- **PDF Preview Buttons** in Profile tab for CV and Cover Letter sections
+  - Preview CV with master profile data to check formatting
+  - Preview Cover Letter with default content to check formatting
+  - Buttons only active when content exists
+- **Style Preset Management** 
+  - PDF style changes in master profile save as default presets
+  - New job applications automatically inherit saved style presets
+  - Separate presets for CV and Cover Letter
+  - Language-specific presets (EN/DE profiles maintain separate defaults)
+- **MasterProfilePdfDialog** component
+  - Extends BaseTemplatePdfPreviewDialog for consistency
+  - Read-only preview (no content editing)
+  - Full style customization with preset saving
+  - Export functionality to user's preferred location
+
+#### Technical Improvements
+- Added `loadMasterProfileCvPdfSettings()` / `saveMasterProfileCvPdfSettings()` to StorageService
+- Added `loadMasterProfileClPdfSettings()` / `saveMasterProfileClPdfSettings()` to StorageService
+- Preset storage: `UserData/profiles/{lang}/cv_pdf_settings.json` & `cl_pdf_settings.json`
+- Clean DRY architecture reusing existing PDF editor base
+
+### Benefits
+- Users can validate PDF formatting before creating job applications
+- Consistent default styling across all new job applications
+- No more manual style configuration for each new application
+- Quick visual check for master profile content quality
+
+---
+
 ## [1.0.0] - 2026-01-16
 
 ### 🎉 Initial Release
