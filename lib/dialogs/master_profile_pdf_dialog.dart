@@ -54,19 +54,32 @@ class _MasterProfilePdfDialogState
   void initState() {
     super.initState();
 
-    // Set language based on profile language
-    final correctLanguage =
-        _documentLanguageToCvLanguage(widget.profile.language);
-    controller.updateCustomization(
-      controller.customization.copyWith(language: correctLanguage),
-    );
+    // DON'T update controller here - it triggers regeneration!
+    // Language will be set when loaded settings are applied
 
-    // Load saved PDF settings if they exist
-    _loadSavedSettings();
+    // IMPORTANT: Remove the base class listener temporarily
+    // This prevents it from firing during settings load
+    removeBaseControllerListener();
 
-    // Listen to PDF settings changes to auto-save
-    controller.addListener(_onPdfSettingsChanged);
+    // Load saved PDF settings FIRST
+    _loadSavedSettings().then((_) {
+      debugPrint(
+          '[Master PDF] Settings loaded - style: ${controller.style.type}, accent: ${controller.style.accentColor}');
+
+      // Re-add the base class listener
+      addBaseControllerListener();
+
+      // Add our listener for future changes
+      controller.addListener(_onPdfSettingsChanged);
+
+      // Force immediate regeneration with loaded settings
+      debugPrint('[Master PDF] Forcing PDF regeneration with loaded settings');
+      generatePdf();
+    });
   }
+
+  @override
+  bool shouldSkipInitialGeneration() => true;
 
   /// Load saved PDF settings from master profile folder
   Future<void> _loadSavedSettings() async {

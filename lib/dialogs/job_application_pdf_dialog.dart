@@ -20,7 +20,8 @@ import '../services/pdf_service.dart';
 import '../services/storage_service.dart';
 import '../utils/data_converters.dart';
 import '../widgets/pdf_editor/template_edit_panel.dart';
-import '../widgets/pdf_editor/pdf_editor_sidebar.dart' show CvSectionAvailability;
+import '../widgets/pdf_editor/pdf_editor_sidebar.dart'
+    show CvSectionAvailability;
 import 'base_template_pdf_preview_dialog.dart';
 
 /// PDF preview and editor for job applications
@@ -64,19 +65,32 @@ class _JobApplicationPdfDialogState
   void initState() {
     super.initState();
 
-    // CRITICAL: Set language IMMEDIATELY (synchronously) to prevent wrong language on first open
-    final correctLanguage =
-        _documentLanguageToCvLanguage(widget.application.baseLanguage);
-    controller.updateCustomization(
-      controller.customization.copyWith(language: correctLanguage),
-    );
+    // DON'T update controller here - it triggers regeneration!
+    // Language will be set when loaded settings are applied
 
-    // Then load saved PDF settings if they exist (async - updates other settings)
-    _loadSavedSettings();
+    // IMPORTANT: Remove the base class listener temporarily
+    // This prevents it from firing during settings load
+    removeBaseControllerListener();
 
-    // Listen to PDF settings changes to auto-save
-    controller.addListener(_onPdfSettingsChanged);
+    // Load saved PDF settings FIRST
+    _loadSavedSettings().then((_) {
+      debugPrint(
+          '[Job PDF] Settings loaded - style: ${controller.style.type}, accent: ${controller.style.accentColor}');
+
+      // Re-add the base class listener
+      addBaseControllerListener();
+
+      // Add our listener for future changes
+      controller.addListener(_onPdfSettingsChanged);
+
+      // Force immediate regeneration with loaded settings
+      debugPrint('[Job PDF] Forcing PDF regeneration with loaded settings');
+      generatePdf();
+    });
   }
+
+  @override
+  bool shouldSkipInitialGeneration() => true;
 
   /// Load saved PDF settings from job folder
   Future<void> _loadSavedSettings() async {
@@ -401,6 +415,8 @@ class _JobApplicationPdfDialogState
     debugPrint('[PDF Gen] CvData.language: ${cvData.language}');
     debugPrint(
         '[PDF Gen] Profile picture loaded: ${profileImageBytes != null}');
+    debugPrint(
+        '[PDF Gen] *** Using style: ${selectedStyle.type}, accent: ${selectedStyle.accentColor}');
 
     return await PdfService.instance.generateCvPdf(
       cvData,

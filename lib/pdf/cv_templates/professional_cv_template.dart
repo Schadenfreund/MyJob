@@ -189,116 +189,123 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     PdfStyling s,
     pw.ImageProvider? profileImage,
   ) {
-    return pw.Column(
-      crossAxisAlignment:
-          pw.CrossAxisAlignment.stretch, // Stretch to fill sidebar width
-      mainAxisSize: pw.MainAxisSize.min,
-      children: [
-        // Profile photo - respects shape settings
-        if (profileImage != null) ...[
-          () {
-            final shape = s.customization.profilePhotoShape;
+    return pw.Container(
+      // Add top padding ONLY when there's no profile picture
+      // This ensures alignment with main column when picture is absent
+      padding: pw.EdgeInsets.only(
+        top: profileImage == null ? s.space6 : 0,
+      ),
+      child: pw.Column(
+        crossAxisAlignment:
+            pw.CrossAxisAlignment.stretch, // Stretch to fill sidebar width
+        mainAxisSize: pw.MainAxisSize.min,
+        children: [
+          // Profile photo - respects shape settings
+          if (profileImage != null) ...[
+            () {
+              final shape = s.customization.profilePhotoShape;
 
-            if (shape == ProfilePhotoShape.square) {
-              // Square: Full width to match accent column
-              return pw.Container(
-                width: double.infinity,
-                height: 220, // Adjusted height for better proportions
-                child: pw.Image(profileImage, fit: pw.BoxFit.cover),
-              );
-            } else {
-              // Circle/Rounded: Centered with padding, slightly smaller
-              return pw.Container(
-                padding: pw.EdgeInsets.symmetric(
-                  vertical: s.space4,
-                  horizontal: s.space2,
-                ),
-                width: double.infinity,
-                alignment: pw.Alignment.center,
-                child: pw.Container(
-                  width: 150 * s.customization.profilePhotoSize,
-                  height: 150 * s.customization.profilePhotoSize,
-                  child: _buildFullHeightPhoto(profileImage, s),
-                ),
-              );
-            }
-          }(),
-          pw.SizedBox(height: s.space4),
-        ],
-
-        // Add padding for text content
-        pw.Padding(
-          padding: pw.EdgeInsets.all(s.space3),
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              // Contact info - full width
-              if (cv.contactDetails != null) ...[
-                pw.Container(
+              if (shape == ProfilePhotoShape.square) {
+                // Square: Full width to match accent column
+                return pw.Container(
                   width: double.infinity,
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      _buildSidebarSectionHeader('Contact', s),
-                      pw.SizedBox(height: s.space2),
-                      _buildSidebarContactInfo(cv.contactDetails!, s),
-                    ],
+                  height: 220, // Adjusted height for better proportions
+                  child: pw.Image(profileImage, fit: pw.BoxFit.cover),
+                );
+              } else {
+                // Circle/Rounded: Centered with padding, slightly smaller
+                return pw.Container(
+                  padding: pw.EdgeInsets.symmetric(
+                    vertical: s.space4,
+                    horizontal: s.space2,
                   ),
-                ),
-                pw.SizedBox(height: s.space4),
-              ],
-
-              // Skills - full width
-              if (cv.skills.isNotEmpty) ...[
-                pw.Container(
                   width: double.infinity,
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      _buildSidebarSectionHeader('Skills', s),
-                      pw.SizedBox(height: s.space2),
-                      _buildSidebarSkills(cv.skills, s),
-                    ],
+                  alignment: pw.Alignment.center,
+                  child: pw.Container(
+                    width: 150 * s.customization.profilePhotoSize,
+                    height: 150 * s.customization.profilePhotoSize,
+                    child: _buildFullHeightPhoto(profileImage, s),
                   ),
-                ),
-                pw.SizedBox(height: s.space4),
-              ],
+                );
+              }
+            }(),
+            pw.SizedBox(height: s.space4),
+          ],
 
-              // Languages - full width
-              if (cv.languages.isNotEmpty) ...[
-                pw.Container(
-                  width: double.infinity,
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      _buildSidebarSectionHeader('Languages', s),
-                      pw.SizedBox(height: s.space2),
-                      _buildSidebarLanguages(cv.languages, s),
-                    ],
+          // Add padding for text content
+          pw.Padding(
+            padding: pw.EdgeInsets.all(s.space3),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                // Contact info - full width
+                if (cv.contactDetails != null) ...[
+                  pw.Container(
+                    width: double.infinity,
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        _buildSidebarSectionHeader('Contact', s),
+                        pw.SizedBox(height: s.space2),
+                        _buildSidebarContactInfo(cv.contactDetails!, s),
+                      ],
+                    ),
                   ),
-                ),
-                pw.SizedBox(height: s.space4),
-              ],
+                  pw.SizedBox(height: s.space4),
+                ],
 
-              // Interests - full width
-              if (cv.interests.isNotEmpty) ...[
-                pw.Container(
-                  width: double.infinity,
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      _buildSidebarSectionHeader('Interests', s),
-                      pw.SizedBox(height: s.space2),
-                      _buildSidebarInterests(cv.interests, s),
-                    ],
+                // Skills - full width
+                if (cv.skills.isNotEmpty) ...[
+                  pw.Container(
+                    width: double.infinity,
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        _buildSidebarSectionHeader('Skills', s),
+                        pw.SizedBox(height: s.space2),
+                        _buildSidebarSkills(cv.skills, s),
+                      ],
+                    ),
                   ),
-                ),
+                  pw.SizedBox(height: s.space4),
+                ],
+
+                // Languages - full width
+                if (cv.languages.isNotEmpty) ...[
+                  pw.Container(
+                    width: double.infinity,
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        _buildSidebarSectionHeader('Languages', s),
+                        pw.SizedBox(height: s.space2),
+                        _buildSidebarLanguages(cv.languages, s),
+                      ],
+                    ),
+                  ),
+                  pw.SizedBox(height: s.space4),
+                ],
+
+                // Interests - full width
+                if (cv.interests.isNotEmpty) ...[
+                  pw.Container(
+                    width: double.infinity,
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        _buildSidebarSectionHeader('Interests', s),
+                        pw.SizedBox(height: s.space2),
+                        _buildSidebarInterests(cv.interests, s),
+                      ],
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      ), // Column
+    ); // Container
   }
 
   /// Build sidebar section header
@@ -313,13 +320,17 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Text(
-          displayTitle,
-          style: pw.TextStyle(
-            fontSize: s.fontSizeSmall,
-            fontWeight: pw.FontWeight.bold,
-            color: PdfColors.black, // Black for contrast on accent
-            letterSpacing: s.letterSpacingWide,
+        pw.SizedBox(
+          width: double.infinity, // Constrain to sidebar width
+          child: pw.Text(
+            displayTitle,
+            style: pw.TextStyle(
+              fontSize: s.fontSizeSmall,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.black, // Black for contrast on accent
+              letterSpacing: s.letterSpacingWide,
+            ),
+            softWrap: true, // Enable wrapping for long headers
           ),
         ),
         pw.SizedBox(height: s.space1),
@@ -359,11 +370,17 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
   pw.Widget _buildSidebarContactItem(String text, PdfStyling s) {
     return pw.Padding(
       padding: pw.EdgeInsets.only(bottom: s.space2),
-      child: pw.Text(
-        text,
-        style: pw.TextStyle(
-          fontSize: s.fontSizeTiny,
-          color: PdfColors.black,
+      child: pw.SizedBox(
+        width: double.infinity, // Constrain width to parent
+        child: pw.Text(
+          text,
+          style: pw.TextStyle(
+            fontSize: s.fontSizeTiny,
+            color: PdfColors.black,
+            lineSpacing: 1.2,
+          ),
+          softWrap: true, // Enable text wrapping
+          maxLines: 3, // Allow multi-line for long emails/addresses
         ),
       ),
     );

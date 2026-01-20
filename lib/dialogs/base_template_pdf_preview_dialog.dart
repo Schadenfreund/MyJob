@@ -103,13 +103,18 @@ abstract class BaseTemplatePdfPreviewDialogState<
   }
 
   void _onControllerChanged() {
-    // Regenerate PDF when controller signals regeneration needed
-    if (_controller.needsRegeneration && !_controller.isGenerating) {
-      _generatePdfAsync();
-    }
-    // Always rebuild UI on controller changes (for zoom, view mode, etc.)
+    // Always rebuild UI first for immediate visual feedback
     if (mounted) {
       setState(() {});
+    }
+
+    // Then check if PDF regeneration is needed
+    if (_controller.needsRegeneration && !_controller.isGenerating) {
+      logDebug(
+        'Controller signaled regeneration needed (version: ${_controller.pdfVersion})',
+        tag: 'PdfPreview',
+      );
+      _generatePdfAsync();
     }
   }
 
@@ -132,16 +137,53 @@ abstract class BaseTemplatePdfPreviewDialogState<
         }
       });
 
-      // Generate initial PDF
-      _generatePdfAsync();
+      // Generate initial PDF (unless subclass wants to defer it)
+      if (!shouldSkipInitialGeneration()) {
+        _generatePdfAsync();
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
           _availableFonts = PdfFontFamily.values.toList();
         });
-        _generatePdfAsync();
+        if (!shouldSkipInitialGeneration()) {
+          _generatePdfAsync();
+        }
       }
     }
+  }
+
+  // ============================================================================
+  // INITIAL GENERATION CONTROL
+  // ============================================================================
+
+  /// Override this to skip initial PDF generation
+  /// Useful when subclasses need to load saved settings first
+  bool shouldSkipInitialGeneration() => false;
+
+  /// Trigger the initial PDF generation
+  /// Call this after loading saved settings if you skipped initial generation
+  void triggerInitialGeneration() {
+    // Force immediate regeneration to ensure PDF uses loaded settings
+    controller.regenerate();
+  }
+
+  /// Remove the base class controller listener (for subclasses to manage initialization)
+  @protected
+  void removeBaseControllerListener() {
+    _controller.removeListener(_onControllerChanged);
+  }
+
+  /// Add the base class controller listener (for subclasses to manage initialization)
+  @protected
+  void addBaseControllerListener() {
+    _controller.addListener(_onControllerChanged);
+  }
+
+  /// Force PDF generation (for subclasses)
+  @protected
+  void generatePdf() {
+    _generatePdfAsync();
   }
 
   // ============================================================================
@@ -214,11 +256,17 @@ abstract class BaseTemplatePdfPreviewDialogState<
       }
 
       if (mounted) {
+        // Mark regeneration complete first
+        _controller.markRegenerationComplete();
+
+        // Update cached PDF and notify UI
         setState(() {
           _cachedPdf = pdf;
         });
-        _controller.markRegenerationComplete();
+
+        // Then mark generation as complete (this notifies listeners)
         _controller.setGenerating(false);
+
         logInfo('PDF generated successfully (${pdf.length} bytes)',
             tag: 'PdfPreview');
       }

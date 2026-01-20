@@ -5,6 +5,45 @@ All notable changes to MyJob will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+---
+
+## [1.0.3] - 2026-01-20
+
+### Fixed
+
+#### UI/UX Improvements
+- **Application Editor Modal** 
+  - Prevent accidental dismissal by disabling outside-click and back button closing
+  - Accent-colored close button (X) for better visibility
+  - Only closable via explicit X button click to prevent data loss
+- **PDF Preview Responsiveness**
+  - Improved PDF regeneration timing for more responsive UI updates
+  - Reduced debounce delay from 300ms to 150ms
+  - Optimized controller change handling for immediate visual feedback
+  - Fixed issues where PDF preview didn't update when toggling buttons or changing templates
+  - Enhanced state management to ensure reliable PDF updates
+- **PDF Settings Persistence** ✅
+  - **FIXED**: PDF color and design preset settings now properly persist when reopening preview dialogs
+  - **Root Cause**: Controller updates in `initState()` triggered premature PDF regeneration with default values
+  - **Solution**: Deferred ALL controller updates until after saved settings load
+  - Base class listener is temporarily removed during settings load to prevent interference
+  - After settings load: base listener restored, subclass listener added, PDF generated once with correct settings
+  - Added protected API methods in base class: `removeBaseControllerListener()`, `addBaseControllerListener()`, `generatePdf()`
+  - Initial PDF generation deferred via `shouldSkipInitialGeneration()` mechanism
+  - PDF now displays with saved settings from the very first render
+  - No flashing, no button pressing needed
+  - Clean, robust architecture following DRY principles
+- **Two-Column CV Layout**
+  - Fixed top margin alignment between sidebar and main column
+  - Conditionally apply top padding only when no profile picture exists
+  - Profile pictures now start at the very top of the accent sidebar
+  - Fixed text rendering issues in accent sidebar
+  - Added proper width constraints to all sidebar text elements
+  - Enabled text wrapping (`softWrap`) for contact info, headers, and sections
+  - Long emails and addresses now wrap properly instead of disappearing
+  - Sidebar content always renders correctly regardless of content length or width
+
 ---
 
 ## [1.0.2] - 2026-01-19
@@ -26,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Read-only preview (no content editing)
   - Full style customization with preset saving
   - Export functionality to user's preferred location
+
 
 #### Technical Improvements
 - Added `loadMasterProfileCvPdfSettings()` / `saveMasterProfileCvPdfSettings()` to StorageService

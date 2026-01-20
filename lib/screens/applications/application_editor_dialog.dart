@@ -98,262 +98,267 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 700, maxHeight: 800),
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text(_isEditing ? 'Edit Application' : 'New Application'),
-            leading: IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => Navigator.pop(context),
-            ),
-            actions: [
-              if (_isEditing)
-                IconButton(
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: _confirmDelete,
+    return PopScope(
+        canPop: false, // Prevent back button from closing
+        child: Dialog(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 700, maxHeight: 800),
+            child: Scaffold(
+              appBar: AppBar(
+                title:
+                    Text(_isEditing ? 'Edit Application' : 'New Application'),
+                leading: IconButton(
+                  icon: Icon(Icons.close, color: theme.colorScheme.primary),
+                  onPressed: () => Navigator.pop(context),
                 ),
-            ],
-          ),
-          body: Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                // Status selector (only for editing)
-                if (_isEditing) ...[
-                  Text('Status', style: theme.textTheme.labelLarge),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: ApplicationStatus.values.map((status) {
-                      final isSelected = _status == status;
-                      return ChoiceChip(
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            StatusBadge(
-                                status: status, size: StatusBadgeSize.small),
-                          ],
-                        ),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          if (selected) {
-                            setState(() => _status = status);
-                          }
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 24),
-                  const SizedBox(height: AppSpacing.md),
-                  const SizedBox(height: 24),
-                ],
-
-                // Job Information Section
-                Text('Job Information',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 16),
-
-                // Company
-                TextFormField(
-                  controller: _companyController,
-                  decoration: const InputDecoration(
-                    labelText: 'Company *',
-                    hintText: 'Enter company name',
-                    prefixIcon: Icon(Icons.business, size: 20),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Company is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Position
-                TextFormField(
-                  controller: _positionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Position *',
-                    hintText: 'Enter job title',
-                    prefixIcon: Icon(Icons.work, size: 20),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Position is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Subject / Reference
-                TextFormField(
-                  controller: _subjectController,
-                  decoration: InputDecoration(
-                    labelText: _baseLanguage == DocumentLanguage.de
-                        ? 'Betreff / Referenz'
-                        : 'Subject / Reference',
-                    hintText: _baseLanguage == DocumentLanguage.de
-                        ? 'z.B. Bewerbung als ...'
-                        : 'e.g. Application for ...',
-                    prefixIcon: const Icon(Icons.subject, size: 20),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Location
-                TextFormField(
-                  controller: _locationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Location',
-                    hintText: 'City, Country or Remote',
-                    prefixIcon: Icon(Icons.location_on, size: 20),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Job URL
-                TextFormField(
-                  controller: _jobUrlController,
-                  decoration: const InputDecoration(
-                    labelText: 'Job URL',
-                    hintText: 'Link to job posting',
-                    prefixIcon: Icon(Icons.link, size: 20),
-                  ),
-                  keyboardType: TextInputType.url,
-                ),
-                const SizedBox(height: 16),
-
-                // Salary
-                TextFormField(
-                  controller: _salaryController,
-                  decoration: const InputDecoration(
-                    labelText: 'Salary Range',
-                    hintText: 'e.g., 50,000 - 70,000 EUR',
-                    prefixIcon: Icon(Icons.attach_money, size: 20),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Language Selection (only for new applications)
-                if (!_isEditing) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  const SizedBox(height: 24),
-                  Text('Application Language',
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Select the language for your application documents',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.bodySmall?.color
-                          ?.withValues(alpha: 0.7),
+                actions: [
+                  if (_isEditing)
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: _confirmDelete,
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Language selector with consistent styling
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: theme.colorScheme.outline.withOpacity(0.2),
+                ],
+              ),
+              body: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    // Status selector (only for editing)
+                    if (_isEditing) ...[
+                      Text('Status', style: theme.textTheme.labelLarge),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: ApplicationStatus.values.map((status) {
+                          final isSelected = _status == status;
+                          return ChoiceChip(
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                StatusBadge(
+                                    status: status,
+                                    size: StatusBadgeSize.small),
+                              ],
+                            ),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() => _status = status);
+                              }
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 24),
+                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // Job Information Section
+                    Text('Job Information',
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 16),
+
+                    // Company
+                    TextFormField(
+                      controller: _companyController,
+                      decoration: const InputDecoration(
+                        labelText: 'Company *',
+                        hintText: 'Enter company name',
+                        prefixIcon: Icon(Icons.business, size: 20),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Company is required';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Position
+                    TextFormField(
+                      controller: _positionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Position *',
+                        hintText: 'Enter job title',
+                        prefixIcon: Icon(Icons.work, size: 20),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Position is required';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Subject / Reference
+                    TextFormField(
+                      controller: _subjectController,
+                      decoration: InputDecoration(
+                        labelText: _baseLanguage == DocumentLanguage.de
+                            ? 'Betreff / Referenz'
+                            : 'Subject / Reference',
+                        hintText: _baseLanguage == DocumentLanguage.de
+                            ? 'z.B. Bewerbung als ...'
+                            : 'e.g. Application for ...',
+                        prefixIcon: const Icon(Icons.subject, size: 20),
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (var i = 0;
-                            i < DocumentLanguage.values.length;
-                            i++) ...[
-                          if (i > 0)
-                            Container(
-                              width: 1,
-                              height: 32,
-                              color: theme.colorScheme.outline.withOpacity(0.2),
-                            ),
-                          _buildLanguageOption(
-                            theme,
-                            DocumentLanguage.values[i],
-                            _baseLanguage == DocumentLanguage.values[i],
-                          ),
-                        ],
-                      ],
+                    const SizedBox(height: 16),
+
+                    // Location
+                    TextFormField(
+                      controller: _locationController,
+                      decoration: const InputDecoration(
+                        labelText: 'Location',
+                        hintText: 'City, Country or Remote',
+                        prefixIcon: Icon(Icons.location_on, size: 20),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                    const SizedBox(height: 16),
 
-                // Contact section
-                const SizedBox(height: AppSpacing.md),
-                const SizedBox(height: 24),
-                Text('Contact Person (Optional)',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 16),
+                    // Job URL
+                    TextFormField(
+                      controller: _jobUrlController,
+                      decoration: const InputDecoration(
+                        labelText: 'Job URL',
+                        hintText: 'Link to job posting',
+                        prefixIcon: Icon(Icons.link, size: 20),
+                      ),
+                      keyboardType: TextInputType.url,
+                    ),
+                    const SizedBox(height: 16),
 
-                TextFormField(
-                  controller: _contactPersonController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    hintText: 'Contact person name',
-                    prefixIcon: Icon(Icons.person, size: 20),
-                  ),
+                    // Salary
+                    TextFormField(
+                      controller: _salaryController,
+                      decoration: const InputDecoration(
+                        labelText: 'Salary Range',
+                        hintText: 'e.g., 50,000 - 70,000 EUR',
+                        prefixIcon: Icon(Icons.attach_money, size: 20),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Language Selection (only for new applications)
+                    if (!_isEditing) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: 24),
+                      Text('Application Language',
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Select the language for your application documents',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.textTheme.bodySmall?.color
+                              ?.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Language selector with consistent styling
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: theme.colorScheme.outline.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            for (var i = 0;
+                                i < DocumentLanguage.values.length;
+                                i++) ...[
+                              if (i > 0)
+                                Container(
+                                  width: 1,
+                                  height: 32,
+                                  color: theme.colorScheme.outline
+                                      .withOpacity(0.2),
+                                ),
+                              _buildLanguageOption(
+                                theme,
+                                DocumentLanguage.values[i],
+                                _baseLanguage == DocumentLanguage.values[i],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // Contact section
+                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: 24),
+                    Text('Contact Person (Optional)',
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: _contactPersonController,
+                      decoration: const InputDecoration(
+                        labelText: 'Name',
+                        hintText: 'Contact person name',
+                        prefixIcon: Icon(Icons.person, size: 20),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: _contactEmailController,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        hintText: 'Contact email',
+                        prefixIcon: Icon(Icons.email, size: 20),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Notes
+                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: 24),
+                    TextFormField(
+                      controller: _notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Notes',
+                        hintText: 'Add notes about this application',
+                        prefixIcon: Icon(Icons.note, size: 20),
+                      ),
+                      maxLines: 4,
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Save button
+                    ElevatedButton(
+                      onPressed: _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.all(16),
+                      ),
+                      child: Text(
+                        _isEditing ? 'Save Changes' : 'Create Application',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _contactEmailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'Contact email',
-                    prefixIcon: Icon(Icons.email, size: 20),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 24),
-
-                // Notes
-                const SizedBox(height: AppSpacing.md),
-                const SizedBox(height: 24),
-                TextFormField(
-                  controller: _notesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes',
-                    hintText: 'Add notes about this application',
-                    prefixIcon: Icon(Icons.note, size: 20),
-                  ),
-                  maxLines: 4,
-                ),
-                const SizedBox(height: 32),
-
-                // Save button
-                ElevatedButton(
-                  onPressed: _save,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.all(16),
-                  ),
-                  child: Text(
-                    _isEditing ? 'Save Changes' : 'Create Application',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   Future<void> _save() async {

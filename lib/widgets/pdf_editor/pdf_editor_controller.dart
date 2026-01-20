@@ -36,7 +36,7 @@ class PdfEditorController extends ChangeNotifier {
   PdfEditorController({
     TemplateStyle? initialStyle,
     TemplateCustomization? initialCustomization,
-    this.regenerationDelay = const Duration(milliseconds: 300),
+    this.regenerationDelay = const Duration(milliseconds: 150),
   })  : _style = initialStyle ?? TemplateStyle.electric,
         _customization = initialCustomization ?? const TemplateCustomization() {
     // Load saved customization asynchronously
@@ -426,10 +426,10 @@ class PdfEditorController extends ChangeNotifier {
     // Notify immediately so UI reflects changes instantly
     notifyListeners();
 
-    // Debounce actual PDF regeneration
+    // Debounce actual PDF regeneration with shorter delay for better responsiveness
     _debounceTimer = Timer(regenerationDelay, () {
       // Re-notify after debounce to trigger PDF generation if still needed
-      if (_needsRegeneration) {
+      if (_needsRegeneration && !_isGenerating) {
         notifyListeners();
       }
     });
