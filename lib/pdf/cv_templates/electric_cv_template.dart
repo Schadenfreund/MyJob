@@ -6,6 +6,7 @@ import '../../models/template_style.dart';
 import '../../models/template_customization.dart';
 import '../shared/pdf_styling.dart';
 import '../shared/pdf_icons.dart';
+import '../shared/cv_translations.dart';
 import '../shared/base_pdf_template.dart';
 
 /// Electric CV Template - Clean Professional Design
@@ -284,7 +285,10 @@ class ElectricCvTemplate extends BasePdfTemplate<CvData>
             text: pw.TextSpan(
               children: [
                 pw.TextSpan(
-                  text: 'Languages: ',
+                  text: CvTranslations.translateLabel(
+                    'Languages: ',
+                    s.customization.language,
+                  ),
                   style: pw.TextStyle(
                     fontSize: s.fontSizeSmall,
                     fontWeight: pw.FontWeight.bold,
@@ -293,7 +297,8 @@ class ElectricCvTemplate extends BasePdfTemplate<CvData>
                 ),
                 pw.TextSpan(
                   text: cv.languages
-                      .map((l) => '${l.language} (${l.level})')
+                      .map((l) =>
+                          '${l.language} (${CvTranslations.translateLanguageLevel(l.level, s.customization.language)})')
                       .join(' • '),
                   style: pw.TextStyle(
                       fontSize: s.fontSizeSmall, color: s.textSecondary),
@@ -310,7 +315,10 @@ class ElectricCvTemplate extends BasePdfTemplate<CvData>
             text: pw.TextSpan(
               children: [
                 pw.TextSpan(
-                  text: 'Interests: ',
+                  text: CvTranslations.translateLabel(
+                    'Interests: ',
+                    s.customization.language,
+                  ),
                   style: pw.TextStyle(
                     fontSize: s.fontSizeSmall,
                     fontWeight: pw.FontWeight.bold,

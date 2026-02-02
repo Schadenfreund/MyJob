@@ -200,7 +200,11 @@ class ExperienceComponent {
                         ),
                       ),
                       pw.TextSpan(
-                        text: ' at ${experience.company}',
+                        text: CvTranslations.translateLabel(
+                              ' at ',
+                              styling.customization.language,
+                            ) +
+                            experience.company,
                         style: pw.TextStyle(
                           fontSize: styling.fontSizeBody,
                           color: styling.textSecondary,

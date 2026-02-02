@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.4] - 2026-02-02
+
+### Fixed
+
+#### German Localization for CV Templates
+- **Language Proficiency Levels** - Now properly translate to German (Beginner→Anfänger, Intermediate→Fortgeschritten, Advanced→Sehr gut, Fluent→Fließend, Native→Muttersprache, Basic→Grundkenntnisse). Includes CEFR levels (A1-C2).
+- **Experience Preposition** - "at" now translates to "bei" in compact layout (e.g., "Software Engineer bei Google")
+- **Section Labels** - "Languages:" → "Sprachen:", "Interests:" → "Interessen:"
+
+#### Technical
+- Extended `CvTranslations` with `translateLanguageLevel()` and `translateLabel()` methods
+- Centralized all translation logic following DRY principles
+- Fixed in 4 files: cv_translations.dart, experience_component.dart, professional_cv_template.dart, electric_cv_template.dart
+
+---
+
 ## [1.0.3] - 2026-01-20
 
 ### Fixed

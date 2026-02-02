@@ -142,4 +142,68 @@ class CvTranslations {
 
     return closing;
   }
+
+  /// Translate language proficiency level (e.g., "Native" -> "Muttersprache")
+  static String translateLanguageLevel(String level, CvLanguage language) {
+    if (language != CvLanguage.german) return level;
+
+    final levelTranslations = {
+      // Common proficiency levels
+      'Native': 'Muttersprache',
+      'native': 'Muttersprache',
+      'NATIVE': 'MUTTERSPRACHE',
+      'Fluent': 'Fließend',
+      'fluent': 'Fließend',
+      'FLUENT': 'FLIESSEND',
+      'Advanced': 'Sehr gut',
+      'advanced': 'Sehr gut',
+      'ADVANCED': 'SEHR GUT',
+      'Intermediate': 'Fortgeschritten',
+      'intermediate': 'Fortgeschritten',
+      'INTERMEDIATE': 'FORTGESCHRITTEN',
+      'Beginner': 'Anfänger',
+      'beginner': 'Anfänger',
+      'BEGINNER': 'ANFÄNGER',
+      'Basic': 'Grundkenntnisse',
+      'basic': 'Grundkenntnisse',
+      'BASIC': 'GRUNDKENNTNISSE',
+      // CEFR levels (commonly used in Europe)
+      'C2': 'C2 (Muttersprachlich)',
+      'C1': 'C1 (Sehr gut)',
+      'B2': 'B2 (Fortgeschritten)',
+      'B1': 'B1 (Mittelstufe)',
+      'A2': 'A2 (Grundkenntnisse)',
+      'A1': 'A1 (Anfänger)',
+    };
+
+    return levelTranslations[level] ?? level;
+  }
+
+  /// Translate common labels (e.g., "at" -> "bei", "Languages:" -> "Sprachen:")
+  static String translateLabel(String label, CvLanguage language) {
+    if (language != CvLanguage.german) return label;
+
+    final labelTranslations = {
+      // Common prepositions
+      ' at ': ' bei ',
+      'at ': 'bei ',
+      ' at': ' bei',
+      // Common labels with colons
+      'Languages:': 'Sprachen:',
+      'languages:': 'Sprachen:',
+      'LANGUAGES:': 'SPRACHEN:',
+      'Interests:': 'Interessen:',
+      'interests:': 'Interessen:',
+      'INTERESTS:': 'INTERESSEN:',
+      'Skills:': 'Fähigkeiten:',
+      'skills:': 'Fähigkeiten:',
+      'SKILLS:': 'FÄHIGKEITEN:',
+      // Standalone labels
+      'Languages': 'Sprachen',
+      'Interests': 'Interessen',
+      'Skills': 'Fähigkeiten',
+    };
+
+    return labelTranslations[label] ?? label;
+  }
 }

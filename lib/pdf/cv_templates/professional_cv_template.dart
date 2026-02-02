@@ -432,7 +432,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
                 ),
               ),
               pw.Text(
-                lang.level,
+                CvTranslations.translateLanguageLevel(
+                  lang.level,
+                  s.customization.language,
+                ),
                 style: pw.TextStyle(
                   fontSize: s.fontSizeTiny,
                   color: PdfColors.black,
@@ -1430,7 +1433,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
-          s.customization.uppercaseHeaders ? 'LANGUAGES' : 'Languages',
+          CvTranslations.getSectionHeader(
+            s.customization.uppercaseHeaders ? 'LANGUAGES' : 'Languages',
+            s.customization.language,
+          ),
           style: pw.TextStyle(
             fontSize: s.fontSizeSmall,
             fontWeight: pw.FontWeight.bold,
@@ -1442,7 +1448,7 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
           spacing: s.space4,
           children: languages
               .map((lang) => pw.Text(
-                    '${lang.language} (${lang.level})',
+                    '${lang.language} (${CvTranslations.translateLanguageLevel(lang.level, s.customization.language)})',
                     style: pw.TextStyle(
                         fontSize: s.fontSizeSmall, color: s.textPrimary),
                   ))
@@ -2011,7 +2017,8 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
         children: cv.languages.map((lang) {
           return IconComponent.badge(
             iconType: 'language',
-            text: '${lang.language} - ${lang.level}',
+            text:
+                '${lang.language} - ${CvTranslations.translateLanguageLevel(lang.level, s.customization.language)}',
             styling: s,
             style: BadgeStyle.outlined,
           );
