@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
+import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
+import 'package:intl/intl.dart';
 import '../../providers/applications_provider.dart';
 import '../../providers/user_data_provider.dart';
 import '../../providers/app_state.dart';
@@ -11,6 +14,7 @@ import '../../utils/ui_utils.dart';
 import '../../utils/dialog_utils.dart';
 import '../../services/preferences_service.dart';
 import '../../services/storage_service.dart';
+import '../../services/application_statistics_markdown_service.dart';
 import 'application_editor_dialog.dart';
 import '../../dialogs/job_application_pdf_dialog.dart';
 import '../job_cv_editor/job_cv_editor_screen.dart';
@@ -453,6 +457,19 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                           icon: Icons.schedule,
                           color: AppColors.statusWithdrawn,
                         ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  // Export button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      AppCardActionButton(
+                        label: 'Export Report',
+                        icon: Icons.download,
+                        onPressed: () =>
+                            _exportStatisticsPdf(context, provider),
                       ),
                     ],
                   ),
@@ -977,6 +994,102 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     } catch (e) {
       if (context.mounted) {
         UIUtils.showError(context, 'Failed to open folder: $e');
+      }
+    }
+  }
+
+  /// Export comprehensive statistics as separate English and German markdowns
+  Future<void> _exportStatisticsPdf(
+      BuildContext context, ApplicationsProvider provider) async {
+    try {
+      final apps = provider.allApplications;
+
+      if (apps.isEmpty) {
+        if (context.mounted) {
+          UIUtils.showError(context, 'No applications to export');
+        }
+        return;
+      }
+
+      // Show loading
+      if (context.mounted) {
+        DialogUtils.showLoading(context, message: 'Generating statistics...');
+      }
+
+      // Generate both English and German markdown
+      final englishMarkdown =
+          ApplicationStatisticsMarkdownService.generateEnglishMarkdown(
+        applications: apps,
+      );
+
+      final germanMarkdown =
+          ApplicationStatisticsMarkdownService.generateGermanMarkdown(
+        applications: apps,
+      );
+
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close loading
+      }
+
+      // Let user choose save location for the folder
+      final result = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: 'Select folder to save statistics',
+      );
+
+      if (result == null) return;
+
+      // Create filenames with date
+      final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final englishFile =
+          File('$result\\Application_Statistics_EN_$dateStr.md');
+      final germanFile = File('$result\\Application_Statistics_DE_$dateStr.md');
+
+      // Save both files
+      await englishFile.writeAsString(englishMarkdown, encoding: utf8);
+      await germanFile.writeAsString(germanMarkdown, encoding: utf8);
+
+      if (context.mounted) {
+        UIUtils.showSuccess(context,
+            'Statistics exported successfully!\n2 files created: EN and DE');
+
+        // Offer to open folder
+        final shouldOpen = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Export Successful'),
+            content: Text(
+                'Two markdown files have been created:\n\n• Application_Statistics_EN_$dateStr.md\n• Application_Statistics_DE_$dateStr.md\n\nWould you like to open the folder?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('No'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Open Folder'),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldOpen == true) {
+          try {
+            if (Platform.isWindows) {
+              await Process.run('explorer', [result]);
+            } else if (Platform.isMacOS) {
+              await Process.run('open', [result]);
+            } else if (Platform.isLinux) {
+              await Process.run('xdg-open', [result]);
+            }
+          } catch (e) {
+            debugPrint('Failed to open folder: $e');
+          }
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close loading if still open
+        UIUtils.showError(context, 'Failed to export statistics: $e');
       }
     }
   }

@@ -321,11 +321,47 @@ class _JobApplicationPdfDialogState
 
   @override
   String getDocumentName() {
-    // Smart naming: Company_Position_CV or Company_Position_CoverLetter
-    final company = widget.application.company.replaceAll(' ', '_');
-    final position = widget.application.position.replaceAll(' ', '_');
+    // Sanitize filename by removing/replacing invalid characters
+    // Windows invalid chars: < > : " / \ | ? *
+    // Also remove control characters and trim whitespace
+    final company = _sanitizeFilename(widget.application.company);
+    final position = _sanitizeFilename(widget.application.position);
     final type = widget.isCV ? 'CV' : 'CoverLetter';
-    return '${company}_${position}_$type';
+
+    // Ensure we have valid names (fallback to generic if sanitization results in empty string)
+    final safeName = company.isEmpty || position.isEmpty
+        ? 'Application_$type'
+        : '${company}_${position}_$type';
+
+    return safeName;
+  }
+
+  /// Sanitize a string to be safe for use in filenames
+  /// Removes Windows invalid characters: < > : " / \ | ? *
+  /// Also removes control characters and trims whitespace
+  String _sanitizeFilename(String input) {
+    if (input.isEmpty) return input;
+
+    // Replace invalid Windows filename characters with underscores
+    // Invalid chars: < > : " / \ | ? * and control characters (0x00-0x1F)
+    String sanitized = input
+        .replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_')
+        .replaceAll(RegExp(r'\s+'), '_') // Replace whitespace with underscores
+        .replaceAll(RegExp(r'_+'), '_') // Collapse multiple underscores
+        .trim();
+
+    // Remove leading/trailing underscores
+    sanitized = sanitized.replaceAll(RegExp(r'^_+|_+$'), '');
+
+    // Ensure the result isn't empty and doesn't exceed Windows max filename length (255)
+    if (sanitized.isEmpty) {
+      sanitized = 'Document';
+    } else if (sanitized.length > 200) {
+      // Leave room for the suffix and extension
+      sanitized = sanitized.substring(0, 200);
+    }
+
+    return sanitized;
   }
 
   @override

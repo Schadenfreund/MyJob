@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../models/job_application.dart';
 import '../../../constants/app_constants.dart';
@@ -290,7 +291,10 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
                     ),
 
                     // Status details
-                    if (statusDate != null || timeline.isNotEmpty) ...[
+                    if (statusDate != null ||
+                        timeline.isNotEmpty ||
+                        (widget.application.jobUrl != null &&
+                            widget.application.jobUrl!.isNotEmpty)) ...[
                       const SizedBox(height: AppSpacing.sm),
                       AppCardStackedSummary(
                         children: [
@@ -327,6 +331,72 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
                                   ),
                                 ),
                               ],
+                            ),
+                          if (widget.application.jobUrl != null &&
+                              widget.application.jobUrl!.isNotEmpty)
+                            InkWell(
+                              onTap: () async {
+                                try {
+                                  final urlString = widget.application.jobUrl!;
+                                  // Ensure URL has a scheme
+                                  final url = urlString.startsWith('http://') ||
+                                          urlString.startsWith('https://')
+                                      ? urlString
+                                      : 'https://$urlString';
+
+                                  // Use the same method as the support button in settings
+                                  if (Platform.isWindows) {
+                                    await Process.run(
+                                        'cmd', ['/c', 'start', url]);
+                                  } else if (Platform.isMacOS) {
+                                    await Process.run('open', [url]);
+                                  } else if (Platform.isLinux) {
+                                    await Process.run('xdg-open', [url]);
+                                  }
+                                } catch (e) {
+                                  debugPrint('Failed to open job URL: $e');
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Could not open URL: $e'),
+                                        backgroundColor:
+                                            theme.colorScheme.error,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(4),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 2),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.link,
+                                        size: 12,
+                                        color: theme.colorScheme.primary
+                                            .withOpacity(0.6)),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        widget.application.jobUrl!,
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w500,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(Icons.open_in_new,
+                                        size: 10,
+                                        color: theme.colorScheme.primary
+                                            .withOpacity(0.6)),
+                                  ],
+                                ),
+                              ),
                             ),
                         ],
                       ),

@@ -8,6 +8,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.5] - 2026-02-11
+
+### Added
+
+#### Application Statistics Export
+- **Bilingual Markdown Reports** - Export comprehensive job application reports in both English and German
+  - Two separate markdown files generated: `Application_Statistics_EN_[date].md` and `Application_Statistics_DE_[date].md`
+  - Professional report structure with executive summary, chronological history, status breakdown, and statistical overview
+  - Clean, emoji-free formatting for professional documentation
+  
+#### Report Structure
+- **Executive Summary** - Overview of total applications, active/closed counts, and key success metrics
+- **Application History** - Chronological table of all applications with:
+  - Application date
+  - Company and position details
+  - Location
+  - Current status
+  - Notes (truncated for readability)
+- **Applications by Status** - Grouped breakdown by status (Interviewing, Applied, Draft, Successful, Rejected, No Response)
+- **Statistical Overview** - Status distribution with percentages and overall statistics
+
+### Changed
+
+#### UI/UX Improvements
+- **Export Button Redesign** - Replaced icon button with professional "Export Report" button
+  - Styled to match profile tab export buttons using `AppCardActionButton`
+  - Positioned at bottom of expanded statistics card
+  - Only visible when statistics card is expanded
+  - Consistent design language across the application
+
+- **Job URL Links** - Removed underline decoration from job URL links in application cards for cleaner appearance
+  - Links remain clickable and styled in primary color
+  - Maintains link icon for visual identification
+
+### Technical
+
+- Created `ApplicationStatisticsMarkdownService` for markdown generation
+- Implemented language-specific report generation (English/German)
+- Added folder selection dialog for saving both markdown files simultaneously
+- Integrated with existing `AppCardActionButton` component for consistency
+- Clean, maintainable code following DRY principles
+
+---
+
 ## [1.0.4] - 2026-02-02
 
 ### Fixed
