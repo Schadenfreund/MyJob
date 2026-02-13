@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../localization/app_localizations.dart';
 import '../../../providers/templates_provider.dart';
 import '../../../models/cv_template.dart';
 import '../../../models/cover_letter_template.dart';
@@ -40,7 +41,7 @@ class TemplatesSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Document Templates',
+                  context.tr('document_templates'),
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -86,7 +87,7 @@ class _CvTemplatesSubsection extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'CV Templates',
+              context.tr('cv_templates'),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -111,7 +112,7 @@ class _CvTemplatesSubsection extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: () => _showCreateCvTemplateDialog(context),
               icon: const Icon(Icons.add, size: 14),
-              label: const Text('New CV'),
+              label: Text(context.tr('new_cv')),
               style: OutlinedButton.styleFrom(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -122,7 +123,7 @@ class _CvTemplatesSubsection extends StatelessWidget {
         const SizedBox(height: 12),
         if (templates.isEmpty)
           _buildEmptyState(
-              context, Icons.description_outlined, 'No CV templates')
+              context, Icons.description_outlined, context.tr('no_cv_templates'))
         else
           Wrap(
             spacing: 12,
@@ -227,19 +228,19 @@ class _CvTemplatesSubsection extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Create CV Template'),
+        title: Text(context.tr('create_cv_template')),
         content: TextField(
           controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Template Name',
-            hintText: 'e.g., Tech CV, General CV',
+          decoration: InputDecoration(
+            labelText: context.tr('template_name'),
+            hintText: context.tr('template_name_hint_cv'),
           ),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.tr('cancel')),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -250,7 +251,7 @@ class _CvTemplatesSubsection extends StatelessWidget {
                 if (context.mounted) Navigator.pop(context);
               }
             },
-            child: const Text('Create'),
+            child: Text(context.tr('create')),
           ),
         ],
       ),
@@ -278,7 +279,7 @@ class _CoverLetterTemplatesSubsection extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'Cover Letter Templates',
+              context.tr('cl_templates'),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -303,7 +304,7 @@ class _CoverLetterTemplatesSubsection extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: () => _showCreateCoverLetterTemplateDialog(context),
               icon: const Icon(Icons.add, size: 14),
-              label: const Text('New Letter'),
+              label: Text(context.tr('new_letter')),
               style: OutlinedButton.styleFrom(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -314,7 +315,7 @@ class _CoverLetterTemplatesSubsection extends StatelessWidget {
         const SizedBox(height: 12),
         if (templates.isEmpty)
           _buildEmptyState(
-              context, Icons.email_outlined, 'No cover letter templates')
+              context, Icons.email_outlined, context.tr('no_cl_templates'))
         else
           Wrap(
             spacing: 12,
@@ -377,7 +378,7 @@ class _CoverLetterTemplatesSubsection extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   template.body.isEmpty
-                      ? 'No content yet'
+                      ? context.tr('no_content_yet')
                       : '${template.body.length} characters',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.textTheme.bodySmall?.color
@@ -422,19 +423,19 @@ class _CoverLetterTemplatesSubsection extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Create Cover Letter Template'),
+        title: Text(context.tr('create_cl_template')),
         content: TextField(
           controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Template Name',
-            hintText: 'e.g., Tech Letter, General Letter',
+          decoration: InputDecoration(
+            labelText: context.tr('template_name'),
+            hintText: context.tr('template_name_hint_cl'),
           ),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.tr('cancel')),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -447,7 +448,7 @@ class _CoverLetterTemplatesSubsection extends StatelessWidget {
                 if (context.mounted) Navigator.pop(context);
               }
             },
-            child: const Text('Create'),
+            child: Text(context.tr('create')),
           ),
         ],
       ),

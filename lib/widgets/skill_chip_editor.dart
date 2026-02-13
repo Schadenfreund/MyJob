@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../localization/app_localizations.dart';
 import '../models/user_data/skill.dart';
 import '../utils/ui_utils.dart';
 import '../theme/app_theme.dart';
@@ -149,7 +150,7 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
             // Uncategorized skills
             if (uncategorized.isNotEmpty) ...[
               Text(
-                'Other',
+                context.tr('other_category'),
                 style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color:
@@ -170,8 +171,8 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
           UIUtils.buildEmptyState(
             context,
             icon: Icons.psychology_outlined,
-            title: 'No Skills Added',
-            message: 'Add your skills to show recruiters your expertise.',
+            title: context.tr('no_skills_added'),
+            message: context.tr('no_skills_message'),
           ),
 
         const SizedBox(height: AppSpacing.lg),
@@ -190,7 +191,7 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
                         size: 16, color: theme.colorScheme.primary),
                     const SizedBox(width: 8),
                     Text(
-                      'Add New Skill',
+                      context.tr('add_new_skill'),
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -207,7 +208,7 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
                       child: TextField(
                         controller: _nameController,
                         decoration: InputDecoration(
-                          labelText: 'Skill Name',
+                          labelText: context.tr('skill_name'),
                           hintText: 'e.g., Flutter, Python',
                           filled: true,
                           fillColor: theme.colorScheme.surface,
@@ -226,7 +227,7 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
                             setState(() => _selectedLevel = level);
                           }
                         },
-                        label: 'Proficiency',
+                        label: context.tr('proficiency'),
                       ),
                     ),
                   ],
@@ -238,7 +239,7 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
                   TextField(
                     controller: _categoryController,
                     decoration: InputDecoration(
-                      labelText: 'Category (Optional)',
+                      labelText: context.tr('category_optional'),
                       hintText: 'e.g., Programming, Design',
                       filled: true,
                       fillColor: theme.colorScheme.surface,
@@ -256,7 +257,7 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
                   child: FilledButton.icon(
                     onPressed: _addSkill,
                     icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Add to List'),
+                    label: Text(context.tr('add_to_list')),
                   ),
                 ),
               ],
@@ -319,7 +320,7 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        level.displayName,
+                        context.tr(level.localizationKey),
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
@@ -391,8 +392,8 @@ class _SkillChipEditorState extends State<SkillChipEditor> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      (skill.level ?? SkillLevel.intermediate)
-                          .displayName
+                      context.tr((skill.level ?? SkillLevel.intermediate)
+                          .localizationKey)
                           .toUpperCase(),
                       style: TextStyle(
                         fontSize: 9,

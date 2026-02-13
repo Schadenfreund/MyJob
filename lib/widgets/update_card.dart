@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../localization/app_localizations.dart';
 import '../models/update_info.dart';
 import '../services/settings_service.dart';
 import '../services/update_service.dart';
@@ -16,9 +17,9 @@ class UpdateCard extends StatelessWidget {
     return Consumer<UpdateService>(
       builder: (context, updateService, _) {
         return AppCard(
-          title: 'Software Updates',
+          title: context.tr('software_updates'),
           icon: Icons.system_update_outlined,
-          description: 'Check for new versions',
+          description: context.tr('check_for_new_versions'),
           children: [
             _buildContent(context, updateService),
           ],
@@ -64,7 +65,7 @@ class _IdleState extends StatelessWidget {
         _VersionInfo(version: updateService.currentVersion),
         const SizedBox(height: AppSpacing.md),
         AppCardActionButton(
-          label: 'Check for Updates',
+          label: context.tr('check_for_updates'),
           icon: Icons.refresh,
           onPressed: () => updateService.checkForUpdates(),
         ),
@@ -92,7 +93,7 @@ class _CheckingState extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.sm),
         Text(
-          'Checking for updates...',
+          context.tr('checking_for_updates'),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
@@ -117,7 +118,7 @@ class _UpToDateState extends StatelessWidget {
             const Icon(Icons.check_circle, color: Colors.green, size: 20),
             const SizedBox(width: AppSpacing.sm),
             Text(
-              'You\'re up to date!',
+              context.tr('up_to_date'),
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -129,7 +130,7 @@ class _UpToDateState extends StatelessWidget {
         if (updateService.lastCheckTime != null) ...[
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Last checked: ${_formatTime(updateService.lastCheckTime!)}',
+            context.tr('last_checked', {'time': _formatTime(context, updateService.lastCheckTime!)}),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -137,7 +138,7 @@ class _UpToDateState extends StatelessWidget {
         ],
         const SizedBox(height: AppSpacing.md),
         AppCardActionButton(
-          label: 'Check Again',
+          label: context.tr('check_again'),
           icon: Icons.refresh,
           onPressed: () => updateService.checkForUpdates(force: true),
         ),
@@ -145,13 +146,13 @@ class _UpToDateState extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime time) {
+  String _formatTime(BuildContext context, DateTime time) {
     final now = DateTime.now();
     final diff = now.difference(time);
 
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} minutes ago';
-    if (diff.inHours < 24) return '${diff.inHours} hours ago';
+    if (diff.inMinutes < 1) return context.tr('just_now');
+    if (diff.inMinutes < 60) return context.tr('minutes_ago', {'count': '${diff.inMinutes}'});
+    if (diff.inHours < 24) return context.tr('hours_ago', {'count': '${diff.inHours}'});
     return '${time.day}.${time.month}.${time.year}';
   }
 }
@@ -193,7 +194,7 @@ class _UpdateAvailableState extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.xs),
               Text(
-                'New version available: v${updateInfo.version}',
+                context.tr('new_version_available', {'version': updateInfo.version}),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: settings.accentColor,
@@ -206,19 +207,19 @@ class _UpdateAvailableState extends StatelessWidget {
 
         // Update details
         AppCardInfoRow(
-          label: 'Current version',
+          label: context.tr('current_version'),
           value: 'v${updateService.currentVersion}',
         ),
         AppCardInfoRow(
-          label: 'New version',
+          label: context.tr('new_version'),
           value: 'v${updateInfo.version}',
         ),
         AppCardInfoRow(
-          label: 'Download size',
+          label: context.tr('download_size'),
           value: updateInfo.formattedSize,
         ),
         AppCardInfoRow(
-          label: 'Released',
+          label: context.tr('released'),
           value: updateInfo.formattedDate,
         ),
 
@@ -237,14 +238,14 @@ class _UpdateAvailableState extends StatelessWidget {
         Row(
           children: [
             AppCardActionButton(
-              label: 'Download Update',
+              label: context.tr('download_update'),
               icon: Icons.download,
               isFilled: true,
               onPressed: () => updateService.downloadUpdate(),
             ),
             const SizedBox(width: AppSpacing.sm),
             AppCardActionButton(
-              label: 'Later',
+              label: context.tr('later'),
               onPressed: () => updateService.reset(),
             ),
           ],
@@ -285,7 +286,7 @@ class _ChangelogPreview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "What's new:",
+            context.tr('whats_new'),
             style: theme.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: isDark
@@ -304,7 +305,7 @@ class _ChangelogPreview extends StatelessWidget {
           InkWell(
             onTap: () => _showFullChangelog(context),
             child: Text(
-              'View full changelog',
+              context.tr('view_full_changelog'),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: context.read<SettingsService>().accentColor,
                 fontWeight: FontWeight.w600,
@@ -346,14 +347,14 @@ class _DownloadingState extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Downloading update... $percentage%',
+                context.tr('downloading_update', {'percentage': percentage}),
                 style: theme.textTheme.bodyMedium,
               ),
             ),
             TextButton(
               onPressed: () => updateService.cancelDownload(),
               child: Text(
-                'Cancel',
+                context.tr('cancel'),
                 style: TextStyle(color: theme.colorScheme.error),
               ),
             ),
@@ -402,7 +403,7 @@ class _ExtractingState extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.sm),
         Text(
-          'Preparing update...',
+          context.tr('preparing_update'),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
@@ -428,7 +429,7 @@ class _ReadyToInstallState extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
-                'Update ready to install!',
+                context.tr('update_ready'),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -450,7 +451,7 @@ class _ReadyToInstallState extends StatelessWidget {
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
-                  'The app will close and restart automatically.',
+                  context.tr('update_restart_notice'),
                   style: theme.textTheme.bodySmall,
                 ),
               ),
@@ -461,14 +462,14 @@ class _ReadyToInstallState extends StatelessWidget {
         Row(
           children: [
             AppCardActionButton(
-              label: 'Install & Restart',
+              label: context.tr('install_restart'),
               icon: Icons.system_update,
               isFilled: true,
               onPressed: () => _confirmAndInstall(context, updateService),
             ),
             const SizedBox(width: AppSpacing.sm),
             AppCardActionButton(
-              label: 'Later',
+              label: context.tr('later'),
               onPressed: () => updateService.reset(),
             ),
           ],
@@ -481,22 +482,21 @@ class _ReadyToInstallState extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Install Update?'),
-        content: const Text(
-          'The application will close and restart with the new version. '
-          'Your data will be preserved.',
+        title: Text(context.tr('install_update_title')),
+        content: Text(
+          context.tr('install_update_message'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.tr('cancel')),
           ),
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
               updateService.installUpdate();
             },
-            child: const Text('Install Now'),
+            child: Text(context.tr('install_now')),
           ),
         ],
       ),
@@ -523,7 +523,7 @@ class _InstallingState extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.sm),
         Text(
-          'Installing update...',
+          context.tr('installing_update'),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
@@ -560,7 +560,7 @@ class _ErrorState extends StatelessWidget {
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
-                  updateService.errorMessage ?? 'An error occurred',
+                  updateService.errorMessage ?? context.tr('update_error'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.error,
                   ),
@@ -573,7 +573,7 @@ class _ErrorState extends StatelessWidget {
         Row(
           children: [
             AppCardActionButton(
-              label: 'Try Again',
+              label: context.tr('try_again'),
               icon: Icons.refresh,
               onPressed: () {
                 updateService.reset();
@@ -582,7 +582,7 @@ class _ErrorState extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.sm),
             AppCardActionButton(
-              label: 'Manual Download',
+              label: context.tr('manual_download'),
               icon: Icons.open_in_new,
               onPressed: () => updateService.openReleasesPage(),
             ),
@@ -604,7 +604,7 @@ class _VersionInfo extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Text(
-      'Current version: v$version',
+      context.tr('current_version_v', {'version': version}),
       style: theme.textTheme.bodySmall?.copyWith(
         color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
       ),

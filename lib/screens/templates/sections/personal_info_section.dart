@@ -5,6 +5,7 @@ import '../../../models/user_data/personal_info.dart';
 import '../../../services/templates_storage_service.dart';
 import '../../../widgets/profile_picture_picker.dart';
 import '../../../constants/ui_constants.dart';
+import '../../../localization/app_localizations.dart';
 
 /// Personal information management section
 class PersonalInfoSection extends StatelessWidget {
@@ -56,7 +57,7 @@ class PersonalInfoSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Personal Information',
+                  context.tr('personal_info'),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -68,7 +69,7 @@ class PersonalInfoSection extends StatelessWidget {
                     personalInfo == null ? Icons.add : Icons.edit,
                     size: 16,
                   ),
-                  label: Text(personalInfo == null ? 'Add' : 'Edit'),
+                  label: Text(personalInfo == null ? context.tr('add') : context.tr('edit')),
                   style: UIConstants.getSecondaryButtonStyle(context),
                 ),
               ],
@@ -94,7 +95,7 @@ class PersonalInfoSection extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'No personal information yet',
+              context.tr('no_personal_info'),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.textTheme.bodySmall?.color,
               ),
@@ -147,18 +148,18 @@ class PersonalInfoSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildInfoRow(context, Icons.badge, 'Name', info.fullName),
+              _buildInfoRow(context, Icons.badge, context.tr('full_name'), info.fullName),
               if (info.jobTitle != null && info.jobTitle!.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                _buildInfoRow(context, Icons.work, 'Job Title', info.jobTitle!),
+                _buildInfoRow(context, Icons.work, context.tr('job_title'), info.jobTitle!),
               ],
               if (info.email != null) ...[
                 const SizedBox(height: 12),
-                _buildInfoRow(context, Icons.email, 'Email', info.email!),
+                _buildInfoRow(context, Icons.email, context.tr('email'), info.email!),
               ],
               if (info.phone != null) ...[
                 const SizedBox(height: 12),
-                _buildInfoRow(context, Icons.phone, 'Phone', info.phone!),
+                _buildInfoRow(context, Icons.phone, context.tr('phone'), info.phone!),
               ],
               if (info.address != null ||
                   info.city != null ||
@@ -167,7 +168,7 @@ class PersonalInfoSection extends StatelessWidget {
                 _buildInfoRow(
                   context,
                   Icons.location_on,
-                  'Location',
+                  context.tr('location'),
                   [info.address, info.city, info.country]
                       .where((e) => e != null && e.isNotEmpty)
                       .join(', '),
@@ -175,12 +176,12 @@ class PersonalInfoSection extends StatelessWidget {
               ],
               if (info.linkedin != null && info.linkedin!.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                _buildInfoRow(context, Icons.link, 'LinkedIn', info.linkedin!),
+                _buildInfoRow(context, Icons.link, context.tr('linkedin'), info.linkedin!),
               ],
               if (info.website != null && info.website!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 _buildInfoRow(
-                    context, Icons.language, 'Website', info.website!),
+                    context, Icons.language, context.tr('website'), info.website!),
               ],
             ],
           ),
@@ -225,7 +226,16 @@ class PersonalInfoSection extends StatelessWidget {
     );
   }
 
+  static void showEditDialog(BuildContext context) {
+    final existingInfo = context.read<UserDataProvider>().personalInfo;
+    _showEditDialogImpl(context, existingInfo);
+  }
+
   void _showEditDialog(BuildContext context, PersonalInfo? existingInfo) {
+    _showEditDialogImpl(context, existingInfo);
+  }
+
+  static void _showEditDialogImpl(BuildContext context, PersonalInfo? existingInfo) {
     showDialog(
       context: context,
       builder: (dialogContext) => _PersonalInfoEditDialog(
@@ -294,8 +304,8 @@ class PersonalInfoSection extends StatelessWidget {
                 const Icon(Icons.check_circle, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
                 Text(newPath.isEmpty
-                    ? 'Profile picture removed'
-                    : 'Profile picture updated'),
+                    ? context.tr('profile_picture_removed')
+                    : context.tr('profile_picture_updated')),
               ],
             ),
             backgroundColor: Colors.green.shade600,
@@ -308,7 +318,7 @@ class PersonalInfoSection extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update profile picture: $e'),
+            content: Text('${context.tr('profile_picture_failed')}: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -381,8 +391,8 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
     return AlertDialog(
       title: Text(
         widget.existingInfo == null
-            ? 'Add Personal Info'
-            : 'Edit Personal Info',
+            ? context.tr('add_personal_info')
+            : context.tr('edit_personal_info'),
       ),
       content: SizedBox(
         width: 550,
@@ -413,9 +423,9 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
                   Expanded(
                     child: TextField(
                       controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Full Name *',
-                        prefixIcon: Icon(Icons.badge),
+                      decoration: InputDecoration(
+                        labelText: '${context.tr('full_name')} *',
+                        prefixIcon: const Icon(Icons.badge),
                       ),
                       autofocus: true,
                       onChanged: (_) => setState(() {}),
@@ -425,9 +435,9 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
                   Expanded(
                     child: TextField(
                       controller: _jobTitleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Job Title',
-                        prefixIcon: Icon(Icons.work),
+                      decoration: InputDecoration(
+                        labelText: context.tr('job_title'),
+                        prefixIcon: const Icon(Icons.work),
                       ),
                     ),
                   ),
@@ -441,9 +451,9 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
                   Expanded(
                     child: TextField(
                       controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email),
+                      decoration: InputDecoration(
+                        labelText: context.tr('email'),
+                        prefixIcon: const Icon(Icons.email),
                       ),
                       keyboardType: TextInputType.emailAddress,
                     ),
@@ -452,9 +462,9 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
                   Expanded(
                     child: TextField(
                       controller: _phoneController,
-                      decoration: const InputDecoration(
-                        labelText: 'Phone',
-                        prefixIcon: Icon(Icons.phone),
+                      decoration: InputDecoration(
+                        labelText: context.tr('phone'),
+                        prefixIcon: const Icon(Icons.phone),
                       ),
                       keyboardType: TextInputType.phone,
                     ),
@@ -466,9 +476,9 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
               // Address
               TextField(
                 controller: _addressController,
-                decoration: const InputDecoration(
-                  labelText: 'Address',
-                  prefixIcon: Icon(Icons.location_on),
+                decoration: InputDecoration(
+                  labelText: context.tr('address'),
+                  prefixIcon: const Icon(Icons.location_on),
                 ),
               ),
               const SizedBox(height: 16),
@@ -479,9 +489,9 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
                   Expanded(
                     child: TextField(
                       controller: _cityController,
-                      decoration: const InputDecoration(
-                        labelText: 'City',
-                        prefixIcon: Icon(Icons.location_city),
+                      decoration: InputDecoration(
+                        labelText: context.tr('city'),
+                        prefixIcon: const Icon(Icons.location_city),
                       ),
                     ),
                   ),
@@ -489,9 +499,9 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
                   Expanded(
                     child: TextField(
                       controller: _countryController,
-                      decoration: const InputDecoration(
-                        labelText: 'Country',
-                        prefixIcon: Icon(Icons.flag),
+                      decoration: InputDecoration(
+                        labelText: context.tr('country'),
+                        prefixIcon: const Icon(Icons.flag),
                       ),
                     ),
                   ),
@@ -505,9 +515,9 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
                   Expanded(
                     child: TextField(
                       controller: _linkedinController,
-                      decoration: const InputDecoration(
-                        labelText: 'LinkedIn',
-                        prefixIcon: Icon(Icons.link),
+                      decoration: InputDecoration(
+                        labelText: context.tr('linkedin'),
+                        prefixIcon: const Icon(Icons.link),
                       ),
                     ),
                   ),
@@ -515,9 +525,9 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
                   Expanded(
                     child: TextField(
                       controller: _websiteController,
-                      decoration: const InputDecoration(
-                        labelText: 'Website',
-                        prefixIcon: Icon(Icons.language),
+                      decoration: InputDecoration(
+                        labelText: context.tr('website'),
+                        prefixIcon: const Icon(Icons.language),
                       ),
                     ),
                   ),
@@ -531,12 +541,12 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
         TextButton(
           onPressed: () => Navigator.pop(context),
           style: UIConstants.getTextButtonStyle(context),
-          child: const Text('Cancel'),
+          child: Text(context.tr('cancel')),
         ),
         FilledButton(
           onPressed: _save,
           style: UIConstants.getPrimaryButtonStyle(context),
-          child: const Text('Save'),
+          child: Text(context.tr('save')),
         ),
       ],
     );
@@ -545,7 +555,7 @@ class _PersonalInfoEditDialogState extends State<_PersonalInfoEditDialog> {
   Future<void> _save() async {
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name is required')),
+        SnackBar(content: Text(context.tr('name_is_required'))),
       );
       return;
     }

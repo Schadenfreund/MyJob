@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/unified_yaml_import_service.dart';
-import '../providers/user_data_provider.dart';
 import '../constants/app_constants.dart';
+import '../localization/app_localizations.dart';
+import '../providers/user_data_provider.dart';
+import '../services/unified_yaml_import_service.dart';
 
 /// Unified YAML import dialog with auto-detection and smart UI
 ///
@@ -115,12 +116,12 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                   child: _parseResult!.isCvData
                       ? _buildInfoBanner(
                           context,
-                          'CV data will replace existing data in the selected sections.',
+                          context.tr('import_cv_info'),
                           Icons.info_outline_rounded,
                         )
                       : _buildInfoBanner(
                           context,
-                          'Cover letter will be imported to your Profile tab based on the detected language.',
+                          context.tr('import_cl_info'),
                           Icons.info_outline_rounded,
                         ),
                 ),
@@ -185,7 +186,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Import YAML',
+                      context.tr('import_yaml'),
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -218,7 +219,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
           Row(
             children: [
               Text(
-                'Target Language:',
+                context.tr('target_language'),
                 style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color:
@@ -338,14 +339,14 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Analyzing file...',
+              context.tr('analyzing_file'),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Detecting content type and language',
+              context.tr('detecting_content'),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
               ),
@@ -435,7 +436,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Content Preview',
+                context.tr('content_preview'),
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -564,7 +565,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Select what to import',
+                context.tr('select_what_to_import'),
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -578,7 +579,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
             children: [
               _buildFilterChip(
                 context,
-                label: 'Personal Info',
+                label: context.tr('personal_info'),
                 icon: Icons.person_rounded,
                 selected: _importPersonalInfo,
                 onSelected: (v) => setState(() => _importPersonalInfo = v),
@@ -586,7 +587,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
               ),
               _buildFilterChip(
                 context,
-                label: 'Skills',
+                label: context.tr('skills'),
                 icon: Icons.construction_rounded,
                 selected: _importSkills,
                 onSelected: (v) => setState(() => _importSkills = v),
@@ -594,7 +595,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
               ),
               _buildFilterChip(
                 context,
-                label: 'Languages',
+                label: context.tr('languages_section'),
                 icon: Icons.language_rounded,
                 selected: _importLanguages,
                 onSelected: (v) => setState(() => _importLanguages = v),
@@ -602,7 +603,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
               ),
               _buildFilterChip(
                 context,
-                label: 'Interests',
+                label: context.tr('interests'),
                 icon: Icons.favorite_rounded,
                 selected: _importInterests,
                 onSelected: (v) => setState(() => _importInterests = v),
@@ -610,7 +611,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
               ),
               _buildFilterChip(
                 context,
-                label: 'Work Experience',
+                label: context.tr('work_experience'),
                 icon: Icons.work_rounded,
                 selected: _importWorkExperience,
                 onSelected: (v) => setState(() => _importWorkExperience = v),
@@ -618,7 +619,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
               ),
               _buildFilterChip(
                 context,
-                label: 'Education',
+                label: context.tr('education'),
                 icon: Icons.school_rounded,
                 selected: _importEducation,
                 onSelected: (v) => setState(() => _importEducation = v),
@@ -785,7 +786,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               minimumSize: const Size(0, 44),
             ),
-            child: const Text('Cancel'),
+            child: Text(context.tr('cancel')),
           ),
           const SizedBox(width: 12),
           FilledButton.icon(
@@ -812,7 +813,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                   )
                 : const Icon(Icons.download_done_rounded, size: 20),
             label: Text(
-              _isLoading ? 'Importing...' : 'Import Now',
+              _isLoading ? context.tr('importing') : context.tr('import_now'),
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 15,

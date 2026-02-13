@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../providers/user_data_provider.dart';
+import '../../../localization/app_localizations.dart';
 import '../../../models/user_data/interest.dart';
-import '../../../widgets/app_card.dart';
+import '../../../providers/user_data_provider.dart';
 import '../../../utils/ui_utils.dart';
+import '../../../widgets/app_card.dart';
 
 /// Interests management section
 class InterestsSection extends StatelessWidget {
@@ -28,11 +29,11 @@ class InterestsSection extends StatelessWidget {
     }
 
     return AppCard(
-      title: 'Interests',
+      title: context.tr('interests'),
       icon: Icons.interests_outlined,
-      description: 'Add your hobbies and personal interests',
+      description: context.tr('interests_desc'),
       trailing: AppCardActionButton(
-        label: 'Add Interest',
+        label: context.tr('add_interest'),
         icon: Icons.add,
         onPressed: () => _addInterest(context, userDataProvider),
       ),
@@ -46,12 +47,12 @@ class InterestsSection extends StatelessWidget {
     return UIUtils.buildEmptyState(
       context,
       icon: Icons.interests_outlined,
-      title: 'No Interests Added',
-      message: 'Add your hobbies and interests to personalize your profile.',
+      title: context.tr('no_interests_added'),
+      message: context.tr('interests_empty_message'),
       action: FilledButton.icon(
         onPressed: () => _addInterest(context, provider),
         icon: const Icon(Icons.add, size: 18),
-        label: const Text('Add Your First Interest'),
+        label: Text(context.tr('add_first_interest')),
       ),
     );
   }
@@ -122,24 +123,24 @@ class InterestsSection extends StatelessWidget {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Interest'),
+        title: Text(context.tr('add_interest')),
         content: TextField(
           controller: nameController,
           autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Interest Name',
-            hintText: 'e.g., Photography, Hiking',
+          decoration: InputDecoration(
+            labelText: context.tr('interest_name'),
+            hintText: context.tr('interest_hint'),
           ),
           onSubmitted: (val) => Navigator.pop(context, val),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.tr('cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, nameController.text),
-            child: const Text('Add'),
+            child: Text(context.tr('add')),
           ),
         ],
       ),
@@ -157,12 +158,12 @@ class InterestsSection extends StatelessWidget {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Interest'),
+        title: Text(context.tr('edit_interest')),
         content: TextField(
           controller: nameController,
           autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Interest Name',
+          decoration: InputDecoration(
+            labelText: context.tr('interest_name'),
           ),
           onSubmitted: (val) => Navigator.pop(context, val),
         ),
@@ -173,16 +174,16 @@ class InterestsSection extends StatelessWidget {
               if (context.mounted) Navigator.pop(context);
             },
             icon: const Icon(Icons.delete, color: Colors.red),
-            label: const Text('Delete', style: TextStyle(color: Colors.red)),
+            label: Text(context.tr('delete'), style: const TextStyle(color: Colors.red)),
           ),
           const Spacer(),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.tr('cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, nameController.text),
-            child: const Text('Save'),
+            child: Text(context.tr('save')),
           ),
         ],
       ),

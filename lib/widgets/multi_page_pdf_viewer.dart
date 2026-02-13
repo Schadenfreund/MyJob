@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:printing/printing.dart';
 
+import '../localization/app_localizations.dart';
+
 /// Enhanced multi-page PDF viewer with proper side-by-side layout support
 ///
 /// Features:
@@ -244,7 +246,7 @@ class _MultiPagePdfViewerState extends State<MultiPagePdfViewer> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Loading PDF...',
+              context.tr('loading_pdf'),
               style: TextStyle(
                 color: Colors.grey.shade700,
                 fontSize: 14,
@@ -271,7 +273,7 @@ class _MultiPagePdfViewerState extends State<MultiPagePdfViewer> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadDocument,
-              child: const Text('Retry'),
+              child: Text(context.tr('retry')),
             ),
           ],
         ),
@@ -279,8 +281,8 @@ class _MultiPagePdfViewerState extends State<MultiPagePdfViewer> {
     }
 
     if (_pageImages.isEmpty) {
-      return const Center(
-        child: Text('No pages to display'),
+      return Center(
+        child: Text(context.tr('no_pages_to_display')),
       );
     }
 
@@ -427,10 +429,10 @@ class _MultiPagePdfViewerState extends State<MultiPagePdfViewer> {
           _buildToolbarButton(
             icon: _isSideBySide ? Icons.view_week : Icons.view_agenda,
             tooltip: _isSideBySide
-                ? 'Switch to Single Page'
-                : 'Switch to Side-by-Side',
+                ? context.tr('switch_to_single_page')
+                : context.tr('switch_to_side_by_side'),
             onPressed: _toggleViewMode,
-            label: _isSideBySide ? 'Split' : 'Single',
+            label: _isSideBySide ? context.tr('split_view') : context.tr('single_view'),
             isActive: _isSideBySide,
           ),
           _buildDivider(),
@@ -438,7 +440,7 @@ class _MultiPagePdfViewerState extends State<MultiPagePdfViewer> {
           // Zoom controls
           _buildToolbarButton(
             icon: Icons.remove,
-            tooltip: 'Zoom Out (-)',
+            tooltip: context.tr('zoom_out'),
             onPressed: _zoom > _minZoom ? _zoomOut : null,
           ),
           Container(
@@ -454,7 +456,7 @@ class _MultiPagePdfViewerState extends State<MultiPagePdfViewer> {
           ),
           _buildToolbarButton(
             icon: Icons.add,
-            tooltip: 'Zoom In (+)',
+            tooltip: context.tr('zoom_in'),
             onPressed: _zoom < _maxZoom ? _zoomIn : null,
           ),
           _buildDivider(),
@@ -463,7 +465,7 @@ class _MultiPagePdfViewerState extends State<MultiPagePdfViewer> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text(
-              '$_pageCount ${_pageCount == 1 ? 'page' : 'pages'}',
+              context.tr('n_pages_count', {'count': '$_pageCount'}),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.7),
                 fontSize: 11,
@@ -475,7 +477,7 @@ class _MultiPagePdfViewerState extends State<MultiPagePdfViewer> {
           // Print button
           _buildToolbarButton(
             icon: Icons.print,
-            tooltip: 'Print (Ctrl+P)',
+            tooltip: context.tr('print_shortcut'),
             onPressed: _handlePrint,
             useAccentColor: true,
           ),
@@ -578,7 +580,7 @@ class _MultiPagePdfViewerState extends State<MultiPagePdfViewer> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   child: Text(
-                    'Reset',
+                    context.tr('reset_zoom'),
                     style: TextStyle(
                       color: widget.accentColor,
                       fontSize: 11,

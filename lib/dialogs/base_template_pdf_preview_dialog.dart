@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
+import '../localization/app_localizations.dart';
 import 'package:printing/printing.dart';
 import '../models/template_style.dart';
 import '../models/template_customization.dart';
@@ -287,7 +288,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
   Future<void> _handleExport() async {
     try {
       final result = await FilePicker.platform.saveFile(
-        dialogTitle: 'Export PDF',
+        dialogTitle: context.tr('pdf_dialog_export'),
         fileName: '${getDocumentName()}.pdf',
         initialDirectory: getInitialExportDirectory(),
         type: FileType.custom,
@@ -430,9 +431,9 @@ abstract class BaseTemplatePdfPreviewDialogState<
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'PDF PREVIEW & EDITOR',
-                        style: TextStyle(
+                      Text(
+                        context.tr('pdf_preview_editor'),
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -466,7 +467,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
                 ElevatedButton.icon(
                   onPressed: _controller.isGenerating ? null : _handleExport,
                   icon: const Icon(Icons.download, size: 18),
-                  label: const Text('Export PDF'),
+                  label: Text(context.tr('pdf_dialog_export')),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _controller.style.accentColor,
                     foregroundColor: Colors.black,
@@ -479,7 +480,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close, color: Colors.white),
-                  tooltip: 'Close',
+                  tooltip: context.tr('close'),
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.white.withValues(alpha: 0.1),
                   ),
@@ -518,7 +519,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        'Generating PDF Preview...',
+                        context.tr('generating_pdf_preview'),
                         style: TextStyle(
                           color: Colors.grey.shade700,
                           fontSize: 14,
@@ -576,7 +577,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 8), // Longer duration for errors
         action: SnackBarAction(
-          label: 'Copy',
+          label: context.tr('copy'),
           textColor: Colors.white,
           onPressed: () {
             Clipboard.setData(ClipboardData(text: message));

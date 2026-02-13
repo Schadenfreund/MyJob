@@ -12,6 +12,7 @@ import '../widgets/interest_chip_editor.dart';
 import '../widgets/autofill_button.dart';
 import '../utils/data_converters.dart';
 import '../utils/ui_utils.dart';
+import '../localization/app_localizations.dart';
 
 /// Tabbed CV editor with organized sections
 class TabbedCvEditor extends StatefulWidget {
@@ -169,11 +170,11 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
             isScrollable: true,
             tabAlignment: TabAlignment.start,
             tabs: [
-              _buildTab(Icons.contact_mail, 'Contact'),
-              _buildTab(Icons.person, 'Profile'),
-              _buildTab(Icons.star, 'Skills & Interests'),
-              _buildTab(Icons.work, 'Experience'),
-              _buildTab(Icons.school, 'Education'),
+              _buildTab(Icons.contact_mail, context.tr('tab_contact')),
+              _buildTab(Icons.person, context.tr('tab_profile')),
+              _buildTab(Icons.star, context.tr('tab_skills_interests')),
+              _buildTab(Icons.work, context.tr('tab_experience')),
+              _buildTab(Icons.school, context.tr('tab_education')),
             ],
           ),
         ),
@@ -218,7 +219,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
           AutofillSection(
             onAutofill: _autofillFromProfile,
             fieldsToFill: const ['Name', 'Email', 'Phone', 'Address'],
-            title: 'Auto-fill from Profile',
+            title: context.tr('autofill_from_profile'),
             description: '',
           ),
 
@@ -227,7 +228,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
           // Contact fields with reduced spacing
           CustomTextField(
             controller: _fullNameController,
-            label: 'Full Name',
+            label: context.tr('full_name'),
             hint: 'John Doe',
             prefixIcon: Icons.person,
             required: true,
@@ -239,7 +240,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
               Expanded(
                 child: CustomTextField(
                   controller: _emailController,
-                  label: 'Email',
+                  label: context.tr('email'),
                   hint: 'john@example.com',
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email,
@@ -249,7 +250,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
               Expanded(
                 child: CustomTextField(
                   controller: _phoneController,
-                  label: 'Phone',
+                  label: context.tr('phone'),
                   hint: '+1 234 567 8900',
                   keyboardType: TextInputType.phone,
                   prefixIcon: Icons.phone,
@@ -261,7 +262,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
 
           CustomTextField(
             controller: _addressController,
-            label: 'Address',
+            label: context.tr('address'),
             hint: 'City, Country',
             prefixIcon: Icons.location_on,
           ),
@@ -272,7 +273,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
               Expanded(
                 child: CustomTextField(
                   controller: _linkedinController,
-                  label: 'LinkedIn',
+                  label: context.tr('linkedin'),
                   hint: 'linkedin.com/in/johndoe',
                   keyboardType: TextInputType.url,
                   prefixIcon: Icons.link,
@@ -282,7 +283,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
               Expanded(
                 child: CustomTextField(
                   controller: _websiteController,
-                  label: 'Website',
+                  label: context.tr('website'),
                   hint: 'www.johndoe.com',
                   keyboardType: TextInputType.url,
                   prefixIcon: Icons.language,
@@ -304,7 +305,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Professional Summary',
+            context.tr('professional_summary'),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -313,7 +314,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
 
           CustomTextField(
             controller: _profileController,
-            label: 'Profile Summary',
+            label: context.tr('profile_summary_label'),
             hint: 'Experienced professional with a proven track record in...',
             maxLines: 12,
             minLines: 8,
@@ -333,7 +334,10 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
               ),
               const SizedBox(width: 6),
               Text(
-                '${_profileController.text.length} characters • ${_profileController.text.trim().split(RegExp(r'\s+')).where((word) => word.isNotEmpty).length} words',
+                context.tr('chars_words_count', {
+                  'chars': '${_profileController.text.length}',
+                  'words': '${_profileController.text.trim().split(RegExp(r'\s+')).where((word) => word.isNotEmpty).length}',
+                }),
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontSize: 12,
                   color:
@@ -357,7 +361,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
         children: [
           // Skills section
           Text(
-            'Skills',
+            context.tr('skills'),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -381,7 +385,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
 
           // Interests section
           Text(
-            'Interests & Hobbies',
+            context.tr('interests_hobbies'),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -413,7 +417,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Work Experience',
+                context.tr('work_experience'),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -421,7 +425,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
               FilledButton.tonalIcon(
                 onPressed: _addExperience,
                 icon: const Icon(Icons.add, size: 16),
-                label: const Text('Add'),
+                label: Text(context.tr('add')),
                 style: FilledButton.styleFrom(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -438,8 +442,8 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
             UIUtils.buildEmptyState(
               context,
               icon: Icons.work_outline,
-              title: 'No work experience added',
-              message: 'Click "Add Experience" to add your work history',
+              title: context.tr('no_work_experience'),
+              message: context.tr('no_work_exp_message'),
             )
           else
             ...experiences.asMap().entries.map((entry) {
@@ -477,7 +481,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                'Current',
+                                context.tr('current'),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onPrimaryContainer,
                                   fontWeight: FontWeight.w600,
@@ -487,12 +491,12 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
                           IconButton(
                             icon: const Icon(Icons.edit, size: 20),
                             onPressed: () => _editExperience(index),
-                            tooltip: 'Edit',
+                            tooltip: context.tr('edit'),
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete, size: 20),
                             onPressed: () => _deleteExperience(index),
-                            tooltip: 'Delete',
+                            tooltip: context.tr('delete'),
                             color: theme.colorScheme.error,
                           ),
                         ],
@@ -513,7 +517,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${exp.startDate} - ${exp.endDate ?? 'Present'}',
+                            '${exp.startDate} - ${exp.endDate ?? context.tr('present')}',
                             style: theme.textTheme.bodySmall,
                           ),
                         ],
@@ -610,7 +614,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Education',
+                context.tr('education'),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -618,7 +622,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
               FilledButton.tonalIcon(
                 onPressed: _addEducation,
                 icon: const Icon(Icons.add, size: 16),
-                label: const Text('Add'),
+                label: Text(context.tr('add')),
                 style: FilledButton.styleFrom(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -634,9 +638,8 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
             UIUtils.buildEmptyState(
               context,
               icon: Icons.school_outlined,
-              title: 'No education added',
-              message:
-                  'Click "Add Education" to add your educational background',
+              title: context.tr('no_education_added'),
+              message: context.tr('no_education_message_short'),
             )
           else
             ...education.asMap().entries.map((entry) {
@@ -663,12 +666,12 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
                           IconButton(
                             icon: const Icon(Icons.edit, size: 20),
                             onPressed: () => _editEducation(index),
-                            tooltip: 'Edit',
+                            tooltip: context.tr('edit'),
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete, size: 20),
                             onPressed: () => _deleteEducation(index),
-                            tooltip: 'Delete',
+                            tooltip: context.tr('delete'),
                             color: theme.colorScheme.error,
                           ),
                         ],
@@ -689,7 +692,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${edu.startDate} - ${edu.endDate ?? 'Present'}',
+                            '${edu.startDate} - ${edu.endDate ?? context.tr('present')}',
                             style: theme.textTheme.bodySmall,
                           ),
                         ],
@@ -720,7 +723,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Languages',
+                context.tr('languages'),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -728,7 +731,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
               FilledButton.tonalIcon(
                 onPressed: _addLanguage,
                 icon: const Icon(Icons.add, size: 16),
-                label: const Text('Add'),
+                label: Text(context.tr('add')),
                 style: FilledButton.styleFrom(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -744,8 +747,8 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
             UIUtils.buildEmptyState(
               context,
               icon: Icons.language,
-              title: 'No languages added',
-              message: 'Click "Add Language" to add your language skills',
+              title: context.tr('no_languages_added'),
+              message: context.tr('no_languages_message'),
             )
           else
             ...languages.asMap().entries.map((entry) {
@@ -789,12 +792,12 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
                       IconButton(
                         icon: const Icon(Icons.edit, size: 20),
                         onPressed: () => _editLanguage(index),
-                        tooltip: 'Edit',
+                        tooltip: context.tr('edit'),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, size: 20),
                         onPressed: () => _deleteLanguage(index),
-                        tooltip: 'Delete',
+                        tooltip: context.tr('delete'),
                         color: theme.colorScheme.error,
                       ),
                     ],
@@ -958,7 +961,7 @@ class _ExperienceDialogState extends State<_ExperienceDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-          widget.experience == null ? 'Add Experience' : 'Edit Experience'),
+          widget.experience == null ? context.tr('add_work_experience') : context.tr('edit_work_experience')),
       content: SizedBox(
         width: 550,
         child: Form(
@@ -969,22 +972,22 @@ class _ExperienceDialogState extends State<_ExperienceDialog> {
               children: [
                 CustomTextField(
                   controller: _companyController,
-                  label: 'Company',
+                  label: context.tr('company'),
                   hint: 'Google Inc.',
                   prefixIcon: Icons.business,
                   required: true,
                   validator: (value) =>
-                      value?.trim().isEmpty ?? true ? 'Required' : null,
+                      value?.trim().isEmpty ?? true ? context.tr('required') : null,
                 ),
                 const SizedBox(height: 12),
                 CustomTextField(
                   controller: _titleController,
-                  label: 'Position',
+                  label: context.tr('position'),
                   hint: 'Senior Software Engineer',
                   prefixIcon: Icons.work,
                   required: true,
                   validator: (value) =>
-                      value?.trim().isEmpty ?? true ? 'Required' : null,
+                      value?.trim().isEmpty ?? true ? context.tr('required') : null,
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -992,19 +995,19 @@ class _ExperienceDialogState extends State<_ExperienceDialog> {
                     Expanded(
                       child: CustomTextField(
                         controller: _startDateController,
-                        label: 'Start Date',
+                        label: context.tr('start_date'),
                         hint: 'Jan 2020',
                         prefixIcon: Icons.calendar_today,
                         required: true,
                         validator: (value) =>
-                            value?.trim().isEmpty ?? true ? 'Required' : null,
+                            value?.trim().isEmpty ?? true ? context.tr('required') : null,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: CustomTextField(
                         controller: _endDateController,
-                        label: 'End Date',
+                        label: context.tr('end_date_label'),
                         hint: 'Present',
                         prefixIcon: Icons.event,
                       ),
@@ -1014,7 +1017,7 @@ class _ExperienceDialogState extends State<_ExperienceDialog> {
                 const SizedBox(height: 12),
                 CustomTextField(
                   controller: _descriptionController,
-                  label: 'Description',
+                  label: context.tr('description'),
                   hint: 'Brief overview...',
                   maxLines: 3,
                   minLines: 2,
@@ -1026,13 +1029,13 @@ class _ExperienceDialogState extends State<_ExperienceDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Key Points',
+                      context.tr('key_points'),
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                     FilledButton.tonalIcon(
                       onPressed: _addBullet,
                       icon: const Icon(Icons.add, size: 14),
-                      label: const Text('Add'),
+                      label: Text(context.tr('add')),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
@@ -1070,7 +1073,7 @@ class _ExperienceDialogState extends State<_ExperienceDialog> {
                               size: 18,
                               color: Theme.of(context).colorScheme.error),
                           onPressed: () => _removeBullet(index),
-                          tooltip: 'Remove',
+                          tooltip: context.tr('remove'),
                           visualDensity: VisualDensity.compact,
                         ),
                       ],
@@ -1085,7 +1088,7 @@ class _ExperienceDialogState extends State<_ExperienceDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.tr('cancel')),
         ),
         FilledButton(
           onPressed: () {
@@ -1112,7 +1115,7 @@ class _ExperienceDialogState extends State<_ExperienceDialog> {
               );
             }
           },
-          child: const Text('Save'),
+          child: Text(context.tr('save')),
         ),
       ],
     );
@@ -1166,7 +1169,7 @@ class _EducationDialogState extends State<_EducationDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title:
-          Text(widget.education == null ? 'Add Education' : 'Edit Education'),
+          Text(widget.education == null ? context.tr('add_education') : context.tr('edit_education')),
       content: SizedBox(
         width: 550,
         child: Form(
@@ -1177,22 +1180,22 @@ class _EducationDialogState extends State<_EducationDialog> {
               children: [
                 CustomTextField(
                   controller: _institutionController,
-                  label: 'Institution',
+                  label: context.tr('institution'),
                   hint: 'Harvard University',
                   prefixIcon: Icons.school,
                   required: true,
                   validator: (value) =>
-                      value?.trim().isEmpty ?? true ? 'Required' : null,
+                      value?.trim().isEmpty ?? true ? context.tr('required') : null,
                 ),
                 const SizedBox(height: 12),
                 CustomTextField(
                   controller: _degreeController,
-                  label: 'Degree',
+                  label: context.tr('degree'),
                   hint: 'Bachelor of Science in Computer Science',
                   prefixIcon: Icons.workspace_premium,
                   required: true,
                   validator: (value) =>
-                      value?.trim().isEmpty ?? true ? 'Required' : null,
+                      value?.trim().isEmpty ?? true ? context.tr('required') : null,
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -1200,19 +1203,19 @@ class _EducationDialogState extends State<_EducationDialog> {
                     Expanded(
                       child: CustomTextField(
                         controller: _startDateController,
-                        label: 'Start Date',
+                        label: context.tr('start_date'),
                         hint: '2015',
                         prefixIcon: Icons.calendar_today,
                         required: true,
                         validator: (value) =>
-                            value?.trim().isEmpty ?? true ? 'Required' : null,
+                            value?.trim().isEmpty ?? true ? context.tr('required') : null,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: CustomTextField(
                         controller: _endDateController,
-                        label: 'End Date',
+                        label: context.tr('end_date_label'),
                         hint: '2019',
                         prefixIcon: Icons.event,
                       ),
@@ -1222,7 +1225,7 @@ class _EducationDialogState extends State<_EducationDialog> {
                 const SizedBox(height: 12),
                 CustomTextField(
                   controller: _descriptionController,
-                  label: 'Description',
+                  label: context.tr('description'),
                   hint: 'GPA, honors, relevant coursework...',
                   maxLines: 3,
                   minLines: 2,
@@ -1237,7 +1240,7 @@ class _EducationDialogState extends State<_EducationDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.tr('cancel')),
         ),
         FilledButton(
           onPressed: () {
@@ -1258,7 +1261,7 @@ class _EducationDialogState extends State<_EducationDialog> {
               );
             }
           },
-          child: const Text('Save'),
+          child: Text(context.tr('save')),
         ),
       ],
     );
@@ -1299,7 +1302,7 @@ class _LanguageDialogState extends State<_LanguageDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.language == null ? 'Add Language' : 'Edit Language'),
+      title: Text(widget.language == null ? context.tr('add_language') : context.tr('edit_language')),
       content: Form(
         key: _formKey,
         child: Column(
@@ -1307,22 +1310,22 @@ class _LanguageDialogState extends State<_LanguageDialog> {
           children: [
             CustomTextField(
               controller: _languageController,
-              label: 'Language',
+              label: context.tr('language_word'),
               hint: 'English',
               prefixIcon: Icons.language,
               required: true,
               validator: (value) =>
-                  value?.trim().isEmpty ?? true ? 'Required' : null,
+                  value?.trim().isEmpty ?? true ? context.tr('required') : null,
             ),
             const SizedBox(height: 12),
             CustomTextField(
               controller: _levelController,
-              label: 'Proficiency Level',
+              label: context.tr('proficiency_level_label'),
               hint: 'Native, Fluent, Intermediate, Basic',
               prefixIcon: Icons.star,
               required: true,
               validator: (value) =>
-                  value?.trim().isEmpty ?? true ? 'Required' : null,
+                  value?.trim().isEmpty ?? true ? context.tr('required') : null,
             ),
           ],
         ),
@@ -1330,7 +1333,7 @@ class _LanguageDialogState extends State<_LanguageDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.tr('cancel')),
         ),
         FilledButton(
           onPressed: () {
@@ -1344,7 +1347,7 @@ class _LanguageDialogState extends State<_LanguageDialog> {
               );
             }
           },
-          child: const Text('Save'),
+          child: Text(context.tr('save')),
         ),
       ],
     );

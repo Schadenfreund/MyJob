@@ -10,6 +10,7 @@ import '../../utils/ui_utils.dart';
 import '../../services/backup_service.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/update_card.dart';
+import '../../localization/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 
 /// Settings screen - Consistent card design with other tabs
@@ -32,15 +33,15 @@ class SettingsScreen extends StatelessWidget {
                 // Header
                 UIUtils.buildSectionHeader(
                   context,
-                  title: 'Settings',
-                  subtitle: 'Customize your experience',
+                  title: context.tr('settings_title'),
+                  subtitle: context.tr('settings_subtitle'),
                   icon: Icons.settings_outlined,
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
                 // Accent Color Section
                 AppCard(
-                  title: 'Accent Color',
+                  title: context.tr('accent_color'),
                   icon: Icons.palette_outlined,
                   children: [
                     // Current color hex value display
@@ -92,7 +93,7 @@ class SettingsScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Current Color',
+                                  context.tr('current_color'),
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.textTheme.bodySmall?.color
                                         ?.withValues(alpha: 0.6),
@@ -127,7 +128,7 @@ class SettingsScreen extends StatelessWidget {
                               AppColors.lightPrimary.toARGB32(),
                           onTap: () =>
                               settings.setAccentColor(AppColors.lightPrimary),
-                          label: 'Blue',
+                          label: context.tr('color_blue'),
                         ),
                         _ColorButton(
                           color: AppColors.lightSuccess,
@@ -135,7 +136,7 @@ class SettingsScreen extends StatelessWidget {
                               AppColors.lightSuccess.toARGB32(),
                           onTap: () =>
                               settings.setAccentColor(AppColors.lightSuccess),
-                          label: 'Green',
+                          label: context.tr('color_green'),
                         ),
                         _ColorButton(
                           color: AppColors.lightInfo,
@@ -143,7 +144,7 @@ class SettingsScreen extends StatelessWidget {
                               AppColors.lightInfo.toARGB32(),
                           onTap: () =>
                               settings.setAccentColor(AppColors.lightInfo),
-                          label: 'Cyan',
+                          label: context.tr('color_cyan'),
                         ),
                         _ColorButton(
                           color: AppColors.lightWarning,
@@ -151,7 +152,7 @@ class SettingsScreen extends StatelessWidget {
                               AppColors.lightWarning.toARGB32(),
                           onTap: () =>
                               settings.setAccentColor(AppColors.lightWarning),
-                          label: 'Orange',
+                          label: context.tr('color_orange'),
                         ),
                         _ColorButton(
                           color: AppColors.lightDanger,
@@ -159,7 +160,7 @@ class SettingsScreen extends StatelessWidget {
                               AppColors.lightDanger.toARGB32(),
                           onTap: () =>
                               settings.setAccentColor(AppColors.lightDanger),
-                          label: 'Red',
+                          label: context.tr('color_red'),
                         ),
                       ],
                     ),
@@ -167,9 +168,115 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
+                // Language Selection Section
+                Consumer<AppLocalizations>(
+                  builder: (context, loc, _) {
+                    final languages = loc.availableLanguages;
+                    return AppCard(
+                      title: loc.tr('language_title'),
+                      icon: Icons.translate_outlined,
+                      children: [
+                        // Current language indicator
+                        Container(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                settings.accentColor.withValues(alpha: 0.08),
+                                settings.accentColor.withValues(alpha: 0.02),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(
+                                AppDimensions.cardBorderRadius),
+                            border: Border.all(
+                              color:
+                                  settings.accentColor.withValues(alpha: 0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: settings.accentColor
+                                      .withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    loc.currentLanguageCode.toUpperCase(),
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: settings.accentColor,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      loc.tr('current_language'),
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        color: theme.textTheme.bodySmall?.color
+                                            ?.withValues(alpha: 0.6),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      loc.currentLanguage?.name ??
+                                          loc.currentLanguageCode.toUpperCase(),
+                                      style:
+                                          theme.textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: settings.accentColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // Language selection buttons
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: languages.map((lang) {
+                            final isSelected =
+                                lang.code == loc.currentLanguageCode;
+                            return _LanguageButton(
+                              languageCode: lang.code,
+                              languageName: lang.name,
+                              isSelected: isSelected,
+                              accentColor: settings.accentColor,
+                              onTap: () {
+                                loc.setLanguage(lang.code);
+                                settings.setAppLanguage(lang.code);
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
                 // Data Management Section
                 AppCard(
-                  title: 'Data Management',
+                  title: context.tr('data_management'),
                   icon: Icons.storage_outlined,
                   children: [
                     // Backup Folder Selection
@@ -194,7 +301,7 @@ class SettingsScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Backup Destination',
+                                context.tr('backup_destination'),
                                 style: theme.textTheme.bodyLarge?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -202,7 +309,7 @@ class SettingsScreen extends StatelessWidget {
                               const SizedBox(height: 4),
                               Text(
                                 settings.backupPath ??
-                                    'No backup location defined',
+                                    context.tr('no_backup_location'),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.textTheme.bodySmall?.color
                                       ?.withOpacity(settings.backupPath == null
@@ -221,7 +328,7 @@ class SettingsScreen extends StatelessWidget {
                         AppCardActionButton(
                           onPressed: () => _pickBackupPath(context, settings),
                           icon: Icons.folder_open,
-                          label: 'Select',
+                          label: context.tr('select'),
                         ),
                       ],
                     ),
@@ -233,7 +340,7 @@ class SettingsScreen extends StatelessWidget {
                             ? () {} // Need non-null to not be disabled visually in my custom button if I didn't handle null
                             : () => _performBackup(context, settings),
                         icon: Icons.archive_outlined,
-                        label: 'Create Backup Zip',
+                        label: context.tr('create_backup_zip'),
                         isFilled: settings.backupPath != null,
                         color: settings.backupPath == null
                             ? theme.disabledColor
@@ -263,14 +370,14 @@ class SettingsScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Restore Backup',
+                                context.tr('restore_backup'),
                                 style: theme.textTheme.bodyLarge?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Restore entire UserData from a zip file',
+                                context.tr('restore_backup_desc'),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.textTheme.bodySmall?.color
                                       ?.withOpacity(0.7),
@@ -282,7 +389,7 @@ class SettingsScreen extends StatelessWidget {
                         AppCardActionButton(
                           onPressed: () => _pickRestoreFile(context, settings),
                           icon: Icons.unarchive_outlined,
-                          label: 'Restore Zip',
+                          label: context.tr('restore_zip'),
                         ),
                       ],
                     ),
@@ -291,7 +398,7 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: AppSpacing.lg),
 
                 // Software Updates Section
-                const UpdateCard(),
+                UpdateCard(),
                 const SizedBox(height: AppSpacing.xl),
 
                 // About Section - Using AppCardContainer for premium look
@@ -305,36 +412,11 @@ class SettingsScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           // Header
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: settings.accentColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  Icons.work_outline,
-                                  color: settings.accentColor,
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                AppInfo.appName,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Version ${AppInfo.version}',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.textTheme.bodySmall?.color
-                                      ?.withOpacity(0.6),
-                                ),
-                              ),
-                            ],
+                          AppCardHeader(
+                            icon: Icons.work_outline,
+                            title: AppInfo.appName,
+                            description: context.tr('version_label',
+                                {'version': AppInfo.version}),
                           ),
                           const SizedBox(height: AppSpacing.lg),
 
@@ -376,7 +458,9 @@ class SettingsScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(width: AppSpacing.md),
                                 Text(
-                                  'Job Application${totalApps == 1 ? '' : 's'} Created',
+                                  context.tr(totalApps == 1
+                                      ? 'job_application_created'
+                                      : 'job_applications_created'),
                                   style: theme.textTheme.titleLarge?.copyWith(
                                     color: theme.textTheme.bodyMedium?.color,
                                   ),
@@ -399,7 +483,7 @@ class SettingsScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Made with ',
+                            '${context.tr('made_with_love')} ',
                             style: theme.textTheme.bodyMedium,
                           ),
                           Icon(
@@ -408,14 +492,14 @@ class SettingsScreen extends StatelessWidget {
                             color: settings.accentColor,
                           ),
                           Text(
-                            ' for you to enjoy.',
+                            ' ${context.tr('for_you_to_enjoy')}',
                             style: theme.textTheme.bodyMedium,
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Please consider supporting the development.',
+                        context.tr('support_development'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.textTheme.bodySmall?.color
                               ?.withOpacity(0.7),
@@ -424,7 +508,7 @@ class SettingsScreen extends StatelessWidget {
                       const SizedBox(height: AppSpacing.md),
                       AppCardActionButton(
                         onPressed: () => _openSupportLink(),
-                        label: 'Support',
+                        label: context.tr('support'),
                         isFilled: true,
                       ),
                     ],
@@ -456,7 +540,7 @@ class SettingsScreen extends StatelessWidget {
 
   void _pickBackupPath(BuildContext context, SettingsService settings) async {
     final path = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: 'Select Backup Destination',
+      dialogTitle: context.tr('select_backup_destination'),
       initialDirectory: settings.backupPath,
     );
 
@@ -469,8 +553,8 @@ class SettingsScreen extends StatelessWidget {
     final backupPath = settings.backupPath;
     if (backupPath == null) return;
 
-    final closeLoading =
-        DialogUtils.showLoading(context, message: 'Creating backup zip...');
+    final closeLoading = DialogUtils.showLoading(context,
+        message: context.tr('creating_backup'));
 
     try {
       final file = await BackupService.instance.createBackup(backupPath);
@@ -479,16 +563,17 @@ class SettingsScreen extends StatelessWidget {
         closeLoading();
 
         if (file != null) {
-          context.showSuccessSnackBar(
-              'Backup created successfully: ${file.path.split(Platform.pathSeparator).last}');
+          context.showSuccessSnackBar(context.tr('backup_created',
+              {'filename': file.path.split(Platform.pathSeparator).last}));
         } else {
-          context.showErrorSnackBar('Failed to create backup');
+          context.showErrorSnackBar(context.tr('backup_failed'));
         }
       }
     } catch (e) {
       if (context.mounted) {
         closeLoading();
-        context.showErrorSnackBar('Error: $e');
+        context.showErrorSnackBar(
+            context.tr('error_generic', {'error': e.toString()}));
       }
     }
   }
@@ -497,7 +582,7 @@ class SettingsScreen extends StatelessWidget {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['zip'],
-      dialogTitle: 'Select Backup Zip to Restore',
+      dialogTitle: context.tr('select_backup_zip'),
     );
 
     if (result == null || result.files.single.path == null) return;
@@ -506,10 +591,9 @@ class SettingsScreen extends StatelessWidget {
 
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
-      title: 'Restore Backup?',
-      message:
-          'This will overwrite ALL current profile data, job applications, and presets with the data from the backup. This action cannot be undone.',
-      confirmLabel: 'Restore & Restart',
+      title: context.tr('restore_confirm_title'),
+      message: context.tr('restore_confirm_message'),
+      confirmLabel: context.tr('restore_confirm_button'),
       icon: Icons.settings_backup_restore,
     );
 
@@ -519,8 +603,8 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _performRestore(BuildContext context, String zipPath) async {
-    final closeLoading =
-        DialogUtils.showLoading(context, message: 'Restoring backup...');
+    final closeLoading = DialogUtils.showLoading(context,
+        message: context.tr('restoring_backup'));
 
     try {
       final success = await BackupService.instance.restoreBackup(zipPath);
@@ -533,25 +617,25 @@ class SettingsScreen extends StatelessWidget {
             context: context,
             barrierDismissible: false,
             builder: (context) => AlertDialog(
-              title: const Text('Restore Successful'),
-              content: const Text(
-                  'Your data has been restored. The application needs to be restarted to load the new data.'),
+              title: Text(context.tr('restore_successful_title')),
+              content: Text(context.tr('restore_successful_message')),
               actions: [
                 FilledButton(
                   onPressed: () => exit(0),
-                  child: const Text('Close Application'),
+                  child: Text(context.tr('close_application')),
                 ),
               ],
             ),
           );
         } else {
-          context.showErrorSnackBar('Failed to restore backup');
+          context.showErrorSnackBar(context.tr('restore_failed'));
         }
       }
     } catch (e) {
       if (context.mounted) {
         closeLoading();
-        context.showErrorSnackBar('Error during restore: $e');
+        context.showErrorSnackBar(
+            context.tr('error_restore', {'error': e.toString()}));
       }
     }
   }
@@ -627,6 +711,95 @@ class _ColorButton extends StatelessWidget {
                 color: isSelected
                     ? color
                     : theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguageButton extends StatelessWidget {
+  const _LanguageButton({
+    required this.languageCode,
+    required this.languageName,
+    required this.isSelected,
+    required this.accentColor,
+    required this.onTap,
+  });
+
+  final String languageCode;
+  final String languageName;
+  final bool isSelected;
+  final Color accentColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: AppDurations.quick,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? accentColor.withValues(alpha: 0.12)
+              : theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? accentColor
+                : AppColors.getColor(
+                        context, AppColors.lightBorder, AppColors.darkBorder)
+                    .withValues(alpha: 0.5),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? accentColor.withValues(alpha: 0.2)
+                    : theme.colorScheme.surfaceContainerHighest,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? accentColor.withValues(alpha: 0.6)
+                      : theme.dividerColor.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  languageCode.toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: isSelected
+                        ? accentColor
+                        : theme.textTheme.bodySmall?.color
+                            ?.withValues(alpha: 0.7),
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              languageName,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected
+                    ? accentColor
+                    : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
               ),
             ),
           ],

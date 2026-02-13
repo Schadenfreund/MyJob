@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
 import '../theme/app_theme.dart';
+import '../localization/app_localizations.dart';
 
 /// Centralized helper for application status display properties
 ///
@@ -98,6 +99,30 @@ class ApplicationStatusHelper {
         return 'Rejected';
       case ApplicationStatus.noResponse:
         return 'No Response';
+    }
+  }
+
+  /// Get the localized display label for a given status
+  static String getLocalizedLabel(
+    BuildContext context,
+    ApplicationStatus status, {
+    bool short = false,
+  }) {
+    switch (status) {
+      case ApplicationStatus.draft:
+        return context.tr('status_draft');
+      case ApplicationStatus.applied:
+        return context.tr('status_applied');
+      case ApplicationStatus.interviewing:
+        return short
+            ? context.tr('status_interviewing_short')
+            : context.tr('status_interviewing');
+      case ApplicationStatus.successful:
+        return context.tr('status_successful');
+      case ApplicationStatus.rejected:
+        return context.tr('status_rejected');
+      case ApplicationStatus.noResponse:
+        return context.tr('status_no_response');
     }
   }
 

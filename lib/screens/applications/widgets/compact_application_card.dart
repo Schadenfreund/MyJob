@@ -7,6 +7,7 @@ import '../../../widgets/status_chip.dart';
 import '../../../utils/application_status_helper.dart';
 import '../../../utils/app_date_utils.dart';
 import '../../../widgets/app_card.dart';
+import '../../../localization/app_localizations.dart';
 
 /// Compact, collapsible application card for MyJob
 class CompactApplicationCard extends StatefulWidget {
@@ -133,22 +134,26 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
         app.getStatusChangeDate(ApplicationStatus.noResponse);
 
     if (draftDate != null) {
-      timeline.add('Draft: ${AppDateUtils.formatNumeric(draftDate)}');
+      timeline.add(
+          '${context.tr('status_draft')}: ${AppDateUtils.formatNumeric(draftDate)}');
     }
     if (appliedDate != null) {
-      timeline.add('Applied: ${AppDateUtils.formatNumeric(appliedDate)}');
+      timeline.add(
+          '${context.tr('status_applied')}: ${AppDateUtils.formatNumeric(appliedDate)}');
     }
     if (interviewingDate != null) {
-      timeline
-          .add('Interviewing: ${AppDateUtils.formatNumeric(interviewingDate)}');
+      timeline.add(
+          '${context.tr('status_interviewing')}: ${AppDateUtils.formatNumeric(interviewingDate)}');
     }
     if (successfulDate != null) {
-      timeline.add('Successful: ${AppDateUtils.formatNumeric(successfulDate)}');
+      timeline.add(
+          '${context.tr('status_successful')}: ${AppDateUtils.formatNumeric(successfulDate)}');
     } else if (rejectedDate != null) {
-      timeline.add('Rejected: ${AppDateUtils.formatNumeric(rejectedDate)}');
+      timeline.add(
+          '${context.tr('status_rejected')}: ${AppDateUtils.formatNumeric(rejectedDate)}');
     } else if (noResponseDate != null) {
-      timeline
-          .add('No Response: ${AppDateUtils.formatNumeric(noResponseDate)}');
+      timeline.add(
+          '${context.tr('status_no_response')}: ${AppDateUtils.formatNumeric(noResponseDate)}');
     }
 
     return timeline.join(' | ');
@@ -161,28 +166,28 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
 
     switch (app.status) {
       case ApplicationStatus.draft:
-        label = 'Draft';
+        label = context.tr('status_draft');
         date = app.lastUpdated;
         break;
       case ApplicationStatus.applied:
-        label = 'Applied';
+        label = context.tr('status_applied');
         date = app.applicationDate ??
             app.getStatusChangeDate(ApplicationStatus.applied);
         break;
       case ApplicationStatus.interviewing:
-        label = 'Interviewing since';
+        label = context.tr('status_interviewing_since');
         date = app.getStatusChangeDate(ApplicationStatus.interviewing);
         break;
       case ApplicationStatus.successful:
-        label = 'Successful';
+        label = context.tr('status_successful');
         date = app.getStatusChangeDate(ApplicationStatus.successful);
         break;
       case ApplicationStatus.rejected:
-        label = 'Rejected';
+        label = context.tr('status_rejected');
         date = app.getStatusChangeDate(ApplicationStatus.rejected);
         break;
       case ApplicationStatus.noResponse:
-        label = 'No Response since';
+        label = context.tr('status_no_response_since');
         date = app.getStatusChangeDate(ApplicationStatus.noResponse);
         break;
     }
@@ -278,7 +283,7 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
                           icon: const Icon(Icons.swap_horiz, size: 16),
                           visualDensity: VisualDensity.compact,
                           color: theme.colorScheme.primary.withOpacity(0.7),
-                          tooltip: 'Change Status',
+                          tooltip: context.tr('change_status_tooltip'),
                         ),
                         const SizedBox(width: 4),
                         // Expand icon
@@ -358,7 +363,9 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('Could not open URL: $e'),
+                                        content: Text(context.tr(
+                                            'could_not_open_url',
+                                            {'error': e.toString()})),
                                         backgroundColor:
                                             theme.colorScheme.error,
                                       ),
@@ -420,7 +427,7 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
                         if (widget.application.location != null &&
                             widget.application.location!.isNotEmpty)
                           AppCardInfoRow(
-                            label: 'Location',
+                            label: context.tr('card_location'),
                             value: widget.application.location!,
                             icon: Icons.location_on_outlined,
                           ),
@@ -428,7 +435,7 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
                             widget.application.notes!.isNotEmpty) ...[
                           const SizedBox(height: AppSpacing.sm),
                           Text(
-                            'Notes',
+                            context.tr('card_notes'),
                             style: theme.textTheme.labelSmall
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
@@ -451,29 +458,29 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
                           children: [
                             if (widget.application.folderPath != null) ...[
                               AppCardActionButton(
-                                label: 'Edit Content',
+                                label: context.tr('card_edit_content'),
                                 icon: Icons.edit_document,
                                 onPressed: widget.onEditContent,
                                 isFilled: true,
                               ),
                               AppCardActionButton(
-                                label: 'CV',
+                                label: context.tr('card_cv'),
                                 icon: Icons.picture_as_pdf_outlined,
                                 onPressed: widget.onViewPdf,
                               ),
                               AppCardActionButton(
-                                label: 'Letter',
+                                label: context.tr('card_letter'),
                                 icon: Icons.email_outlined,
                                 onPressed: widget.onViewCoverLetter,
                               ),
                               AppCardActionButton(
-                                label: 'Folder',
+                                label: context.tr('card_folder'),
                                 icon: Icons.folder_open,
                                 onPressed: widget.onOpenFolder,
                               ),
                             ],
                             AppCardActionButton(
-                              label: 'Delete',
+                              label: context.tr('delete'),
                               icon: Icons.delete_outline,
                               onPressed: widget.onDelete,
                               color: theme.colorScheme.error,

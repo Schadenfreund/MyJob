@@ -28,6 +28,7 @@ import '../widgets/app_card.dart';
 import '../utils/ui_utils.dart';
 import '../utils/dialog_utils.dart';
 import '../constants/app_constants.dart';
+import '../localization/app_localizations.dart';
 
 /// Modern tabbed CV content editor for job applications
 ///
@@ -370,14 +371,14 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
             dividerColor: Colors.transparent,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             tabs: [
-              _buildTab(Icons.info_outline, 'Details'),
-              _buildTab(Icons.person_outline, 'Personal'),
-              _buildTab(Icons.work_outline, 'Experience'),
-              _buildTab(Icons.stars_outlined, 'Skills'),
-              _buildTab(Icons.language_outlined, 'Languages'),
-              _buildTab(Icons.interests_outlined, 'Interests'),
-              _buildTab(Icons.school_outlined, 'Education'),
-              _buildTab(Icons.email_outlined, 'Cover Letter'),
+              _buildTab(Icons.info_outline, context.tr('tab_details')),
+              _buildTab(Icons.person_outline, context.tr('tab_personal')),
+              _buildTab(Icons.work_outline, context.tr('tab_experience')),
+              _buildTab(Icons.stars_outlined, context.tr('tab_skills')),
+              _buildTab(Icons.language_outlined, context.tr('tab_languages')),
+              _buildTab(Icons.interests_outlined, context.tr('tab_interests')),
+              _buildTab(Icons.school_outlined, context.tr('tab_education')),
+              _buildTab(Icons.email_outlined, context.tr('tab_cover_letter')),
             ],
           ),
         ),
@@ -432,22 +433,22 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
           // Header
           UIUtils.buildSectionHeader(
             context,
-            title: 'Application Details',
-            subtitle: 'Manage status, dates, and notes for this application',
+            title: context.tr('application_details'),
+            subtitle: context.tr('application_details_desc'),
             icon: Icons.info_outline,
           ),
           const SizedBox(height: AppSpacing.lg),
 
           // Status Section
           AppCard(
-            title: 'Application Status',
+            title: context.tr('application_status'),
             icon: Icons.flag_outlined,
             children: [
               DropdownButtonFormField<ApplicationStatus>(
                 initialValue: application?.status ?? ApplicationStatus.draft,
-                decoration: const InputDecoration(
-                  labelText: 'Status',
-                  prefixIcon: Icon(Icons.flag_outlined, size: 20),
+                decoration: InputDecoration(
+                  labelText: context.tr('status_label'),
+                  prefixIcon: const Icon(Icons.flag_outlined, size: 20),
                 ),
                 items: ApplicationStatus.values.map((status) {
                   return DropdownMenuItem(
@@ -469,7 +470,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
 
           // Dates Section
           AppCard(
-            title: 'Important Dates',
+            title: context.tr('important_dates'),
             icon: Icons.calendar_today_outlined,
             children: [
               ListTile(
@@ -483,7 +484,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                   child: Icon(Icons.calendar_today,
                       size: 18, color: theme.colorScheme.primary),
                 ),
-                title: Text('Application Date',
+                title: Text(context.tr('application_date'),
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                     )),
@@ -491,7 +492,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                   application?.applicationDate != null
                       ? DateFormat('MMMM dd, yyyy')
                           .format(application!.applicationDate!)
-                      : 'Not set',
+                      : context.tr('not_set'),
                 ),
                 trailing: const Icon(Icons.edit, size: 18),
                 onTap: () async {
@@ -525,7 +526,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                     child:
                         const Icon(Icons.event, size: 18, color: Colors.orange),
                   ),
-                  title: Text('Interview Date',
+                  title: Text(context.tr('interview_date'),
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       )),
@@ -533,7 +534,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                     application?.interviewDate != null
                         ? DateFormat('MMMM dd, yyyy')
                             .format(application!.interviewDate!)
-                        : 'Not scheduled',
+                        : context.tr('not_scheduled'),
                   ),
                   trailing: const Icon(Icons.edit, size: 18),
                   onTap: () async {
@@ -557,83 +558,83 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
 
           // Contact & Details Section
           AppCard(
-            title: 'Job Details',
+            title: context.tr('job_details'),
             icon: Icons.business_outlined,
             children: [
               // Company field
               TextFormField(
                 controller: _companyController,
-                decoration: const InputDecoration(
-                  labelText: 'Company',
+                decoration: InputDecoration(
+                  labelText: context.tr('company'),
                   hintText: 'Company name',
-                  prefixIcon: Icon(Icons.business),
+                  prefixIcon: const Icon(Icons.business),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
               // Position field
               TextFormField(
                 controller: _positionController,
-                decoration: const InputDecoration(
-                  labelText: 'Position',
+                decoration: InputDecoration(
+                  labelText: context.tr('position'),
                   hintText: 'Job title',
-                  prefixIcon: Icon(Icons.work_outline),
+                  prefixIcon: const Icon(Icons.work_outline),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
               // Language field (read-only)
               TextFormField(
                 initialValue: application?.baseLanguage.label ?? 'English',
-                decoration: const InputDecoration(
-                  labelText: 'Application Language',
-                  prefixIcon: Icon(Icons.language_outlined),
-                  helperText: 'Language cannot be changed after creation',
+                decoration: InputDecoration(
+                  labelText: context.tr('application_language'),
+                  prefixIcon: const Icon(Icons.language_outlined),
+                  helperText: context.tr('language_cannot_change'),
                 ),
                 enabled: false,
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
                 controller: _locationController,
-                decoration: const InputDecoration(
-                  labelText: 'Location',
+                decoration: InputDecoration(
+                  labelText: context.tr('location'),
                   hintText: 'City, Country',
-                  prefixIcon: Icon(Icons.location_on_outlined),
+                  prefixIcon: const Icon(Icons.location_on_outlined),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
                 controller: _jobUrlController,
-                decoration: const InputDecoration(
-                  labelText: 'Job Posting URL',
+                decoration: InputDecoration(
+                  labelText: context.tr('job_posting_url'),
                   hintText: 'https://...',
-                  prefixIcon: Icon(Icons.link),
+                  prefixIcon: const Icon(Icons.link),
                 ),
                 keyboardType: TextInputType.url,
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
                 controller: _salaryController,
-                decoration: const InputDecoration(
-                  labelText: 'Salary Range',
+                decoration: InputDecoration(
+                  labelText: context.tr('salary_range'),
                   hintText: 'e.g., \$80k - \$100k',
-                  prefixIcon: Icon(Icons.attach_money),
+                  prefixIcon: const Icon(Icons.attach_money),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
                 controller: _contactPersonController,
-                decoration: const InputDecoration(
-                  labelText: 'Contact Person',
+                decoration: InputDecoration(
+                  labelText: context.tr('contact_person'),
                   hintText: 'Hiring Manager Name',
-                  prefixIcon: Icon(Icons.person_outline),
+                  prefixIcon: const Icon(Icons.person_outline),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
                 controller: _contactEmailController,
-                decoration: const InputDecoration(
-                  labelText: 'Contact Email',
+                decoration: InputDecoration(
+                  labelText: context.tr('contact_email'),
                   hintText: 'hr@company.com',
-                  prefixIcon: Icon(Icons.email_outlined),
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
                 keyboardType: TextInputType.emailAddress,
               ),
@@ -643,15 +644,15 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
 
           // Notes Section
           AppCard(
-            title: 'Notes',
+            title: context.tr('notes_word'),
             icon: Icons.note_outlined,
             children: [
               TextFormField(
                 controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Application Notes',
+                decoration: InputDecoration(
+                  labelText: context.tr('application_notes'),
                   hintText: 'Add any notes about this application...',
-                  prefixIcon: Icon(Icons.note_alt_outlined),
+                  prefixIcon: const Icon(Icons.note_alt_outlined),
                   alignLabelWithHint: true,
                 ),
                 maxLines: 5,
@@ -671,11 +672,11 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     final company = widget.applicationContext?.company ?? 'the company';
 
     return AppCard(
-      title: 'Profile Summary',
+      title: context.tr('profile_summary'),
       icon: Icons.stars_outlined,
       children: [
         Text(
-          'Tailor your summary for $position at $company',
+          context.tr('tailor_summary', {'position': position, 'company': company}),
           style: theme.textTheme.bodySmall,
         ),
         const SizedBox(height: AppSpacing.md),
@@ -712,8 +713,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
         children: [
           UIUtils.buildSectionHeader(
             context,
-            title: 'Personal Information',
-            subtitle: 'Customize contact details for this application',
+            title: context.tr('personal_info'),
+            subtitle: context.tr('customize_contact_desc'),
             icon: Icons.person_outline,
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -732,16 +733,16 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
           ),
           const SizedBox(height: AppSpacing.lg),
           AppCard(
-            title: 'Contact Details',
+            title: context.tr('contact_details'),
             icon: Icons.contact_mail_outlined,
             children: [
               // Full Name
               TextFormField(
                 initialValue: info?.fullName ?? '',
-                decoration: const InputDecoration(
-                  labelText: 'Full Name *',
+                decoration: InputDecoration(
+                  labelText: '${context.tr('full_name')} *',
                   hintText: 'John Doe',
-                  prefixIcon: Icon(Icons.person_outline),
+                  prefixIcon: const Icon(Icons.person_outline),
                 ),
                 onChanged: (value) {
                   _updateCvData(_cvData.copyWith(
@@ -756,10 +757,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
               // Job Title
               TextFormField(
                 initialValue: info?.jobTitle ?? '',
-                decoration: const InputDecoration(
-                  labelText: 'Job Title',
+                decoration: InputDecoration(
+                  labelText: context.tr('job_title'),
                   hintText: 'Senior Software Engineer',
-                  prefixIcon: Icon(Icons.work_outline),
+                  prefixIcon: const Icon(Icons.work_outline),
                 ),
                 onChanged: (value) {
                   _updateCvData(_cvData.copyWith(
@@ -774,10 +775,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
               // Email
               TextFormField(
                 initialValue: info?.email ?? '',
-                decoration: const InputDecoration(
-                  labelText: 'Email',
+                decoration: InputDecoration(
+                  labelText: context.tr('email'),
                   hintText: 'john.doe@example.com',
-                  prefixIcon: Icon(Icons.email_outlined),
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 onChanged: (value) {
@@ -793,10 +794,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
               // Phone
               TextFormField(
                 initialValue: info?.phone ?? '',
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
+                decoration: InputDecoration(
+                  labelText: context.tr('phone'),
                   hintText: '+1 (555) 123-4567',
-                  prefixIcon: Icon(Icons.phone_outlined),
+                  prefixIcon: const Icon(Icons.phone_outlined),
                 ),
                 keyboardType: TextInputType.phone,
                 onChanged: (value) {
@@ -812,10 +813,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
               // Address
               TextFormField(
                 initialValue: info?.address ?? '',
-                decoration: const InputDecoration(
-                  labelText: 'Address',
+                decoration: InputDecoration(
+                  labelText: context.tr('address'),
                   hintText: '123 Main Street',
-                  prefixIcon: Icon(Icons.home_outlined),
+                  prefixIcon: const Icon(Icons.home_outlined),
                 ),
                 onChanged: (value) {
                   _updateCvData(_cvData.copyWith(
@@ -833,10 +834,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                   Expanded(
                     child: TextFormField(
                       initialValue: info?.city ?? '',
-                      decoration: const InputDecoration(
-                        labelText: 'City',
+                      decoration: InputDecoration(
+                        labelText: context.tr('city'),
                         hintText: 'New York',
-                        prefixIcon: Icon(Icons.location_city_outlined),
+                        prefixIcon: const Icon(Icons.location_city_outlined),
                       ),
                       onChanged: (value) {
                         _updateCvData(_cvData.copyWith(
@@ -852,10 +853,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                   Expanded(
                     child: TextFormField(
                       initialValue: info?.country ?? '',
-                      decoration: const InputDecoration(
-                        labelText: 'Country',
+                      decoration: InputDecoration(
+                        labelText: context.tr('country'),
                         hintText: 'USA',
-                        prefixIcon: Icon(Icons.public_outlined),
+                        prefixIcon: const Icon(Icons.public_outlined),
                       ),
                       onChanged: (value) {
                         _updateCvData(_cvData.copyWith(
@@ -874,10 +875,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
               // LinkedIn
               TextFormField(
                 initialValue: info?.linkedin ?? '',
-                decoration: const InputDecoration(
-                  labelText: 'LinkedIn',
+                decoration: InputDecoration(
+                  labelText: context.tr('linkedin'),
                   hintText: 'linkedin.com/in/johndoe',
-                  prefixIcon: Icon(Icons.link_outlined),
+                  prefixIcon: const Icon(Icons.link_outlined),
                 ),
                 keyboardType: TextInputType.url,
                 onChanged: (value) {
@@ -893,10 +894,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
               // Website
               TextFormField(
                 initialValue: info?.website ?? '',
-                decoration: const InputDecoration(
-                  labelText: 'Website',
+                decoration: InputDecoration(
+                  labelText: context.tr('website'),
                   hintText: 'johndoe.com',
-                  prefixIcon: Icon(Icons.language_outlined),
+                  prefixIcon: const Icon(Icons.language_outlined),
                 ),
                 keyboardType: TextInputType.url,
                 onChanged: (value) {
@@ -927,14 +928,16 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
           // Work Experience Header
           UIUtils.buildSectionHeader(
             context,
-            title: 'Work Experience',
-            subtitle:
-                '${_cvData.experiences.length} ${_cvData.experiences.length == 1 ? 'entry' : 'entries'} tailored for this role',
+            title: context.tr('work_experience'),
+            subtitle: context.tr('work_exp_subtitle', {
+              'count': _cvData.experiences.length.toString(),
+              'label': _cvData.experiences.length == 1 ? context.tr('entry') : context.tr('entries'),
+            }),
             icon: Icons.work_outline,
             action: AppCardActionButton(
               onPressed: _addExperience,
               icon: Icons.add,
-              label: 'Add Entry',
+              label: context.tr('add_entry'),
               isFilled: true,
             ),
           ),
@@ -942,9 +945,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
           if (_cvData.experiences.isEmpty)
             _buildEmptyState(
               icon: Icons.work_outline,
-              title: 'No work experience yet',
-              subtitle:
-                  'Add your professional experience to showcase your career journey',
+              title: context.tr('no_work_exp_yet'),
+              subtitle: context.tr('no_work_exp_desc'),
             )
           else
             ..._cvData.experiences.asMap().entries.map((entry) {
@@ -998,13 +1000,13 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                     IconButton(
                       icon: const Icon(Icons.edit_outlined, size: 20),
                       onPressed: () => _editExperience(index),
-                      tooltip: 'Edit',
+                      tooltip: context.tr('edit'),
                     ),
                     IconButton(
                       icon: Icon(Icons.delete_outline,
                           size: 20, color: theme.colorScheme.error),
                       onPressed: () => _deleteExperience(index),
-                      tooltip: 'Delete',
+                      tooltip: context.tr('delete'),
                     ),
                   ],
                 ),
@@ -1022,7 +1024,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                         size: 16, color: theme.textTheme.bodySmall?.color),
                     const SizedBox(width: 4),
                     Text(
-                      '${DateFormat('MMM yyyy').format(exp.startDate)} - ${exp.endDate != null ? DateFormat('MMM yyyy').format(exp.endDate!) : 'Present'}',
+                      '${DateFormat('MMM yyyy').format(exp.startDate)} - ${exp.endDate != null ? DateFormat('MMM yyyy').format(exp.endDate!) : context.tr('present')}',
                       style: theme.textTheme.bodySmall,
                     ),
                   ],
@@ -1052,14 +1054,16 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
         children: [
           UIUtils.buildSectionHeader(
             context,
-            title: 'Education',
-            subtitle:
-                '${_cvData.education.length} ${_cvData.education.length == 1 ? 'entry' : 'entries'} available',
+            title: context.tr('education'),
+            subtitle: context.tr('edu_subtitle', {
+              'count': _cvData.education.length.toString(),
+              'label': _cvData.education.length == 1 ? context.tr('entry') : context.tr('entries'),
+            }),
             icon: Icons.school_outlined,
             action: AppCardActionButton(
               onPressed: _addEducation,
               icon: Icons.add,
-              label: 'Add Entry',
+              label: context.tr('add_entry'),
               isFilled: true,
             ),
           ),
@@ -1067,8 +1071,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
           if (_cvData.education.isEmpty)
             _buildEmptyState(
               icon: Icons.school_outlined,
-              title: 'No education yet',
-              subtitle: 'Add your educational background and qualifications',
+              title: context.tr('no_education_yet'),
+              subtitle: context.tr('no_education_desc'),
             )
           else
             ..._cvData.education.asMap().entries.map((entry) {
@@ -1122,13 +1126,13 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                     IconButton(
                       icon: const Icon(Icons.edit_outlined, size: 20),
                       onPressed: () => _editEducation(index),
-                      tooltip: 'Edit',
+                      tooltip: context.tr('edit'),
                     ),
                     IconButton(
                       icon: Icon(Icons.delete_outline,
                           size: 20, color: theme.colorScheme.error),
                       onPressed: () => _deleteEducation(index),
-                      tooltip: 'Delete',
+                      tooltip: context.tr('delete'),
                     ),
                   ],
                 ),
@@ -1139,7 +1143,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                         size: 16, color: theme.textTheme.bodySmall?.color),
                     const SizedBox(width: 4),
                     Text(
-                      '${DateFormat('MMM yyyy').format(edu.startDate)} - ${edu.endDate != null ? DateFormat('MMM yyyy').format(edu.endDate!) : 'Present'}',
+                      '${DateFormat('MMM yyyy').format(edu.startDate)} - ${edu.endDate != null ? DateFormat('MMM yyyy').format(edu.endDate!) : context.tr('present')}',
                       style: theme.textTheme.bodySmall,
                     ),
                   ],
@@ -1160,13 +1164,13 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
         children: [
           UIUtils.buildSectionHeader(
             context,
-            title: 'Skills',
-            subtitle: 'Add relevant skills for this position',
+            title: context.tr('skills'),
+            subtitle: context.tr('skills_subtitle'),
             icon: Icons.stars_outlined,
             action: AppCardActionButton(
               onPressed: _addSkill,
               icon: Icons.add,
-              label: 'Add Skill',
+              label: context.tr('add_skill'),
               isFilled: true,
             ),
           ),
@@ -1193,13 +1197,13 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
         children: [
           UIUtils.buildSectionHeader(
             context,
-            title: 'Languages',
-            subtitle: 'Add languages and specify your proficiency level',
+            title: context.tr('languages_section'),
+            subtitle: context.tr('languages_subtitle'),
             icon: Icons.language_outlined,
             action: AppCardActionButton(
               onPressed: _addLanguage,
               icon: Icons.add,
-              label: 'Add Language',
+              label: context.tr('add_language'),
               isFilled: true,
             ),
           ),
@@ -1207,8 +1211,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
           if (_cvData.languages.isEmpty)
             _buildEmptyState(
               icon: Icons.language_outlined,
-              title: 'No languages added',
-              subtitle: 'Add languages to showcase your communication skills',
+              title: context.tr('no_languages_added'),
+              subtitle: context.tr('no_languages_desc'),
             )
           else
             ..._cvData.languages.asMap().entries.map((entry) {
@@ -1235,7 +1239,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                       ),
                     ),
                     subtitle: Text(
-                      lang.proficiency.displayName,
+                      context.tr(lang.proficiency.localizationKey),
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
@@ -1246,7 +1250,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                         IconButton(
                           icon: const Icon(Icons.edit_outlined, size: 20),
                           onPressed: () => _editLanguage(index),
-                          tooltip: 'Edit',
+                          tooltip: context.tr('edit'),
                         ),
                         IconButton(
                           icon: Icon(
@@ -1255,7 +1259,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                             color: theme.colorScheme.error,
                           ),
                           onPressed: () => _deleteLanguage(index),
-                          tooltip: 'Delete',
+                          tooltip: context.tr('delete'),
                         ),
                       ],
                     ),
@@ -1277,13 +1281,13 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
         children: [
           UIUtils.buildSectionHeader(
             context,
-            title: 'Interests',
-            subtitle: 'Add personal interests to your CV',
+            title: context.tr('interests'),
+            subtitle: context.tr('interests_subtitle'),
             icon: Icons.interests_outlined,
             action: AppCardActionButton(
               onPressed: _addInterest,
               icon: Icons.add,
-              label: 'Add Interest',
+              label: context.tr('add_interest'),
               isFilled: true,
             ),
           ),
@@ -1319,32 +1323,32 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
           // Header
           UIUtils.buildSectionHeader(
             context,
-            title: 'Cover Letter',
-            subtitle: 'Personalize your cover letter for this application',
+            title: context.tr('cover_letter'),
+            subtitle: context.tr('cl_personalize'),
             icon: Icons.email_outlined,
           ),
           const SizedBox(height: AppSpacing.lg),
 
           // Recipient Information Card
           AppCard(
-            title: 'Recipient Information',
+            title: context.tr('recipient_info'),
             icon: Icons.person_outline,
             children: [
               TextFormField(
                 controller: _recipientNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Recipient Name',
+                decoration: InputDecoration(
+                  labelText: context.tr('recipient_name'),
                   hintText: 'e.g., Jane Smith',
-                  prefixIcon: Icon(Icons.person_outline),
+                  prefixIcon: const Icon(Icons.person_outline),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
                 controller: _recipientTitleController,
-                decoration: const InputDecoration(
-                  labelText: 'Recipient Title',
+                decoration: InputDecoration(
+                  labelText: context.tr('recipient_title'),
                   hintText: 'e.g., HR Manager',
-                  prefixIcon: Icon(Icons.badge_outlined),
+                  prefixIcon: const Icon(Icons.badge_outlined),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -1353,8 +1357,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                 decoration: InputDecoration(
                   labelText: widget.applicationContext?.baseLanguage ==
                           DocumentLanguage.de
-                      ? 'Betreff'
-                      : 'Subject',
+                      ? context.tr('subject_label_de')
+                      : context.tr('subject_label_en'),
                   hintText: widget.applicationContext?.baseLanguage ==
                           DocumentLanguage.de
                       ? 'Bewerbung als ...'
@@ -1365,18 +1369,18 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
               const SizedBox(height: AppSpacing.md),
               TextFormField(
                 initialValue: application?.company ?? '',
-                decoration: const InputDecoration(
-                  labelText: 'Company Name',
-                  prefixIcon: Icon(Icons.business_outlined),
+                decoration: InputDecoration(
+                  labelText: context.tr('company_name'),
+                  prefixIcon: const Icon(Icons.business_outlined),
                 ),
                 enabled: false,
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
                 initialValue: application?.position ?? '',
-                decoration: const InputDecoration(
-                  labelText: 'Position',
-                  prefixIcon: Icon(Icons.work_outline),
+                decoration: InputDecoration(
+                  labelText: context.tr('position'),
+                  prefixIcon: const Icon(Icons.work_outline),
                 ),
                 enabled: false,
               ),
@@ -1386,15 +1390,15 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
 
           // Letter Content Card
           AppCard(
-            title: 'Letter Content',
+            title: context.tr('letter_content'),
             icon: Icons.article_outlined,
             children: [
               TextFormField(
                 controller: _greetingController,
-                decoration: const InputDecoration(
-                  labelText: 'Greeting',
+                decoration: InputDecoration(
+                  labelText: context.tr('greeting'),
                   hintText: 'Dear [Name],',
-                  prefixIcon: Icon(Icons.waving_hand_outlined),
+                  prefixIcon: const Icon(Icons.waving_hand_outlined),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -1419,7 +1423,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Use ==COMPANY== and ==POSITION== as placeholders. They will be replaced automatically.',
+                        context.tr('placeholder_tip'),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontSize: 13,
                         ),
@@ -1432,8 +1436,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
 
               TextFormField(
                 controller: _bodyController,
-                decoration: const InputDecoration(
-                  labelText: 'Letter Body',
+                decoration: InputDecoration(
+                  labelText: context.tr('letter_body'),
                   hintText:
                       'Write your cover letter here...\n\nExample:\nI am writing to express my interest in the ==POSITION== position at ==COMPANY==...',
                   alignLabelWithHint: true,
@@ -1448,7 +1452,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
-                    '$charCount chars • $wordCount words',
+                    context.tr('chars_words', {'chars': charCount.toString(), 'words': wordCount.toString()}),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.textTheme.bodySmall?.color
                           ?.withValues(alpha: 0.7),
@@ -1460,10 +1464,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
 
               TextFormField(
                 controller: _closingController,
-                decoration: const InputDecoration(
-                  labelText: 'Closing',
+                decoration: InputDecoration(
+                  labelText: context.tr('closing'),
                   hintText: 'e.g., Best regards,',
-                  prefixIcon: Icon(Icons.edit_note_outlined),
+                  prefixIcon: const Icon(Icons.edit_note_outlined),
                 ),
               ),
             ],
@@ -1521,22 +1525,25 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   Future<void> _deleteExperience(int index) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Experience'),
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.tr('delete_experience')),
         content: Text(
-          'Are you sure you want to delete "${_cvData.experiences[index].position}" at ${_cvData.experiences[index].company}?',
+          ctx.tr('delete_experience_confirm', {
+            'position': _cvData.experiences[index].position,
+            'company': _cvData.experiences[index].company,
+          }),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(ctx.tr('cancel')),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
-            child: const Text('Delete'),
+            child: Text(ctx.tr('delete')),
           ),
         ],
       ),
@@ -1583,22 +1590,25 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   Future<void> _deleteEducation(int index) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Education'),
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.tr('delete_education')),
         content: Text(
-          'Are you sure you want to delete "${_cvData.education[index].degree}" from ${_cvData.education[index].institution}?',
+          ctx.tr('delete_education_confirm_job', {
+            'degree': _cvData.education[index].degree,
+            'institution': _cvData.education[index].institution,
+          }),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(ctx.tr('cancel')),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
-            child: const Text('Delete'),
+            child: Text(ctx.tr('delete')),
           ),
         ],
       ),
@@ -1640,11 +1650,11 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white, size: 18),
-                SizedBox(width: 8),
-                Text('Profile picture updated'),
+                const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Text(context.tr('profile_picture_updated')),
               ],
             ),
             backgroundColor: Colors.green.shade600,
@@ -1658,7 +1668,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to set profile picture: $e'),
+            content: Text('${context.tr('failed_set_picture')}: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -1679,11 +1689,11 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
+          content: Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.white, size: 18),
-              SizedBox(width: 8),
-              Text('Profile picture removed'),
+              const Icon(Icons.check_circle, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Text(context.tr('profile_picture_removed')),
             ],
           ),
           backgroundColor: Colors.orange.shade600,
@@ -1720,8 +1730,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   void _deleteSkill(int index) async {
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
-      title: 'Delete Skill',
-      message: 'Remove "${_cvData.skills[index].name}" from this CV?',
+      title: context.tr('delete_skill'),
+      message: context.tr('delete_skill_confirm', {'name': _cvData.skills[index].name}),
     );
     if (confirmed == true) {
       final updated = List<Skill>.from(_cvData.skills);
@@ -1758,8 +1768,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   void _deleteInterest(int index) async {
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
-      title: 'Delete Interest',
-      message: 'Remove "${_cvData.interests[index].name}" from this CV?',
+      title: context.tr('delete_interest'),
+      message: context.tr('delete_interest_confirm', {'name': _cvData.interests[index].name}),
     );
     if (confirmed == true) {
       final updated = List<Interest>.from(_cvData.interests);
@@ -1796,8 +1806,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   void _deleteLanguage(int index) async {
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
-      title: 'Delete Language',
-      message: 'Remove "${_cvData.languages[index].name}" from this CV?',
+      title: context.tr('delete'),
+      message: context.tr('delete_language_confirm_job', {'name': _cvData.languages[index].name}),
     );
     if (confirmed == true) {
       final updated = List<Language>.from(_cvData.languages);

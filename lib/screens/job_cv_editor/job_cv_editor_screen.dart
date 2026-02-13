@@ -8,6 +8,7 @@ import '../../providers/applications_provider.dart';
 import '../../widgets/job_cv_editor_widget.dart';
 import '../../dialogs/job_application_pdf_dialog.dart';
 import '../../widgets/draggable_dialog_wrapper.dart';
+import '../../localization/app_localizations.dart';
 
 /// Full content editor for job-specific CV
 ///
@@ -88,7 +89,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update application details: $e'),
+            content: Text('${context.tr('failed_update_app_details')}: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -142,11 +143,11 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 12),
-                Text('All changes saved'),
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Text(context.tr('all_changes_saved')),
               ],
             ),
             backgroundColor: Colors.green.shade600,
@@ -161,7 +162,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save changes: $e'),
+            content: Text('${context.tr('failed_save_changes')}: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
             duration: const Duration(seconds: 4),
           ),
@@ -208,14 +209,14 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Unsaved Changes'),
-        content: const Text(
-          'You have unsaved changes. Do you want to save them before leaving?',
+        title: Text(context.tr('unsaved_changes')),
+        content: Text(
+          context.tr('unsaved_changes_leave_message'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Discard'),
+            child: Text(context.tr('discard')),
           ),
           TextButton(
             onPressed: () async {
@@ -225,11 +226,11 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
                 Navigator.pop(context, true);
               }
             },
-            child: const Text('Save & Close'),
+            child: Text(context.tr('save_and_close')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Cancel'),
+            child: Text(context.tr('cancel')),
           ),
         ],
       ),
@@ -262,7 +263,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Edit Content'),
+              Text(context.tr('edit_content')),
               Text(
                 '${widget.application.company} • ${widget.application.position}',
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -274,17 +275,17 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
           actions: [
             // Saving indicator
             if (_isSaving)
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
-                    SizedBox(width: 8),
-                    Text('Saving...'),
+                    const SizedBox(width: 8),
+                    Text(context.tr('saving')),
                   ],
                 ),
               ),
@@ -312,7 +313,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Unsaved',
+                        context.tr('unsaved'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onPrimaryContainer,
                           fontWeight: FontWeight.w600,
@@ -328,7 +329,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
               TextButton.icon(
                 onPressed: _save,
                 icon: const Icon(Icons.save, size: 18),
-                label: const Text('Save'),
+                label: Text(context.tr('save')),
               ),
 
             const SizedBox(width: 8),
@@ -337,7 +338,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
             ElevatedButton.icon(
               onPressed: _showPdfCustomization,
               icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-              label: const Text('Preview PDF'),
+              label: Text(context.tr('preview_pdf')),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,

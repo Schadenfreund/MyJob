@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../../providers/user_data_provider.dart';
 import '../../../services/pdf_service.dart';
 import '../../../services/settings_service.dart';
+import '../../../localization/app_localizations.dart';
 
 /// Dialog for exporting CV as PDF
 class CvExportDialog extends StatefulWidget {
@@ -27,7 +28,7 @@ class _CvExportDialogState extends State<CvExportDialog> {
     final canExport = personalInfo != null;
 
     return AlertDialog(
-      title: const Text('Export CV as PDF'),
+      title: Text(context.tr('export_cv_as_pdf')),
       content: SizedBox(
         width: 450,
         child: Column(
@@ -54,7 +55,7 @@ class _CvExportDialogState extends State<CvExportDialog> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Please add your personal information before exporting.',
+                        context.tr('add_personal_info_before_export'),
                         style: TextStyle(
                           color: theme.colorScheme.error,
                           fontSize: 13,
@@ -65,34 +66,34 @@ class _CvExportDialogState extends State<CvExportDialog> {
                 ),
               ),
             ] else ...[
-              const Text(
-                'Your CV will be generated with the following information:',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              Text(
+                context.tr('cv_will_be_generated'),
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 16),
               _InfoRow(
                 icon: Icons.person,
-                label: 'Personal Info',
+                label: context.tr('personal_info'),
                 value: personalInfo.fullName,
               ),
               _InfoRow(
                 icon: Icons.work,
-                label: 'Work Experience',
-                value: '${userDataProvider.workExperiences.length} entries',
+                label: context.tr('work_experience'),
+                value: context.tr('n_entries', {'count': '${userDataProvider.workExperiences.length}'}),
               ),
               _InfoRow(
                 icon: Icons.star,
-                label: 'Skills',
-                value: '${userDataProvider.skills.length} skills',
+                label: context.tr('skills'),
+                value: context.tr('n_skills', {'count': '${userDataProvider.skills.length}'}),
               ),
               _InfoRow(
                 icon: Icons.language,
-                label: 'Languages',
-                value: '${userDataProvider.languages.length} languages',
+                label: context.tr('languages_section'),
+                value: context.tr('n_languages', {'count': '${userDataProvider.languages.length}'}),
               ),
               const SizedBox(height: 16),
               Text(
-                'The PDF will be saved to your chosen location.',
+                context.tr('pdf_saved_to_location'),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color:
                       theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
@@ -105,7 +106,7 @@ class _CvExportDialogState extends State<CvExportDialog> {
       actions: [
         TextButton(
           onPressed: _isExporting ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.tr('cancel')),
         ),
         ElevatedButton.icon(
           onPressed: canExport && !_isExporting ? _exportCv : null,
@@ -116,7 +117,7 @@ class _CvExportDialogState extends State<CvExportDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.download, size: 18),
-          label: Text(_isExporting ? 'Exporting...' : 'Export PDF'),
+          label: Text(_isExporting ? context.tr('exporting') : context.tr('pdf_dialog_export')),
         ),
       ],
     );
@@ -128,7 +129,7 @@ class _CvExportDialogState extends State<CvExportDialog> {
     try {
       // Let user choose save location
       final result = await FilePicker.platform.saveFile(
-        dialogTitle: 'Save CV as PDF',
+        dialogTitle: context.tr('export_cv_as_pdf'),
         fileName: 'CV_${DateTime.now().toString().split(' ')[0]}.pdf',
         type: FileType.custom,
         allowedExtensions: ['pdf'],
@@ -159,10 +160,10 @@ class _CvExportDialogState extends State<CvExportDialog> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('CV exported successfully!'),
+            content: Text(context.tr('cv_exported_success')),
             backgroundColor: Theme.of(context).colorScheme.primary,
             action: SnackBarAction(
-              label: 'Open Folder',
+              label: context.tr('open_folder'),
               textColor: Colors.white,
               onPressed: () {
                 // Open folder containing the file
@@ -178,7 +179,7 @@ class _CvExportDialogState extends State<CvExportDialog> {
         setState(() => _isExporting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error exporting CV: $e'),
+            content: Text('${context.tr('error_exporting_cv')}: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

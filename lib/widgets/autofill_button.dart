@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../localization/app_localizations.dart';
 import '../providers/user_data_provider.dart';
 import '../services/profile_autofill_service.dart';
 import '../utils/ui_utils.dart';
@@ -68,7 +69,7 @@ class AutofillButton extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Tooltip(
-      message: 'Configure your profile in Settings first',
+      message: context.tr('configure_profile_first'),
       child: OutlinedButton.icon(
         onPressed: () => _showNotConfiguredDialog(context),
         icon: Icon(
@@ -77,7 +78,7 @@ class AutofillButton extends StatelessWidget {
           color: theme.colorScheme.error,
         ),
         label: Text(
-          'Profile Not Set',
+          context.tr('profile_not_set'),
           style: TextStyle(color: theme.colorScheme.error),
         ),
         style: OutlinedButton.styleFrom(
@@ -97,17 +98,14 @@ class AutofillButton extends StatelessWidget {
           color: theme.colorScheme.error,
           size: 48,
         ),
-        title: const Text('Profile Not Configured'),
-        content: const Text(
-          'You haven\'t set up your user profile yet.\n\n'
-          'Go to Settings → User Profile to add your basic information, '
-          'skills, and interests. This will allow you to quickly fill in '
-          'your CV and cover letter templates.',
+        title: Text(context.tr('profile_not_configured')),
+        content: Text(
+          context.tr('profile_not_configured_message'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('OK'),
+            child: Text(context.tr('ok')),
           ),
         ],
       ),
@@ -123,7 +121,7 @@ class AutofillButton extends StatelessWidget {
       context,
       title: title,
       fieldsToFill: fieldsToFill.isEmpty
-          ? ['Contact information', 'Skills', 'Interests', 'Languages']
+          ? [context.tr('contact_information'), context.tr('skills'), context.tr('interests'), context.tr('languages')]
           : fieldsToFill,
     );
 
@@ -223,17 +221,17 @@ class AutofillSection extends StatelessWidget {
             runSpacing: 8,
             children: [
               if (availability['name'] == true)
-                _buildAvailabilityChip(context, 'Name', true),
+                _buildAvailabilityChip(context, context.tr('name'), true),
               if (availability['email'] == true)
-                _buildAvailabilityChip(context, 'Email', true),
+                _buildAvailabilityChip(context, context.tr('email'), true),
               if (availability['phone'] == true)
-                _buildAvailabilityChip(context, 'Phone', true),
+                _buildAvailabilityChip(context, context.tr('phone'), true),
               if (availability['skills'] == true)
-                _buildAvailabilityChip(context, 'Skills', true),
+                _buildAvailabilityChip(context, context.tr('skills'), true),
               if (availability['interests'] == true)
-                _buildAvailabilityChip(context, 'Interests', true),
+                _buildAvailabilityChip(context, context.tr('interests'), true),
               if (availability['languages'] == true)
-                _buildAvailabilityChip(context, 'Languages', true),
+                _buildAvailabilityChip(context, context.tr('languages'), true),
             ],
           ),
 

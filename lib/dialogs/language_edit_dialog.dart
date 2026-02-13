@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/user_data/language.dart';
+import '../localization/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 /// Dialog for adding or editing a language
@@ -79,7 +80,7 @@ class _LanguageEditDialogState extends State<LanguageEditDialog> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    widget.language == null ? 'Add Language' : 'Edit Language',
+                    widget.language == null ? context.tr('add_language') : context.tr('edit_language'),
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -96,14 +97,14 @@ class _LanguageEditDialogState extends State<LanguageEditDialog> {
               // Name field
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Language *',
-                  hintText: 'e.g., English, German, Spanish',
-                  prefixIcon: Icon(Icons.language_outlined),
+                decoration: InputDecoration(
+                  labelText: context.tr('language_name_label'),
+                  hintText: context.tr('language_name_hint'),
+                  prefixIcon: const Icon(Icons.language_outlined),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a language';
+                    return context.tr('please_enter_language');
                   }
                   return null;
                 },
@@ -114,7 +115,7 @@ class _LanguageEditDialogState extends State<LanguageEditDialog> {
 
               // Proficiency Level
               Text(
-                'Proficiency Level',
+                context.tr('proficiency_level'),
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -127,7 +128,7 @@ class _LanguageEditDialogState extends State<LanguageEditDialog> {
                 itemBuilder: (context, index) {
                   final level = LanguageProficiency.values[index];
                   return RadioListTile<LanguageProficiency>(
-                    title: Text(level.displayName),
+                    title: Text(context.tr(level.localizationKey)),
                     subtitle: Text(_getProficiencyDescription(level)),
                     value: level,
                     groupValue: _proficiency,
@@ -149,13 +150,13 @@ class _LanguageEditDialogState extends State<LanguageEditDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: Text(context.tr('cancel')),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   FilledButton.icon(
                     onPressed: _save,
                     icon: const Icon(Icons.check, size: 18),
-                    label: const Text('Save Language'),
+                    label: Text(context.tr('save_language')),
                   ),
                 ],
               ),
@@ -169,15 +170,15 @@ class _LanguageEditDialogState extends State<LanguageEditDialog> {
   String _getProficiencyDescription(LanguageProficiency level) {
     switch (level) {
       case LanguageProficiency.basic:
-        return 'Elementery knowledge, basic phrases';
+        return context.tr('proficiency_basic_desc');
       case LanguageProficiency.intermediate:
-        return 'Can hold conversations and read comfortably';
+        return context.tr('proficiency_intermediate_desc');
       case LanguageProficiency.advanced:
-        return 'Professional working proficiency';
+        return context.tr('proficiency_advanced_desc');
       case LanguageProficiency.fluent:
-        return 'Full professional proficiency';
+        return context.tr('proficiency_fluent_desc');
       case LanguageProficiency.native:
-        return 'First language or mother tongue';
+        return context.tr('proficiency_native_desc');
     }
   }
 }

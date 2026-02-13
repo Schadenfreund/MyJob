@@ -129,6 +129,8 @@ extension NoteTypeExtension on NoteType {
         return 'Reminder';
     }
   }
+
+  String get localizationKey => 'note_type_$name';
 }
 
 /// Extension for NotePriority display
@@ -145,4 +147,6 @@ extension NotePriorityExtension on NotePriority {
         return 'Urgent';
     }
   }
+
+  String get localizationKey => 'note_priority_$name';
 }

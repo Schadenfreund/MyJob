@@ -16,6 +16,8 @@ enum InterestLevel {
         return 'Passionate';
     }
   }
+
+  String get localizationKey => 'interest_level_$name';
 }
 
 /// Interest/hobby model

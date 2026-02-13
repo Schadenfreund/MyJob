@@ -8,6 +8,7 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/app_card.dart';
 import '../../../utils/dialog_utils.dart';
 import '../../../utils/ui_utils.dart';
+import '../../../localization/app_localizations.dart';
 
 /// Education section for master profile
 ///
@@ -36,11 +37,11 @@ class EducationSection extends StatelessWidget {
     }
 
     return AppCard(
-      title: 'Education',
+      title: context.tr('education'),
       icon: Icons.school_outlined,
-      description: 'Your academic background and certifications',
+      description: context.tr('education_section_desc'),
       trailing: AppCardActionButton(
-        label: 'Add',
+        label: context.tr('add'),
         icon: Icons.add,
         onPressed: () => _addEducation(context, provider),
       ),
@@ -54,12 +55,12 @@ class EducationSection extends StatelessWidget {
     return UIUtils.buildEmptyState(
       context,
       icon: Icons.school_outlined,
-      title: 'No Education Added',
-      message: 'Add your educational background to include it in your CV.',
+      title: context.tr('no_education_added'),
+      message: context.tr('no_education_message'),
       action: FilledButton.icon(
         onPressed: () => _addEducation(context, provider),
         icon: const Icon(Icons.add, size: 18),
-        label: const Text('Add Education'),
+        label: Text(context.tr('add_education')),
       ),
     );
   }
@@ -150,7 +151,7 @@ class EducationSection extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '${dateFormat.format(edu.startDate)} - ${edu.isCurrent ? 'Present' : dateFormat.format(edu.endDate!)}',
+                        '${dateFormat.format(edu.startDate)} - ${edu.isCurrent ? context.tr('present') : dateFormat.format(edu.endDate!)}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w500,
                         ),
@@ -167,7 +168,7 @@ class EducationSection extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        'Grade: ${edu.grade}',
+                        '${context.tr('edu_grade_label')}: ${edu.grade}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w600,
                           fontSize: 11,
@@ -186,7 +187,7 @@ class EducationSection extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, size: 18),
                   onPressed: () => _editEducation(context, provider, edu),
-                  tooltip: 'Edit',
+                  tooltip: context.tr('edit'),
                   visualDensity: VisualDensity.compact,
                 ),
                 IconButton(
@@ -196,7 +197,7 @@ class EducationSection extends StatelessWidget {
                     color: theme.colorScheme.error,
                   ),
                   onPressed: () => _deleteEducation(context, provider, edu),
-                  tooltip: 'Delete',
+                  tooltip: context.tr('delete'),
                   visualDensity: VisualDensity.compact,
                 ),
               ],
@@ -241,8 +242,8 @@ class EducationSection extends StatelessWidget {
   ) async {
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
-      title: 'Delete Education',
-      message: 'Remove "${edu.degree}" from ${edu.institution}?',
+      title: context.tr('delete_education'),
+      message: context.tr('delete_education_confirm', {'degree': edu.degree, 'institution': edu.institution}),
     );
 
     if (confirmed == true) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../localization/app_localizations.dart';
 import '../models/user_data/language.dart';
 
 /// Language editor with proficiency levels
@@ -42,19 +43,19 @@ class LanguageEditor extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Language'),
-        content: Text('Remove ${languages[index].name}?'),
+        title: Text(context.tr('delete_language')),
+        content: Text(context.tr('remove_language_confirm', {'name': languages[index].name})),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Delete'),
+            child: Text(context.tr('delete')),
           ),
         ],
       ),
@@ -78,7 +79,7 @@ class LanguageEditor extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${languages.length} ${languages.length == 1 ? 'language' : 'languages'}',
+              context.tr('n_languages', {'count': '${languages.length}'}),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.6),
               ),
@@ -86,7 +87,7 @@ class LanguageEditor extends StatelessWidget {
             FilledButton.icon(
               onPressed: () => _addLanguage(context),
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Language'),
+              label: Text(context.tr('add_language')),
             ),
           ],
         ),
@@ -104,7 +105,7 @@ class LanguageEditor extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No languages added yet',
+                    context.tr('no_languages_added_yet'),
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.onSurface.withOpacity(0.6),
                     ),
@@ -138,7 +139,7 @@ class LanguageEditor extends StatelessWidget {
                     ),
                   ),
                   subtitle: Text(
-                    lang.proficiency.displayName,
+                    context.tr(lang.proficiency.localizationKey),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: _getProficiencyColor(theme, lang.proficiency),
                       fontWeight: FontWeight.w500,
@@ -150,7 +151,7 @@ class LanguageEditor extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.edit_outlined, size: 20),
                         onPressed: () => _editLanguage(context, index),
-                        tooltip: 'Edit',
+                        tooltip: context.tr('edit'),
                       ),
                       IconButton(
                         icon: Icon(
@@ -159,7 +160,7 @@ class LanguageEditor extends StatelessWidget {
                           color: theme.colorScheme.error,
                         ),
                         onPressed: () => _deleteLanguage(context, index),
-                        tooltip: 'Delete',
+                        tooltip: context.tr('delete'),
                       ),
                     ],
                   ),
@@ -247,7 +248,7 @@ class _LanguageEditDialogState extends State<_LanguageEditDialog> {
                   Icon(Icons.language, color: theme.colorScheme.primary),
                   const SizedBox(width: 12),
                   Text(
-                    widget.language == null ? 'Add Language' : 'Edit Language',
+                    widget.language == null ? context.tr('add_language') : context.tr('edit_language'),
                     style: theme.textTheme.titleLarge,
                   ),
                   const Spacer(),
@@ -260,25 +261,25 @@ class _LanguageEditDialogState extends State<_LanguageEditDialog> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Language *',
+                decoration: InputDecoration(
+                  labelText: context.tr('language_required'),
                   hintText: 'e.g. English, Spanish, German',
-                  prefixIcon: Icon(Icons.abc),
-                  border: OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.abc),
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (value) =>
-                    value?.trim().isEmpty ?? true ? 'Required' : null,
+                    value?.trim().isEmpty ?? true ? context.tr('required') : null,
                 autofocus: true,
               ),
               const SizedBox(height: 20),
               Text(
-                'Proficiency Level',
+                context.tr('proficiency_level'),
                 style: theme.textTheme.titleSmall,
               ),
               const SizedBox(height: 12),
               ...LanguageProficiency.values.map((level) {
                 return RadioListTile<LanguageProficiency>(
-                  title: Text(level.displayName),
+                  title: Text(context.tr(level.localizationKey)),
                   value: level,
                   groupValue: _proficiency,
                   onChanged: (value) {
@@ -293,13 +294,13 @@ class _LanguageEditDialogState extends State<_LanguageEditDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: Text(context.tr('cancel')),
                   ),
                   const SizedBox(width: 12),
                   FilledButton.icon(
                     onPressed: _save,
                     icon: const Icon(Icons.check, size: 18),
-                    label: const Text('Save'),
+                    label: Text(context.tr('save')),
                   ),
                 ],
               ),

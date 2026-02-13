@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/master_profile.dart';
+import '../localization/app_localizations.dart';
 
 /// Dialog for adding or editing education entries
 class EducationEditDialog extends StatefulWidget {
@@ -57,7 +58,7 @@ class _EducationEditDialogState extends State<EducationEditDialog> {
     if (!_formKey.currentState!.validate()) return;
     if (_startDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a start date')),
+        SnackBar(content: Text(context.tr('please_select_start_date'))),
       );
       return;
     }
@@ -66,8 +67,8 @@ class _EducationEditDialogState extends State<EducationEditDialog> {
     if (!_isCurrentlyStudying && _endDate != null) {
       if (_endDate!.isBefore(_startDate!)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('End date cannot be before start date'),
+          SnackBar(
+            content: Text(context.tr('end_date_before_start')),
             backgroundColor: Colors.red,
           ),
         );
@@ -151,8 +152,8 @@ class _EducationEditDialogState extends State<EducationEditDialog> {
                   Expanded(
                     child: Text(
                       widget.education == null
-                          ? 'Add Education'
-                          : 'Edit Education',
+                          ? context.tr('add_education')
+                          : context.tr('edit_education'),
                       style: theme.textTheme.titleLarge?.copyWith(
                         color: theme.colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.bold,
@@ -179,41 +180,41 @@ class _EducationEditDialogState extends State<EducationEditDialog> {
                     children: [
                       TextFormField(
                         controller: _degreeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Degree *',
-                          hintText: 'e.g. Bachelor of Science',
-                          prefixIcon: Icon(Icons.school_outlined),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.tr('edu_degree_label'),
+                          hintText: context.tr('edu_degree_hint'),
+                          prefixIcon: const Icon(Icons.school_outlined),
+                          border: const OutlineInputBorder(),
                         ),
                         validator: (value) =>
-                            value?.trim().isEmpty ?? true ? 'Required' : null,
+                            value?.trim().isEmpty ?? true ? context.tr('required') : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _fieldOfStudyController,
-                        decoration: const InputDecoration(
-                          labelText: 'Field of Study *',
-                          hintText: 'e.g. Computer Science',
-                          prefixIcon: Icon(Icons.book_outlined),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.tr('edu_field_label'),
+                          hintText: context.tr('edu_field_hint'),
+                          prefixIcon: const Icon(Icons.book_outlined),
+                          border: const OutlineInputBorder(),
                         ),
                         validator: (value) =>
-                            value?.trim().isEmpty ?? true ? 'Required' : null,
+                            value?.trim().isEmpty ?? true ? context.tr('required') : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _institutionController,
-                        decoration: const InputDecoration(
-                          labelText: 'Institution *',
-                          hintText: 'e.g. Stanford University',
-                          prefixIcon: Icon(Icons.account_balance_outlined),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.tr('edu_institution_label'),
+                          hintText: context.tr('edu_institution_hint'),
+                          prefixIcon: const Icon(Icons.account_balance_outlined),
+                          border: const OutlineInputBorder(),
                         ),
                         validator: (value) =>
-                            value?.trim().isEmpty ?? true ? 'Required' : null,
+                            value?.trim().isEmpty ?? true ? context.tr('required') : null,
                       ),
                       const SizedBox(height: 24),
-                      Text('Study Period', style: theme.textTheme.titleSmall),
+                      Text(context.tr('study_period'), style: theme.textTheme.titleSmall),
                       const SizedBox(height: 12),
                       Row(
                         children: [
@@ -222,7 +223,7 @@ class _EducationEditDialogState extends State<EducationEditDialog> {
                               onPressed: _pickStartDate,
                               icon: const Icon(Icons.calendar_today),
                               label: Text(_startDate == null
-                                  ? 'Start Date *'
+                                  ? context.tr('start_date_required')
                                   : dateFormat.format(_startDate!)),
                             ),
                           ),
@@ -233,9 +234,9 @@ class _EducationEditDialogState extends State<EducationEditDialog> {
                                   _isCurrentlyStudying ? null : _pickEndDate,
                               icon: const Icon(Icons.event),
                               label: Text(_isCurrentlyStudying
-                                  ? 'Present'
+                                  ? context.tr('present')
                                   : _endDate == null
-                                      ? 'End Date'
+                                      ? context.tr('end_date')
                                       : dateFormat.format(_endDate!)),
                             ),
                           ),
@@ -247,29 +248,28 @@ class _EducationEditDialogState extends State<EducationEditDialog> {
                         onChanged: (value) {
                           setState(() => _isCurrentlyStudying = value ?? false);
                         },
-                        title: const Text('I am currently studying here'),
+                        title: Text(context.tr('currently_studying_here')),
                         contentPadding: EdgeInsets.zero,
                       ),
                       const SizedBox(height: 24),
                       TextFormField(
                         controller: _gradeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Grade/GPA (Optional)',
-                          hintText: 'e.g. 3.8/4.0 or First Class Honours',
-                          prefixIcon: Icon(Icons.grade_outlined),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.tr('edu_grade_label'),
+                          hintText: context.tr('edu_grade_hint'),
+                          prefixIcon: const Icon(Icons.grade_outlined),
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _descriptionController,
                         maxLines: 4,
-                        decoration: const InputDecoration(
-                          labelText: 'Description (Optional)',
-                          hintText:
-                              'Relevant coursework, achievements, honors, etc.',
-                          prefixIcon: Icon(Icons.description_outlined),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.tr('description_optional'),
+                          hintText: context.tr('edu_description_hint'),
+                          prefixIcon: const Icon(Icons.description_outlined),
+                          border: const OutlineInputBorder(),
                           filled: true,
                         ),
                       ),
@@ -290,13 +290,13 @@ class _EducationEditDialogState extends State<EducationEditDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: Text(context.tr('cancel')),
                   ),
                   const SizedBox(width: 12),
                   FilledButton.icon(
                     onPressed: _save,
                     icon: const Icon(Icons.check, size: 18),
-                    label: const Text('Save'),
+                    label: Text(context.tr('save')),
                   ),
                 ],
               ),

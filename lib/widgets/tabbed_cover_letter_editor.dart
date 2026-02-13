@@ -6,6 +6,7 @@ import '../services/profile_autofill_service.dart';
 import '../widgets/common/custom_text_field.dart';
 import '../widgets/autofill_button.dart';
 import '../utils/ui_utils.dart';
+import '../localization/app_localizations.dart';
 
 /// Tabbed cover letter editor with organized sections
 class TabbedCoverLetterEditor extends StatefulWidget {
@@ -126,9 +127,9 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
             controller: _tabController,
             isScrollable: false,
             tabs: [
-              _buildTab(Icons.person, 'Sender'),
-              _buildTab(Icons.business, 'Recipient'),
-              _buildTab(Icons.article, 'Letter'),
+              _buildTab(Icons.person, context.tr('tab_sender')),
+              _buildTab(Icons.business, context.tr('tab_recipient')),
+              _buildTab(Icons.article, context.tr('tab_letter')),
             ],
           ),
         ),
@@ -172,15 +173,15 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
           // Auto-fill section
           AutofillSection(
             onAutofill: _autofillFromProfile,
-            fieldsToFill: const ['Sender Name'],
-            title: 'Auto-fill from Profile',
+            fieldsToFill: [context.tr('sender_name')],
+            title: context.tr('autofill_from_profile'),
             description: '',
           ),
 
           const SizedBox(height: 20),
 
           Text(
-            'Sender Information',
+            context.tr('sender_info'),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -189,7 +190,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
 
           CustomTextField(
             controller: _senderNameController,
-            label: 'Sender Name',
+            label: context.tr('sender_name'),
             hint: 'Your Full Name',
             prefixIcon: Icons.person,
           ),
@@ -210,7 +211,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Contact details will be added automatically when generating PDF.',
+                    context.tr('contact_auto_pdf'),
                     style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
                   ),
                 ),
@@ -231,7 +232,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Recipient Information',
+            context.tr('recipient_info'),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -252,7 +253,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'These fields will be filled when creating a cover letter for a specific job application.',
+                    context.tr('recipient_fields_info'),
                     style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
                   ),
                 ),
@@ -264,7 +265,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
 
           CustomTextField(
             controller: _recipientNameController,
-            label: 'Recipient Name',
+            label: context.tr('recipient_name'),
             hint: 'Hiring Manager Name',
             prefixIcon: Icons.person_outline,
             enabled: false,
@@ -273,7 +274,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
 
           CustomTextField(
             controller: _recipientTitleController,
-            label: 'Recipient Title',
+            label: context.tr('recipient_title'),
             hint: 'HR Manager',
             prefixIcon: Icons.badge_outlined,
             enabled: false,
@@ -282,7 +283,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
 
           CustomTextField(
             controller: _companyNameController,
-            label: 'Company Name',
+            label: context.tr('company_name'),
             hint: 'Target Company',
             prefixIcon: Icons.business_outlined,
             enabled: false,
@@ -291,7 +292,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
 
           CustomTextField(
             controller: _jobTitleController,
-            label: 'Job Title',
+            label: context.tr('job_title_label'),
             hint: 'Position Applied For',
             prefixIcon: Icons.work_outline,
             enabled: false,
@@ -310,7 +311,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Letter Content',
+            context.tr('letter_content'),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -320,7 +321,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
           // Greeting
           CustomTextField(
             controller: _greetingController,
-            label: 'Greeting',
+            label: context.tr('greeting'),
             hint: 'Dear Hiring Manager,',
             prefixIcon: Icons.waving_hand,
           ),
@@ -342,7 +343,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Placeholder Tips',
+                      context.tr('placeholder_tips_title'),
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
@@ -352,9 +353,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '• Use ==COMPANY== for company name\n'
-                  '• Use ==POSITION== for job title\n'
-                  '• Placeholders will be replaced when creating cover letters',
+                  context.tr('placeholder_tips_body'),
                   style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
                 ),
               ],
@@ -366,7 +365,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
           // Body
           CustomTextField(
             controller: _bodyController,
-            label: 'Letter Body',
+            label: context.tr('letter_body'),
             hint:
                 'Write your cover letter here...\n\nUse ==COMPANY== and ==POSITION== as placeholders.',
             maxLines: 15,
@@ -380,7 +379,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
           // Closing
           CustomTextField(
             controller: _closingController,
-            label: 'Closing',
+            label: context.tr('closing'),
             hint: 'Kind regards,',
             prefixIcon: Icons.edit_note,
           ),
@@ -397,7 +396,10 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
               ),
               const SizedBox(width: 6),
               Text(
-                '${_bodyController.text.length} characters • ${_bodyController.text.trim().split(RegExp(r'\s+')).where((word) => word.isNotEmpty).length} words',
+                context.tr('chars_words_count', {
+                  'chars': '${_bodyController.text.length}',
+                  'words': '${_bodyController.text.trim().split(RegExp(r'\s+')).where((word) => word.isNotEmpty).length}',
+                }),
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontSize: 12,
                   color:

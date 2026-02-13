@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../localization/app_localizations.dart';
 import 'sections/personal_info_section.dart';
 import 'sections/skills_section.dart';
 import 'sections/work_experience_section.dart';
@@ -42,7 +43,7 @@ class TemplatesScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'User Data & Templates',
+                        context.tr('user_data_templates'),
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.5,
@@ -50,7 +51,7 @@ class TemplatesScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Manage your personal information, skills, and document templates',
+                        context.tr('user_data_templates_desc'),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.textTheme.bodySmall?.color
                               ?.withValues(alpha: 0.7),
@@ -104,7 +105,7 @@ class _ExportPdfButton extends StatelessWidget {
     return OutlinedButton.icon(
       onPressed: () => _showExportDialog(context),
       icon: const Icon(Icons.picture_as_pdf, size: 18),
-      label: const Text('Export PDF'),
+      label: Text(context.tr('pdf_dialog_export')),
       style: OutlinedButton.styleFrom(
         foregroundColor: theme.colorScheme.primary,
         side: BorderSide(color: theme.colorScheme.primary),
@@ -133,14 +134,14 @@ class _ExportPdfDialogState extends State<_ExportPdfDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Export as PDF'),
+      title: Text(context.tr('export_as_pdf')),
       content: SizedBox(
         width: 400,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Choose what you want to export:'),
+            Text(context.tr('choose_export')),
             const SizedBox(height: 16),
 
             // Option tiles
@@ -148,16 +149,16 @@ class _ExportPdfDialogState extends State<_ExportPdfDialog> {
               context: context,
               index: 0,
               icon: Icons.description,
-              title: 'Curriculum Vitae (CV)',
-              description: 'Export your professional resume',
+              title: context.tr('cv_full_name'),
+              description: context.tr('cv_export_desc'),
             ),
             const SizedBox(height: 12),
             _buildOptionTile(
               context: context,
               index: 1,
               icon: Icons.mail,
-              title: 'Cover Letter',
-              description: 'Export a cover letter for job applications',
+              title: context.tr('cover_letter'),
+              description: context.tr('cl_export_desc'),
             ),
           ],
         ),
@@ -165,7 +166,7 @@ class _ExportPdfDialogState extends State<_ExportPdfDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.tr('cancel')),
         ),
         ElevatedButton.icon(
           onPressed: () {
@@ -177,7 +178,7 @@ class _ExportPdfDialogState extends State<_ExportPdfDialog> {
             }
           },
           icon: const Icon(Icons.arrow_forward, size: 18),
-          label: const Text('Continue'),
+          label: Text(context.tr('continue_button')),
         ),
       ],
     );
@@ -272,7 +273,7 @@ class _ExportPdfDialogState extends State<_ExportPdfDialog> {
   void _showCoverLetterDialog(BuildContext context) {
     // TODO: Implement cover letter export dialog
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Cover letter PDF export coming soon')),
+      SnackBar(content: Text(context.tr('cl_export_coming_soon'))),
     );
   }
 }
@@ -286,7 +287,7 @@ class _ImportDataButton extends StatelessWidget {
     return ElevatedButton.icon(
       onPressed: () => _showImportDialog(context),
       icon: const Icon(Icons.upload_file, size: 18),
-      label: const Text('Import Data'),
+      label: Text(context.tr('import_data')),
       style: ElevatedButton.styleFrom(
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: Colors.white,
@@ -299,18 +300,16 @@ class _ImportDataButton extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Import User Data'),
+        title: Text(context.tr('import_user_data')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Import your personal data from YAML template files.',
-            ),
+            Text(context.tr('import_yaml_desc')),
             const SizedBox(height: 16),
-            const Text(
-              'Template files are located in:',
-              style: TextStyle(fontWeight: FontWeight.w600),
+            Text(
+              context.tr('template_files_location'),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Text(
@@ -326,17 +325,17 @@ class _ImportDataButton extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: Text(context.tr('close')),
           ),
           ElevatedButton(
             onPressed: () {
               // TODO: Implement file picker for YAML import
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('File picker coming soon')),
+                SnackBar(content: Text(context.tr('file_picker_coming_soon'))),
               );
             },
-            child: const Text('Select File'),
+            child: Text(context.tr('select_file')),
           ),
         ],
       ),

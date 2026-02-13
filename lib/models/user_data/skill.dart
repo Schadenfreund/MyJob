@@ -84,4 +84,6 @@ enum SkillLevel {
         return 'Expert';
     }
   }
+
+  String get localizationKey => 'skill_level_$name';
 }

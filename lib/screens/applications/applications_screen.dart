@@ -20,6 +20,7 @@ import '../../dialogs/job_application_pdf_dialog.dart';
 import '../job_cv_editor/job_cv_editor_screen.dart';
 import 'widgets/compact_application_card.dart';
 import '../../widgets/app_card.dart';
+import '../../localization/app_localizations.dart';
 
 /// Applications Screen - Modern job application tracking with statistics
 class ApplicationsScreen extends StatefulWidget {
@@ -148,9 +149,8 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
             // Header
             UIUtils.buildSectionHeader(
               context,
-              title: 'Job Applications',
-              subtitle:
-                  'Track and manage all your job applications in one place',
+              title: context.tr('applications_title'),
+              subtitle: context.tr('applications_subtitle'),
               icon: Icons.assignment_outlined,
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -199,7 +199,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                             Row(
                               children: [
                                 Text(
-                                  'Found a new opportunity?',
+                                  context.tr('new_opportunity'),
                                   style: theme.textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -213,7 +213,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
-                                    'ADD HERE',
+                                    context.tr('add_here'),
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
@@ -226,7 +226,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Track where you send your documents and keep notes on each application',
+                              context.tr('new_opportunity_desc'),
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.textTheme.bodySmall?.color
                                     ?.withOpacity(0.8),
@@ -239,7 +239,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                       AppCardActionButton(
                         onPressed: () => _showAddDialog(context),
                         icon: Icons.add,
-                        label: 'Add New',
+                        label: context.tr('add_new'),
                         isFilled: true,
                       ),
                     ],
@@ -307,7 +307,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'Statistics',
+                    context.tr('statistics'),
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -331,7 +331,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                   Expanded(
                     child: _buildCompactStatItem(
                       context,
-                      label: 'Total',
+                      label: context.tr('stat_total'),
                       value: total.toString(),
                       icon: Icons.folder_outlined,
                       color: theme.colorScheme.primary,
@@ -341,7 +341,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                   Expanded(
                     child: _buildCompactStatItem(
                       context,
-                      label: 'Active',
+                      label: context.tr('stat_active'),
                       value: active.toString(),
                       icon: Icons.pending_actions,
                       color: AppColors.statusApplied,
@@ -351,7 +351,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                   Expanded(
                     child: _buildCompactStatItem(
                       context,
-                      label: 'Success',
+                      label: context.tr('stat_success'),
                       value: successful.toString(),
                       icon: Icons.check_circle_outline,
                       color: AppColors.statusAccepted,
@@ -361,7 +361,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                   Expanded(
                     child: _buildCompactStatItem(
                       context,
-                      label: 'Rejected',
+                      label: context.tr('stat_rejected'),
                       value: rejected.toString(),
                       icon: Icons.cancel_outlined,
                       color: AppColors.statusRejected,
@@ -371,7 +371,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                   Expanded(
                     child: _buildCompactStatItem(
                       context,
-                      label: 'No Response',
+                      label: context.tr('stat_no_response'),
                       value: noResponse.toString(),
                       icon: Icons.schedule,
                       color: AppColors.statusWithdrawn,
@@ -390,20 +390,24 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                   Row(
                     children: [
                       Text(
-                        'Period:',
+                        context.tr('period'),
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.textTheme.bodySmall?.color
                               ?.withOpacity(0.7),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      _buildTimeRangeButton(context, 'All', 'all'),
+                      _buildTimeRangeButton(
+                          context, context.tr('period_all'), 'all'),
                       const SizedBox(width: 6),
-                      _buildTimeRangeButton(context, 'Month', 'month'),
+                      _buildTimeRangeButton(
+                          context, context.tr('period_month'), 'month'),
                       const SizedBox(width: 6),
-                      _buildTimeRangeButton(context, 'Quarter', 'quarter'),
+                      _buildTimeRangeButton(
+                          context, context.tr('period_quarter'), 'quarter'),
                       const SizedBox(width: 6),
-                      _buildTimeRangeButton(context, 'Year', 'year'),
+                      _buildTimeRangeButton(
+                          context, context.tr('period_year'), 'year'),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -412,7 +416,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                       Expanded(
                         child: _buildCompactStatItem(
                           context,
-                          label: 'Total',
+                          label: context.tr('stat_total'),
                           value: total.toString(),
                           icon: Icons.folder_outlined,
                           color: theme.colorScheme.primary,
@@ -422,7 +426,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                       Expanded(
                         child: _buildCompactStatItem(
                           context,
-                          label: 'Active',
+                          label: context.tr('stat_active'),
                           value: active.toString(),
                           icon: Icons.pending_actions,
                           color: AppColors.statusApplied,
@@ -432,7 +436,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                       Expanded(
                         child: _buildCompactStatItem(
                           context,
-                          label: 'Successful',
+                          label: context.tr('stat_successful'),
                           value: successful.toString(),
                           icon: Icons.check_circle_outline,
                           color: AppColors.statusAccepted,
@@ -442,7 +446,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                       Expanded(
                         child: _buildCompactStatItem(
                           context,
-                          label: 'Rejected',
+                          label: context.tr('stat_rejected'),
                           value: rejected.toString(),
                           icon: Icons.cancel_outlined,
                           color: AppColors.statusRejected,
@@ -452,7 +456,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                       Expanded(
                         child: _buildCompactStatItem(
                           context,
-                          label: 'No Response',
+                          label: context.tr('stat_no_response'),
                           value: noResponse.toString(),
                           icon: Icons.schedule,
                           color: AppColors.statusWithdrawn,
@@ -466,7 +470,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       AppCardActionButton(
-                        label: 'Export Report',
+                        label: context.tr('export_report'),
                         icon: Icons.download,
                         onPressed: () =>
                             _exportStatisticsPdf(context, provider),
@@ -571,7 +575,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
 
     return TextField(
       decoration: InputDecoration(
-        hintText: 'Search by company, position, or location...',
+        hintText: context.tr('search_placeholder'),
         prefixIcon: const Icon(Icons.search, size: 20),
         suffixIcon: provider.searchQuery.isNotEmpty
             ? IconButton(
@@ -602,10 +606,10 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
       return UIUtils.buildEmptyState(
         context,
         icon: Icons.work_outline,
-        title: 'No applications yet',
-        message: 'Track where you send your CV and cover letters',
+        title: context.tr('no_applications_title'),
+        message: context.tr('no_applications_message'),
         action: AppCardActionButton(
-          label: 'Add Your First Application',
+          label: context.tr('add_first_application'),
           onPressed: () => _showAddDialog(context),
           icon: Icons.add,
           isFilled: true,
@@ -637,7 +641,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         if (activeApps.isNotEmpty) ...[
           _buildCollapsibleSection(
             context,
-            title: 'Active',
+            title: context.tr('section_active'),
             count: activeApps.length,
             icon: Icons.pending_actions,
             color: AppColors.statusApplied,
@@ -651,7 +655,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         if (successfulApps.isNotEmpty) ...[
           _buildCollapsibleSection(
             context,
-            title: 'Successful',
+            title: context.tr('section_successful'),
             count: successfulApps.length,
             icon: Icons.check_circle,
             color: AppColors.statusAccepted,
@@ -665,7 +669,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         if (noResponseApps.isNotEmpty) ...[
           _buildCollapsibleSection(
             context,
-            title: 'No Response',
+            title: context.tr('section_no_response'),
             count: noResponseApps.length,
             icon: Icons.schedule,
             color: AppColors.statusWithdrawn,
@@ -679,7 +683,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         if (rejectedApps.isNotEmpty) ...[
           _buildCollapsibleSection(
             context,
-            title: 'Rejected',
+            title: context.tr('section_rejected'),
             count: rejectedApps.length,
             icon: Icons.cancel,
             color: AppColors.statusRejected,
@@ -813,17 +817,12 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
             color: Theme.of(context).colorScheme.primary,
             size: 48,
           ),
-          title: const Text('No Profile Data Found'),
-          content: const Text(
-            'Your master profile appears to be empty.\n\n'
-            'Tip: Fill out your Profile tab first to save time! '
-            'You can populate it once and use that data across all job applications.\n\n'
-            'Would you like to continue creating this job application anyway?',
-          ),
+          title: Text(context.tr('no_profile_data_title')),
+          content: Text(context.tr('no_profile_data_message')),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Continue'),
+              child: Text(context.tr('continue_button')),
             ),
             FilledButton(
               onPressed: () {
@@ -831,7 +830,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                 // Navigate to Profile tab (index 0)
                 context.read<AppState>().setNavIndex(0);
               },
-              child: const Text('Fill Profile First'),
+              child: Text(context.tr('fill_profile_first')),
             ),
           ],
         ),
@@ -848,7 +847,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     );
 
     if (result != null && context.mounted) {
-      UIUtils.showSuccess(context, 'Application added successfully');
+      UIUtils.showSuccess(context, context.tr('application_added'));
     }
   }
 
@@ -860,32 +859,32 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     );
 
     if (result != null && context.mounted) {
-      UIUtils.showSuccess(context, 'Application updated');
+      UIUtils.showSuccess(context, context.tr('application_updated'));
     }
   }
 
   void _confirmDelete(BuildContext context, JobApplication application) async {
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
-      title: 'Delete Application',
-      message:
-          'Are you sure you want to delete this application for ${application.company}?\nThis will NOT delete the exported PDF or tailoring data folder.',
+      title: context.tr('delete_application_title'),
+      message: context
+          .tr('delete_application_message', {'company': application.company}),
     );
 
     if (confirmed && context.mounted) {
       context.read<ApplicationsProvider>().deleteApplication(application.id);
-      UIUtils.showSuccess(context, 'Application deleted');
+      UIUtils.showSuccess(context, context.tr('application_deleted'));
     }
   }
 
   void _editContent(BuildContext context, JobApplication application) async {
     if (application.folderPath == null) {
-      UIUtils.showError(context, 'Application folder not found');
+      UIUtils.showError(context, context.tr('app_folder_not_found'));
       return;
     }
 
     final closeLoading =
-        DialogUtils.showLoading(context, message: 'Opening editor...');
+        DialogUtils.showLoading(context, message: context.tr('opening_editor'));
 
     try {
       final storage = StorageService.instance;
@@ -897,7 +896,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         closeLoading();
 
         if (cvData == null) {
-          UIUtils.showError(context, 'Failed to load CV data');
+          UIUtils.showError(context, context.tr('failed_load_cv'));
           return;
         }
 
@@ -914,7 +913,8 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     } catch (e) {
       if (context.mounted) {
         closeLoading();
-        UIUtils.showError(context, 'Error loading data: $e');
+        UIUtils.showError(
+            context, context.tr('error_loading_data', {'error': e.toString()}));
       }
     }
   }
@@ -931,12 +931,12 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
   Future<void> _openPdfDialog(
       BuildContext context, JobApplication application, bool isCV) async {
     if (application.folderPath == null) {
-      UIUtils.showError(context, 'Application folder not found');
+      UIUtils.showError(context, context.tr('app_folder_not_found'));
       return;
     }
 
-    final closeLoading =
-        DialogUtils.showLoading(context, message: 'Loading document data...');
+    final closeLoading = DialogUtils.showLoading(context,
+        message: context.tr('loading_document'));
 
     try {
       final storage = StorageService.instance;
@@ -948,7 +948,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         closeLoading();
 
         if (cvData == null) {
-          UIUtils.showError(context, 'Failed to load CV data');
+          UIUtils.showError(context, context.tr('failed_load_cv'));
           return;
         }
 
@@ -965,7 +965,8 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     } catch (e) {
       if (context.mounted) {
         closeLoading();
-        UIUtils.showError(context, 'Error loading data: $e');
+        UIUtils.showError(
+            context, context.tr('error_loading_data', {'error': e.toString()}));
       }
     }
   }
@@ -973,13 +974,13 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
   void _openFolder(BuildContext context, JobApplication application) async {
     final folderPath = application.folderPath;
     if (folderPath == null) {
-      UIUtils.showError(context, 'Folder path not found');
+      UIUtils.showError(context, context.tr('folder_path_not_found'));
       return;
     }
 
     final directory = Directory(folderPath);
     if (!await directory.exists()) {
-      UIUtils.showError(context, 'Tailoring folder does not exist yet');
+      UIUtils.showError(context, context.tr('folder_not_exist'));
       return;
     }
 
@@ -993,7 +994,8 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
       }
     } catch (e) {
       if (context.mounted) {
-        UIUtils.showError(context, 'Failed to open folder: $e');
+        UIUtils.showError(
+            context, context.tr('failed_open_folder', {'error': e.toString()}));
       }
     }
   }
@@ -1006,14 +1008,15 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
 
       if (apps.isEmpty) {
         if (context.mounted) {
-          UIUtils.showError(context, 'No applications to export');
+          UIUtils.showError(context, context.tr('no_apps_to_export'));
         }
         return;
       }
 
       // Show loading
       if (context.mounted) {
-        DialogUtils.showLoading(context, message: 'Generating statistics...');
+        DialogUtils.showLoading(context,
+            message: context.tr('generating_statistics'));
       }
 
       // Generate both English and German markdown
@@ -1033,7 +1036,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
 
       // Let user choose save location for the folder
       final result = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: 'Select folder to save statistics',
+        dialogTitle: context.tr('select_folder_save'),
       );
 
       if (result == null) return;
@@ -1049,24 +1052,23 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
       await germanFile.writeAsString(germanMarkdown, encoding: utf8);
 
       if (context.mounted) {
-        UIUtils.showSuccess(context,
-            'Statistics exported successfully!\n2 files created: EN and DE');
+        UIUtils.showSuccess(context, context.tr('stats_exported'));
 
         // Offer to open folder
         final shouldOpen = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Export Successful'),
+            title: Text(context.tr('export_successful_title')),
             content: Text(
-                'Two markdown files have been created:\n\n• Application_Statistics_EN_$dateStr.md\n• Application_Statistics_DE_$dateStr.md\n\nWould you like to open the folder?'),
+                context.tr('export_successful_message', {'date': dateStr})),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('No'),
+                child: Text(context.tr('no')),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Open Folder'),
+                child: Text(context.tr('open_folder')),
               ),
             ],
           ),
@@ -1089,7 +1091,8 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop(); // Close loading if still open
-        UIUtils.showError(context, 'Failed to export statistics: $e');
+        UIUtils.showError(context,
+            context.tr('failed_export_stats', {'error': e.toString()}));
       }
     }
   }

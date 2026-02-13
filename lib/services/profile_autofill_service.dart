@@ -7,6 +7,7 @@ import '../models/user_data/interest.dart';
 import '../models/user_data/language.dart';
 import '../providers/user_data_provider.dart';
 import '../utils/data_converters.dart';
+import '../localization/app_localizations.dart';
 
 /// Service for auto-filling CV and cover letter templates from user profile
 class ProfileAutofillService {
@@ -105,15 +106,14 @@ class ProfileAutofillService {
             color: Theme.of(dialogContext).colorScheme.error,
             size: 48,
           ),
-          title: const Text('Profile Not Configured'),
-          content: const Text(
-            'Please configure your user profile in Settings first.\n\n'
-            'Go to Settings → User Profile to add your information.',
+          title: Text(dialogContext.tr('profile_not_configured')),
+          content: Text(
+            dialogContext.tr('profile_not_configured_message'),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('OK'),
+              child: Text(dialogContext.tr('ok')),
             ),
           ],
         ),
@@ -135,8 +135,8 @@ class ProfileAutofillService {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'This will fill the following fields with your profile data:',
+            Text(
+              dialogContext.tr('autofill_confirmation_message'),
             ),
             const SizedBox(height: 16),
             ...fieldsToFill.map(
@@ -157,7 +157,7 @@ class ProfileAutofillService {
             ),
             const SizedBox(height: 16),
             Text(
-              'Any existing data in these fields will be replaced.',
+              dialogContext.tr('autofill_replace_warning'),
               style: TextStyle(
                 color: Theme.of(dialogContext).textTheme.bodySmall?.color,
                 fontSize: 12,
@@ -168,12 +168,12 @@ class ProfileAutofillService {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(dialogContext.tr('cancel')),
           ),
           FilledButton.icon(
             onPressed: () => Navigator.pop(dialogContext, true),
             icon: const Icon(Icons.auto_fix_high, size: 18),
-            label: const Text('Use Profile Data'),
+            label: Text(dialogContext.tr('use_profile_data')),
           ),
         ],
       ),
@@ -193,7 +193,7 @@ class ProfileAutofillService {
               color: Theme.of(context).colorScheme.onPrimary,
             ),
             const SizedBox(width: 12),
-            const Text('Profile data applied successfully'),
+            Text(context.tr('profile_data_applied')),
           ],
         ),
         backgroundColor: Theme.of(context).colorScheme.primary,

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../models/notes_data.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/ui_utils.dart';
+import '../../localization/app_localizations.dart';
 
 /// Dialog for creating or editing a note
 class NoteEditorDialog extends StatefulWidget {
@@ -87,7 +88,9 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      isEdit ? 'Edit Note' : 'Create New Note',
+                      isEdit
+                          ? context.tr('edit_note_title')
+                          : context.tr('create_note_title'),
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -111,9 +114,9 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
                     // Title
                     TextFormField(
                       controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Title *',
-                        hintText: 'Enter note title',
+                      decoration: InputDecoration(
+                        labelText: context.tr('note_title_label'),
+                        hintText: context.tr('note_title_hint'),
                         prefixIcon: Icon(Icons.title),
                       ),
                       autofocus: !isEdit,
@@ -123,9 +126,9 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
                     // Description
                     TextFormField(
                       controller: _descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
-                        hintText: 'Add more details...',
+                      decoration: InputDecoration(
+                        labelText: context.tr('note_description_label'),
+                        hintText: context.tr('note_description_hint'),
                         prefixIcon: Icon(Icons.description_outlined),
                         alignLabelWithHint: true,
                       ),
@@ -139,14 +142,14 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
                         Expanded(
                           child: DropdownButtonFormField<NoteType>(
                             value: _selectedType,
-                            decoration: const InputDecoration(
-                              labelText: 'Type',
+                            decoration: InputDecoration(
+                              labelText: context.tr('note_type_label'),
                               prefixIcon: Icon(Icons.category_outlined),
                             ),
                             items: NoteType.values.map((type) {
                               return DropdownMenuItem(
                                 value: type,
-                                child: Text(type.displayName),
+                                child: Text(context.tr(type.localizationKey)),
                               );
                             }).toList(),
                             onChanged: (value) {
@@ -160,8 +163,8 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
                         Expanded(
                           child: DropdownButtonFormField<NotePriority>(
                             value: _selectedPriority,
-                            decoration: const InputDecoration(
-                              labelText: 'Priority',
+                            decoration: InputDecoration(
+                              labelText: context.tr('note_priority_label'),
                               prefixIcon: Icon(Icons.flag_outlined),
                             ),
                             items: NotePriority.values.map((priority) {
@@ -178,7 +181,7 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    Text(priority.displayName),
+                                    Text(context.tr(priority.localizationKey)),
                                   ],
                                 ),
                               );
@@ -199,15 +202,15 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
                       onTap: _selectDueDate,
                       borderRadius: BorderRadius.circular(12),
                       child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Due Date',
+                        decoration: InputDecoration(
+                          labelText: context.tr('note_due_date_label'),
                           prefixIcon: Icon(Icons.calendar_today),
                           suffixIcon: Icon(Icons.arrow_drop_down),
                         ),
                         child: Text(
                           _dueDate != null
                               ? DateFormat('MMM dd, yyyy').format(_dueDate!)
-                              : 'No due date',
+                              : context.tr('no_due_date'),
                           style: theme.textTheme.bodyMedium,
                         ),
                       ),
@@ -219,7 +222,7 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
                         child: TextButton.icon(
                           onPressed: () => setState(() => _dueDate = null),
                           icon: const Icon(Icons.clear, size: 16),
-                          label: const Text('Clear date'),
+                          label: Text(context.tr('clear_date')),
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -234,9 +237,9 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
                     // Tags
                     TextFormField(
                       controller: _tagsController,
-                      decoration: const InputDecoration(
-                        labelText: 'Tags',
-                        hintText: 'Separate tags with commas',
+                      decoration: InputDecoration(
+                        labelText: context.tr('note_tags_label'),
+                        hintText: context.tr('note_tags_hint'),
                         prefixIcon: Icon(Icons.label_outlined),
                       ),
                     ),
@@ -261,13 +264,14 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                    child: Text(context.tr('cancel')),
                   ),
                   const SizedBox(width: 12),
                   FilledButton.icon(
                     onPressed: _saveNote,
                     icon: const Icon(Icons.check, size: 18),
-                    label: Text(isEdit ? 'Update' : 'Create'),
+                    label: Text(
+                        isEdit ? context.tr('update') : context.tr('create')),
                   ),
                 ],
               ),
@@ -295,7 +299,7 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
     final title = _titleController.text.trim();
 
     if (title.isEmpty) {
-      UIUtils.showError(context, 'Please enter a title');
+      UIUtils.showError(context, context.tr('please_enter_title'));
       return;
     }
 

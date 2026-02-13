@@ -17,7 +17,7 @@ import 'screens/profile/profile_screen.dart';
 import 'screens/applications/applications_screen.dart';
 import 'screens/notes/notes_screen.dart';
 import 'screens/settings/settings_screen.dart';
-// Added based on context of TabInfo usage
+import 'localization/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -73,6 +73,7 @@ class MyJobApp extends StatelessWidget {
             create: (_) => PdfPresetsProvider()..loadPresets()),
         ChangeNotifierProvider(create: (_) => NotesProvider()..loadNotes()),
         ChangeNotifierProvider(create: (_) => UpdateService()),
+        ChangeNotifierProvider(create: (_) => AppLocalizations()),
       ],
       child: Consumer<SettingsService>(
         builder: (context, settings, _) {
@@ -99,30 +100,34 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentTabIndex = 0;
+  bool _localizationInitialized = false;
 
-  // Define tabs (3-tab structure: Profile, Job Applications, Settings)
-  final List<TabInfo> _tabs = const [
-    TabInfo(
-      label: 'Profile',
-      icon: Icons.person_outline,
-      activeIcon: Icons.person,
-    ),
-    TabInfo(
-      label: 'Job Applications',
-      icon: Icons.work_outline,
-      activeIcon: Icons.work,
-    ),
-    TabInfo(
-      label: 'Notes',
-      icon: Icons.sticky_note_2_outlined,
-      activeIcon: Icons.sticky_note_2,
-    ),
-    TabInfo(
-      label: 'Settings',
-      icon: Icons.settings_outlined,
-      activeIcon: Icons.settings,
-    ),
-  ];
+  // Tabs built dynamically for localization
+  List<TabInfo> _buildTabs(BuildContext context) {
+    final loc = context.read<AppLocalizations>();
+    return [
+      TabInfo(
+        label: loc.tr('tab_profile'),
+        icon: Icons.person_outline,
+        activeIcon: Icons.person,
+      ),
+      TabInfo(
+        label: loc.tr('tab_job_applications'),
+        icon: Icons.work_outline,
+        activeIcon: Icons.work,
+      ),
+      TabInfo(
+        label: loc.tr('tab_notes'),
+        icon: Icons.sticky_note_2_outlined,
+        activeIcon: Icons.sticky_note_2,
+      ),
+      TabInfo(
+        label: loc.tr('tab_settings'),
+        icon: Icons.settings_outlined,
+        activeIcon: Icons.settings,
+      ),
+    ];
+  }
 
   // Screen widgets for each tab
   late final List<Widget> _screens;
@@ -138,6 +143,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     ];
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_localizationInitialized) {
+      _localizationInitialized = true;
+      final settings = context.read<SettingsService>();
+      final loc = context.read<AppLocalizations>();
+      loc.initialize(languageCode: settings.appLanguage);
+    }
+  }
+
   void _onTabChanged(int index) {
     setState(() {
       _currentTabIndex = index;
@@ -150,6 +166,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsService>();
     final appState = context.watch<AppState>();
+    // Watch localization so UI rebuilds on language change
+    context.watch<AppLocalizations>();
 
     // Sync with AppState changes (e.g., from other parts of the app)
     if (appState.currentNavIndex != _currentTabIndex) {
@@ -172,7 +190,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             accentColor: settings.accentColor,
             isDarkMode: settings.themeMode == ThemeMode.dark,
             onThemeToggle: settings.toggleTheme,
-            tabs: _tabs,
+            tabs: _buildTabs(context),
             currentTabIndex: _currentTabIndex,
             onTabChanged: _onTabChanged,
           ),

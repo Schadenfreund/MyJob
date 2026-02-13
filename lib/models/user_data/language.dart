@@ -79,4 +79,6 @@ enum LanguageProficiency {
         return 'Basic';
     }
   }
+
+  String get localizationKey => 'lang_proficiency_$name';
 }

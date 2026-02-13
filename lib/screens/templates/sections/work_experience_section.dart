@@ -4,6 +4,7 @@ import '../../../providers/user_data_provider.dart';
 import '../../../models/user_data/work_experience.dart';
 import '../../../dialogs/experience_edit_dialog.dart';
 import '../../../constants/ui_constants.dart';
+import '../../../localization/app_localizations.dart';
 
 /// Work experience management section
 class WorkExperienceSection extends StatelessWidget {
@@ -66,7 +67,7 @@ class WorkExperienceSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Work Experience',
+                  context.tr('work_experience'),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -93,7 +94,7 @@ class WorkExperienceSection extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: () => _showAddExperienceDialog(context),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Add'),
+                  label: Text(context.tr('add')),
                   style: UIConstants.getSecondaryButtonStyle(context),
                 ),
               ],
@@ -119,7 +120,7 @@ class WorkExperienceSection extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'No work experience added yet',
+              context.tr('no_experience_added'),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.textTheme.bodySmall?.color,
               ),
@@ -198,7 +199,7 @@ class WorkExperienceSection extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          'Current',
+                          context.tr('current'),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -281,7 +282,7 @@ class WorkExperienceSection extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        '+ ${experience.responsibilities.length - 3} more',
+                        context.tr('plus_more', {'count': '${experience.responsibilities.length - 3}'}),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.w500,
@@ -297,16 +298,20 @@ class WorkExperienceSection extends StatelessWidget {
     );
   }
 
+  static void showAddDialog(BuildContext context) {
+    _showExperienceDialogImpl(context, null);
+  }
+
   void _showAddExperienceDialog(BuildContext context) {
-    _showExperienceDialog(context, null);
+    _showExperienceDialogImpl(context, null);
   }
 
   void _showEditExperienceDialog(
       BuildContext context, WorkExperience experience) {
-    _showExperienceDialog(context, experience);
+    _showExperienceDialogImpl(context, experience);
   }
 
-  void _showExperienceDialog(
+  static void _showExperienceDialogImpl(
       BuildContext context, WorkExperience? existingExp) async {
     final result = await showDialog<WorkExperience>(
       context: context,

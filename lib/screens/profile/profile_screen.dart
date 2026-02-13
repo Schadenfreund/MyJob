@@ -21,6 +21,7 @@ import '../templates/sections/skills_section.dart';
 import '../templates/sections/languages_section.dart';
 import '../templates/sections/education_section.dart';
 import '../templates/sections/interests_section.dart';
+import '../../localization/app_localizations.dart';
 
 /// Profile Screen - Central hub for all user data
 ///
@@ -63,9 +64,8 @@ class ProfileScreen extends StatelessWidget {
 
     return UIUtils.buildSectionHeader(
       context,
-      title: 'Profile Template',
-      subtitle:
-          'Start here! Fill out your master profile data once, then use it for all job applications.',
+      title: context.tr('profile_title'),
+      subtitle: context.tr('profile_subtitle'),
       icon: Icons.account_circle_outlined,
       action: Row(
         mainAxisSize: MainAxisSize.min,
@@ -75,7 +75,8 @@ class ProfileScreen extends StatelessWidget {
             IconButton.filledTonal(
               onPressed: () => _confirmDeleteProfile(context),
               icon: const Icon(Icons.delete_outline, size: 20),
-              tooltip: 'Clear ${currentLang.code.toUpperCase()} Profile',
+              tooltip: context.tr('clear_profile_tooltip',
+                  {'lang': currentLang.code.toUpperCase()}),
               style: IconButton.styleFrom(
                 backgroundColor: theme.colorScheme.error.withValues(alpha: 0.1),
                 foregroundColor: theme.colorScheme.error,
@@ -157,7 +158,7 @@ class ProfileScreen extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          'Import & Export',
+                          context.tr('import_export'),
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
@@ -171,7 +172,7 @@ class ProfileScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            'START HERE',
+                            context.tr('start_here'),
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
@@ -184,7 +185,7 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Import YAML files to populate your profile data, or export your current profile for backup',
+                      context.tr('import_export_subtitle'),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color:
                             theme.textTheme.bodySmall?.color?.withOpacity(0.8),
@@ -198,14 +199,14 @@ class ProfileScreen extends StatelessWidget {
               Row(
                 children: [
                   AppCardActionButton(
-                    label: 'Import',
+                    label: context.tr('import'),
                     icon: Icons.upload,
                     onPressed: () => _showImportDialog(context),
                     isFilled: true,
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   AppCardActionButton(
-                    label: 'Export',
+                    label: context.tr('export'),
                     icon: Icons.download,
                     onPressed: () => _showExportDialog(context),
                   ),
@@ -225,44 +226,74 @@ class ProfileScreen extends StatelessWidget {
     bool isSelected,
   ) {
     final theme = Theme.of(context);
+    final accentColor = theme.colorScheme.primary;
 
-    return OutlinedButton(
-      onPressed: () => provider.switchLanguage(language),
-      style: OutlinedButton.styleFrom(
-        backgroundColor: isSelected
-            ? theme.colorScheme.primary.withOpacity(0.08)
-            : Colors.transparent,
-        foregroundColor: isSelected
-            ? theme.colorScheme.primary
-            : theme.textTheme.bodyMedium?.color,
-        side: BorderSide(
+    return InkWell(
+      onTap: () => provider.switchLanguage(language),
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: AppDurations.quick,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
           color: isSelected
-              ? theme.colorScheme.primary
-              : theme.colorScheme.outline.withOpacity(0.3),
-          width: isSelected ? 1.5 : 1,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            language.flag,
-            style: const TextStyle(fontSize: 16),
+              ? accentColor.withValues(alpha: 0.12)
+              : theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? accentColor
+                : AppColors.getColor(
+                        context, AppColors.lightBorder, AppColors.darkBorder)
+                    .withValues(alpha: 0.5),
+            width: isSelected ? 2 : 1,
           ),
-          const SizedBox(width: 6),
-          Text(
-            language.code.toUpperCase(),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              letterSpacing: 0.5,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? accentColor.withValues(alpha: 0.2)
+                    : theme.colorScheme.surfaceContainerHighest,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? accentColor.withValues(alpha: 0.6)
+                      : theme.dividerColor.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  language.code.toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: isSelected
+                        ? accentColor
+                        : theme.textTheme.bodySmall?.color
+                            ?.withValues(alpha: 0.7),
+                    fontSize: 10,
+                  ),
+                ),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Text(
+              language.label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected
+                    ? accentColor
+                    : theme.textTheme.bodyMedium?.color
+                        ?.withValues(alpha: 0.8),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -273,7 +304,7 @@ class ProfileScreen extends StatelessWidget {
       final fileResult = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['yaml', 'yml'],
-        dialogTitle: 'Select YAML File to Import',
+        dialogTitle: context.tr('select_yaml_file'),
       );
 
       if (fileResult == null || fileResult.files.single.path == null) {
@@ -290,12 +321,13 @@ class ProfileScreen extends StatelessWidget {
         );
 
         if (result == true && context.mounted) {
-          UIUtils.showSuccess(context, 'Profile data imported successfully!');
+          UIUtils.showSuccess(context, context.tr('profile_imported'));
         }
       }
     } catch (e) {
       if (context.mounted) {
-        UIUtils.showError(context, 'Error selecting file: $e');
+        UIUtils.showError(context,
+            context.tr('error_selecting_file', {'error': e.toString()}));
       }
     }
   }
@@ -306,7 +338,7 @@ class ProfileScreen extends StatelessWidget {
 
     if (profile == null) {
       if (context.mounted) {
-        UIUtils.showError(context, 'No profile data to export');
+        UIUtils.showError(context, context.tr('no_profile_to_export'));
       }
       return;
     }
@@ -317,7 +349,7 @@ class ProfileScreen extends StatelessWidget {
 
       // Show save file dialog
       final result = await FilePicker.platform.saveFile(
-        dialogTitle: 'Export Profile as YAML',
+        dialogTitle: context.tr('export_profile_title'),
         fileName: 'profile_${profile.language.code}.yaml',
         type: FileType.custom,
         allowedExtensions: ['yaml', 'yml'],
@@ -328,12 +360,13 @@ class ProfileScreen extends StatelessWidget {
         await file.writeAsString(yamlContent);
 
         if (context.mounted) {
-          context.showSuccessSnackBar('Profile exported successfully!');
+          context.showSuccessSnackBar(context.tr('profile_exported'));
         }
       }
     } catch (e) {
       if (context.mounted) {
-        context.showErrorSnackBar('Export failed: $e');
+        context.showErrorSnackBar(
+            context.tr('export_failed', {'error': e.toString()}));
       }
     }
   }
@@ -464,17 +497,20 @@ class ProfileScreen extends StatelessWidget {
 
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
-      title: 'Delete ${lang.code.toUpperCase()} Profile?',
-      message:
-          'This will permanently clear all personal info, work experience, skills, and other data for the ${lang.code.toUpperCase()} profile. This cannot be undone.',
-      confirmLabel: 'Delete Profile',
+      title:
+          context.tr('delete_profile_title', {'lang': lang.code.toUpperCase()}),
+      message: context
+          .tr('delete_profile_message', {'lang': lang.code.toUpperCase()}),
+      confirmLabel: context.tr('delete_profile_confirm'),
     );
 
     if (confirmed && context.mounted) {
       await provider.clearCurrentProfile();
       if (context.mounted) {
         context.showSuccessSnackBar(
-            '${lang.code.toUpperCase()} profile data cleared');
+            '${lang.code.toUpperCase()} ${context.tr('profile_cleared', {
+              'lang': lang.code.toUpperCase()
+            })}');
       }
     }
   }
@@ -495,11 +531,16 @@ class _ProfileSections extends StatelessWidget {
         // Personal Info Section - Wrapped (has Add button in inner widget)
         ProfileSectionCard(
           cardId: 'personal_info',
-          title: 'Personal Information',
+          title: context.tr('personal_info'),
           icon: Icons.person_outline,
           count: userDataProvider.personalInfo != null ? 1 : 0,
-          actionLabel: '',
-          onActionPressed: null,
+          actionLabel: userDataProvider.personalInfo != null
+              ? context.tr('edit')
+              : context.tr('add'),
+          actionIcon: userDataProvider.personalInfo != null
+              ? Icons.edit
+              : Icons.add,
+          onActionPressed: () => PersonalInfoSection.showEditDialog(context),
           collapsedPreview: userDataProvider.personalInfo != null
               ? Row(
                   children: [
@@ -569,7 +610,7 @@ class _ProfileSections extends StatelessWidget {
                   ],
                 )
               : Text(
-                  'No personal information added',
+                  context.tr('no_personal_info'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
                   ),
@@ -585,14 +626,15 @@ class _ProfileSections extends StatelessWidget {
         // Work Experience Section - Wrapped
         ProfileSectionCard(
           cardId: 'work_experience',
-          title: 'Work Experience',
+          title: context.tr('work_experience'),
           icon: Icons.work_outline,
           count: userDataProvider.experiences.length,
-          actionLabel: '',
-          onActionPressed: null,
+          actionLabel: context.tr('add'),
+          actionIcon: Icons.add,
+          onActionPressed: () => WorkExperienceSection.showAddDialog(context),
           collapsedPreview: userDataProvider.experiences.isEmpty
               ? Text(
-                  'No work experience added',
+                  context.tr('no_work_experience'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
                   ),
@@ -652,15 +694,15 @@ class _ProfileSections extends StatelessWidget {
         // Skills Section - Wrapped
         ProfileSectionCard(
           cardId: 'skills',
-          title: 'Skills',
+          title: context.tr('skills'),
           icon: Icons.psychology_outlined,
           count: userDataProvider.skills.length,
-          actionLabel: 'Add',
+          actionLabel: context.tr('add'),
           actionIcon: Icons.add,
           onActionPressed: () => SkillsSection.showAddSkillDialog(context),
           collapsedPreview: userDataProvider.skills.isEmpty
               ? Text(
-                  'No skills added',
+                  context.tr('no_skills_added'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
                   ),
@@ -713,16 +755,16 @@ class _ProfileSections extends StatelessWidget {
         // Languages Section - Wrapped
         ProfileSectionCard(
           cardId: 'languages',
-          title: 'Languages',
+          title: context.tr('languages_section'),
           icon: Icons.language,
           count: userDataProvider.languages.length,
-          actionLabel: 'Add',
+          actionLabel: context.tr('add'),
           actionIcon: Icons.add,
           onActionPressed: () =>
               LanguagesSection.showAddLanguageDialog(context),
           collapsedPreview: userDataProvider.languages.isEmpty
               ? Text(
-                  'No languages added',
+                  context.tr('no_languages_added'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
                   ),
@@ -774,15 +816,15 @@ class _ProfileSections extends StatelessWidget {
         // Interests Section
         ProfileSectionCard(
           cardId: 'interests',
-          title: 'Interests',
+          title: context.tr('interests'),
           icon: Icons.interests_outlined,
           count: userDataProvider.interests.length,
-          actionLabel: 'Add',
+          actionLabel: context.tr('add'),
           actionIcon: Icons.add,
           onActionPressed: () => InterestsSection.showAddDialog(context),
           collapsedPreview: userDataProvider.interests.isEmpty
               ? Text(
-                  'No interests added yet',
+                  context.tr('no_interests_added_yet'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
                   ),
@@ -819,15 +861,15 @@ class _ProfileSections extends StatelessWidget {
         // Education Section
         ProfileSectionCard(
           cardId: 'education',
-          title: 'Education',
+          title: context.tr('education'),
           icon: Icons.school_outlined,
           count: userDataProvider.education.length,
-          actionLabel: 'Add',
+          actionLabel: context.tr('add'),
           actionIcon: Icons.add,
           onActionPressed: () => EducationSection.showAddDialog(context),
           collapsedPreview: userDataProvider.education.isEmpty
               ? Text(
-                  'No education added',
+                  context.tr('no_education_added'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.textTheme.bodySmall?.color
                         ?.withValues(alpha: 0.6),
@@ -911,17 +953,17 @@ class _ProfileSections extends StatelessWidget {
 
     return ProfileSectionCard(
       cardId: 'profile_summary',
-      title: 'Profile Summary',
+      title: context.tr('profile_summary'),
       icon: Icons.description_outlined,
       count: profileSummary.isNotEmpty ? 1 : 0,
-      actionLabel: 'Preview PDF',
+      actionLabel: context.tr('preview_pdf'),
       actionIcon: Icons.picture_as_pdf_outlined,
       onActionPressed: profileSummary.isNotEmpty
           ? () => _showMasterProfilePdfPreview(context, isCV: true)
           : null,
       collapsedPreview: Text(
         profileSummary.isEmpty
-            ? 'No profile summary set'
+            ? context.tr('no_profile_summary')
             : '${profileSummary.split('\n').first.substring(0, profileSummary.split('\n').first.length > 50 ? 50 : profileSummary.split('\n').first.length)}${profileSummary.length > 50 ? '...' : ''}',
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
@@ -930,12 +972,8 @@ class _ProfileSections extends StatelessWidget {
       content: ProfileLongTextEditor(
         initialValue: profileSummary,
         onSave: (val) => userDataProvider.updateProfileSummary(val),
-        hintText: 'Enter your professional summary...\n\n'
-            'Example: Experienced professional with 5+ years in software development, '
-            'specializing in full-stack solutions and team leadership.',
-        helpText:
-            'This summary will be used as the starting point for all new job applications. '
-            'You can customize it for each specific job.',
+        hintText: context.tr('profile_summary_hint'),
+        helpText: context.tr('profile_summary_help'),
         minLines: 4,
       ),
     );
@@ -950,18 +988,21 @@ class _ProfileSections extends StatelessWidget {
 
     return ProfileSectionCard(
       cardId: 'default_cover_letter',
-      title: 'Default Cover Letter',
+      title: context.tr('default_cover_letter'),
       icon: Icons.article_outlined,
       count: paragraphCount,
-      actionLabel: 'Preview PDF',
+      actionLabel: context.tr('preview_pdf'),
       actionIcon: Icons.picture_as_pdf_outlined,
       onActionPressed: coverLetterBody.isNotEmpty
           ? () => _showMasterProfilePdfPreview(context, isCV: false)
           : null,
       collapsedPreview: Text(
         coverLetterBody.isEmpty
-            ? 'No default cover letter set'
-            : '$paragraphCount paragraph${paragraphCount == 1 ? '' : 's'}',
+            ? context.tr('no_default_cover_letter')
+            : context.tr('paragraph_count', {
+                'count': paragraphCount.toString(),
+                's': paragraphCount == 1 ? '' : 's'
+              }),
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
         ),
@@ -969,12 +1010,8 @@ class _ProfileSections extends StatelessWidget {
       content: ProfileLongTextEditor(
         initialValue: coverLetterBody,
         onSave: (val) => userDataProvider.updateDefaultCoverLetterBody(val),
-        hintText: 'Enter your default cover letter body...\n\n'
-            'Example:\nDear Hiring Manager,\n\n'
-            'I am writing to express my interest in the [Position] role at [Company]...',
-        helpText:
-            'This text will be used as the default body for new cover letters. '
-            'You can customize it for each job application later.',
+        hintText: context.tr('cover_letter_hint'),
+        helpText: context.tr('cover_letter_help'),
         minLines: 8,
       ),
     );
@@ -988,7 +1025,7 @@ class _ProfileSections extends StatelessWidget {
     final profile = userDataProvider.currentProfile;
 
     if (profile == null) {
-      UIUtils.showError(context, 'No profile data available');
+      UIUtils.showError(context, context.tr('no_profile_data'));
       return;
     }
 

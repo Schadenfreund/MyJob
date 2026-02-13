@@ -4,6 +4,7 @@ import '../../providers/templates_provider.dart';
 import '../../models/cover_letter_template.dart';
 import '../../widgets/tabbed_cover_letter_editor.dart';
 import '../../dialogs/cover_letter_template_pdf_preview_dialog.dart';
+import '../../localization/app_localizations.dart';
 
 /// Cover Letter Template Editor Screen - Streamlined content-focused editor
 ///
@@ -40,7 +41,7 @@ class _CoverLetterTemplateEditorScreenState
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Template not found')),
+          SnackBar(content: Text(context.tr('template_not_found'))),
         );
       }
       return;
@@ -65,21 +66,21 @@ class _CoverLetterTemplateEditorScreenState
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Discard Changes?'),
-        content: const Text(
-          'You have unsaved changes. Are you sure you want to discard them?',
+        title: Text(context.tr('discard_changes')),
+        content: Text(
+          context.tr('discard_changes_message'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Discard'),
+            child: Text(context.tr('discard')),
           ),
         ],
       ),
@@ -94,15 +95,15 @@ class _CoverLetterTemplateEditorScreenState
 
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Loading...')),
+        appBar: AppBar(title: Text(context.tr('loading'))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_template == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Error')),
-        body: const Center(child: Text('Template not found')),
+        appBar: AppBar(title: Text(context.tr('error'))),
+        body: Center(child: Text(context.tr('template_not_found'))),
       );
     }
 
@@ -119,7 +120,7 @@ class _CoverLetterTemplateEditorScreenState
         appBar: AppBar(
           title: Row(
             children: [
-              Text('Edit: ${_template!.name}'),
+              Text('${context.tr('edit')}: ${_template!.name}'),
               if (_hasUnsavedChanges) ...[
                 const SizedBox(width: 8),
                 Container(
@@ -132,7 +133,7 @@ class _CoverLetterTemplateEditorScreenState
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'Unsaved',
+                    context.tr('unsaved'),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onPrimaryContainer,
                       fontWeight: FontWeight.w600,
@@ -147,7 +148,7 @@ class _CoverLetterTemplateEditorScreenState
               TextButton.icon(
                 onPressed: _save,
                 icon: const Icon(Icons.save, size: 18),
-                label: const Text('Save'),
+                label: Text(context.tr('save')),
                 style: TextButton.styleFrom(
                   foregroundColor: theme.colorScheme.primary,
                 ),
@@ -156,7 +157,7 @@ class _CoverLetterTemplateEditorScreenState
             ElevatedButton.icon(
               onPressed: _handlePreview,
               icon: const Icon(Icons.visibility, size: 18),
-              label: const Text('Preview PDF'),
+              label: Text(context.tr('preview_pdf')),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -196,7 +197,7 @@ class _CoverLetterTemplateEditorScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Template saved successfully'),
+            content: Text(context.tr('template_saved')),
             backgroundColor: Theme.of(context).colorScheme.primary,
             duration: const Duration(seconds: 2),
           ),
@@ -206,7 +207,7 @@ class _CoverLetterTemplateEditorScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save template: ${e.toString()}'),
+            content: Text('${context.tr('template_save_failed')}: ${e.toString()}'),
             backgroundColor: Theme.of(context).colorScheme.error,
             duration: const Duration(seconds: 5),
           ),
@@ -221,19 +222,19 @@ class _CoverLetterTemplateEditorScreenState
       // Show saving indicator
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                SizedBox(
+                const SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-                SizedBox(width: 16),
-                Text('Saving changes...'),
+                const SizedBox(width: 16),
+                Text(context.tr('saving_changes')),
               ],
             ),
-            duration: Duration(seconds: 1),
+            duration: const Duration(seconds: 1),
           ),
         );
       }

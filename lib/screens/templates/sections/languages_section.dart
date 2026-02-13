@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../providers/user_data_provider.dart';
-import '../../../models/user_data/language.dart';
 import '../../../constants/ui_constants.dart';
+import '../../../localization/app_localizations.dart';
+import '../../../models/user_data/language.dart';
+import '../../../providers/user_data_provider.dart';
 
 /// Languages management section
 class LanguagesSection extends StatelessWidget {
@@ -65,7 +66,7 @@ class LanguagesSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Languages',
+                  context.tr('languages_section'),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -93,7 +94,7 @@ class LanguagesSection extends StatelessWidget {
                   onPressed: () =>
                       LanguagesSection.showAddLanguageDialog(context),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Add'),
+                  label: Text(context.tr('add')),
                   style: UIConstants.getSecondaryButtonStyle(context),
                 ),
               ],
@@ -119,7 +120,7 @@ class LanguagesSection extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'No languages added yet',
+              context.tr('no_languages_added'),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.textTheme.bodySmall?.color,
               ),
@@ -191,7 +192,7 @@ class LanguagesSection extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    language.proficiency.displayName,
+                    context.tr(language.proficiency.localizationKey),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -241,7 +242,7 @@ class LanguagesSection extends StatelessWidget {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text(existingLang == null ? 'Add Language' : 'Edit Language'),
+          title: Text(existingLang == null ? context.tr('add_language') : context.tr('edit_language')),
           content: SizedBox(
             width: 400,
             child: Column(
@@ -249,24 +250,24 @@ class LanguagesSection extends StatelessWidget {
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Language *',
-                    prefixIcon: Icon(Icons.language),
-                    hintText: 'e.g., English, Spanish',
+                  decoration: InputDecoration(
+                    labelText: context.tr('language_name_label'),
+                    prefixIcon: const Icon(Icons.language),
+                    hintText: context.tr('language_name_hint'),
                   ),
                   autofocus: true,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<LanguageProficiency>(
                   initialValue: selectedProficiency,
-                  decoration: const InputDecoration(
-                    labelText: 'Proficiency Level',
-                    prefixIcon: Icon(Icons.trending_up),
+                  decoration: InputDecoration(
+                    labelText: context.tr('proficiency_level'),
+                    prefixIcon: const Icon(Icons.trending_up),
                   ),
                   items: LanguageProficiency.values.map((proficiency) {
                     return DropdownMenuItem(
                       value: proficiency,
-                      child: Text(proficiency.displayName),
+                      child: Text(context.tr(proficiency.localizationKey)),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -289,18 +290,18 @@ class LanguagesSection extends StatelessWidget {
                 },
                 icon: const Icon(Icons.delete, color: Colors.red),
                 label:
-                    const Text('Delete', style: TextStyle(color: Colors.red)),
+                    Text(context.tr('delete'), style: const TextStyle(color: Colors.red)),
               ),
             const Spacer(),
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
+              child: Text(context.tr('cancel')),
             ),
             ElevatedButton(
               onPressed: () async {
                 if (nameController.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Language name is required')),
+                    SnackBar(content: Text(context.tr('please_enter_language'))),
                   );
                   return;
                 }
@@ -324,7 +325,7 @@ class LanguagesSection extends StatelessWidget {
 
                 if (dialogContext.mounted) Navigator.pop(dialogContext);
               },
-              child: const Text('Save'),
+              child: Text(context.tr('save')),
             ),
           ],
         ),

@@ -14,11 +14,13 @@ class SettingsService extends ChangeNotifier {
   TemplateStyle _defaultCvTemplate = TemplateStyle.electric;
   TemplateStyle _defaultCoverLetterTemplate = TemplateStyle.electric;
   String? _backupPath;
+  String _appLanguage = 'en';
 
   ThemeMode get themeMode => _themeMode;
   Color get accentColor => _accentColor;
   bool get isDarkMode => _themeMode == ThemeMode.dark;
   String? get backupPath => _backupPath;
+  String get appLanguage => _appLanguage;
   TemplateStyle get defaultCvTemplate => _defaultCvTemplate;
   TemplateStyle get defaultCoverLetterTemplate => _defaultCoverLetterTemplate;
 
@@ -78,6 +80,7 @@ class SettingsService extends ChangeNotifier {
       }
 
       _backupPath = json['backupPath'] as String?;
+      _appLanguage = json['appLanguage'] as String? ?? 'en';
 
       debugPrint('Settings loaded successfully');
       notifyListeners();
@@ -96,6 +99,7 @@ class SettingsService extends ChangeNotifier {
         'defaultCvTemplate': _defaultCvTemplate.toJson(),
         'defaultCoverLetterTemplate': _defaultCoverLetterTemplate.toJson(),
         'backupPath': _backupPath,
+        'appLanguage': _appLanguage,
       };
 
       await file.writeAsString(
@@ -140,6 +144,12 @@ class SettingsService extends ChangeNotifier {
     await _saveSettings();
   }
 
+  Future<void> setAppLanguage(String languageCode) async {
+    _appLanguage = languageCode;
+    notifyListeners();
+    await _saveSettings();
+  }
+
   Future<void> setBackupPath(String? path) async {
     _backupPath = path;
     notifyListeners();
@@ -152,6 +162,7 @@ class SettingsService extends ChangeNotifier {
     _defaultCvTemplate = TemplateStyle.electric;
     _defaultCoverLetterTemplate = TemplateStyle.electric;
     _backupPath = null;
+    _appLanguage = 'en';
 
     notifyListeners();
     await _saveSettings();

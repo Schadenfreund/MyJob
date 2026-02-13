@@ -5,6 +5,7 @@ import '../../../models/user_data/skill.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_card.dart';
 import '../../../utils/ui_utils.dart';
+import '../../../localization/app_localizations.dart';
 
 /// Skills management section
 class SkillsSection extends StatelessWidget {
@@ -29,11 +30,11 @@ class SkillsSection extends StatelessWidget {
     }
 
     return AppCard(
-      title: 'Skills',
+      title: context.tr('skills'),
       icon: Icons.psychology_outlined,
-      description: 'Manage your skills and expertise levels',
+      description: context.tr('skills_section_desc'),
       trailing: AppCardActionButton(
-        label: 'Add Skill',
+        label: context.tr('add_skill'),
         icon: Icons.add,
         onPressed: () => SkillsSection.showAddSkillDialog(context),
       ),
@@ -47,12 +48,12 @@ class SkillsSection extends StatelessWidget {
     return UIUtils.buildEmptyState(
       context,
       icon: Icons.psychology_outlined,
-      title: 'No Skills Added',
-      message: 'Add your skills to highlight your expertise and strengths.',
+      title: context.tr('no_skills_added'),
+      message: context.tr('no_skills_message'),
       action: FilledButton.icon(
         onPressed: () => SkillsSection.showAddSkillDialog(context),
         icon: const Icon(Icons.add, size: 18),
-        label: const Text('Add Your First Skill'),
+        label: Text(context.tr('add_first_skill')),
       ),
     );
   }
@@ -82,7 +83,7 @@ class SkillsSection extends StatelessWidget {
         }),
         // Uncategorized skills
         if (uncategorized.isNotEmpty)
-          _buildSkillCategory(context, 'Other', uncategorized),
+          _buildSkillCategory(context, context.tr('other'), uncategorized),
       ],
     );
   }
@@ -198,7 +199,7 @@ class SkillsSection extends StatelessWidget {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text(existingSkill == null ? 'Add Skill' : 'Edit Skill'),
+          title: Text(existingSkill == null ? context.tr('add_skill') : context.tr('edit_skill')),
           content: SizedBox(
             width: 400,
             child: Column(
@@ -206,32 +207,32 @@ class SkillsSection extends StatelessWidget {
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Skill Name *',
-                    prefixIcon: Icon(Icons.psychology),
+                  decoration: InputDecoration(
+                    labelText: '${context.tr('skill_name_label')} *',
+                    prefixIcon: const Icon(Icons.psychology),
                   ),
                   autofocus: true,
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: categoryController,
-                  decoration: const InputDecoration(
-                    labelText: 'Category',
-                    prefixIcon: Icon(Icons.category),
-                    hintText: 'e.g., Professional, Technical',
+                  decoration: InputDecoration(
+                    labelText: context.tr('category_optional'),
+                    prefixIcon: const Icon(Icons.category),
+                    hintText: context.tr('category_hint'),
                   ),
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<SkillLevel>(
                   initialValue: selectedLevel,
-                  decoration: const InputDecoration(
-                    labelText: 'Proficiency Level',
-                    prefixIcon: Icon(Icons.trending_up),
+                  decoration: InputDecoration(
+                    labelText: context.tr('proficiency_level'),
+                    prefixIcon: const Icon(Icons.trending_up),
                   ),
                   items: SkillLevel.values.map((level) {
                     return DropdownMenuItem(
                       value: level,
-                      child: Text(level.displayName),
+                      child: Text(context.tr(level.localizationKey)),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -254,18 +255,18 @@ class SkillsSection extends StatelessWidget {
                 },
                 icon: const Icon(Icons.delete, color: Colors.red),
                 label:
-                    const Text('Delete', style: TextStyle(color: Colors.red)),
+                    Text(context.tr('delete'), style: const TextStyle(color: Colors.red)),
               ),
             const Spacer(),
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
+              child: Text(context.tr('cancel')),
             ),
             ElevatedButton(
               onPressed: () async {
                 if (nameController.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Skill name is required')),
+                    SnackBar(content: Text(context.tr('please_enter_skill'))),
                   );
                   return;
                 }
@@ -293,7 +294,7 @@ class SkillsSection extends StatelessWidget {
 
                 if (dialogContext.mounted) Navigator.pop(dialogContext);
               },
-              child: const Text('Save'),
+              child: Text(context.tr('save')),
             ),
           ],
         ),

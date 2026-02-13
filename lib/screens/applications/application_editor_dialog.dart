@@ -8,6 +8,7 @@ import '../../models/job_application.dart';
 import '../../constants/app_constants.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/status_badge.dart';
+import '../../localization/app_localizations.dart';
 
 class ApplicationEditorDialog extends StatefulWidget {
   const ApplicationEditorDialog({
@@ -105,8 +106,9 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
             constraints: const BoxConstraints(maxWidth: 700, maxHeight: 800),
             child: Scaffold(
               appBar: AppBar(
-                title:
-                    Text(_isEditing ? 'Edit Application' : 'New Application'),
+                title: Text(_isEditing
+                    ? context.tr('edit_application_title')
+                    : context.tr('new_application_title')),
                 leading: IconButton(
                   icon: Icon(Icons.close, color: theme.colorScheme.primary),
                   onPressed: () => Navigator.pop(context),
@@ -126,7 +128,8 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                   children: [
                     // Status selector (only for editing)
                     if (_isEditing) ...[
-                      Text('Status', style: theme.textTheme.labelLarge),
+                      Text(context.tr('status_label'),
+                          style: theme.textTheme.labelLarge),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -157,7 +160,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                     ],
 
                     // Job Information Section
-                    Text('Job Information',
+                    Text(context.tr('job_info_section'),
                         style: theme.textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 16),
@@ -165,14 +168,14 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                     // Company
                     TextFormField(
                       controller: _companyController,
-                      decoration: const InputDecoration(
-                        labelText: 'Company *',
-                        hintText: 'Enter company name',
+                      decoration: InputDecoration(
+                        labelText: context.tr('company_label'),
+                        hintText: context.tr('company_hint'),
                         prefixIcon: Icon(Icons.business, size: 20),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Company is required';
+                          return context.tr('company_required');
                         }
                         return null;
                       },
@@ -182,14 +185,14 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                     // Position
                     TextFormField(
                       controller: _positionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Position *',
-                        hintText: 'Enter job title',
+                      decoration: InputDecoration(
+                        labelText: context.tr('position_label'),
+                        hintText: context.tr('position_hint'),
                         prefixIcon: Icon(Icons.work, size: 20),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Position is required';
+                          return context.tr('position_required');
                         }
                         return null;
                       },
@@ -201,11 +204,11 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                       controller: _subjectController,
                       decoration: InputDecoration(
                         labelText: _baseLanguage == DocumentLanguage.de
-                            ? 'Betreff / Referenz'
-                            : 'Subject / Reference',
+                            ? context.tr('subject_label_de')
+                            : context.tr('subject_label_en'),
                         hintText: _baseLanguage == DocumentLanguage.de
-                            ? 'z.B. Bewerbung als ...'
-                            : 'e.g. Application for ...',
+                            ? context.tr('subject_hint_de')
+                            : context.tr('subject_hint_en'),
                         prefixIcon: const Icon(Icons.subject, size: 20),
                       ),
                     ),
@@ -214,9 +217,9 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                     // Location
                     TextFormField(
                       controller: _locationController,
-                      decoration: const InputDecoration(
-                        labelText: 'Location',
-                        hintText: 'City, Country or Remote',
+                      decoration: InputDecoration(
+                        labelText: context.tr('location_label'),
+                        hintText: context.tr('location_hint'),
                         prefixIcon: Icon(Icons.location_on, size: 20),
                       ),
                     ),
@@ -225,9 +228,9 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                     // Job URL
                     TextFormField(
                       controller: _jobUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'Job URL',
-                        hintText: 'Link to job posting',
+                      decoration: InputDecoration(
+                        labelText: context.tr('job_url_label'),
+                        hintText: context.tr('job_url_hint'),
                         prefixIcon: Icon(Icons.link, size: 20),
                       ),
                       keyboardType: TextInputType.url,
@@ -237,9 +240,9 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                     // Salary
                     TextFormField(
                       controller: _salaryController,
-                      decoration: const InputDecoration(
-                        labelText: 'Salary Range',
-                        hintText: 'e.g., 50,000 - 70,000 EUR',
+                      decoration: InputDecoration(
+                        labelText: context.tr('salary_label'),
+                        hintText: context.tr('salary_hint'),
                         prefixIcon: Icon(Icons.attach_money, size: 20),
                       ),
                     ),
@@ -249,12 +252,12 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                     if (!_isEditing) ...[
                       const SizedBox(height: AppSpacing.md),
                       const SizedBox(height: 24),
-                      Text('Application Language',
+                      Text(context.tr('app_language_section'),
                           style: theme.textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       Text(
-                        'Select the language for your application documents',
+                        context.tr('app_language_desc'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.textTheme.bodySmall?.color
                               ?.withValues(alpha: 0.7),
@@ -262,36 +265,16 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                       ),
                       const SizedBox(height: 16),
                       // Language selector with consistent styling
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: theme.colorScheme.outline.withOpacity(0.2),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            for (var i = 0;
-                                i < DocumentLanguage.values.length;
-                                i++) ...[
-                              if (i > 0)
-                                Container(
-                                  width: 1,
-                                  height: 32,
-                                  color: theme.colorScheme.outline
-                                      .withOpacity(0.2),
-                                ),
-                              _buildLanguageOption(
-                                theme,
-                                DocumentLanguage.values[i],
-                                _baseLanguage == DocumentLanguage.values[i],
-                              ),
-                            ],
-                          ],
-                        ),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: DocumentLanguage.values.map((lang) {
+                          return _buildLanguageOption(
+                            theme,
+                            lang,
+                            _baseLanguage == lang,
+                          );
+                        }).toList(),
                       ),
                       const SizedBox(height: 24),
                     ],
@@ -299,16 +282,16 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                     // Contact section
                     const SizedBox(height: AppSpacing.md),
                     const SizedBox(height: 24),
-                    Text('Contact Person (Optional)',
+                    Text(context.tr('contact_section'),
                         style: theme.textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 16),
 
                     TextFormField(
                       controller: _contactPersonController,
-                      decoration: const InputDecoration(
-                        labelText: 'Name',
-                        hintText: 'Contact person name',
+                      decoration: InputDecoration(
+                        labelText: context.tr('contact_name_label'),
+                        hintText: context.tr('contact_name_hint'),
                         prefixIcon: Icon(Icons.person, size: 20),
                       ),
                     ),
@@ -316,9 +299,9 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
 
                     TextFormField(
                       controller: _contactEmailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        hintText: 'Contact email',
+                      decoration: InputDecoration(
+                        labelText: context.tr('contact_email_label'),
+                        hintText: context.tr('contact_email_hint'),
                         prefixIcon: Icon(Icons.email, size: 20),
                       ),
                       keyboardType: TextInputType.emailAddress,
@@ -330,9 +313,9 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _notesController,
-                      decoration: const InputDecoration(
-                        labelText: 'Notes',
-                        hintText: 'Add notes about this application',
+                      decoration: InputDecoration(
+                        labelText: context.tr('notes_label'),
+                        hintText: context.tr('notes_hint'),
                         prefixIcon: Icon(Icons.note, size: 20),
                       ),
                       maxLines: 4,
@@ -348,7 +331,9 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                         padding: const EdgeInsets.all(16),
                       ),
                       child: Text(
-                        _isEditing ? 'Save Changes' : 'Create Application',
+                        _isEditing
+                            ? context.tr('save_changes')
+                            : context.tr('create_application'),
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600),
                       ),
@@ -451,13 +436,12 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Application?'),
-        content: const Text(
-            'This will delete the application and all associated documents. This action cannot be undone.'),
+        title: Text(context.tr('delete_application_confirm_title')),
+        content: Text(context.tr('delete_application_confirm_message')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.tr('cancel')),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -481,7 +465,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                 Navigator.pop(context); // Close editor dialog
               }
             },
-            child: const Text('Delete'),
+            child: Text(context.tr('delete')),
           ),
         ],
       ),
@@ -493,47 +477,73 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
     DocumentLanguage language,
     bool isSelected,
   ) {
-    return Material(
-      color: isSelected
-          ? theme.colorScheme.primary.withOpacity(0.12)
-          : Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: () => setState(() => _baseLanguage = language),
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Flag with background
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? theme.colorScheme.primary.withOpacity(0.1)
-                      : theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  language.flag,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Language code
-              Text(
-                language.code.toUpperCase(),
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
+    final accentColor = theme.colorScheme.primary;
+
+    return InkWell(
+      onTap: () => setState(() => _baseLanguage = language),
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: AppDurations.quick,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? accentColor.withValues(alpha: 0.12)
+              : theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? accentColor
+                : AppColors.getColor(
+                        context, AppColors.lightBorder, AppColors.darkBorder)
+                    .withValues(alpha: 0.5),
+            width: isSelected ? 2 : 1,
           ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? accentColor.withValues(alpha: 0.2)
+                    : theme.colorScheme.surfaceContainerHighest,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? accentColor.withValues(alpha: 0.6)
+                      : theme.dividerColor.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  language.code.toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: isSelected
+                        ? accentColor
+                        : theme.textTheme.bodySmall?.color
+                            ?.withValues(alpha: 0.7),
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              language.label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected
+                    ? accentColor
+                    : theme.textTheme.bodyMedium?.color
+                        ?.withValues(alpha: 0.8),
+              ),
+            ),
+          ],
         ),
       ),
     );

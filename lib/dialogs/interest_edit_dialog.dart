@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/user_data/interest.dart';
-
+import '../localization/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 /// Simple dialog for adding or editing an interest
@@ -78,7 +78,7 @@ class _InterestEditDialogState extends State<InterestEditDialog> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    widget.interest == null ? 'Add Interest' : 'Edit Interest',
+                    widget.interest == null ? context.tr('add_interest') : context.tr('edit_interest'),
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -95,14 +95,14 @@ class _InterestEditDialogState extends State<InterestEditDialog> {
               // Name field
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Interest *',
-                  hintText: 'e.g., Photography, Hiking, Chess',
-                  prefixIcon: Icon(Icons.favorite_outline),
+                decoration: InputDecoration(
+                  labelText: context.tr('interest_label'),
+                  hintText: context.tr('interest_hint'),
+                  prefixIcon: const Icon(Icons.favorite_outline),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter an interest';
+                    return context.tr('please_enter_interest');
                   }
                   return null;
                 },
@@ -113,7 +113,7 @@ class _InterestEditDialogState extends State<InterestEditDialog> {
 
               // Passion Level
               Text(
-                'Passion Level (Optional)',
+                context.tr('passion_level_optional'),
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -123,7 +123,7 @@ class _InterestEditDialogState extends State<InterestEditDialog> {
                 spacing: AppSpacing.sm,
                 children: [
                   ChoiceChip(
-                    label: const Text('None'),
+                    label: Text(context.tr('none')),
                     selected: _selectedLevel == null,
                     onSelected: (selected) {
                       if (selected) setState(() => _selectedLevel = null);
@@ -132,7 +132,7 @@ class _InterestEditDialogState extends State<InterestEditDialog> {
                   ...InterestLevel.values.map((level) {
                     final isSelected = _selectedLevel == level;
                     return ChoiceChip(
-                      label: Text(level.displayName),
+                      label: Text(context.tr(level.localizationKey)),
                       selected: isSelected,
                       onSelected: (selected) {
                         if (selected) setState(() => _selectedLevel = level);
@@ -149,13 +149,13 @@ class _InterestEditDialogState extends State<InterestEditDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: Text(context.tr('cancel')),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   FilledButton.icon(
                     onPressed: _save,
                     icon: const Icon(Icons.check, size: 18),
-                    label: const Text('Save Interest'),
+                    label: Text(context.tr('save_interest')),
                   ),
                 ],
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/notes_data.dart';
 import '../theme/app_theme.dart';
+import '../localization/app_localizations.dart';
 
 /// Compact card for displaying a note item
 class NoteCard extends StatelessWidget {
@@ -102,7 +103,7 @@ class NoteCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  note.type.displayName,
+                                  context.tr(note.type.localizationKey),
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w600,
@@ -125,7 +126,7 @@ class NoteCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            note.priority.displayName,
+                            context.tr(note.priority.localizationKey),
                             style: theme.textTheme.labelSmall?.copyWith(
                               fontSize: 9,
                               color: theme.textTheme.bodySmall?.color
@@ -260,7 +261,7 @@ class NoteCard extends StatelessWidget {
                           Icon(Icons.edit_outlined,
                               size: 16, color: theme.colorScheme.primary),
                           const SizedBox(width: 8),
-                          const Text('Edit'),
+                          Text(context.tr('edit')),
                         ],
                       ),
                     ),
@@ -272,7 +273,7 @@ class NoteCard extends StatelessWidget {
                             const Icon(Icons.archive_outlined,
                                 size: 16, color: Colors.orange),
                             const SizedBox(width: 8),
-                            const Text('Archive'),
+                            Text(context.tr('archive')),
                           ],
                         ),
                       ),
@@ -284,7 +285,7 @@ class NoteCard extends StatelessWidget {
                             const Icon(Icons.unarchive_outlined,
                                 size: 16, color: Colors.green),
                             const SizedBox(width: 8),
-                            const Text('Unarchive'),
+                            Text(context.tr('unarchive')),
                           ],
                         ),
                       ),
@@ -295,7 +296,7 @@ class NoteCard extends StatelessWidget {
                           const Icon(Icons.delete_outlined,
                               size: 16, color: AppColors.statusRejected),
                           const SizedBox(width: 8),
-                          const Text('Delete'),
+                          Text(context.tr('delete')),
                         ],
                       ),
                     ),

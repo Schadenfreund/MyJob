@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../localization/app_localizations.dart';
 import '../models/user_data/skill.dart';
 import '../models/user_data/language.dart';
 import '../models/user_data/interest.dart';
@@ -59,7 +60,7 @@ class ProficiencyDropdown<T extends Enum> extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               // Display name
-              Text(_getDisplayName(item)),
+              Text(_getDisplayName(context, item)),
             ],
           ),
         );
@@ -77,13 +78,13 @@ class ProficiencyDropdown<T extends Enum> extends StatelessWidget {
   }
 
   /// Get display name for any proficiency enum
-  String _getDisplayName(T level) {
+  String _getDisplayName(BuildContext context, T level) {
     if (level is SkillLevel) {
-      return level.displayName;
+      return context.tr(level.localizationKey);
     } else if (level is LanguageProficiency) {
-      return level.displayName;
+      return context.tr(level.localizationKey);
     } else if (level is InterestLevel) {
-      return level.displayName;
+      return context.tr(level.localizationKey);
     }
     return level.name;
   }

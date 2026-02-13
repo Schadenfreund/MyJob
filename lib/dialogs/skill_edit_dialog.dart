@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/user_data/skill.dart';
+import '../localization/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 /// Dialog for adding or editing a skill
@@ -83,7 +84,7 @@ class _SkillEditDialogState extends State<SkillEditDialog> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    widget.skill == null ? 'Add Skill' : 'Edit Skill',
+                    widget.skill == null ? context.tr('add_skill') : context.tr('edit_skill'),
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -100,14 +101,14 @@ class _SkillEditDialogState extends State<SkillEditDialog> {
               // Name field
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Skill Name *',
-                  hintText: 'e.g., Flutter, Project Management, Python',
-                  prefixIcon: Icon(Icons.psychology_outlined),
+                decoration: InputDecoration(
+                  labelText: context.tr('skill_name_label'),
+                  hintText: context.tr('skill_name_hint'),
+                  prefixIcon: const Icon(Icons.psychology_outlined),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a skill name';
+                    return context.tr('please_enter_skill');
                   }
                   return null;
                 },
@@ -119,10 +120,10 @@ class _SkillEditDialogState extends State<SkillEditDialog> {
               // Category field
               TextFormField(
                 controller: _categoryController,
-                decoration: const InputDecoration(
-                  labelText: 'Category (Optional)',
-                  hintText: 'e.g., Technical, Languages, Soft Skills',
-                  prefixIcon: Icon(Icons.category_outlined),
+                decoration: InputDecoration(
+                  labelText: context.tr('category_optional'),
+                  hintText: context.tr('category_hint'),
+                  prefixIcon: const Icon(Icons.category_outlined),
                 ),
                 textCapitalization: TextCapitalization.words,
               ),
@@ -130,7 +131,7 @@ class _SkillEditDialogState extends State<SkillEditDialog> {
 
               // Proficiency Level
               Text(
-                'Proficiency Level',
+                context.tr('proficiency_level'),
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -141,7 +142,7 @@ class _SkillEditDialogState extends State<SkillEditDialog> {
                 children: SkillLevel.values.map((level) {
                   final isSelected = _selectedLevel == level;
                   return ChoiceChip(
-                    label: Text(level.displayName),
+                    label: Text(context.tr(level.localizationKey)),
                     selected: isSelected,
                     onSelected: (selected) {
                       if (selected) {
@@ -159,13 +160,13 @@ class _SkillEditDialogState extends State<SkillEditDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: Text(context.tr('cancel')),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   FilledButton.icon(
                     onPressed: _save,
                     icon: const Icon(Icons.check, size: 18),
-                    label: const Text('Save Skill'),
+                    label: Text(context.tr('save_skill')),
                   ),
                 ],
               ),

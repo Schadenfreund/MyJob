@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../localization/app_localizations.dart';
 import '../services/settings_service.dart';
 import '../theme/app_theme.dart';
 
@@ -55,7 +56,7 @@ class ChangelogDialog extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Release Notes',
+                          context.tr('release_notes'),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -106,7 +107,7 @@ class ChangelogDialog extends StatelessWidget {
                     style: FilledButton.styleFrom(
                       backgroundColor: settings.accentColor,
                     ),
-                    child: const Text('Close'),
+                    child: Text(context.tr('close')),
                   ),
                 ],
               ),
@@ -224,7 +225,7 @@ class _ChangelogContent extends StatelessWidget {
 
     if (widgets.isEmpty) {
       return Text(
-        'No release notes available.',
+        context.tr('no_release_notes'),
         style: theme.textTheme.bodyMedium?.copyWith(
           fontStyle: FontStyle.italic,
           color: isDark

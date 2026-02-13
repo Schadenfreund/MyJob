@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/user_data/work_experience.dart';
 import '../constants/ui_constants.dart';
+import '../localization/app_localizations.dart';
 
 /// Dialog for adding or editing work experience
 ///
@@ -59,7 +60,7 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
     if (!_formKey.currentState!.validate()) return;
     if (_startDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a start date')),
+        SnackBar(content: Text(context.tr('please_select_start_date'))),
       );
       return;
     }
@@ -68,8 +69,8 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
     if (!_isCurrentPosition && _endDate != null) {
       if (_endDate!.isBefore(_startDate!)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('End date cannot be before start date'),
+          SnackBar(
+            content: Text(context.tr('end_date_before_start')),
             backgroundColor: Colors.red,
           ),
         );
@@ -152,8 +153,8 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
                   Expanded(
                     child: Text(
                       widget.experience == null
-                          ? 'Add Work Experience'
-                          : 'Edit Work Experience',
+                          ? context.tr('add_work_experience')
+                          : context.tr('edit_work_experience'),
                       style: theme.textTheme.titleLarge?.copyWith(
                         color: theme.colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.bold,
@@ -180,39 +181,39 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
                     children: [
                       TextFormField(
                         controller: _positionController,
-                        decoration: const InputDecoration(
-                          labelText: 'Position *',
-                          hintText: 'e.g. Senior Software Engineer',
-                          prefixIcon: Icon(Icons.badge_outlined),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.tr('exp_position_label'),
+                          hintText: context.tr('exp_position_hint'),
+                          prefixIcon: const Icon(Icons.badge_outlined),
+                          border: const OutlineInputBorder(),
                         ),
                         validator: (value) =>
-                            value?.trim().isEmpty ?? true ? 'Required' : null,
+                            value?.trim().isEmpty ?? true ? context.tr('required') : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _companyController,
-                        decoration: const InputDecoration(
-                          labelText: 'Company *',
-                          hintText: 'e.g. Google Inc.',
-                          prefixIcon: Icon(Icons.business_outlined),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.tr('exp_company_label'),
+                          hintText: context.tr('exp_company_hint'),
+                          prefixIcon: const Icon(Icons.business_outlined),
+                          border: const OutlineInputBorder(),
                         ),
                         validator: (value) =>
-                            value?.trim().isEmpty ?? true ? 'Required' : null,
+                            value?.trim().isEmpty ?? true ? context.tr('required') : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _locationController,
-                        decoration: const InputDecoration(
-                          labelText: 'Location',
-                          hintText: 'e.g. San Francisco, CA',
-                          prefixIcon: Icon(Icons.location_on_outlined),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.tr('exp_location_label'),
+                          hintText: context.tr('exp_location_hint'),
+                          prefixIcon: const Icon(Icons.location_on_outlined),
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 24),
-                      Text('Employment Period',
+                      Text(context.tr('employment_period'),
                           style: theme.textTheme.titleSmall),
                       const SizedBox(height: 12),
                       Row(
@@ -222,7 +223,7 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
                               onPressed: _pickStartDate,
                               icon: const Icon(Icons.calendar_today),
                               label: Text(_startDate == null
-                                  ? 'Start Date *'
+                                  ? context.tr('start_date_required')
                                   : dateFormat.format(_startDate!)),
                             ),
                           ),
@@ -233,9 +234,9 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
                                   _isCurrentPosition ? null : _pickEndDate,
                               icon: const Icon(Icons.event),
                               label: Text(_isCurrentPosition
-                                  ? 'Present'
+                                  ? context.tr('present')
                                   : _endDate == null
-                                      ? 'End Date'
+                                      ? context.tr('end_date')
                                       : dateFormat.format(_endDate!)),
                             ),
                           ),
@@ -247,15 +248,15 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
                         onChanged: (value) {
                           setState(() => _isCurrentPosition = value ?? false);
                         },
-                        title: const Text('I currently work here'),
+                        title: Text(context.tr('currently_work_here')),
                         contentPadding: EdgeInsets.zero,
                       ),
                       const SizedBox(height: 24),
-                      Text('Responsibilities',
+                      Text(context.tr('responsibilities'),
                           style: theme.textTheme.titleSmall),
                       const SizedBox(height: 8),
                       Text(
-                        'Add bullet points that highlight your key achievements and responsibilities',
+                        context.tr('responsibilities_hint'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.textTheme.bodySmall?.color
                               ?.withValues(alpha: 0.7),
@@ -297,12 +298,12 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
                               IconButton(
                                 icon: const Icon(Icons.edit, size: 18),
                                 onPressed: () => _editResponsibility(index),
-                                tooltip: 'Edit',
+                                tooltip: context.tr('edit'),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete, size: 18),
                                 onPressed: () => _deleteResponsibility(index),
-                                tooltip: 'Delete',
+                                tooltip: context.tr('delete'),
                                 color: theme.colorScheme.error,
                               ),
                             ],
@@ -312,17 +313,17 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
                       OutlinedButton.icon(
                         onPressed: _addResponsibility,
                         icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Add Responsibility'),
+                        label: Text(context.tr('add_responsibility')),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(44),
                         ),
                       ),
                       const SizedBox(height: 24),
-                      Text('Description (Optional)',
+                      Text(context.tr('description_optional'),
                           style: theme.textTheme.titleSmall),
                       const SizedBox(height: 8),
                       Text(
-                        'Additional context about this role',
+                        context.tr('description_context_hint'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.textTheme.bodySmall?.color
                               ?.withValues(alpha: 0.7),
@@ -332,9 +333,9 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
                       TextFormField(
                         controller: _descriptionController,
                         maxLines: 4,
-                        decoration: const InputDecoration(
-                          hintText: 'Brief overview of the role and company...',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          hintText: context.tr('description_role_hint'),
+                          border: const OutlineInputBorder(),
                           filled: true,
                         ),
                       ),
@@ -355,13 +356,13 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: Text(context.tr('cancel')),
                   ),
                   const SizedBox(width: 12),
                   FilledButton.icon(
                     onPressed: _save,
                     icon: const Icon(Icons.check, size: 18),
-                    label: const Text('Save'),
+                    label: Text(context.tr('save')),
                   ),
                 ],
               ),
@@ -377,21 +378,20 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Responsibility'),
+        title: Text(context.tr('add_responsibility')),
         content: TextField(
           controller: controller,
           autofocus: true,
           maxLines: 3,
-          decoration: const InputDecoration(
-            hintText:
-                'e.g. Led development of new feature that increased revenue by 25%',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            hintText: context.tr('responsibility_hint'),
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.tr('cancel')),
           ),
           FilledButton(
             onPressed: () {
@@ -400,7 +400,7 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
                 Navigator.pop(context, text);
               }
             },
-            child: const Text('Add'),
+            child: Text(context.tr('add')),
           ),
         ],
       ),
@@ -416,7 +416,7 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Responsibility'),
+        title: Text(context.tr('edit_responsibility')),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -428,7 +428,7 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.tr('cancel')),
           ),
           FilledButton(
             onPressed: () {
@@ -437,7 +437,7 @@ class _ExperienceEditDialogState extends State<ExperienceEditDialog> {
                 Navigator.pop(context, text);
               }
             },
-            child: const Text('Save'),
+            child: Text(context.tr('save')),
           ),
         ],
       ),

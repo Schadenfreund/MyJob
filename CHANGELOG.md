@@ -8,6 +8,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-02-14
+
+### Added
+
+#### Full Localization (English & German)
+- **App-wide localization system** - All UI strings now support English and German via JSON locale files
+- **Software Updates card** - Fully translated (all update states: checking, downloading, installing, errors)
+- **Skill levels** - Beginner, Intermediate, Advanced, Expert now localized (German: Anfänger, Fortgeschritten, Erfahren, Experte)
+- **Language proficiency levels** - Native, Fluent, Advanced, Intermediate, Basic now localized (German: Muttersprache, Fließend, etc.)
+- **Interest levels** - Casual, Moderate, Passionate now localized
+- **Note types** - To-Do, Company Lead, General Note, Reminder now localized (German: Aufgabe, Firmenkontakt, etc.)
+- **Note priorities** - Low, Medium, High, Urgent now localized (German: Niedrig, Mittel, Hoch, Dringend)
+- **Interests section** - Added missing translations: `interests_desc`, `interests_empty_message`, `add_first_interest`
+
+#### Profile Tab Enhancements
+- **Personal Info edit/add button** - ProfileSectionCard now shows Edit button (or Add when empty) directly in the card header
+- **Work Experience add button** - ProfileSectionCard now shows Add button in the card header, matching Skills/Languages/Education pattern
+
+### Fixed
+
+#### Provider Listen Bug
+- **Fixed crash when using translations in event handlers** - `context.tr()` now uses `listen: false` to prevent `Provider.of` assertion errors when called from `onPressed`, dialogs, and other non-build contexts
+- Removed fragile `tr`/`trRead` dual API in favor of single safe `context.tr()` that works everywhere
+
+#### Settings Tab
+- **About card header formatting** - Now uses shared `AppCardHeader` widget for consistent title/subtitle sizing and layout matching other cards
+
+### Technical
+- Added `localizationKey` getter to `SkillLevel`, `LanguageProficiency`, `InterestLevel`, `NoteType`, and `NotePriority` enums
+- PDF generation continues to use English `displayName` — localization only affects UI
+- Added static `showEditDialog` to `PersonalInfoSection` and `showAddDialog` to `WorkExperienceSection`
+
+---
+
 ## [1.0.5] - 2026-02-11
 
 ### Added

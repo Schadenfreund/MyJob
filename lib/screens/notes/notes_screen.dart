@@ -9,6 +9,7 @@ import '../../widgets/note_card.dart';
 import '../../utils/dialog_utils.dart';
 import '../../services/preferences_service.dart';
 import 'note_editor_dialog.dart';
+import '../../localization/app_localizations.dart';
 
 /// Notes Screen - Todo tracker and notes management
 class NotesScreen extends StatefulWidget {
@@ -110,9 +111,8 @@ class _NotesScreenState extends State<NotesScreen> {
             // Header
             UIUtils.buildSectionHeader(
               context,
-              title: 'Notes & To-Do',
-              subtitle:
-                  'Track next steps, company leads, and application reminders',
+              title: context.tr('notes_title'),
+              subtitle: context.tr('notes_subtitle'),
               icon: Icons.sticky_note_2_outlined,
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -159,7 +159,7 @@ class _NotesScreenState extends State<NotesScreen> {
                             Row(
                               children: [
                                 Text(
-                                  'Stay Organized',
+                                  context.tr('stay_organized'),
                                   style: theme.textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -173,7 +173,7 @@ class _NotesScreenState extends State<NotesScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
-                                    'ADD NOTE',
+                                    context.tr('add_note_badge'),
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
@@ -186,7 +186,7 @@ class _NotesScreenState extends State<NotesScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Keep track of companies to apply to, follow-ups, and important deadlines',
+                              context.tr('notes_action_desc'),
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.textTheme.bodySmall?.color
                                     ?.withOpacity(0.8),
@@ -199,7 +199,7 @@ class _NotesScreenState extends State<NotesScreen> {
                       AppCardActionButton(
                         onPressed: () => _showNoteEditor(context),
                         icon: Icons.add,
-                        label: 'Add Note',
+                        label: context.tr('add_note'),
                         isFilled: true,
                       ),
                     ],
@@ -220,7 +220,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 context.read<NotesProvider>().setSearchQuery(value);
               },
               decoration: InputDecoration(
-                hintText: 'Search notes by title, description, or tags...',
+                hintText: context.tr('search_notes_placeholder'),
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
@@ -239,9 +239,12 @@ class _NotesScreenState extends State<NotesScreen> {
             if (activeNotes.isNotEmpty) ...[
               _buildNotesSection(
                 context,
-                title: 'Active',
-                subtitle:
-                    '${activeNotes.length} item${activeNotes.length != 1 ? 's' : ''}',
+                title: context.tr('active_filter'),
+                subtitle: activeNotes.length != 1
+                    ? context.tr('items_count_plural',
+                        {'count': activeNotes.length.toString()})
+                    : context.tr('items_count',
+                        {'count': activeNotes.length.toString()}),
                 notes: activeNotes,
                 icon: Icons.pending_actions,
                 color: AppColors.statusApplied,
@@ -256,9 +259,12 @@ class _NotesScreenState extends State<NotesScreen> {
             if (completedNotes.isNotEmpty) ...[
               _buildNotesSection(
                 context,
-                title: 'Completed',
-                subtitle:
-                    '${completedNotes.length} item${completedNotes.length != 1 ? 's' : ''}',
+                title: context.tr('section_completed'),
+                subtitle: completedNotes.length != 1
+                    ? context.tr('items_count_plural',
+                        {'count': completedNotes.length.toString()})
+                    : context.tr('items_count',
+                        {'count': completedNotes.length.toString()}),
                 notes: completedNotes,
                 icon: Icons.check_circle,
                 color: AppColors.statusAccepted,
@@ -273,9 +279,12 @@ class _NotesScreenState extends State<NotesScreen> {
             if (archivedNotes.isNotEmpty) ...[
               _buildNotesSection(
                 context,
-                title: 'Archived',
-                subtitle:
-                    '${archivedNotes.length} item${archivedNotes.length != 1 ? 's' : ''}',
+                title: context.tr('archived_filter'),
+                subtitle: archivedNotes.length != 1
+                    ? context.tr('items_count_plural',
+                        {'count': archivedNotes.length.toString()})
+                    : context.tr('items_count',
+                        {'count': archivedNotes.length.toString()}),
                 notes: archivedNotes,
                 icon: Icons.archive,
                 color: Colors.grey,
@@ -297,13 +306,16 @@ class _NotesScreenState extends State<NotesScreen> {
                       ? Icons.filter_list_off
                       : Icons.note_add_outlined,
                   title: _filterType != null
-                      ? 'No ${_filterType!.displayName}s'
-                      : 'No notes yet',
+                      ? context.tr('no_filtered_notes_title',
+                          {'type': context.tr(_filterType!.localizationKey)})
+                      : context.tr('no_notes_title'),
                   message: _filterType != null
-                      ? 'Try clearing the filter or create a new note'
-                      : 'Create your first note, todo, or company lead',
+                      ? context.tr('no_filtered_notes_message')
+                      : context.tr('no_notes_message'),
                   action: AppCardActionButton(
-                    label: _filterType != null ? 'Clear Filter' : 'Add Note',
+                    label: _filterType != null
+                        ? context.tr('clear_filter')
+                        : context.tr('add_note'),
                     onPressed: () {
                       if (_filterType != null) {
                         setState(() => _filterType = null);
@@ -330,7 +342,7 @@ class _NotesScreenState extends State<NotesScreen> {
         children: [
           _buildFilterChip(
             theme,
-            label: 'All',
+            label: context.tr('all_filter'),
             isSelected: !_showArchived && _filterType == null,
             onTap: () => setState(() {
               _showArchived = false;
@@ -342,7 +354,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 padding: const EdgeInsets.only(right: 8),
                 child: _buildFilterChip(
                   theme,
-                  label: type.displayName,
+                  label: context.tr(type.localizationKey),
                   isSelected: !_showArchived && _filterType == type,
                   onTap: () => setState(() {
                     _showArchived = false;
@@ -354,7 +366,7 @@ class _NotesScreenState extends State<NotesScreen> {
             padding: const EdgeInsets.only(right: 8),
             child: _buildFilterChip(
               theme,
-              label: 'Archive',
+              label: context.tr('archive_filter'),
               isSelected: _showArchived,
               onTap: () => setState(() {
                 _showArchived = true;
@@ -515,12 +527,15 @@ class _NotesScreenState extends State<NotesScreen> {
         if (mounted) {
           UIUtils.showSuccess(
             context,
-            note == null ? 'Note created' : 'Note updated',
+            note == null
+                ? context.tr('note_created')
+                : context.tr('note_updated'),
           );
         }
       } catch (e) {
         if (mounted) {
-          UIUtils.showError(context, 'Failed to save note: $e');
+          UIUtils.showError(
+              context, context.tr('failed_save_note', {'error': e.toString()}));
         }
       }
     }
@@ -531,7 +546,8 @@ class _NotesScreenState extends State<NotesScreen> {
       await context.read<NotesProvider>().toggleCompletion(note.id);
     } catch (e) {
       if (mounted) {
-        UIUtils.showError(context, 'Failed to update note: $e');
+        UIUtils.showError(
+            context, context.tr('failed_update_note', {'error': e.toString()}));
       }
     }
   }
@@ -539,19 +555,20 @@ class _NotesScreenState extends State<NotesScreen> {
   Future<void> _confirmDelete(BuildContext context, NoteItem note) async {
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
-      title: 'Delete Note',
-      message: 'Are you sure you want to delete "${note.title}"?',
+      title: context.tr('delete_note_title'),
+      message: context.tr('delete_note_message', {'title': note.title}),
     );
 
     if (confirmed && mounted) {
       try {
         await context.read<NotesProvider>().deleteNote(note.id);
         if (mounted) {
-          UIUtils.showSuccess(context, 'Note deleted');
+          UIUtils.showSuccess(context, context.tr('note_deleted'));
         }
       } catch (e) {
         if (mounted) {
-          UIUtils.showError(context, 'Failed to delete note: $e');
+          UIUtils.showError(context,
+              context.tr('failed_delete_note', {'error': e.toString()}));
         }
       }
     }
@@ -561,11 +578,12 @@ class _NotesScreenState extends State<NotesScreen> {
     try {
       await context.read<NotesProvider>().archiveNote(note.id);
       if (mounted) {
-        UIUtils.showSuccess(context, 'Note archived');
+        UIUtils.showSuccess(context, context.tr('note_archived'));
       }
     } catch (e) {
       if (mounted) {
-        UIUtils.showError(context, 'Failed to archive note: $e');
+        UIUtils.showError(context,
+            context.tr('failed_archive_note', {'error': e.toString()}));
       }
     }
   }
@@ -574,11 +592,12 @@ class _NotesScreenState extends State<NotesScreen> {
     try {
       await context.read<NotesProvider>().unarchiveNote(note.id);
       if (mounted) {
-        UIUtils.showSuccess(context, 'Note unarchived');
+        UIUtils.showSuccess(context, context.tr('note_unarchived'));
       }
     } catch (e) {
       if (mounted) {
-        UIUtils.showError(context, 'Failed to unarchive note: $e');
+        UIUtils.showError(context,
+            context.tr('failed_unarchive_note', {'error': e.toString()}));
       }
     }
   }

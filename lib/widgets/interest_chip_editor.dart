@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../localization/app_localizations.dart';
 import '../models/user_data/interest.dart';
 import '../utils/ui_utils.dart';
 import '../theme/app_theme.dart';
@@ -101,9 +102,8 @@ class _InterestChipEditorState extends State<InterestChipEditor> {
           UIUtils.buildEmptyState(
             context,
             icon: Icons.interests_outlined,
-            title: 'No Interests Added',
-            message:
-                'Add your hobbies and interests to personalize your profile.',
+            title: context.tr('no_interests_added'),
+            message: context.tr('no_interests_message'),
           ),
 
         const SizedBox(height: AppSpacing.lg),
@@ -122,7 +122,7 @@ class _InterestChipEditorState extends State<InterestChipEditor> {
                         size: 16, color: theme.colorScheme.primary),
                     const SizedBox(width: 8),
                     Text(
-                      'Add New Interest',
+                      context.tr('add_new_interest'),
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -138,7 +138,7 @@ class _InterestChipEditorState extends State<InterestChipEditor> {
                       child: TextField(
                         controller: _nameController,
                         decoration: InputDecoration(
-                          labelText: 'Interest Name',
+                          labelText: context.tr('interest_name'),
                           hintText: 'e.g., Photography, Hiking',
                           filled: true,
                           fillColor: theme.colorScheme.surface,
@@ -156,7 +156,7 @@ class _InterestChipEditorState extends State<InterestChipEditor> {
                           onChanged: (level) {
                             setState(() => _selectedLevel = level);
                           },
-                          label: 'Level (Optional)',
+                          label: context.tr('level_optional'),
                         ),
                       ),
                     ],
@@ -171,7 +171,7 @@ class _InterestChipEditorState extends State<InterestChipEditor> {
                   child: FilledButton.icon(
                     onPressed: _addInterest,
                     icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Add Interest'),
+                    label: Text(context.tr('add_interest')),
                   ),
                 ),
               ],
@@ -219,7 +219,7 @@ class _InterestChipEditorState extends State<InterestChipEditor> {
               items: [
                 DropdownMenuItem<InterestLevel?>(
                   value: null,
-                  child: Text('None', style: theme.textTheme.bodySmall),
+                  child: Text(context.tr('none'), style: theme.textTheme.bodySmall),
                 ),
                 ...InterestLevel.values.map((level) {
                   return DropdownMenuItem(
@@ -237,7 +237,7 @@ class _InterestChipEditorState extends State<InterestChipEditor> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          level.displayName,
+                          context.tr(level.localizationKey),
                           style: theme.textTheme.bodySmall,
                         ),
                       ],
@@ -309,7 +309,7 @@ class _InterestChipEditorState extends State<InterestChipEditor> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      interest.level!.displayName.toUpperCase(),
+                      context.tr(interest.level!.localizationKey).toUpperCase(),
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
