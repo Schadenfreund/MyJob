@@ -1013,6 +1013,19 @@ class StorageService {
     }
   }
 
+  /// Save all notes (used for batch operations like reordering)
+  Future<void> saveAllNotes(List<NoteItem> notes) async {
+    try {
+      for (final note in notes) {
+        await saveNote(note);
+      }
+      debugPrint('All notes saved (${notes.length} notes)');
+    } catch (e) {
+      debugPrint('Error saving all notes: $e');
+      rethrow;
+    }
+  }
+
   String _sanitizeFileName(String name) {
     // Replace invalid Windows filename characters with underscores
     return name.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_').trim();

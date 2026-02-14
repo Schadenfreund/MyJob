@@ -173,12 +173,12 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                       BorderRadius.circular(AppDimensions.cardBorderRadius),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   child: Row(
                     children: [
                       // Icon with accent
                       Container(
-                        padding: const EdgeInsets.all(AppSpacing.md),
+                        padding: const EdgeInsets.all(AppSpacing.sm),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.primary.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(
@@ -187,10 +187,10 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                         child: Icon(
                           Icons.add_task_outlined,
                           color: theme.colorScheme.primary,
-                          size: 28,
+                          size: 24,
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.lg),
+                      const SizedBox(width: AppSpacing.md),
                       // Text content
                       Expanded(
                         child: Column(
@@ -224,7 +224,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               context.tr('new_opportunity_desc'),
                               style: theme.textTheme.bodyMedium?.copyWith(
@@ -235,12 +235,22 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.lg),
-                      AppCardActionButton(
-                        onPressed: () => _showAddDialog(context),
-                        icon: Icons.add,
-                        label: context.tr('add_new'),
-                        isFilled: true,
+                      const SizedBox(width: AppSpacing.md),
+                      Row(
+                        children: [
+                          AppCardActionButton(
+                            onPressed: () => _showAddDialog(context),
+                            icon: Icons.add,
+                            label: context.tr('add'),
+                            isFilled: true,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          AppCardActionButton(
+                            onPressed: () => _exportStatisticsPdf(context, applicationsProvider),
+                            icon: Icons.download,
+                            label: context.tr('export_report'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -461,19 +471,6 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                           icon: Icons.schedule,
                           color: AppColors.statusWithdrawn,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  // Export button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      AppCardActionButton(
-                        label: context.tr('export_report'),
-                        icon: Icons.download,
-                        onPressed: () =>
-                            _exportStatisticsPdf(context, provider),
                       ),
                     ],
                   ),

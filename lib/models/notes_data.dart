@@ -13,6 +13,14 @@ class NoteItem {
   final DateTime? completedAt;
   final DateTime? dueDate;
   final List<String> tags;
+  final int sortOrder;
+
+  // Company Lead fields
+  final String? url;
+  final String? contactPerson;
+  final String? contactEmail;
+  final String? location;
+  final LeadStatus? leadStatus;
 
   NoteItem({
     String? id,
@@ -26,6 +34,12 @@ class NoteItem {
     this.completedAt,
     this.dueDate,
     List<String>? tags,
+    this.sortOrder = 0,
+    this.url,
+    this.contactPerson,
+    this.contactEmail,
+    this.location,
+    this.leadStatus,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         tags = tags ?? [];
@@ -40,6 +54,12 @@ class NoteItem {
     DateTime? completedAt,
     DateTime? dueDate,
     List<String>? tags,
+    int? sortOrder,
+    String? url,
+    String? contactPerson,
+    String? contactEmail,
+    String? location,
+    LeadStatus? leadStatus,
   }) {
     return NoteItem(
       id: id,
@@ -53,6 +73,12 @@ class NoteItem {
       completedAt: completedAt ?? this.completedAt,
       dueDate: dueDate ?? this.dueDate,
       tags: tags ?? this.tags,
+      sortOrder: sortOrder ?? this.sortOrder,
+      url: url ?? this.url,
+      contactPerson: contactPerson ?? this.contactPerson,
+      contactEmail: contactEmail ?? this.contactEmail,
+      location: location ?? this.location,
+      leadStatus: leadStatus ?? this.leadStatus,
     );
   }
 
@@ -69,6 +95,12 @@ class NoteItem {
       'completedAt': completedAt?.toIso8601String(),
       'dueDate': dueDate?.toIso8601String(),
       'tags': tags,
+      'sortOrder': sortOrder,
+      'url': url,
+      'contactPerson': contactPerson,
+      'contactEmail': contactEmail,
+      'location': location,
+      'leadStatus': leadStatus?.name,
     };
   }
 
@@ -95,6 +127,17 @@ class NoteItem {
           ? DateTime.parse(json['dueDate'] as String)
           : null,
       tags: (json['tags'] as List?)?.cast<String>() ?? [],
+      sortOrder: json['sortOrder'] as int? ?? 0,
+      url: json['url'] as String?,
+      contactPerson: json['contactPerson'] as String?,
+      contactEmail: json['contactEmail'] as String?,
+      location: json['location'] as String?,
+      leadStatus: json['leadStatus'] != null
+          ? LeadStatus.values.firstWhere(
+              (e) => e.name == json['leadStatus'],
+              orElse: () => LeadStatus.researching,
+            )
+          : null,
     );
   }
 }
@@ -149,4 +192,43 @@ extension NotePriorityExtension on NotePriority {
   }
 
   String get localizationKey => 'note_priority_$name';
+}
+
+/// Lead status for company leads
+enum LeadStatus {
+  researching,
+  contacted,
+  applied,
+  interviewing,
+}
+
+/// Extension for LeadStatus display
+extension LeadStatusExtension on LeadStatus {
+  String get displayName {
+    switch (this) {
+      case LeadStatus.researching:
+        return 'Researching';
+      case LeadStatus.contacted:
+        return 'Contacted';
+      case LeadStatus.applied:
+        return 'Applied';
+      case LeadStatus.interviewing:
+        return 'Interviewing';
+    }
+  }
+
+  String get localizationKey => 'lead_status_$name';
+
+  String get icon {
+    switch (this) {
+      case LeadStatus.researching:
+        return '🔍';
+      case LeadStatus.contacted:
+        return '💬';
+      case LeadStatus.applied:
+        return '📤';
+      case LeadStatus.interviewing:
+        return '🎯';
+    }
+  }
 }

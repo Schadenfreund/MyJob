@@ -14,9 +14,23 @@ class ApplicationEditorDialog extends StatefulWidget {
   const ApplicationEditorDialog({
     super.key,
     this.applicationId,
+    this.prefillCompany,
+    this.prefillLocation,
+    this.prefillJobUrl,
+    this.prefillContactPerson,
+    this.prefillContactEmail,
+    this.prefillNotes,
   });
 
   final String? applicationId;
+
+  /// Pre-fill fields when creating from a company lead note
+  final String? prefillCompany;
+  final String? prefillLocation;
+  final String? prefillJobUrl;
+  final String? prefillContactPerson;
+  final String? prefillContactEmail;
+  final String? prefillNotes;
 
   @override
   State<ApplicationEditorDialog> createState() =>
@@ -51,6 +65,26 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
     if (widget.applicationId != null) {
       _isEditing = true;
       _loadApplication();
+    } else {
+      // Apply pre-fill values (from company lead conversion)
+      if (widget.prefillCompany != null) {
+        _companyController.text = widget.prefillCompany!;
+      }
+      if (widget.prefillLocation != null) {
+        _locationController.text = widget.prefillLocation!;
+      }
+      if (widget.prefillJobUrl != null) {
+        _jobUrlController.text = widget.prefillJobUrl!;
+      }
+      if (widget.prefillContactPerson != null) {
+        _contactPersonController.text = widget.prefillContactPerson!;
+      }
+      if (widget.prefillContactEmail != null) {
+        _contactEmailController.text = widget.prefillContactEmail!;
+      }
+      if (widget.prefillNotes != null) {
+        _notesController.text = widget.prefillNotes!;
+      }
     }
   }
 

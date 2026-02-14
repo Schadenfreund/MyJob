@@ -132,12 +132,12 @@ class ProfileScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppDimensions.cardBorderRadius),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
               // Icon with accent
               Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
+                padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withOpacity(0.15),
                   borderRadius:
@@ -146,10 +146,10 @@ class ProfileScreen extends StatelessWidget {
                 child: Icon(
                   Icons.upload_file,
                   color: theme.colorScheme.primary,
-                  size: 28,
+                  size: 24,
                 ),
               ),
-              const SizedBox(width: AppSpacing.lg),
+              const SizedBox(width: AppSpacing.md),
               // Text content
               Expanded(
                 child: Column(
@@ -183,7 +183,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       context.tr('import_export_subtitle'),
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -194,7 +194,7 @@ class ProfileScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: AppSpacing.lg),
+              const SizedBox(width: AppSpacing.md),
               // Action buttons
               Row(
                 children: [
@@ -233,7 +233,7 @@ class ProfileScreen extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: AppDurations.quick,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
               ? accentColor.withValues(alpha: 0.12)
@@ -253,8 +253,8 @@ class ProfileScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 28,
-              height: 28,
+              width: 24,
+              height: 24,
               decoration: BoxDecoration(
                 color: isSelected
                     ? accentColor.withValues(alpha: 0.2)
@@ -276,12 +276,12 @@ class ProfileScreen extends StatelessWidget {
                         ? accentColor
                         : theme.textTheme.bodySmall?.color
                             ?.withValues(alpha: 0.7),
-                    fontSize: 10,
+                    fontSize: 9,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Text(
               language.label,
               style: theme.textTheme.bodyMedium?.copyWith(

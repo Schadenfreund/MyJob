@@ -34,7 +34,7 @@ class SkillsSection extends StatelessWidget {
       icon: Icons.psychology_outlined,
       description: context.tr('skills_section_desc'),
       trailing: AppCardActionButton(
-        label: context.tr('add_skill'),
+        label: context.tr('add'),
         icon: Icons.add,
         onPressed: () => SkillsSection.showAddSkillDialog(context),
       ),

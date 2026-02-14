@@ -33,7 +33,7 @@ class InterestsSection extends StatelessWidget {
       icon: Icons.interests_outlined,
       description: context.tr('interests_desc'),
       trailing: AppCardActionButton(
-        label: context.tr('add_interest'),
+        label: context.tr('add'),
         icon: Icons.add,
         onPressed: () => _addInterest(context, userDataProvider),
       ),
