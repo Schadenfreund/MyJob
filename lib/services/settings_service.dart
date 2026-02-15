@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import '../models/template_style.dart';
 import '../constants/json_constants.dart';
+import 'storage_service.dart';
 
 /// Portable settings service that stores configuration in a JSON file
 class SettingsService extends ChangeNotifier {
@@ -25,16 +26,8 @@ class SettingsService extends ChangeNotifier {
   TemplateStyle get defaultCoverLetterTemplate => _defaultCoverLetterTemplate;
 
   Future<String> _getUserDataPath() async {
-    final exePath = Platform.resolvedExecutable;
-    final exeDir = p.dirname(exePath);
-    final userDataPath = p.join(exeDir, 'UserData');
-
-    final userDataDir = Directory(userDataPath);
-    if (!userDataDir.existsSync()) {
-      userDataDir.createSync(recursive: true);
-    }
-
-    return userDataPath;
+    // Use StorageService for consistent path resolution across all services
+    return StorageService.instance.getUserDataPath();
   }
 
   Future<File> _getSettingsFile() async {

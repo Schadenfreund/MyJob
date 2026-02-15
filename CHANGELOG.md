@@ -8,6 +8,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.1] - 2026-02-15
+
+### Backup System Overhaul - Production Ready
+
+This release makes the backup/restore feature **safe and reliable** for production use. All critical data loss scenarios are now prevented.
+
+### What's New
+
+#### Automatic Safety Backups
+
+- App automatically backs up current data before any restore operation
+- Failed restores automatically roll back to original state
+- Keeps 2 most recent safety backups in `.backup_safety/` folder
+
+#### Smart Validation
+
+- Corrupted or invalid backup files are detected and rejected before extraction
+- Every backup includes metadata (version, timestamp, file counts)
+- Security checks prevent malicious files
+
+#### Bulletproof Restore
+
+- Restore either completes fully or not at all - no partial corruption
+- Uses atomic operations to prevent data loss during restore
+- Automatic cleanup of temporary files
+
+#### Better User Experience
+
+- Warning dialog before backup creation to prevent accidental changes
+- Clear, helpful error messages ("disk full", "permission denied", etc.)
+- No more cryptic technical errors
+
+### Bug Fixes
+
+- Fixed: Settings could be lost due to path inconsistencies
+- Fixed: Corrupted backups could destroy all user data
+- Fixed: Partial restore could leave data in broken state
+- Fixed: No protection against restore failures
+
+---
+
 ## [1.1.0] - 2026-02-14
 
 ### Added

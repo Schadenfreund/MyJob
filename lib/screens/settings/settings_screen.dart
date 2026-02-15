@@ -12,6 +12,7 @@ import '../../widgets/app_card.dart';
 import '../../widgets/update_card.dart';
 import '../../localization/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../exceptions/backup_exceptions.dart';
 
 /// Settings screen - Consistent card design with other tabs
 class SettingsScreen extends StatelessWidget {
@@ -553,8 +554,29 @@ class SettingsScreen extends StatelessWidget {
     final backupPath = settings.backupPath;
     if (backupPath == null) return;
 
+    // Show warning dialog to prevent race conditions
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.tr('backup_in_progress')),
+        content: Text(context.tr('backup_warning_message')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(context.tr('cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.tr('continue')),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
     final closeLoading = DialogUtils.showLoading(context,
-        message: context.tr('creating_backup'));
+        message: context.tr('creating_backup_please_wait'));
 
     try {
       final file = await BackupService.instance.createBackup(backupPath);
@@ -568,6 +590,21 @@ class SettingsScreen extends StatelessWidget {
         } else {
           context.showErrorSnackBar(context.tr('backup_failed'));
         }
+      }
+    } on BackupDiskFullException catch (e) {
+      if (context.mounted) {
+        closeLoading();
+        context.showErrorSnackBar(e.toString());
+      }
+    } on BackupPermissionException catch (e) {
+      if (context.mounted) {
+        closeLoading();
+        context.showErrorSnackBar(e.toString());
+      }
+    } on BackupException catch (e) {
+      if (context.mounted) {
+        closeLoading();
+        context.showErrorSnackBar(e.message);
       }
     } catch (e) {
       if (context.mounted) {
@@ -630,6 +667,31 @@ class SettingsScreen extends StatelessWidget {
         } else {
           context.showErrorSnackBar(context.tr('restore_failed'));
         }
+      }
+    } on BackupValidationException catch (e) {
+      if (context.mounted) {
+        closeLoading();
+        context.showErrorSnackBar(e.message);
+      }
+    } on BackupCorruptedException catch (e) {
+      if (context.mounted) {
+        closeLoading();
+        context.showErrorSnackBar(e.toString());
+      }
+    } on BackupDiskFullException catch (e) {
+      if (context.mounted) {
+        closeLoading();
+        context.showErrorSnackBar(e.toString());
+      }
+    } on BackupPermissionException catch (e) {
+      if (context.mounted) {
+        closeLoading();
+        context.showErrorSnackBar(e.toString());
+      }
+    } on BackupException catch (e) {
+      if (context.mounted) {
+        closeLoading();
+        context.showErrorSnackBar(e.message);
       }
     } catch (e) {
       if (context.mounted) {
