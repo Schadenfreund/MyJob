@@ -453,7 +453,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                 items: ApplicationStatus.values.map((status) {
                   return DropdownMenuItem(
                     value: status,
-                    child: Text(status.name.toUpperCase()),
+                    child: Text(context.tr(status.localizationKey)),
                   );
                 }).toList(),
                 onChanged: (newStatus) {

@@ -27,7 +27,7 @@ class FileConfig {
 /// Application metadata
 class AppInfo {
   static const String appName = 'MyJob';
-  static const String version = '1.1.1';
+  static const String version = '1.1.3';
   static const String description = 'Job Application Management Tool';
   static const String supportEmail = 'support@myjob.app';
 }
@@ -44,6 +44,11 @@ enum ApplicationStatus {
   const ApplicationStatus(this.label, this.description);
   final String label;
   final String description;
+
+  String get localizationKey => switch (this) {
+        ApplicationStatus.noResponse => 'status_no_response',
+        _ => 'status_$name',
+      };
 }
 
 /// Supported languages for documents

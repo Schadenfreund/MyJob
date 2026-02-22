@@ -86,42 +86,38 @@ class BackupValidator {
     }
   }
 
-  /// Extract and validate the manifest
+  /// Extract and validate the manifest.
+  /// Manifest is optional for backward compatibility with pre-1.1.1 backups.
   Future<BackupValidationResult> _extractAndValidateManifest(
       Archive archive) async {
+    // Find manifest file — may not exist in older backups
+    ArchiveFile? manifestFile;
     try {
-      // Find manifest file
-      final manifestFile = archive.firstWhere(
-        (file) => file.name == 'manifest.json',
-        orElse: () => throw Exception('Manifest not found'),
-      );
+      manifestFile =
+          archive.firstWhere((file) => file.name == 'manifest.json');
+    } catch (_) {
+      // No manifest — legacy backup format, proceed without version check
+      debugPrint(
+          '[Validator] No manifest found - treating as legacy backup (pre-1.1.1)');
+      return BackupValidationResult(isValid: true);
+    }
 
-      // Decode manifest
-      final manifestContent = utf8.decode(manifestFile.content as List<int>);
-      final manifestJson = jsonDecode(manifestContent) as Map<String, dynamic>;
+    // Manifest found — decode and validate it
+    try {
+      final manifestContent =
+          utf8.decode(manifestFile.content as List<int>);
+      final manifestJson =
+          jsonDecode(manifestContent) as Map<String, dynamic>;
       final manifest = BackupManifest.fromJson(manifestJson);
 
       debugPrint('[Validator] Manifest found: v${manifest.backupVersion}, '
           'app v${manifest.appVersion}, ${manifest.stats.totalFiles} files');
 
-      // Check backup version compatibility
-      if (manifest.backupVersion != '1.0') {
-        return BackupValidationResult(
-          isValid: false,
-          errorMessage:
-              'Incompatible backup version: ${manifest.backupVersion}. This app supports version 1.0.',
-        );
-      }
-
-      return BackupValidationResult(
-        isValid: true,
-        manifest: manifest,
-      );
+      return BackupValidationResult(isValid: true, manifest: manifest);
     } catch (e) {
       return BackupValidationResult(
         isValid: false,
-        errorMessage:
-            'Backup does not contain a valid manifest. This may not be a MyJob backup file.',
+        errorMessage: 'Backup manifest is corrupted.',
       );
     }
   }
@@ -131,7 +127,7 @@ class BackupValidator {
     final fileNames = archive.map((file) => file.name).toList();
 
     // Check for at least one of the critical files/directories
-    final hasSettings = fileNames.any((name) => name.contains('settings.json'));
+    final hasSettings = fileNames.any((name) => name == 'settings.json');
     final hasProfiles = fileNames.any((name) => name.startsWith('profiles/'));
     final hasApplications =
         fileNames.any((name) => name.startsWith('applications/'));

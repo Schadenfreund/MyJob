@@ -14,7 +14,29 @@ class BackupService {
   BackupService._();
   static final BackupService instance = BackupService._();
 
-  /// Create a zip backup of the entire UserData folder at the specified destination path
+  /// Internal folders that are never included in backup zips
+  static const _excludedFolders = {'.backup_safety', '.restore_temp'};
+
+  /// Whitelist of known UserData directories to restore
+  static const _knownDirs = [
+    'applications',
+    'profiles',
+    'notes',
+    'pdf_presets',
+    'cvs', // legacy
+    'cover_letters', // legacy
+  ];
+
+  /// Whitelist of known UserData files to restore
+  static const _knownFiles = [
+    'settings.json',
+    'preferences.json',
+    'cv_customization.json',
+    '.migrated',
+  ];
+
+  /// Create a zip backup of the entire UserData folder at the specified destination path.
+  /// Destination must be outside UserData to prevent recursion.
   Future<File?> createBackup(String destinationDir) async {
     try {
       final userDataPath = await StorageService.instance.getUserDataPath();
@@ -25,7 +47,7 @@ class BackupService {
         return null;
       }
 
-      // Check if destination is inside UserData to avoid recursion/locking
+      // Check destination is not inside UserData to avoid recursion/locking
       final absoluteDestDir = Directory(destinationDir).absolute.path;
       final absoluteUserDataPath = userDataDir.absolute.path;
 
@@ -34,30 +56,12 @@ class BackupService {
             'Cannot backup to a folder inside UserData. Please select a location outside the application folder.');
       }
 
-      // Ensure destination directory exists
       final destDir = Directory(destinationDir);
       if (!destDir.existsSync()) {
         destDir.createSync(recursive: true);
       }
 
-      // Create filename with timestamp
-      final timestamp =
-          DateTime.now().toIso8601String().replaceAll(':', '-').split('.')[0];
-      final backupFileName = 'MyJob_Backup_$timestamp.zip';
-      final backupPath = p.join(destinationDir, backupFileName);
-
-      debugPrint('Starting backup: $absoluteUserDataPath -> $backupPath');
-
-      // We use compute for zipping to keep UI responsive if it's large
-      final resultPath = await compute(_zipUserData, {
-        'sourcePath': absoluteUserDataPath,
-        'destPath': backupPath,
-      });
-
-      if (resultPath != null) {
-        return File(resultPath);
-      }
-      return null;
+      return await _createBackupZip(absoluteUserDataPath, destinationDir);
     } catch (e) {
       debugPrint('Error creating backup: $e');
       rethrow;
@@ -81,7 +85,6 @@ class BackupService {
         throw BackupValidationException(
             validationResult.errorMessage ?? 'Backup validation failed');
       }
-
       debugPrint('[Restore] Validation successful');
 
       // Step 2: Create safety backup of current UserData
@@ -98,6 +101,13 @@ class BackupService {
       debugPrint('[Restore] Step 4: Performing atomic replacement...');
       await _atomicReplace(tempDir);
       debugPrint('[Restore] Atomic replacement complete');
+
+      // Step 4.5: Remap absolute paths (folderPath, profilePicturePath)
+      // Backups store absolute paths, which are stale when restored to a
+      // different location. Detect the old UserData prefix and rewrite it.
+      debugPrint('[Restore] Step 4.5: Remapping absolute paths...');
+      await _remapAbsolutePaths(userDataPath);
+      debugPrint('[Restore] Path remapping complete');
 
       // Step 5: Cleanup temp directory
       debugPrint('[Restore] Step 5: Cleaning up...');
@@ -121,23 +131,22 @@ class BackupService {
             '[Restore] CRITICAL: Rollback failed - $rollbackError. Check .backup_safety/ for manual recovery');
       }
 
-      // Cleanup temp directory if it exists
       if (tempDir != null) {
         try {
           final tempDirectory = Directory(tempDir);
           if (tempDirectory.existsSync()) {
             await tempDirectory.delete(recursive: true);
           }
-        } catch (_) {
-          // Ignore cleanup errors
-        }
+        } catch (_) {}
       }
 
       rethrow;
     }
   }
 
-  /// Create a safety backup before restore
+  /// Create a safety backup before restore.
+  /// Saves into .backup_safety inside UserData using the internal zip method
+  /// (bypasses the user-facing destination check that prevents backups inside UserData).
   Future<File> _createSafetyBackup() async {
     final userDataPath = await StorageService.instance.getUserDataPath();
     final safetyDir = Directory(p.join(userDataPath, '.backup_safety'));
@@ -146,23 +155,42 @@ class BackupService {
       safetyDir.createSync(recursive: true);
     }
 
-    // Create backup in safety directory
-    return (await createBackup(safetyDir.path))!;
+    final file = await _createBackupZip(userDataPath, safetyDir.path);
+    if (file == null) {
+      throw BackupException('Failed to create safety backup');
+    }
+    return file;
   }
 
-  /// Extract backup to temporary directory
+  /// Internal: create a timestamped backup zip from [sourcePath] into [destinationDir].
+  /// Does NOT validate that dest is outside source — callers are responsible.
+  Future<File?> _createBackupZip(
+      String sourcePath, String destinationDir) async {
+    final timestamp =
+        DateTime.now().toIso8601String().replaceAll(':', '-').split('.')[0];
+    final backupFileName = 'MyJob_Backup_$timestamp.zip';
+    final backupPath = p.join(destinationDir, backupFileName);
+
+    debugPrint('[Backup] Creating zip: $sourcePath -> $backupPath');
+
+    final resultPath = await compute(_zipUserData, {
+      'sourcePath': sourcePath,
+      'destPath': backupPath,
+    });
+
+    return resultPath != null ? File(resultPath) : null;
+  }
+
+  /// Extract backup to a temporary directory inside UserData
   Future<String> _extractToTemp(String zipPath) async {
     final userDataPath = await StorageService.instance.getUserDataPath();
     final tempDir = Directory(p.join(userDataPath, '.restore_temp'));
 
-    // Remove old temp directory if it exists
     if (tempDir.existsSync()) {
       await tempDir.delete(recursive: true);
     }
-
     tempDir.createSync(recursive: true);
 
-    // Extract using compute to keep UI responsive
     final success = await compute(_extractZip, {
       'zipPath': zipPath,
       'destPath': tempDir.path,
@@ -175,105 +203,94 @@ class BackupService {
     return tempDir.path;
   }
 
-  /// Perform atomic replacement of UserData
+  /// Atomic replacement of UserData using a whitelist of known entries.
+  ///
+  /// Phase 1 — rename existing -> .old_ (preserves originals for rollback)
+  /// Phase 2 — move from temp -> UserData (only whitelisted entries)
+  /// Phase 3 — delete .old_ entries (commit; only reached if phase 2 succeeded)
   Future<void> _atomicReplace(String tempDir) async {
     final userDataPath = await StorageService.instance.getUserDataPath();
 
-    // List of directories to rename
-    final toRename = ['applications', 'profiles', 'notes'];
-
-    // Step 1: Rename existing directories to .old_
-    for (final dirName in toRename) {
+    // Phase 1: rename existing entries to .old_
+    for (final dirName in _knownDirs) {
       final existing = Directory(p.join(userDataPath, dirName));
       if (existing.existsSync()) {
-        final oldName = p.join(userDataPath, '.old_$dirName');
-        // Delete old .old_ directory if it exists
-        final oldDir = Directory(oldName);
-        if (oldDir.existsSync()) {
-          await oldDir.delete(recursive: true);
-        }
-        await existing.rename(oldName);
+        final oldPath = p.join(userDataPath, '.old_$dirName');
+        final oldDir = Directory(oldPath);
+        if (oldDir.existsSync()) await oldDir.delete(recursive: true);
+        await existing.rename(oldPath);
         debugPrint('[Restore] Renamed $dirName -> .old_$dirName');
       }
     }
-
-    // Also handle settings.json
-    final settingsFile = File(p.join(userDataPath, 'settings.json'));
-    if (settingsFile.existsSync()) {
-      final oldSettings = File(p.join(userDataPath, '.old_settings.json'));
-      if (oldSettings.existsSync()) await oldSettings.delete();
-      await settingsFile.rename(oldSettings.path);
-      debugPrint('[Restore] Renamed settings.json -> .old_settings.json');
-    }
-
-    // Step 2: Move new data from temp to UserData
-    final tempContents = Directory(tempDir).listSync();
-    for (final entity in tempContents) {
-      final name = p.basename(entity.path);
-      final dest = p.join(userDataPath, name);
-
-      // Skip manifest.json - we don't need it in UserData
-      if (name == 'manifest.json') {
-        continue;
-      }
-
-      try {
-        await entity.rename(dest);
-        debugPrint('[Restore] Moved $name to UserData');
-      } catch (e) {
-        debugPrint('[Restore] Error moving $name: $e');
-        throw BackupException('Failed to move $name to UserData: $e');
+    for (final fileName in _knownFiles) {
+      final existing = File(p.join(userDataPath, fileName));
+      if (existing.existsSync()) {
+        final oldPath = p.join(userDataPath, '.old_$fileName');
+        final oldFile = File(oldPath);
+        if (oldFile.existsSync()) await oldFile.delete();
+        await existing.rename(oldPath);
+        debugPrint('[Restore] Renamed $fileName -> .old_$fileName');
       }
     }
 
-    // Step 3: Delete .old_ directories (only if everything succeeded)
-    for (final dirName in toRename) {
+    // Phase 2: move whitelisted entries from temp to UserData
+    for (final dirName in _knownDirs) {
+      final src = Directory(p.join(tempDir, dirName));
+      if (src.existsSync()) {
+        await src.rename(p.join(userDataPath, dirName));
+        debugPrint('[Restore] Moved $dirName to UserData');
+      }
+    }
+    for (final fileName in _knownFiles) {
+      final src = File(p.join(tempDir, fileName));
+      if (src.existsSync()) {
+        await src.rename(p.join(userDataPath, fileName));
+        debugPrint('[Restore] Moved $fileName to UserData');
+      }
+    }
+
+    // Phase 3: delete .old_ entries (commit point)
+    for (final dirName in _knownDirs) {
       final oldDir = Directory(p.join(userDataPath, '.old_$dirName'));
       if (oldDir.existsSync()) {
         await oldDir.delete(recursive: true);
         debugPrint('[Restore] Deleted .old_$dirName');
       }
     }
-
-    final oldSettings = File(p.join(userDataPath, '.old_settings.json'));
-    if (oldSettings.existsSync()) {
-      await oldSettings.delete();
-      debugPrint('[Restore] Deleted .old_settings.json');
+    for (final fileName in _knownFiles) {
+      final oldFile = File(p.join(userDataPath, '.old_$fileName'));
+      if (oldFile.existsSync()) {
+        await oldFile.delete();
+        debugPrint('[Restore] Deleted .old_$fileName');
+      }
     }
   }
 
-  /// Rollback failed restore by moving .old_ directories back
+  /// Rollback failed restore by moving .old_ entries back to their original names
   Future<void> _rollback() async {
     final userDataPath = await StorageService.instance.getUserDataPath();
-    final toRestore = ['applications', 'profiles', 'notes'];
 
-    for (final dirName in toRestore) {
+    for (final dirName in _knownDirs) {
       final oldDir = Directory(p.join(userDataPath, '.old_$dirName'));
       if (oldDir.existsSync()) {
         final dest = Directory(p.join(userDataPath, dirName));
-
-        // Delete corrupted new directory if it exists
-        if (dest.existsSync()) {
-          await dest.delete(recursive: true);
-        }
-
-        // Restore old directory
+        if (dest.existsSync()) await dest.delete(recursive: true);
         await oldDir.rename(dest.path);
         debugPrint('[Rollback] Restored .old_$dirName -> $dirName');
       }
     }
-
-    // Restore settings.json
-    final oldSettings = File(p.join(userDataPath, '.old_settings.json'));
-    if (oldSettings.existsSync()) {
-      final settingsFile = File(p.join(userDataPath, 'settings.json'));
-      if (settingsFile.existsSync()) await settingsFile.delete();
-      await oldSettings.rename(settingsFile.path);
-      debugPrint('[Rollback] Restored .old_settings.json -> settings.json');
+    for (final fileName in _knownFiles) {
+      final oldFile = File(p.join(userDataPath, '.old_$fileName'));
+      if (oldFile.existsSync()) {
+        final dest = File(p.join(userDataPath, fileName));
+        if (dest.existsSync()) await dest.delete();
+        await oldFile.rename(dest.path);
+        debugPrint('[Rollback] Restored .old_$fileName -> $fileName');
+      }
     }
   }
 
-  /// Cleanup old safety backups, keeping only the most recent ones
+  /// Cleanup old safety backups, keeping only the most recent [keepCount]
   Future<void> _cleanupSafetyBackups({int keepCount = 2}) async {
     try {
       final userDataPath = await StorageService.instance.getUserDataPath();
@@ -281,32 +298,158 @@ class BackupService {
 
       if (!safetyDir.existsSync()) return;
 
-      // Get all safety backup files
       final backups = safetyDir
           .listSync()
           .whereType<File>()
           .where((f) => f.path.endsWith('.zip'))
           .toList();
 
-      // Sort by modification time (newest first)
-      backups.sort((a, b) =>
-          b.lastModifiedSync().compareTo(a.lastModifiedSync()));
+      backups.sort(
+          (a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
 
-      // Delete old backups beyond keepCount
       for (int i = keepCount; i < backups.length; i++) {
         await backups[i].delete();
         debugPrint('[Cleanup] Deleted old safety backup: ${backups[i].path}');
       }
-
-      debugPrint(
-          '[Cleanup] Kept ${backups.length < keepCount ? backups.length : keepCount} most recent safety backups');
     } catch (e) {
       debugPrint('[Cleanup] Error cleaning up safety backups: $e');
-      // Don't rethrow - cleanup is not critical
+      // Non-critical — don't rethrow
     }
   }
 
-  /// Helper function to perform zipping in a separate isolate
+  /// After restore, rewrite all absolute UserData paths stored inside JSON files.
+  ///
+  /// Backups store absolute paths (e.g. folderPath, profilePicturePath). When
+  /// restored to a different drive/machine these are stale. We detect the old
+  /// UserData prefix from the data itself and replace it with the current one.
+  Future<void> _remapAbsolutePaths(String userDataPath) async {
+    final oldUserDataPath = await _detectOldUserDataPath(userDataPath);
+    if (oldUserDataPath == null) {
+      debugPrint('[Restore] No stored absolute paths found, skipping remapping');
+      return;
+    }
+
+    if (p.normalize(oldUserDataPath) == p.normalize(userDataPath)) {
+      debugPrint('[Restore] Paths are identical, no remapping needed');
+      return;
+    }
+
+    debugPrint('[Restore] Remapping: "$oldUserDataPath" -> "$userDataPath"');
+
+    // JSON stores Windows backslashes doubled: C:\\foo\\bar
+    final oldJson = oldUserDataPath.replaceAll(r'\', r'\\');
+    final newJson = userDataPath.replaceAll(r'\', r'\\');
+    // Some paths may have been stored with forward slashes
+    final oldFwd = oldUserDataPath.replaceAll(r'\', '/');
+    final newFwd = userDataPath.replaceAll(r'\', '/');
+
+    int count = 0;
+
+    // Patch application metadata JSONs (folderPath) and cv_data.json
+    // inside each application subfolder (personalInfo.profilePicturePath)
+    final appDir = Directory(p.join(userDataPath, 'applications'));
+    if (appDir.existsSync()) {
+      for (final entity in appDir.listSync()) {
+        if (entity is File && entity.path.endsWith('.json')) {
+          if (await _patchFile(entity, oldJson, newJson, oldFwd, newFwd)) {
+            count++;
+          }
+        } else if (entity is Directory) {
+          final cvFile = File(p.join(entity.path, 'cv_data.json'));
+          if (cvFile.existsSync()) {
+            if (await _patchFile(cvFile, oldJson, newJson, oldFwd, newFwd)) {
+              count++;
+            }
+          }
+        }
+      }
+    }
+
+    // Patch profile base_data.json (personalInfo.profilePicturePath)
+    final profilesDir = Directory(p.join(userDataPath, 'profiles'));
+    if (profilesDir.existsSync()) {
+      for (final langDir in profilesDir.listSync().whereType<Directory>()) {
+        final baseData = File(p.join(langDir.path, 'base_data.json'));
+        if (baseData.existsSync()) {
+          if (await _patchFile(baseData, oldJson, newJson, oldFwd, newFwd)) {
+            count++;
+          }
+        }
+      }
+    }
+
+    debugPrint('[Restore] Path remapping done: $count file(s) patched');
+  }
+
+  /// Detect the old UserData base path by reading absolute paths stored inside
+  /// the restored JSON files. Tries application folderPaths first, then falls
+  /// back to profile picture paths.
+  Future<String?> _detectOldUserDataPath(String userDataPath) async {
+    // Try application metadata JSONs (folderPath field)
+    final appDir = Directory(p.join(userDataPath, 'applications'));
+    if (appDir.existsSync()) {
+      for (final file in appDir.listSync().whereType<File>()) {
+        if (!file.path.endsWith('.json')) continue;
+        try {
+          final json =
+              jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+          final folderPath = json['folderPath'] as String?;
+          if (folderPath != null && folderPath.isNotEmpty) {
+            // folderPath = <oldUserData>/applications/<foldername>
+            return p.dirname(p.dirname(folderPath));
+          }
+        } catch (_) {}
+      }
+    }
+
+    // Fallback: profile base_data.json (profilePicturePath field)
+    final profilesDir = Directory(p.join(userDataPath, 'profiles'));
+    if (profilesDir.existsSync()) {
+      for (final langDir in profilesDir.listSync().whereType<Directory>()) {
+        final f = File(p.join(langDir.path, 'base_data.json'));
+        if (!f.existsSync()) continue;
+        try {
+          final json =
+              jsonDecode(await f.readAsString()) as Map<String, dynamic>;
+          final picPath =
+              (json['personalInfo'] as Map<String, dynamic>?)?['profilePicturePath']
+                  as String?;
+          if (picPath != null && picPath.isNotEmpty) {
+            // picPath = <oldUserData>/profiles/<lang>/profile_picture.<ext>
+            return p.dirname(p.dirname(p.dirname(picPath)));
+          }
+        } catch (_) {}
+      }
+    }
+
+    return null;
+  }
+
+  /// Replace [oldJson] and [oldFwd] occurrences in [file] with their new
+  /// equivalents. Returns true if the file was modified.
+  Future<bool> _patchFile(
+    File file,
+    String oldJson,
+    String newJson,
+    String oldFwd,
+    String newFwd,
+  ) async {
+    try {
+      final original = await file.readAsString();
+      var patched = original.replaceAll(oldJson, newJson);
+      if (oldFwd != oldJson) patched = patched.replaceAll(oldFwd, newFwd);
+      if (patched == original) return false;
+      await file.writeAsString(patched);
+      debugPrint('[Restore] Patched paths in: ${p.basename(file.path)}');
+      return true;
+    } catch (e) {
+      debugPrint('[Restore] Error patching ${file.path}: $e');
+      return false;
+    }
+  }
+
+  /// Zip UserData into a file, skipping internal app folders.
+  /// Runs in a separate isolate via compute().
   static Future<String?> _zipUserData(Map<String, String> params) async {
     try {
       final sourcePath = params['sourcePath']!;
@@ -315,18 +458,13 @@ class BackupService {
       debugPrint('[Backup Isolate] Starting zip: $sourcePath');
       final dir = Directory(sourcePath);
       if (!dir.existsSync()) {
-        debugPrint(
-            '[Backup Isolate] ERROR: Source directory does not exist or is inaccessible: $sourcePath');
+        debugPrint('[Backup Isolate] ERROR: Source does not exist: $sourcePath');
         return null;
       }
 
       final archive = Archive();
       final entities = dir.listSync(recursive: true);
 
-      debugPrint(
-          '[Backup Isolate] Found ${entities.length} entities in $sourcePath');
-
-      // Count files by type for manifest
       int applicationCount = 0;
       int profileCount = 0;
       int noteCount = 0;
@@ -335,35 +473,35 @@ class BackupService {
       for (final entity in entities) {
         if (entity is File) {
           try {
-            final fileBytes = entity.readAsBytesSync();
             final relativePath = p.relative(entity.path, from: sourcePath);
+            // Zip standard uses forward slashes
+            final normalizedPath = relativePath.replaceAll('\\', '/');
 
-            // Count file types
-            if (relativePath.startsWith('applications${p.separator}') &&
-                relativePath.endsWith('.json')) {
+            // Skip internal app folders (safety backups, restore temp)
+            final topFolder = normalizedPath.split('/').first;
+            if (_excludedFolders.contains(topFolder)) continue;
+
+            final fileBytes = entity.readAsBytesSync();
+
+            if (normalizedPath.startsWith('applications/') &&
+                normalizedPath.endsWith('.json')) {
               applicationCount++;
-            } else if (relativePath.startsWith('profiles${p.separator}') &&
-                relativePath.contains('base_data.json')) {
+            } else if (normalizedPath.startsWith('profiles/') &&
+                normalizedPath.contains('base_data.json')) {
               profileCount++;
-            } else if (relativePath.startsWith('notes${p.separator}') &&
-                (relativePath.endsWith('.yaml') ||
-                    relativePath.endsWith('.yml'))) {
+            } else if (normalizedPath.startsWith('notes/') &&
+                (normalizedPath.endsWith('.yaml') ||
+                    normalizedPath.endsWith('.yml'))) {
               noteCount++;
             }
 
-            // Log every 10th file or important files to avoid logflooding but still show progress
             if (fileCount % 10 == 0 || fileCount < 5) {
               debugPrint(
-                  '[Backup Isolate] Adding file: $relativePath (${fileBytes.length} bytes)');
+                  '[Backup Isolate] Adding: $normalizedPath (${fileBytes.length} bytes)');
             }
 
-            final archiveFile = ArchiveFile(
-              relativePath.replaceAll(
-                  '\\', '/'), // Zip standard uses forward slashes
-              fileBytes.length,
-              fileBytes,
-            );
-            archive.addFile(archiveFile);
+            archive.addFile(
+                ArchiveFile(normalizedPath, fileBytes.length, fileBytes));
             fileCount++;
           } catch (e) {
             debugPrint(
@@ -372,7 +510,7 @@ class BackupService {
         }
       }
 
-      // Create and add manifest as first file
+      // Add manifest
       final manifest = BackupManifest(
         appVersion: AppInfo.version,
         timestamp: DateTime.now(),
@@ -383,42 +521,27 @@ class BackupService {
           totalFiles: fileCount,
         ),
       );
-
-      final manifestJson = jsonEncode(manifest.toJson());
-      final manifestBytes = utf8.encode(manifestJson);
-      final manifestFile = ArchiveFile(
-        'manifest.json',
-        manifestBytes.length,
-        manifestBytes,
-      );
-      archive.addFile(manifestFile);
+      final manifestBytes = utf8.encode(jsonEncode(manifest.toJson()));
+      archive.addFile(
+          ArchiveFile('manifest.json', manifestBytes.length, manifestBytes));
 
       debugPrint(
-          '[Backup Isolate] Added manifest: $applicationCount apps, $profileCount profiles, $noteCount notes');
+          '[Backup Isolate] Encoding $fileCount files ($applicationCount apps, $profileCount profiles, $noteCount notes)...');
 
-      if (fileCount == 0) {
-        debugPrint('[Backup Isolate] WARNING: No files found to backup!');
-      }
-
-      debugPrint('[Backup Isolate] Encoding $fileCount files into zip...');
-      final zipEncoder = ZipEncoder();
-      final encodedBytes = zipEncoder.encode(archive);
-
+      final encodedBytes = ZipEncoder().encode(archive);
       debugPrint(
           '[Backup Isolate] Writing ${encodedBytes.length} bytes to $destPath');
-      final destFile = File(destPath);
-      destFile.writeAsBytesSync(encodedBytes);
+      File(destPath).writeAsBytesSync(encodedBytes);
 
-      debugPrint('[Backup Isolate] Zip creation finished successfully.');
+      debugPrint('[Backup Isolate] Done.');
       return destPath;
     } catch (e, stack) {
-      debugPrint('[Backup Isolate] CRITICAL ERROR: $e');
-      debugPrint('[Backup Isolate] Stack trace: $stack');
+      debugPrint('[Backup Isolate] CRITICAL ERROR: $e\n$stack');
       return null;
     }
   }
 
-  /// Helper function to perform extraction in a separate isolate
+  /// Extract zip to destination directory. Runs in a separate isolate via compute().
   static Future<bool> _extractZip(Map<String, String> params) async {
     try {
       final zipPath = params['zipPath']!;
@@ -428,7 +551,7 @@ class BackupService {
       final archive = ZipDecoder().decodeBytes(bytes);
 
       debugPrint(
-          '[Restore Isolate] Extracting ${archive.length} entities to $destPath');
+          '[Restore Isolate] Extracting ${archive.length} entries to $destPath');
 
       int fileCount = 0;
       for (final file in archive) {
@@ -436,25 +559,18 @@ class BackupService {
         if (file.isFile) {
           final data = file.content as List<int>;
           final outFile = File(p.join(destPath, filename));
-
-          // Ensure parent directory exists
           outFile.parent.createSync(recursive: true);
-
           outFile.writeAsBytesSync(data);
           fileCount++;
         } else {
-          // It's a directory
-          final outDir = Directory(p.join(destPath, filename));
-          outDir.createSync(recursive: true);
+          Directory(p.join(destPath, filename)).createSync(recursive: true);
         }
       }
 
-      debugPrint(
-          '[Restore Isolate] Extraction complete. Restored $fileCount files.');
+      debugPrint('[Restore Isolate] Extracted $fileCount files.');
       return true;
     } catch (e, stack) {
-      debugPrint('[Restore Isolate] CRITICAL ERROR: $e');
-      debugPrint('[Restore Isolate] Stack trace: $stack');
+      debugPrint('[Restore Isolate] CRITICAL ERROR: $e\n$stack');
       return false;
     }
   }

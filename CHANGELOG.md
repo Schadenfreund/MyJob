@@ -5,6 +5,49 @@ All notable changes to MyJob will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+---
+
+## [1.1.3] - 2026-02-20
+
+### Fixed
+
+#### Backup & Restore
+
+- **Profile pictures missing after restore** - `profilePicturePath` in
+  `profiles/<lang>/base_data.json` was stored as an absolute path tied to
+  the original machine. After restoring to a different location the picture
+  appeared missing even though the image file was correctly present in the
+  backup. Restore now rewrites the path to the current UserData location.
+- **Application CV/Cover Letter inaccessible after restore** - `folderPath`
+  in `applications/<uuid>.json` was stored as an absolute path. After
+  restoring to a different drive/location the app could not find the folder,
+  showing "folder does not exist" and "failed to load CV data". Restore now
+  rewrites `folderPath` to the current UserData location.
+- **CV data profile picture path stale after restore** - `cv_data.json`
+  inside each application subfolder also stores `profilePicturePath` as an
+  absolute path that was not updated on restore. All three path types are now
+  patched in a single remapping pass after atomic replace.
+
+---
+
+## [1.1.2] - 2026-02-20
+
+### Fixed
+
+#### Backup & Restore
+
+- **Restore always failed** - Safety backup was saved inside UserData using the public `createBackup()` which explicitly rejects destinations inside UserData. Every restore attempt threw at Step 2 before any data was touched
+- **Old backups rejected** - Backups created before v1.1.1 (without `manifest.json`) were incorrectly treated as invalid. Manifest is now optional; legacy backups are accepted and validated by structure instead
+- **Incomplete restore** - `pdf_presets/`, `preferences.json`, `cv_customization.json`, and `.migrated` were not included in the atomic rename/rollback cycle. A mid-restore failure left these files in a broken state with no rollback coverage
+- **Foreign files written to UserData** - Zip files containing non-UserData entries caused those to be placed into UserData. Restore now uses a strict whitelist of known entries
+- **Safety backups included nested zips** - `.backup_safety/` and `.restore_temp/` were zipped into new backups, creating bloated and potentially recursive archives. Both folders are now always excluded
+- **`settings.json` structure check too broad** - Validator matched any path containing `settings.json` (e.g. `applications/.../pdf_settings.json`). Now requires exact root-level match
+
+#### Software Updates
+
+- **Update check reported "up to date" when newer version exists** - Version comparison was incorrectly gated on `hasValidDownload`. If the GitHub release had no matching Windows ZIP asset, the check silently fell through to "up to date" despite a newer version being available. Version detection and download availability are now independent
+- **404 response incorrectly shown as "up to date"** - A 404 from the GitHub API now shows a proper error message instead of falsely reporting the current version is current
+- **Missing download URL caused silent failure** - If `downloadUpdate()` was called without a valid download URL, it failed silently. Now falls back to opening the GitHub releases page in the browser
 
 ---
 

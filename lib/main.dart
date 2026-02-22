@@ -167,7 +167,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final settings = context.watch<SettingsService>();
     final appState = context.watch<AppState>();
     // Watch localization so UI rebuilds on language change
-    context.watch<AppLocalizations>();
+    final loc = context.watch<AppLocalizations>();
+
+    // Wait for localization to initialize before showing content
+    if (!loc.isInitialized) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
     // Sync with AppState changes (e.g., from other parts of the app)
     if (appState.currentNavIndex != _currentTabIndex) {

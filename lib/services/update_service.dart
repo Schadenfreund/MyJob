@@ -71,18 +71,19 @@ class UpdateService extends ChangeNotifier {
           final current = SemanticVersion.parse(currentVersion);
           final latest = SemanticVersion.parse(_updateInfo!.version);
 
-          if (latest.isNewerThan(current) && _updateInfo!.hasValidDownload) {
+          if (latest.isNewerThan(current)) {
             _setState(UpdateState.available);
             debugPrint(
-                'Update available: $currentVersion -> ${_updateInfo!.version}');
+                'Update available: $currentVersion -> ${_updateInfo!.version}'
+                '${_updateInfo!.hasValidDownload ? '' : ' (no direct download)'}');
           } else {
             _setState(UpdateState.upToDate);
             debugPrint('Already on latest version: $currentVersion');
           }
         } else if (response.statusCode == 404) {
-          // No releases found
-          _setState(UpdateState.upToDate);
-          debugPrint('No releases found on GitHub');
+          // No published releases found on GitHub
+          _setError('No releases found. Check manually at github.com');
+          debugPrint('No releases found on GitHub (404)');
         } else if (response.statusCode == 403) {
           // Rate limited
           _setError('GitHub API rate limit exceeded. Try again later.');
@@ -106,6 +107,13 @@ class UpdateService extends ChangeNotifier {
   /// Download the update ZIP file
   Future<void> downloadUpdate() async {
     if (_updateInfo == null || !_state.canDownload) return;
+
+    // No direct download URL — fall back to the releases page
+    if (!_updateInfo!.hasValidDownload) {
+      debugPrint('No direct download URL, opening releases page');
+      await openReleasesPage();
+      return;
+    }
 
     _setState(UpdateState.downloading);
     _downloadProgress = 0.0;

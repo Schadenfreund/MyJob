@@ -49,7 +49,10 @@
       "Bash(dart update_font_assets.dart:*)",
       "Bash(/c/Users/iBuri/flutter/bin/flutter analyze:*)",
       "Bash(cmd.exe /c \"where flutter\")",
-      "Bash(cmd.exe /c \"flutter analyze lib\\\\widgets\\\\note_card.dart lib\\\\screens\\\\notes\\\\notes_screen.dart lib\\\\services\\\\note_export_service.dart lib\\\\screens\\\\applications\\\\application_editor_dialog.dart\")"
+      "Bash(cmd.exe /c \"flutter analyze lib\\\\widgets\\\\note_card.dart lib\\\\screens\\\\notes\\\\notes_screen.dart lib\\\\services\\\\note_export_service.dart lib\\\\screens\\\\applications\\\\application_editor_dialog.dart\")",
+      "Bash(python3:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(powershell -File:*)"
     ]
   }
 }
