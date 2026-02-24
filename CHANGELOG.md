@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.4] - 2026-02-24
+
+### Added
+
+#### Custom Language Import
+- **Import language files** - Add custom UI languages by importing a JSON locale file directly from Settings → Language. The new language immediately appears in the language selector and in the PDF editor's language dropdown.
+- **Delete custom languages** - Remove imported languages via the delete button next to each custom language entry. Switching away from the active language falls back to English automatically.
+- **PDF language dropdown sources all available languages** - The language selector in the PDF editor now lists every installed language (built-in and custom), not just English and German.
+- **Persistent PDF language choice** - The selected PDF content language is saved per document and restored when reopening the PDF editor. Previously the choice was always overridden on reopen.
+- **Croatian demo locale** - `DEMO_DATA/localization/locale_hr.json` included as a ready-to-import example for the custom language feature.
+
+### Changed
+
+#### PDF Language System
+- Replaced the internal `CvLanguage` enum (`english`/`german`) with a plain language code string (`'en'`/`'de'`). Old `pdf_settings.json` files with enum values are transparently upgraded on load.
+- PDF section headers and labels fall back to English for any language code without explicit translations in `CvTranslations`.
+
+#### PDF Editor — Full UI Localization
+- All hardcoded English strings in the PDF editor are now translated via the app's localization system:
+  - Sidebar section headers, layout preset names and descriptions, font selector message
+  - Toolbar tooltips and view-mode labels (Single Page, Side by Side, Fit Width)
+  - Template Edit Panel header, Save Changes and Cancel buttons
+  - Info panels in the Job Application and Master Profile PDF dialogs
+  - Cover letter template preset section (Design Preset header and descriptions)
+- Sub-header in the PDF editor top bar now shows a human-readable name (e.g. `Acme Corp · Developer · CV`) instead of the raw filename-safe string.
+
+### Fixed
+
+- Import summary labels (Personal Info, Skills, Work Experience, etc.) were hardcoded English; they now use locale keys and translate correctly.
+
+---
+
 ## [1.1.3] - 2026-02-20
 
 ### Fixed

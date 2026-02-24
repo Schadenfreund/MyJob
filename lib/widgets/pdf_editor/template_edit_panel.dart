@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../localization/app_localizations.dart';
 
 /// Editable text field model for PDF template editing
 class EditableField {
@@ -159,10 +160,10 @@ class _TemplateEditPanelState extends State<TemplateEditPanel> {
         children: [
           Icon(Icons.edit, color: widget.accentColor, size: 20),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
-              'EDIT TEMPLATE',
-              style: TextStyle(
+              context.tr('pdf_edit_template').toUpperCase(),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -173,7 +174,7 @@ class _TemplateEditPanelState extends State<TemplateEditPanel> {
           IconButton(
             onPressed: widget.onCancel,
             icon: const Icon(Icons.close, color: Colors.white),
-            tooltip: 'Cancel',
+            tooltip: context.tr('cancel'),
           ),
         ],
       ),
@@ -203,7 +204,7 @@ class _TemplateEditPanelState extends State<TemplateEditPanel> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('Cancel'),
+              child: Text(context.tr('cancel')),
             ),
           ),
           const SizedBox(width: 12),
@@ -215,7 +216,7 @@ class _TemplateEditPanelState extends State<TemplateEditPanel> {
                 foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('Save Changes'),
+              child: Text(context.tr('save_changes')),
             ),
           ),
         ],

@@ -521,7 +521,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                item.label,
+                context.tr(item.label),
                 style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

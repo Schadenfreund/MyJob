@@ -10,13 +10,13 @@ import '../models/template_customization.dart';
 import '../models/cv_data.dart';
 import '../models/cv_data.dart' as cv_data;
 import '../models/cover_letter.dart';
-import '../constants/app_constants.dart';
 import '../services/pdf_service.dart';
 import '../services/storage_service.dart';
 import '../utils/data_converters.dart';
 import '../widgets/pdf_editor/template_edit_panel.dart';
 import '../widgets/pdf_editor/pdf_editor_sidebar.dart'
     show CvSectionAvailability;
+import '../localization/app_localizations.dart';
 import 'base_template_pdf_preview_dialog.dart';
 
 /// PDF preview and editor for master profile
@@ -95,26 +95,24 @@ class _MasterProfilePdfDialogState
 
         if (style != null && customization != null) {
           controller.updateStyle(style);
-          // Ensure language stays correct
-          final updatedCustomization = customization.copyWith(
-            language: _documentLanguageToCvLanguage(widget.profile.language),
+          // Respect the user's saved language choice
+          controller.updateCustomization(customization);
+        } else {
+          // No saved settings yet — default to the profile's language
+          controller.updateCustomization(
+            controller.customization
+                .copyWith(language: widget.profile.language.code),
           );
-          controller.updateCustomization(updatedCustomization);
         }
         debugPrint('[Master PDF Dialog] Loaded saved settings');
       }
     } catch (e) {
       debugPrint('[Master PDF Dialog] No saved settings or error loading: $e');
-    }
-  }
-
-  /// Convert DocumentLanguage to CvLanguage
-  CvLanguage _documentLanguageToCvLanguage(DocumentLanguage docLang) {
-    switch (docLang) {
-      case DocumentLanguage.de:
-        return CvLanguage.german;
-      case DocumentLanguage.en:
-        return CvLanguage.english;
+      // Default to profile language on error
+      controller.updateCustomization(
+        controller.customization
+            .copyWith(language: widget.profile.language.code),
+      );
     }
   }
 
@@ -295,6 +293,12 @@ class _MasterProfilePdfDialogState
   }
 
   @override
+  String getDisplayName() {
+    final type = widget.isCV ? context.tr('pdf_doc_type_cv') : context.tr('cover_letter');
+    return '${context.tr('pdf_info_master_profile')} · $type';
+  }
+
+  @override
   String getDocumentName() {
     final type = widget.isCV ? 'CV' : 'CoverLetter';
     final lang = widget.profile.language.code.toUpperCase();
@@ -454,9 +458,9 @@ class _MasterProfilePdfDialogState
             Icon(Icons.account_circle_outlined,
                 color: selectedStyle.accentColor, size: 18),
             const SizedBox(width: 8),
-            const Text(
-              'MASTER PROFILE',
-              style: TextStyle(
+            Text(
+              context.tr('pdf_info_master_profile').toUpperCase(),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -466,12 +470,12 @@ class _MasterProfilePdfDialogState
           ],
         ),
         const SizedBox(height: 12),
-        _buildInfoRow('Language', widget.profile.language.label),
+        _buildInfoRow(context.tr('pdf_info_language'), widget.profile.language.label),
         _buildInfoRow(
-          'Document',
-          widget.isCV ? 'Curriculum Vitae' : 'Cover Letter',
+          context.tr('pdf_info_document'),
+          widget.isCV ? context.tr('pdf_doc_type_cv') : context.tr('cover_letter'),
         ),
-        _buildInfoRow('Purpose', 'Preview & Save Preset'),
+        _buildInfoRow(context.tr('pdf_info_purpose'), context.tr('pdf_purpose_preview_save')),
       ],
     );
   }
@@ -495,7 +499,7 @@ class _MasterProfilePdfDialogState
                   color: selectedStyle.accentColor, size: 16),
               const SizedBox(width: 6),
               Text(
-                'STYLE PRESET',
+                context.tr('pdf_info_style_preset').toUpperCase(),
                 style: TextStyle(
                   color: selectedStyle.accentColor,
                   fontSize: 11,
@@ -507,7 +511,7 @@ class _MasterProfilePdfDialogState
           ),
           const SizedBox(height: 8),
           Text(
-            'Changes here save as default style for new job applications.',
+            context.tr('pdf_style_preset_desc'),
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.7),
               fontSize: 10,

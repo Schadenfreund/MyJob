@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pdf_editor_controller.dart';
+import '../../localization/app_localizations.dart';
 
 /// Floating toolbar for PDF editor with zoom and view controls
 class PdfEditorToolbar extends StatelessWidget {
@@ -41,27 +42,23 @@ class PdfEditorToolbar extends StatelessWidget {
               // View mode toggle
               _buildToolbarButton(
                 icon: controller.viewMode.icon,
-                tooltip: controller.viewMode.label,
+                tooltip: _viewModeTooltip(context, controller.viewMode),
                 onPressed: controller.cycleViewMode,
-                label: controller.viewMode == PdfViewMode.sideBySide
-                    ? 'Split'
-                    : controller.viewMode == PdfViewMode.singlePage
-                        ? 'Single'
-                        : 'Fit',
+                label: _viewModeShortLabel(context, controller.viewMode),
               ),
               _buildDivider(),
 
               // Zoom controls (compact)
               _buildToolbarButton(
                 icon: Icons.remove,
-                tooltip: 'Zoom Out',
+                tooltip: context.tr('toolbar_zoom_out'),
                 onPressed: controller.zoom > PdfEditorController.minZoom
                     ? controller.zoomOut
                     : null,
               ),
               // Clickable percentage badge (click to reset to 100%)
               Tooltip(
-                message: 'Click to reset to 100%',
+                message: context.tr('toolbar_reset_zoom'),
                 child: GestureDetector(
                   onTap: () => controller.setZoom(1.0),
                   child: Container(
@@ -84,7 +81,7 @@ class PdfEditorToolbar extends StatelessWidget {
               ),
               _buildToolbarButton(
                 icon: Icons.add,
-                tooltip: 'Zoom In',
+                tooltip: context.tr('toolbar_zoom_in'),
                 onPressed: controller.zoom < PdfEditorController.maxZoom
                     ? controller.zoomIn
                     : null,
@@ -94,7 +91,7 @@ class PdfEditorToolbar extends StatelessWidget {
               // Fit width button
               _buildToolbarButton(
                 icon: Icons.fit_screen,
-                tooltip: 'Fit Width',
+                tooltip: context.tr('pdf_view_fit_width'),
                 onPressed: () {
                   controller.resetZoom();
                   controller.setViewMode(PdfViewMode.fitWidth);
@@ -105,7 +102,7 @@ class PdfEditorToolbar extends StatelessWidget {
                 _buildDivider(),
                 _buildToolbarButton(
                   icon: Icons.print,
-                  tooltip: 'Print',
+                  tooltip: context.tr('toolbar_print'),
                   onPressed: onPrint,
                   accentColor: true,
                 ),
@@ -115,6 +112,28 @@ class PdfEditorToolbar extends StatelessWidget {
         );
       },
     );
+  }
+
+  String _viewModeTooltip(BuildContext context, PdfViewMode mode) {
+    switch (mode) {
+      case PdfViewMode.singlePage:
+        return context.tr('pdf_view_single_page');
+      case PdfViewMode.sideBySide:
+        return context.tr('pdf_view_side_by_side');
+      case PdfViewMode.fitWidth:
+        return context.tr('pdf_view_fit_width');
+    }
+  }
+
+  String _viewModeShortLabel(BuildContext context, PdfViewMode mode) {
+    switch (mode) {
+      case PdfViewMode.singlePage:
+        return context.tr('pdf_view_single');
+      case PdfViewMode.sideBySide:
+        return context.tr('pdf_view_split');
+      case PdfViewMode.fitWidth:
+        return context.tr('pdf_view_fit');
+    }
   }
 
   Widget _buildToolbarButton({

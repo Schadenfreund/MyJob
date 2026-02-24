@@ -6,6 +6,7 @@ import '../models/cv_data.dart';
 import '../models/template_style.dart';
 import '../models/cover_letter_template_selection.dart';
 import '../services/pdf_service.dart';
+import '../localization/app_localizations.dart';
 import 'base_template_pdf_preview_dialog.dart';
 
 /// PDF preview and editor for cover letter templates
@@ -72,9 +73,9 @@ class _CoverLetterTemplatePdfPreviewDialogState
             children: [
               Icon(Icons.style, color: controller.style.accentColor, size: 18),
               const SizedBox(width: 8),
-              const Text(
-                'DESIGN PRESET',
-                style: TextStyle(
+              Text(
+                context.tr('sidebar_design_preset').toUpperCase(),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -85,7 +86,7 @@ class _CoverLetterTemplatePdfPreviewDialogState
           ),
           const SizedBox(height: 8),
           Text(
-            'Quick-switch between cover letter styles',
+            context.tr('sidebar_design_preset_desc'),
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.5),
               fontSize: 10,
@@ -143,7 +144,7 @@ class _CoverLetterTemplatePdfPreviewDialogState
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                templateType.label,
+                                _templateLabel(context, templateType),
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -154,7 +155,7 @@ class _CoverLetterTemplatePdfPreviewDialogState
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                templateType.description,
+                                _templateDescription(context, templateType),
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.5),
                                   fontSize: 11,
@@ -175,6 +176,28 @@ class _CoverLetterTemplatePdfPreviewDialogState
         ],
       ),
     );
+  }
+
+  String _templateLabel(BuildContext context, CoverLetterTemplateType type) {
+    switch (type) {
+      case CoverLetterTemplateType.modern:
+        return context.tr('layout_preset_modern');
+      case CoverLetterTemplateType.traditional:
+        return context.tr('layout_preset_traditional');
+      case CoverLetterTemplateType.compact:
+        return context.tr('layout_preset_compact');
+    }
+  }
+
+  String _templateDescription(BuildContext context, CoverLetterTemplateType type) {
+    switch (type) {
+      case CoverLetterTemplateType.modern:
+        return context.tr('cl_template_modern_desc');
+      case CoverLetterTemplateType.traditional:
+        return context.tr('cl_template_traditional_desc');
+      case CoverLetterTemplateType.compact:
+        return context.tr('cl_template_compact_desc');
+    }
   }
 
   /// Get icon for template type

@@ -466,21 +466,21 @@ class UnifiedImportResult {
       if (personalInfo != null) {
         items.add(ImportSummaryItem(
           icon: 'person',
-          label: 'Personal Info',
+          label: 'personal_info',
           detail: personalInfo!.fullName,
         ));
       }
       if (skills.isNotEmpty) {
         items.add(ImportSummaryItem(
           icon: 'build',
-          label: 'Skills',
+          label: 'skills',
           detail: '${skills.length} skill${skills.length == 1 ? '' : 's'}',
         ));
       }
       if (languages.isNotEmpty) {
         items.add(ImportSummaryItem(
           icon: 'language',
-          label: 'Languages',
+          label: 'languages_section',
           detail:
               '${languages.length} language${languages.length == 1 ? '' : 's'}',
         ));
@@ -488,7 +488,7 @@ class UnifiedImportResult {
       if (interests.isNotEmpty) {
         items.add(ImportSummaryItem(
           icon: 'interests',
-          label: 'Interests',
+          label: 'interests',
           detail:
               '${interests.length} interest${interests.length == 1 ? '' : 's'}',
         ));
@@ -496,7 +496,7 @@ class UnifiedImportResult {
       if (workExperiences.isNotEmpty) {
         items.add(ImportSummaryItem(
           icon: 'work',
-          label: 'Work Experience',
+          label: 'work_experience',
           detail:
               '${workExperiences.length} position${workExperiences.length == 1 ? '' : 's'}',
         ));
@@ -504,7 +504,7 @@ class UnifiedImportResult {
       if (education.isNotEmpty) {
         items.add(ImportSummaryItem(
           icon: 'school',
-          label: 'Education',
+          label: 'education',
           detail:
               '${education.length} ${education.length == 1 ? 'degree' : 'degrees'}',
         ));
@@ -512,13 +512,13 @@ class UnifiedImportResult {
     } else if (isCoverLetter) {
       items.add(ImportSummaryItem(
         icon: 'mail',
-        label: 'Cover Letter',
+        label: 'cover_letter',
         detail: templateName ?? 'Template',
       ));
       if (placeholders.isNotEmpty) {
         items.add(ImportSummaryItem(
           icon: 'edit',
-          label: 'Placeholders',
+          label: 'import_placeholders',
           detail: '${placeholders.length} to fill',
         ));
       }

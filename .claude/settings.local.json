@@ -52,7 +52,8 @@
       "Bash(cmd.exe /c \"flutter analyze lib\\\\widgets\\\\note_card.dart lib\\\\screens\\\\notes\\\\notes_screen.dart lib\\\\services\\\\note_export_service.dart lib\\\\screens\\\\applications\\\\application_editor_dialog.dart\")",
       "Bash(python3:*)",
       "Bash(powershell -Command:*)",
-      "Bash(powershell -File:*)"
+      "Bash(powershell -File:*)",
+      "Bash(dart analyze:*)"
     ]
   }
 }

@@ -200,8 +200,12 @@ abstract class BaseTemplatePdfPreviewDialogState<
   /// Export PDF to file
   Future<void> exportPdf(BuildContext context, String outputPath);
 
-  /// Get document name for display and export
+  /// Get document name for file export (filename-safe)
   String getDocumentName();
+
+  /// Get human-readable display name for the top bar sub-header
+  /// Defaults to getDocumentName() — override for nicer formatting
+  String getDisplayName() => getDocumentName();
 
   /// Get initial directory for export dialog (optional)
   ///
@@ -441,7 +445,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
                         ),
                       ),
                       Text(
-                        getDocumentName(),
+                        getDisplayName(),
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.6),
                           fontSize: 12,

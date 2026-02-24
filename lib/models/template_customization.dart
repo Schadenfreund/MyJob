@@ -29,12 +29,6 @@ enum ProfilePhotoStyle {
   // grayscale, // Removed - not supported by pdf package
 }
 
-/// Language options for CV content
-enum CvLanguage {
-  english,
-  german,
-}
-
 /// CV Layout modes for the professional template
 enum CvLayoutMode {
   modern('Modern', 'Single column with timeline experience', Icons.view_agenda),
@@ -328,8 +322,8 @@ class TemplateCustomization {
   // LANGUAGE OPTIONS
   // -------------------------------------------------------------------------
 
-  /// Language of the CV content
-  final CvLanguage language;
+  /// Language of the CV content (language code, e.g. 'en', 'de')
+  final String language;
 
   // -------------------------------------------------------------------------
   // PAGE BREAK OPTIONS
@@ -371,7 +365,7 @@ class TemplateCustomization {
     this.showSubject = true,
     this.showRecipient = true,
     // Language
-    this.language = CvLanguage.english,
+    this.language = 'en',
     // Page breaks
     this.sectionPageBreaks = const SectionPageBreaks(),
   });
@@ -405,7 +399,7 @@ class TemplateCustomization {
       'showProficiencyBars': showProficiencyBars,
       'showSubject': showSubject,
       'showRecipient': showRecipient,
-      'language': language.name,
+      'language': language,
       'sectionPageBreaks': sectionPageBreaks.toJson(),
     };
   }
@@ -456,14 +450,24 @@ class TemplateCustomization {
       showProficiencyBars: json['showProficiencyBars'] as bool? ?? true,
       showSubject: json['showSubject'] as bool? ?? true,
       showRecipient: json['showRecipient'] as bool? ?? true,
-      language: CvLanguage.values.firstWhere(
-        (e) => e.name == json['language'],
-        orElse: () => CvLanguage.english,
-      ),
+      language: _parseLegacyLanguageCode(json['language'] as String?),
       sectionPageBreaks: SectionPageBreaks.fromJson(
         json['sectionPageBreaks'] as Map<String, dynamic>?,
       ),
     );
+  }
+
+  /// Maps legacy enum name strings ('english', 'german') to language codes,
+  /// and passes modern codes ('en', 'de', custom) through unchanged.
+  static String _parseLegacyLanguageCode(String? value) {
+    switch (value) {
+      case 'english':
+        return 'en';
+      case 'german':
+        return 'de';
+      default:
+        return value ?? 'en';
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -597,7 +601,7 @@ class TemplateCustomization {
     bool? showProficiencyBars,
     bool? showSubject,
     bool? showRecipient,
-    CvLanguage? language,
+    String? language,
     SectionPageBreaks? sectionPageBreaks,
   }) {
     return TemplateCustomization(

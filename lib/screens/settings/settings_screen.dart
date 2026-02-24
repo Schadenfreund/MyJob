@@ -257,7 +257,7 @@ class SettingsScreen extends StatelessWidget {
                           children: languages.map((lang) {
                             final isSelected =
                                 lang.code == loc.currentLanguageCode;
-                            return _LanguageButton(
+                            final button = _LanguageButton(
                               languageCode: lang.code,
                               languageName: lang.name,
                               isSelected: isSelected,
@@ -267,7 +267,55 @@ class SettingsScreen extends StatelessWidget {
                                 settings.setAppLanguage(lang.code);
                               },
                             );
+                            if (lang.isBuiltIn) return button;
+                            // Custom languages get a delete badge
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                button,
+                                const SizedBox(width: 4),
+                                Tooltip(
+                                  message: loc.tr('delete_language'),
+                                  child: InkWell(
+                                    onTap: () => _deleteCustomLanguage(
+                                      context,
+                                      loc,
+                                      settings,
+                                      lang.code,
+                                      lang.name,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.lightDanger
+                                            .withValues(alpha: 0.1),
+                                        borderRadius:
+                                            BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: AppColors.lightDanger
+                                              .withValues(alpha: 0.3),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.delete_outline,
+                                        size: 14,
+                                        color: AppColors.lightDanger,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
                           }).toList(),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        AppCardActionButton(
+                          onPressed: () =>
+                              _importLanguageFile(context, loc),
+                          icon: Icons.upload_file_outlined,
+                          label: loc.tr('import_language_file'),
                         ),
                       ],
                     );
@@ -536,6 +584,56 @@ class SettingsScreen extends StatelessWidget {
       }
     } catch (e) {
       debugPrint('Failed to open support link: $e');
+    }
+  }
+
+  void _importLanguageFile(
+      BuildContext context, AppLocalizations loc) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+      dialogTitle: loc.tr('select_language_file'),
+    );
+
+    if (result == null || result.files.single.path == null) return;
+    if (!context.mounted) return;
+
+    final imported = await loc.importLocaleFile(result.files.single.path!);
+
+    if (!context.mounted) return;
+    if (imported != null) {
+      context.showSuccessSnackBar(
+          loc.tr('language_import_success', {'name': imported.name}));
+    } else {
+      context.showErrorSnackBar(loc.tr('language_import_failed'));
+    }
+  }
+
+  void _deleteCustomLanguage(
+    BuildContext context,
+    AppLocalizations loc,
+    SettingsService settings,
+    String code,
+    String name,
+  ) async {
+    final confirmed = await DialogUtils.showDeleteConfirmation(
+      context,
+      title: loc.tr('delete_language'),
+      message: loc.tr('delete_language_confirm', {'name': name}),
+      confirmLabel: loc.tr('delete_language'),
+      icon: Icons.translate_outlined,
+    );
+
+    if (!confirmed || !context.mounted) return;
+
+    final wasSelected = loc.currentLanguageCode == code;
+    await loc.deleteCustomLocale(code);
+
+    if (!context.mounted) return;
+    // loc.deleteCustomLocale switches to 'en' if the deleted language was current;
+    // keep SettingsService in sync.
+    if (wasSelected) {
+      settings.setAppLanguage('en');
     }
   }
 

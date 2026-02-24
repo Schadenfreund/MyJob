@@ -568,11 +568,9 @@ class StorageService {
         JsonConstants.prettyEncoder.convert(coverLetter.toJson()),
       );
 
-      // Create default PDF settings WITH CORRECT LANGUAGE
-      final cvLanguage = application.baseLanguage == DocumentLanguage.de
-          ? CvLanguage.german
-          : CvLanguage.english;
-      final pdfSettings = TemplateCustomization(language: cvLanguage);
+      // Create default PDF settings with the application's base language
+      final pdfSettings =
+          TemplateCustomization(language: application.baseLanguage.code);
       final pdfFile = File(p.join(folderPath, 'pdf_settings.json'));
       await pdfFile.writeAsString(
         JsonConstants.prettyEncoder.convert(pdfSettings.toJson()),

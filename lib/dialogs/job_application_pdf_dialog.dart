@@ -22,6 +22,7 @@ import '../utils/data_converters.dart';
 import '../widgets/pdf_editor/template_edit_panel.dart';
 import '../widgets/pdf_editor/pdf_editor_sidebar.dart'
     show CvSectionAvailability;
+import '../localization/app_localizations.dart';
 import 'base_template_pdf_preview_dialog.dart';
 
 /// PDF preview and editor for job applications
@@ -65,9 +66,6 @@ class _JobApplicationPdfDialogState
   void initState() {
     super.initState();
 
-    // DON'T update controller here - it triggers regeneration!
-    // Language will be set when loaded settings are applied
-
     // IMPORTANT: Remove the base class listener temporarily
     // This prevents it from firing during settings load
     removeBaseControllerListener();
@@ -107,32 +105,15 @@ class _JobApplicationPdfDialogState
 
         if (style != null && customization != null) {
           controller.updateStyle(style);
-          // Language is already set in initState, just load other settings
-          // But ensure it stays correct by overriding any saved wrong language
-          final updatedCustomization = customization.copyWith(
-            language:
-                _documentLanguageToCvLanguage(widget.application.baseLanguage),
-          );
-          controller.updateCustomization(updatedCustomization);
+          // Respect the user's saved language choice
+          controller.updateCustomization(customization);
         }
         debugPrint('[PDF Dialog] Loaded saved settings');
+        // No else needed: StorageService initialises pdf_settings.json with
+        // the correct baseLanguage when the application folder is created.
       }
-      // No else needed - language already set in initState
     } catch (e) {
       debugPrint('[PDF Dialog] No saved settings or error loading: $e');
-      // Language already set in initState, no action needed
-    }
-  }
-
-  /// Convert DocumentLanguage to CvLanguage
-  CvLanguage _documentLanguageToCvLanguage(DocumentLanguage docLang) {
-    // DocumentLanguage.de = German document
-    // DocumentLanguage.en = English document
-    switch (docLang) {
-      case DocumentLanguage.de:
-        return CvLanguage.german; // German app → German PDF
-      case DocumentLanguage.en:
-        return CvLanguage.english; // English app → English PDF
     }
   }
 
@@ -209,9 +190,9 @@ class _JobApplicationPdfDialogState
             children: [
               Icon(Icons.style, color: controller.style.accentColor, size: 18),
               const SizedBox(width: 8),
-              const Text(
-                'DESIGN PRESET',
-                style: TextStyle(
+              Text(
+                context.tr('sidebar_design_preset').toUpperCase(),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -222,7 +203,7 @@ class _JobApplicationPdfDialogState
           ),
           const SizedBox(height: 8),
           Text(
-            'Choose a layout style for your cover letter',
+            context.tr('sidebar_design_preset_desc'),
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.5),
               fontSize: 10,
@@ -277,7 +258,7 @@ class _JobApplicationPdfDialogState
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                preset.displayName,
+                                _layoutPresetName(preset),
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 13,
@@ -288,7 +269,7 @@ class _JobApplicationPdfDialogState
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                preset.description,
+                                _layoutPresetDesc(preset),
                                 style: TextStyle(
                                   color: isSelected
                                       ? controller.style.accentColor
@@ -317,6 +298,38 @@ class _JobApplicationPdfDialogState
     }
     // For CV, use default presets (all of them)
     return null;
+  }
+
+  String _layoutPresetName(LayoutPreset preset) {
+    switch (preset) {
+      case LayoutPreset.modern:
+        return context.tr('layout_preset_modern');
+      case LayoutPreset.compact:
+        return context.tr('layout_preset_compact');
+      case LayoutPreset.traditional:
+        return context.tr('layout_preset_traditional');
+      case LayoutPreset.twoColumn:
+        return context.tr('layout_preset_two_column');
+    }
+  }
+
+  String _layoutPresetDesc(LayoutPreset preset) {
+    switch (preset) {
+      case LayoutPreset.modern:
+        return context.tr('layout_preset_modern_desc');
+      case LayoutPreset.compact:
+        return context.tr('layout_preset_compact_desc');
+      case LayoutPreset.traditional:
+        return context.tr('layout_preset_traditional_desc');
+      case LayoutPreset.twoColumn:
+        return context.tr('layout_preset_two_column_desc');
+    }
+  }
+
+  @override
+  String getDisplayName() {
+    final type = widget.isCV ? context.tr('pdf_doc_type_cv') : context.tr('cover_letter');
+    return '${widget.application.company} · ${widget.application.position} · $type';
   }
 
   @override
@@ -579,7 +592,7 @@ class _JobApplicationPdfDialogState
       final fields = <EditableField>[
         EditableField(
           id: 'profile',
-          label: 'Professional Summary',
+          label: context.tr('pdf_field_professional_summary'),
           value: getFieldValue('profile', ''),
           onChanged: (value) => updateFieldValue('profile', value),
           maxLines: 5,
@@ -588,7 +601,7 @@ class _JobApplicationPdfDialogState
         // Skills editing section
         EditableField(
           id: 'skills',
-          label: 'Skills',
+          label: context.tr('skills'),
           value: widget.cvData.skills.map((s) => s.name).join(', '),
           onChanged: (value) {
             updateFieldValue('skills', value);
@@ -656,7 +669,7 @@ class _JobApplicationPdfDialogState
         ),
         EditableField(
           id: 'greeting',
-          label: 'Greeting',
+          label: context.tr('pdf_field_greeting'),
           value: getFieldValue('greeting',
               widget.coverLetter?.greeting ?? 'Dear Hiring Manager,'),
           onChanged: (value) => updateFieldValue('greeting', value),
@@ -665,7 +678,7 @@ class _JobApplicationPdfDialogState
         ),
         EditableField(
           id: 'body',
-          label: 'Letter Body',
+          label: context.tr('pdf_field_letter_body'),
           value: getFieldValue('body', widget.coverLetter?.body ?? ''),
           onChanged: (value) => updateFieldValue('body', value),
           maxLines: 12,
@@ -673,7 +686,7 @@ class _JobApplicationPdfDialogState
         ),
         EditableField(
           id: 'closing',
-          label: 'Closing',
+          label: context.tr('pdf_field_closing'),
           value: getFieldValue(
               'closing', widget.coverLetter?.closing ?? 'Sincerely,'),
           onChanged: (value) => updateFieldValue('closing', value),
@@ -693,9 +706,9 @@ class _JobApplicationPdfDialogState
             Icon(Icons.work_outline,
                 color: selectedStyle.accentColor, size: 18),
             const SizedBox(width: 8),
-            const Text(
-              'JOB APPLICATION',
-              style: TextStyle(
+            Text(
+              context.tr('pdf_info_job_application').toUpperCase(),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -705,12 +718,12 @@ class _JobApplicationPdfDialogState
           ],
         ),
         const SizedBox(height: 12),
-        _buildInfoRow('Company', widget.application.company),
-        _buildInfoRow('Position', widget.application.position),
-        _buildInfoRow('Language', widget.application.baseLanguage.label),
+        _buildInfoRow(context.tr('company'), widget.application.company),
+        _buildInfoRow(context.tr('position'), widget.application.position),
+        _buildInfoRow(context.tr('pdf_info_language'), widget.application.baseLanguage.label),
         _buildInfoRow(
-          'Document',
-          widget.isCV ? 'Curriculum Vitae' : 'Cover Letter',
+          context.tr('pdf_info_document'),
+          widget.isCV ? context.tr('pdf_doc_type_cv') : context.tr('cover_letter'),
         ),
       ],
     );
@@ -916,9 +929,9 @@ class _JobApplicationPdfDialogState
             Icon(Icons.palette_outlined,
                 color: controller.style.accentColor, size: 18),
             const SizedBox(width: 8),
-            const Text(
-              'DOCUMENT STYLE',
-              style: TextStyle(
+            Text(
+              context.tr('pdf_info_document_style').toUpperCase(),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -928,10 +941,10 @@ class _JobApplicationPdfDialogState
           ],
         ),
         const SizedBox(height: 12),
-        _buildInfoRow('Template', controller.style.type.label),
-        _buildInfoRow('Font', controller.style.fontFamily.displayName),
-        _buildInfoRow('Mode', controller.style.isDarkMode ? 'Dark' : 'Light'),
-        _buildInfoRow('Accent', _getColorName(controller.style.accentColor)),
+        _buildInfoRow(context.tr('pdf_info_template'), controller.style.type.label),
+        _buildInfoRow(context.tr('pdf_info_font'), controller.style.fontFamily.displayName),
+        _buildInfoRow(context.tr('pdf_info_mode'), controller.style.isDarkMode ? context.tr('pdf_mode_dark') : context.tr('pdf_mode_light')),
+        _buildInfoRow(context.tr('pdf_info_accent'), _getColorName(controller.style.accentColor)),
       ],
     );
   }

@@ -13,6 +13,7 @@ A comprehensive job application management tool with CV and cover letter creatio
 - **Job Application Tracking** - Track status, notes, salary expectations, and contacts
 - **Notes & Todo System** - Organize with priorities, tags, and archiving
 - **Professional PDF Generation** - Multiple CV templates with customizable colors and fonts
+- **Custom Language Support** - Import any language as a JSON locale file; appears instantly in the UI and in the PDF editor language selector
 - **Backup & Restore** - Create and restore ZIP backups of all your data
 - **Auto-Update** - Check for updates directly from the app
 - **Dark/Light Mode** - Multiple accent color themes
@@ -34,6 +35,22 @@ A comprehensive job application management tool with CV and cover letter creatio
 1. **Fill out your Profile** - Go to the Profile tab and add your personal info, work experience, education, skills, and languages
 2. **Create a Job Application** - Go to Job Applications and create your first application
 3. **Generate your CV** - Customize and export a professional PDF
+
+---
+
+## Adding Custom Languages
+
+MyJob supports importing additional UI languages via JSON locale files. A Croatian example (`locale_hr.json`) is included in the `DEMO_DATA/localization/` folder.
+
+### How to Import a Language
+
+1. Create a JSON locale file named `locale_<code>.json` (e.g. `locale_fr.json`)
+2. Copy all keys from `DEMO_DATA/localization/locale_hr.json` and translate the values
+3. In the app, go to **Settings** → **Language**
+4. Click **Import Language File** and select your JSON file
+5. The new language appears immediately in the language selector and in the PDF editor
+
+Custom languages can be removed at any time via the delete button next to the language entry.
 
 ---
 
@@ -191,5 +208,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Version**: 1.0.0
+**Version**: 1.1.4
 **Author**: Ivan Buric
