@@ -6,7 +6,6 @@ import '../../providers/user_data_provider.dart';
 import '../../models/user_data/skill.dart';
 import '../../models/user_data/language.dart';
 import '../../models/master_profile.dart';
-import '../../constants/app_constants.dart';
 import '../../dialogs/unified_import_dialog.dart';
 import '../../dialogs/master_profile_pdf_dialog.dart';
 import '../../theme/app_theme.dart';
@@ -60,7 +59,15 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildHeader(BuildContext context) {
     final theme = Theme.of(context);
     final userDataProvider = context.watch<UserDataProvider>();
-    final currentLang = userDataProvider.currentLanguage;
+    final currentCode = userDataProvider.currentLanguageCode;
+    final existingCodes = userDataProvider.profileLanguageCodes.toSet();
+
+    // Custom-imported languages that don't yet have a profile — appear as
+    // inactive chips so the user can activate them with a single tap.
+    final pendingLangs = AppLocalizations.of(context)
+        .availableLanguages
+        .where((l) => !l.isBuiltIn && !existingCodes.contains(l.code))
+        .toList();
 
     return UIUtils.buildSectionHeader(
       context,
@@ -70,42 +77,52 @@ class ProfileScreen extends StatelessWidget {
       action: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Delete Button (only if data exists)
+          // Delete button — only shown when the current profile has data
           if (userDataProvider.hasData) ...[
-            IconButton.filledTonal(
-              onPressed: () => _confirmDeleteProfile(context),
-              icon: const Icon(Icons.delete_outline, size: 20),
-              tooltip: context.tr('clear_profile_tooltip',
-                  {'lang': currentLang.code.toUpperCase()}),
-              style: IconButton.styleFrom(
-                backgroundColor: theme.colorScheme.error.withValues(alpha: 0.1),
-                foregroundColor: theme.colorScheme.error,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+            Tooltip(
+              message: context.tr('clear_profile_tooltip',
+                  {'lang': _getLanguageName(context, currentCode)}),
+              child: InkWell(
+                onTap: () => _confirmDeleteProfile(context),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: theme.colorScheme.error.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.delete_outline,
+                    size: 16,
+                    color: theme.colorScheme.error,
+                  ),
                 ),
-                padding: const EdgeInsets.all(10),
               ),
             ),
             const SizedBox(width: 12),
           ],
 
-          // Language Switcher
+          // Profile chips: active (existing) + pending (custom-imported, no profile yet)
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildLanguageToggle(
-                context,
-                userDataProvider,
-                DocumentLanguage.en,
-                currentLang == DocumentLanguage.en,
-              ),
-              const SizedBox(width: 4),
-              _buildLanguageToggle(
-                context,
-                userDataProvider,
-                DocumentLanguage.de,
-                currentLang == DocumentLanguage.de,
-              ),
+              ...userDataProvider.profileLanguageCodes.map((code) => Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: _buildProfileChip(
+                      context, userDataProvider, code, code == currentCode,
+                    ),
+                  )),
+              ...pendingLangs.map((lang) => Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: _buildProfileChip(
+                      context, userDataProvider, lang.code, false,
+                      hasProfile: false,
+                    ),
+                  )),
             ],
           ),
         ],
@@ -123,8 +140,8 @@ class ProfileScreen extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              theme.colorScheme.primary.withOpacity(0.08),
-              theme.colorScheme.primary.withOpacity(0.02),
+              theme.colorScheme.primary.withValues(alpha: 0.08),
+              theme.colorScheme.primary.withValues(alpha: 0.02),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -139,7 +156,7 @@ class ProfileScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.15),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
                   borderRadius:
                       BorderRadius.circular(AppDimensions.inputBorderRadius),
                 ),
@@ -188,7 +205,7 @@ class ProfileScreen extends StatelessWidget {
                       context.tr('import_export_subtitle'),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color:
-                            theme.textTheme.bodySmall?.color?.withOpacity(0.8),
+                            theme.textTheme.bodySmall?.color?.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
@@ -219,80 +236,112 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLanguageToggle(
+  String _getLanguageName(BuildContext context, String langCode) {
+    return AppLocalizations.of(context).availableLanguages.firstWhere(
+          (l) => l.code == langCode,
+          orElse: () =>
+              LanguageInfo(code: langCode, name: langCode.toUpperCase(), flag: '🌐'),
+        ).name;
+  }
+
+  Widget _buildProfileChip(
     BuildContext context,
     UserDataProvider provider,
-    DocumentLanguage language,
-    bool isSelected,
-  ) {
+    String langCode,
+    bool isSelected, {
+    bool hasProfile = true,
+  }) {
     final theme = Theme.of(context);
     final accentColor = theme.colorScheme.primary;
+    final langInfo = AppLocalizations.of(context).availableLanguages.firstWhere(
+          (l) => l.code == langCode,
+          orElse: () =>
+              LanguageInfo(code: langCode, name: langCode.toUpperCase(), flag: '🌐'),
+        );
 
-    return InkWell(
-      onTap: () => provider.switchLanguage(language),
-      borderRadius: BorderRadius.circular(12),
-      child: AnimatedContainer(
-        duration: AppDurations.quick,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? accentColor.withValues(alpha: 0.12)
-              : theme.colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
+    final textColor = isSelected
+        ? accentColor
+        : hasProfile
+            ? theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8)
+            : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.35);
+
+    return Tooltip(
+      message: hasProfile ? langInfo.name : context.tr('add_profile'),
+      child: InkWell(
+        onTap: () => hasProfile
+            ? provider.switchProfile(langCode)
+            : provider.addProfile(langCode),
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: AppDurations.quick,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
             color: isSelected
-                ? accentColor
-                : AppColors.getColor(
-                        context, AppColors.lightBorder, AppColors.darkBorder)
-                    .withValues(alpha: 0.5),
-            width: isSelected ? 2 : 1,
+                ? accentColor.withValues(alpha: 0.12)
+                : hasProfile
+                    ? theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.4)
+                    : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? accentColor
+                  : AppColors.getColor(
+                          context, AppColors.lightBorder, AppColors.darkBorder)
+                      .withValues(alpha: hasProfile ? 0.5 : 0.3),
+              width: isSelected ? 2 : 1,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? accentColor.withValues(alpha: 0.2)
-                    : theme.colorScheme.surfaceContainerHighest,
-                shape: BoxShape.circle,
-                border: Border.all(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Circular code badge — mirrors the settings tab chip style
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
                   color: isSelected
-                      ? accentColor.withValues(alpha: 0.6)
-                      : theme.dividerColor.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  language.code.toUpperCase(),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                      ? accentColor.withValues(alpha: 0.2)
+                      : theme.colorScheme.surfaceContainerHighest,
+                  shape: BoxShape.circle,
+                  border: Border.all(
                     color: isSelected
-                        ? accentColor
-                        : theme.textTheme.bodySmall?.color
-                            ?.withValues(alpha: 0.7),
-                    fontSize: 9,
+                        ? accentColor.withValues(alpha: 0.6)
+                        : theme.dividerColor.withValues(alpha: 0.3),
+                    width: 1.5,
                   ),
                 ),
+                child: Center(
+                  child: hasProfile
+                      ? Text(
+                          langCode.toUpperCase(),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 9,
+                            color: isSelected
+                                ? accentColor
+                                : theme.textTheme.bodySmall?.color
+                                    ?.withValues(alpha: 0.7),
+                          ),
+                        )
+                      : Icon(
+                          Icons.add,
+                          size: 12,
+                          color: theme.textTheme.bodySmall?.color
+                              ?.withValues(alpha: 0.4),
+                        ),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              language.label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected
-                    ? accentColor
-                    : theme.textTheme.bodyMedium?.color
-                        ?.withValues(alpha: 0.8),
+              const SizedBox(width: 8),
+              Text(
+                langInfo.name,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: textColor,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -350,7 +399,7 @@ class ProfileScreen extends StatelessWidget {
       // Show save file dialog
       final result = await FilePicker.platform.saveFile(
         dialogTitle: context.tr('export_profile_title'),
-        fileName: 'profile_${profile.language.code}.yaml',
+        fileName: 'profile_${profile.language}.yaml',
         type: FileType.custom,
         allowedExtensions: ['yaml', 'yml'],
       );
@@ -493,24 +542,21 @@ class ProfileScreen extends StatelessWidget {
 
   void _confirmDeleteProfile(BuildContext context) async {
     final provider = context.read<UserDataProvider>();
-    final lang = provider.currentLanguage;
+    final langCode = provider.currentLanguageCode;
+    final langName = _getLanguageName(context, langCode);
 
     final confirmed = await DialogUtils.showDeleteConfirmation(
       context,
-      title:
-          context.tr('delete_profile_title', {'lang': lang.code.toUpperCase()}),
-      message: context
-          .tr('delete_profile_message', {'lang': lang.code.toUpperCase()}),
+      title: context.tr('delete_profile_title', {'lang': langName}),
+      message: context.tr('delete_profile_message', {'lang': langName}),
       confirmLabel: context.tr('delete_profile_confirm'),
     );
 
     if (confirmed && context.mounted) {
-      await provider.clearCurrentProfile();
+      await provider.deleteProfile(langCode);
       if (context.mounted) {
         context.showSuccessSnackBar(
-            '${lang.code.toUpperCase()} ${context.tr('profile_cleared', {
-              'lang': lang.code.toUpperCase()
-            })}');
+            context.tr('profile_cleared', {'lang': langName}));
       }
     }
   }
@@ -601,7 +647,7 @@ class _ProfileSections extends StatelessWidget {
                               userDataProvider.personalInfo!.email!,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.textTheme.bodySmall?.color
-                                    ?.withOpacity(0.7),
+                                    ?.withValues(alpha: 0.7),
                               ),
                             ),
                         ],
@@ -612,7 +658,7 @@ class _ProfileSections extends StatelessWidget {
               : Text(
                   context.tr('no_personal_info'),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
                   ),
                 ),
           content: const PersonalInfoSection(showHeader: false),
@@ -636,7 +682,7 @@ class _ProfileSections extends StatelessWidget {
               ? Text(
                   context.tr('no_work_experience'),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
                   ),
                 )
               : Column(
@@ -649,7 +695,7 @@ class _ProfileSections extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.1),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Icon(
@@ -674,7 +720,7 @@ class _ProfileSections extends StatelessWidget {
                                   exp.company,
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.textTheme.bodySmall?.color
-                                        ?.withOpacity(0.7),
+                                        ?.withValues(alpha: 0.7),
                                     fontSize: 11,
                                   ),
                                   overflow: TextOverflow.ellipsis,
@@ -704,7 +750,7 @@ class _ProfileSections extends StatelessWidget {
               ? Text(
                   context.tr('no_skills_added'),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
                   ),
                 )
               : Wrap(
@@ -716,10 +762,10 @@ class _ProfileSections extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: levelColor.withOpacity(0.1),
+                        color: levelColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: levelColor.withOpacity(0.4),
+                          color: levelColor.withValues(alpha: 0.4),
                         ),
                       ),
                       child: Row(
@@ -766,7 +812,7 @@ class _ProfileSections extends StatelessWidget {
               ? Text(
                   context.tr('no_languages_added'),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
                   ),
                 )
               : Wrap(
@@ -779,10 +825,10 @@ class _ProfileSections extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: proficiencyColor.withOpacity(0.1),
+                        color: proficiencyColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: proficiencyColor.withOpacity(0.4),
+                          color: proficiencyColor.withValues(alpha: 0.4),
                         ),
                       ),
                       child: Row(
@@ -826,7 +872,7 @@ class _ProfileSections extends StatelessWidget {
               ? Text(
                   context.tr('no_interests_added_yet'),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
                   ),
                 )
               : Wrap(
@@ -838,10 +884,10 @@ class _ProfileSections extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
+                        color: color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: color.withOpacity(0.4),
+                          color: color.withValues(alpha: 0.4),
                         ),
                       ),
                       child: Text(
@@ -966,7 +1012,7 @@ class _ProfileSections extends StatelessWidget {
             ? context.tr('no_profile_summary')
             : '${profileSummary.split('\n').first.substring(0, profileSummary.split('\n').first.length > 50 ? 50 : profileSummary.split('\n').first.length)}${profileSummary.length > 50 ? '...' : ''}',
         style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
         ),
       ),
       content: ProfileLongTextEditor(
@@ -1004,7 +1050,7 @@ class _ProfileSections extends StatelessWidget {
                 's': paragraphCount == 1 ? '' : 's'
               }),
         style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
         ),
       ),
       content: ProfileLongTextEditor(

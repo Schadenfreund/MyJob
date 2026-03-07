@@ -1,4 +1,3 @@
-import '../constants/app_constants.dart';
 import 'user_data/personal_info.dart';
 import 'user_data/work_experience.dart';
 import 'user_data/skill.dart';
@@ -24,7 +23,7 @@ class MasterProfile {
   /// Create from JSON
   factory MasterProfile.fromJson(Map<String, dynamic> json) {
     return MasterProfile(
-      language: DocumentLanguage.fromJson(json['language'] as String? ?? 'EN'),
+      language: (json['language'] as String? ?? 'en').toLowerCase(),
       personalInfo: json['personalInfo'] != null
           ? PersonalInfo.fromJson(json['personalInfo'] as Map<String, dynamic>)
           : null,
@@ -56,7 +55,7 @@ class MasterProfile {
     );
   }
 
-  final DocumentLanguage language;
+  final String language;
   final PersonalInfo? personalInfo;
   final String profileSummary;
   final List<WorkExperience> experiences;
@@ -70,7 +69,7 @@ class MasterProfile {
 
   /// Convert to JSON
   Map<String, dynamic> toJson() => {
-        'language': language.toJson(),
+        'language': language,
         'personalInfo': personalInfo?.toJson(),
         'profileSummary': profileSummary,
         'experiences': experiences.map((e) => e.toJson()).toList(),
@@ -85,7 +84,7 @@ class MasterProfile {
 
   /// Create a copy with updated fields
   MasterProfile copyWith({
-    DocumentLanguage? language,
+    String? language,
     PersonalInfo? personalInfo,
     String? profileSummary,
     List<WorkExperience>? experiences,
@@ -114,9 +113,9 @@ class MasterProfile {
   }
 
   /// Create an empty profile for a language
-  factory MasterProfile.empty(DocumentLanguage language) {
+  factory MasterProfile.empty(String langCode) {
     return MasterProfile(
-      language: language,
+      language: langCode,
       personalInfo: null,
       profileSummary: '',
       experiences: [],

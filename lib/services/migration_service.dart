@@ -9,7 +9,6 @@ import '../models/user_data/work_experience.dart';
 import '../models/user_data/language.dart';
 import '../models/user_data/interest.dart';
 import '../services/storage_service.dart';
-import '../constants/app_constants.dart';
 
 /// Service to migrate legacy user data to new bilingual structure
 class MigrationService {
@@ -47,13 +46,13 @@ class MigrationService {
       final json = jsonDecode(content) as Map<String, dynamic>;
 
       // Create English profile from old data
-      final enProfile = _createProfileFromLegacyData(json, DocumentLanguage.en);
+      final enProfile = _createProfileFromLegacyData(json, 'en');
 
       // Save to new location
       await _storage.saveMasterProfile(enProfile);
 
       // Create empty German profile
-      final deProfile = MasterProfile.empty(DocumentLanguage.de);
+      final deProfile = MasterProfile.empty('de');
       await _storage.saveMasterProfile(deProfile);
 
       // Create migration marker
@@ -78,10 +77,10 @@ class MigrationService {
   /// Create MasterProfile from legacy user_data.json format
   MasterProfile _createProfileFromLegacyData(
     Map<String, dynamic> json,
-    DocumentLanguage language,
+    String langCode,
   ) {
     return MasterProfile(
-      language: language,
+      language: langCode,
       personalInfo: json['personalInfo'] != null
           ? PersonalInfo.fromJson(json['personalInfo'] as Map<String, dynamic>)
           : null,

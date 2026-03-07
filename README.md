@@ -9,11 +9,13 @@ A comprehensive job application management tool with CV and cover letter creatio
 
 ## Features
 
-- **Bilingual Profile Management** - Maintain separate English and German profiles
+- **Multilingual Profile Management** - Separate profile per language;
+  switch instantly from the Profile tab
+- **Custom Translation Support** - Import any language as a JSON file;
+  appears immediately in the UI, Profile selector, and PDF editor
 - **Job Application Tracking** - Track status, notes, salary expectations, and contacts
 - **Notes & Todo System** - Organize with priorities, tags, and archiving
 - **Professional PDF Generation** - Multiple CV templates with customizable colors and fonts
-- **Custom Language Support** - Import any language as a JSON locale file; appears instantly in the UI and in the PDF editor language selector
 - **Backup & Restore** - Create and restore ZIP backups of all your data
 - **Auto-Update** - Check for updates directly from the app
 - **Dark/Light Mode** - Multiple accent color themes
@@ -38,19 +40,35 @@ A comprehensive job application management tool with CV and cover letter creatio
 
 ---
 
-## Adding Custom Languages
+## Adding Custom Languages / Translations
 
-MyJob supports importing additional UI languages via JSON locale files. A Croatian example (`locale_hr.json`) is included in the `DEMO_DATA/localization/` folder.
+MyJob ships with English and German. Any additional language can be
+added by importing a JSON locale file — no restart required.
 
-### How to Import a Language
+A Croatian example (`locale_hr.json`) is included in
+`DEMO_DATA/localization/` as a ready-to-use starting point.
 
-1. Create a JSON locale file named `locale_<code>.json` (e.g. `locale_fr.json`)
-2. Copy all keys from `DEMO_DATA/localization/locale_hr.json` and translate the values
-3. In the app, go to **Settings** → **Language**
+### How to Import a Translation
+
+1. Create a JSON locale file named `locale_<code>.json`
+   (e.g. `locale_fr.json` for French)
+2. Copy all keys from `DEMO_DATA/localization/locale_hr.json`
+   and translate the values into your target language
+3. In the app go to **Settings** → **Language**
 4. Click **Import Language File** and select your JSON file
-5. The new language appears immediately in the language selector and in the PDF editor
 
-Custom languages can be removed at any time via the delete button next to the language entry.
+Once imported the language appears in three places immediately:
+
+- **App UI** — the entire interface switches to the new language
+- **Profile tab** — a new chip appears in the language selector;
+  tap it once to create a profile in that language
+- **PDF editor** — the language becomes available in the
+  document language selector
+
+Custom language profiles work exactly like built-in ones: fill in
+your profile data, generate PDFs, and switch between languages with
+a single click. Custom languages and their profiles can be removed
+at any time from **Settings** → **Language**.
 
 ---
 
@@ -128,8 +146,9 @@ All your data is stored in: `<app folder>/UserData/`
 ```text
 UserData/
 ├── profiles/
-│   ├── en/          # English profile
-│   └── de/          # German profile
+│   ├── en/          # English profile (created on first use)
+│   ├── de/          # German profile (created on first use)
+│   └── <code>/      # Any additional language profile
 ├── applications/    # Job applications
 ├── notes/           # Notes & todos
 ├── pdf_presets/     # PDF customizations
@@ -208,5 +227,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Version**: 1.1.4
+**Version**: 1.1.5
 **Author**: Ivan Buric

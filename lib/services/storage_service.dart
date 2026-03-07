@@ -13,7 +13,6 @@ import '../models/notes_data.dart';
 import '../constants/json_constants.dart';
 import '../models/template_customization.dart';
 import '../models/template_style.dart';
-import '../constants/app_constants.dart';
 
 /// Storage service for persisting application data as JSON files
 class StorageService {
@@ -35,10 +34,8 @@ class StorageService {
       userDataDir.createSync(recursive: true);
     }
 
-    // Create new directory structure for bilingual profiles
+    // Create base directory structure
     for (final subDir in [
-      'profiles/en',
-      'profiles/de',
       'applications',
       'pdf_presets',
       'notes',
@@ -52,6 +49,62 @@ class StorageService {
     }
 
     return _userDataPath!;
+  }
+
+  // ============================================================================
+  // PATH PORTABILITY HELPERS
+  // ============================================================================
+
+  /// Convert a stored path (relative or stale absolute) to an absolute runtime path.
+  ///
+  /// Handles three cases:
+  /// - Relative path (new format) → joins with userDataPath.
+  /// - Absolute and already under the current userDataPath → returned as-is.
+  /// - Stale absolute from a previous UserData location → the relative portion
+  ///   is recovered by scanning for the first known top-level UserData directory
+  ///   name from the right, then re-anchored to the current userDataPath.
+  String? _toAbsolutePath(String? stored, String userDataPath) {
+    if (stored == null || stored.isEmpty) return stored;
+    final norm = p.normalize(stored);
+    if (!p.isAbsolute(norm)) {
+      return p.normalize(p.join(userDataPath, norm));
+    }
+    final base = p.normalize(userDataPath);
+    if (norm == base || p.isWithin(base, norm)) return norm;
+    // Stale absolute path from a moved UserData location.
+    // Recover the relative portion by finding the last segment that matches a
+    // known top-level UserData subdirectory (scanning right-to-left so that a
+    // coincidental occurrence earlier in the path is ignored).
+    const knownDirs = {
+      'applications',
+      'profiles',
+      'notes',
+      'pdf_presets',
+      'profile_pictures',
+      'cvs',
+      'cover_letters',
+    };
+    final segments = p.split(norm);
+    for (int i = segments.length - 1; i >= 0; i--) {
+      if (knownDirs.contains(segments[i])) {
+        return p.normalize(p.joinAll([userDataPath, ...segments.sublist(i)]));
+      }
+    }
+    return stored; // Unknown structure – leave unchanged.
+  }
+
+  /// Convert an absolute path that lives inside UserData to a path relative to
+  /// userDataPath (for storage in JSON).
+  ///
+  /// Paths that are not under userDataPath are returned unchanged.
+  String? _toRelativePath(String? absolute, String userDataPath) {
+    if (absolute == null || absolute.isEmpty) return absolute;
+    final norm = p.normalize(absolute);
+    final base = p.normalize(userDataPath);
+    if (p.isWithin(base, norm)) {
+      return p.relative(norm, from: base);
+    }
+    return absolute;
   }
 
   // ============================================================================
@@ -71,7 +124,13 @@ class StorageService {
           try {
             final content = await file.readAsString();
             final json = jsonDecode(content) as Map<String, dynamic>;
-            applications.add(JobApplication.fromJson(json));
+            final app = JobApplication.fromJson(json);
+            final resolvedPath = _toAbsolutePath(app.folderPath, userDataPath);
+            applications.add(
+              resolvedPath != app.folderPath
+                  ? app.copyWith(folderPath: resolvedPath)
+                  : app,
+            );
           } catch (e) {
             debugPrint('Error loading application ${file.path}: $e');
           }
@@ -99,9 +158,9 @@ class StorageService {
           File(p.join(userDataPath, 'applications', '${application.id}.json'));
 
       final updatedApp = application.copyWith(lastUpdated: DateTime.now());
-      await file.writeAsString(
-        JsonConstants.prettyEncoder.convert(updatedApp.toJson()),
-      );
+      final json = updatedApp.toJson();
+      json['folderPath'] = _toRelativePath(json['folderPath'] as String?, userDataPath);
+      await file.writeAsString(JsonConstants.prettyEncoder.convert(json));
 
       debugPrint('Application saved: ${application.id}');
     } catch (e) {
@@ -121,7 +180,11 @@ class StorageService {
         try {
           final content = await file.readAsString();
           final json = jsonDecode(content) as Map<String, dynamic>;
-          application = JobApplication.fromJson(json);
+          final app = JobApplication.fromJson(json);
+          final resolvedPath = _toAbsolutePath(app.folderPath, userDataPath);
+          application = resolvedPath != app.folderPath
+              ? app.copyWith(folderPath: resolvedPath)
+              : app;
         } catch (e) {
           debugPrint('Error loading application for deletion: $e');
         }
@@ -390,39 +453,91 @@ class StorageService {
   // MASTER PROFILES (Bilingual Support)
   // ============================================================================
 
-  /// Load master profile for a specific language
-  Future<MasterProfile> loadMasterProfile(DocumentLanguage language) async {
+  /// Discover all profile language codes by scanning the profiles/ directory
+  Future<List<String>> discoverProfileLanguageCodes() async {
+    try {
+      final userDataPath = await getUserDataPath();
+      final profilesDir = Directory(p.join(userDataPath, 'profiles'));
+      if (!profilesDir.existsSync()) return [];
+      final codes = <String>[];
+      for (final entity in profilesDir.listSync()) {
+        if (entity is Directory) {
+          final dataFile = File(p.join(entity.path, 'base_data.json'));
+          if (dataFile.existsSync()) {
+            codes.add(p.basename(entity.path));
+          }
+        }
+      }
+      return codes;
+    } catch (e) {
+      debugPrint('Error discovering profile language codes: $e');
+      return [];
+    }
+  }
+
+  /// Delete the entire profile folder for a language
+  Future<void> deleteProfileFolder(String langCode) async {
+    try {
+      final userDataPath = await getUserDataPath();
+      final dir = Directory(p.join(userDataPath, 'profiles', langCode));
+      if (dir.existsSync()) {
+        await dir.delete(recursive: true);
+        debugPrint('Profile folder deleted ($langCode)');
+      }
+    } catch (e) {
+      debugPrint('Error deleting profile folder ($langCode): $e');
+      rethrow;
+    }
+  }
+
+  /// Load master profile for a specific language code
+  Future<MasterProfile> loadMasterProfile(String langCode) async {
     try {
       final userDataPath = await getUserDataPath();
       final file = File(
-          p.join(userDataPath, 'profiles', language.code, 'base_data.json'));
+          p.join(userDataPath, 'profiles', langCode, 'base_data.json'));
 
       if (!file.existsSync()) {
-        // Return empty profile if doesn't exist
-        return MasterProfile.empty(language);
+        return MasterProfile.empty(langCode);
       }
 
       final content = await file.readAsString();
       final json = jsonDecode(content) as Map<String, dynamic>;
+      if (json['personalInfo'] is Map<String, dynamic>) {
+        final pi = json['personalInfo'] as Map<String, dynamic>;
+        pi['profilePicturePath'] = _toAbsolutePath(
+          pi['profilePicturePath'] as String?,
+          userDataPath,
+        );
+      }
       return MasterProfile.fromJson(json);
     } catch (e) {
-      debugPrint('Error loading master profile (${language.code}): $e');
-      return MasterProfile.empty(language);
+      debugPrint('Error loading master profile ($langCode): $e');
+      return MasterProfile.empty(langCode);
     }
   }
 
-  /// Save master profile for a specific language
+  /// Save master profile
   Future<void> saveMasterProfile(MasterProfile profile) async {
     try {
       final userDataPath = await getUserDataPath();
-      final file = File(p.join(
-          userDataPath, 'profiles', profile.language.code, 'base_data.json'));
+      final dir = Directory(p.join(userDataPath, 'profiles', profile.language));
+      if (!dir.existsSync()) {
+        dir.createSync(recursive: true);
+      }
+      final file = File(p.join(dir.path, 'base_data.json'));
 
-      await file.writeAsString(
-        JsonConstants.prettyEncoder.convert(profile.toJson()),
-      );
+      final json = profile.toJson();
+      if (json['personalInfo'] is Map<String, dynamic>) {
+        final pi = json['personalInfo'] as Map<String, dynamic>;
+        pi['profilePicturePath'] = _toRelativePath(
+          pi['profilePicturePath'] as String?,
+          userDataPath,
+        );
+      }
+      await file.writeAsString(JsonConstants.prettyEncoder.convert(json));
 
-      debugPrint('Master profile saved (${profile.language.code})');
+      debugPrint('Master profile saved (${profile.language})');
     } catch (e) {
       debugPrint('Error saving master profile: $e');
       rethrow;
@@ -466,6 +581,7 @@ class StorageService {
     JobApplication application,
   ) async {
     try {
+      final userDataPath = await getUserDataPath();
       final folderPath = await createJobApplicationFolder(application);
 
       // Debug: Check what's being cloned
@@ -539,9 +655,15 @@ class StorageService {
       }
 
       final cvFile = File(p.join(folderPath, 'cv_data.json'));
-      await cvFile.writeAsString(
-        JsonConstants.prettyEncoder.convert(cvData.toJson()),
-      );
+      final cvJson = cvData.toJson();
+      if (cvJson['personalInfo'] is Map<String, dynamic>) {
+        final pi = cvJson['personalInfo'] as Map<String, dynamic>;
+        pi['profilePicturePath'] = _toRelativePath(
+          pi['profilePicturePath'] as String?,
+          userDataPath,
+        );
+      }
+      await cvFile.writeAsString(JsonConstants.prettyEncoder.convert(cvJson));
 
       // Clone cover letter with defaults from profile
       debugPrint(
@@ -593,8 +715,16 @@ class StorageService {
       final file = File(p.join(folderPath, 'cv_data.json'));
       if (!file.existsSync()) return null;
 
+      final userDataPath = await getUserDataPath();
       final content = await file.readAsString();
       final json = jsonDecode(content) as Map<String, dynamic>;
+      if (json['personalInfo'] is Map<String, dynamic>) {
+        final pi = json['personalInfo'] as Map<String, dynamic>;
+        pi['profilePicturePath'] = _toAbsolutePath(
+          pi['profilePicturePath'] as String?,
+          userDataPath,
+        );
+      }
       return JobCvData.fromJson(json);
     } catch (e) {
       debugPrint('Error loading job CV data: $e');
@@ -606,9 +736,16 @@ class StorageService {
   Future<void> saveJobCvData(String folderPath, JobCvData data) async {
     try {
       final file = File(p.join(folderPath, 'cv_data.json'));
-      await file.writeAsString(
-        JsonConstants.prettyEncoder.convert(data.toJson()),
-      );
+      final userDataPath = await getUserDataPath();
+      final json = data.toJson();
+      if (json['personalInfo'] is Map<String, dynamic>) {
+        final pi = json['personalInfo'] as Map<String, dynamic>;
+        pi['profilePicturePath'] = _toRelativePath(
+          pi['profilePicturePath'] as String?,
+          userDataPath,
+        );
+      }
+      await file.writeAsString(JsonConstants.prettyEncoder.convert(json));
       debugPrint('Job CV data saved');
     } catch (e) {
       debugPrint('Error saving job CV data: $e');
@@ -800,11 +937,11 @@ class StorageService {
 
   /// Load master profile CV PDF settings (used as default for new applications)
   Future<(TemplateStyle?, TemplateCustomization?)>
-      loadMasterProfileCvPdfSettings(DocumentLanguage language) async {
+      loadMasterProfileCvPdfSettings(String langCode) async {
     try {
       final userDataPath = await getUserDataPath();
       final file = File(p.join(
-          userDataPath, 'profiles', language.code, 'cv_pdf_settings.json'));
+          userDataPath, 'profiles', langCode, 'cv_pdf_settings.json'));
 
       if (!file.existsSync()) {
         return (null, null);
@@ -831,14 +968,14 @@ class StorageService {
 
   /// Save master profile CV PDF settings (used as default for new applications)
   Future<void> saveMasterProfileCvPdfSettings(
-    DocumentLanguage language,
+    String langCode,
     TemplateStyle style,
     TemplateCustomization customization,
   ) async {
     try {
       final userDataPath = await getUserDataPath();
       final file = File(p.join(
-          userDataPath, 'profiles', language.code, 'cv_pdf_settings.json'));
+          userDataPath, 'profiles', langCode, 'cv_pdf_settings.json'));
 
       final settings = {
         'style': style.toJson(),
@@ -849,7 +986,7 @@ class StorageService {
         JsonConstants.prettyEncoder.convert(settings),
       );
 
-      debugPrint('Master profile CV PDF settings saved (${language.code})');
+      debugPrint('Master profile CV PDF settings saved ($langCode)');
     } catch (e) {
       debugPrint('Error saving master profile CV PDF settings: $e');
       rethrow;
@@ -858,11 +995,11 @@ class StorageService {
 
   /// Load master profile Cover Letter PDF settings (used as default for new applications)
   Future<(TemplateStyle?, TemplateCustomization?)>
-      loadMasterProfileClPdfSettings(DocumentLanguage language) async {
+      loadMasterProfileClPdfSettings(String langCode) async {
     try {
       final userDataPath = await getUserDataPath();
       final file = File(p.join(
-          userDataPath, 'profiles', language.code, 'cl_pdf_settings.json'));
+          userDataPath, 'profiles', langCode, 'cl_pdf_settings.json'));
 
       if (!file.existsSync()) {
         return (null, null);
@@ -889,14 +1026,14 @@ class StorageService {
 
   /// Save master profile Cover Letter PDF settings (used as default for new applications)
   Future<void> saveMasterProfileClPdfSettings(
-    DocumentLanguage language,
+    String langCode,
     TemplateStyle style,
     TemplateCustomization customization,
   ) async {
     try {
       final userDataPath = await getUserDataPath();
       final file = File(p.join(
-          userDataPath, 'profiles', language.code, 'cl_pdf_settings.json'));
+          userDataPath, 'profiles', langCode, 'cl_pdf_settings.json'));
 
       final settings = {
         'style': style.toJson(),
@@ -907,7 +1044,7 @@ class StorageService {
         JsonConstants.prettyEncoder.convert(settings),
       );
 
-      debugPrint('Master profile CL PDF settings saved (${language.code})');
+      debugPrint('Master profile CL PDF settings saved ($langCode)');
     } catch (e) {
       debugPrint('Error saving master profile CL PDF settings: $e');
       rethrow;
@@ -1081,8 +1218,15 @@ class StorageService {
           }
         }
       } else if (value is String) {
-        // Escape quotes in strings
-        final escaped = value.replaceAll('"', '\\"');
+        // Escape for YAML double-quoted scalar: backslash first, then special chars.
+        // Raw newlines in a double-quoted YAML value are treated as folded spaces
+        // on load, destroying multi-line formatting — they must be written as \n.
+        final escaped = value
+            .replaceAll(r'\', r'\\')
+            .replaceAll('"', r'\"')
+            .replaceAll('\r\n', r'\n')
+            .replaceAll('\n', r'\n')
+            .replaceAll('\r', r'\r');
         buffer.writeln('$indentStr$key: "$escaped"');
       } else {
         buffer.writeln('$indentStr$key: $value');

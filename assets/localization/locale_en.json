@@ -151,11 +151,14 @@
   "start_here": "START HERE",
   "import": "Import",
   "export": "Export",
-  "clear_profile_tooltip": "Clear {lang} Profile",
+  "clear_profile_tooltip": "Delete {lang} Profile",
   "delete_profile_title": "Delete {lang} Profile?",
-  "delete_profile_message": "This will permanently clear all personal info, work experience, skills, and other data for the {lang} profile. This cannot be undone.",
+  "delete_profile_message": "This will permanently delete all personal info, work experience, skills, and other data for the {lang} profile. This cannot be undone.",
   "delete_profile_confirm": "Delete Profile",
-  "profile_cleared": "{lang} profile data cleared",
+  "profile_cleared": "{lang} profile deleted",
+  "add_profile": "Add Profile",
+  "add_profile_select_language": "Select a language for the new profile",
+  "no_available_languages": "All available languages already have a profile",
   "select_yaml_file": "Select YAML File to Import",
   "profile_imported": "Profile data imported successfully!",
   "error_selecting_file": "Error selecting file: {error}",
@@ -372,7 +375,6 @@
   "status_successful_desc": "Job offer accepted",
   "status_rejected_desc": "Application rejected",
   "status_no_response_desc": "No response received",
-  "cancel": "Cancel",
   "ok": "OK",
   "save": "Save",
   "close": "Close",
@@ -460,7 +462,6 @@
   "cv_editor_save": "Save Changes",
   "cv_editor_saved": "Changes saved",
   "cv_editor_save_failed": "Failed to save changes",
-
   "please_select_start_date": "Please select a start date",
   "end_date_before_start": "End date cannot be before start date",
   "required": "Required",
@@ -540,7 +541,6 @@
   "select_what_to_import": "Select what to import",
   "importing": "Importing...",
   "import_now": "Import Now",
-
   "skills_section_desc": "Manage your skills and expertise levels",
   "no_skills_message": "Add your skills to highlight your expertise and strengths.",
   "add_first_skill": "Add Your First Skill",
@@ -601,7 +601,6 @@
   "template_files_location": "Template files location:",
   "select_file": "Select File",
   "file_picker_coming_soon": "File picker coming soon",
-
   "note_company_name_label": "Company Name *",
   "note_company_name_hint": "e.g. Google, Microsoft",
   "note_why_interesting_label": "Why is this company interesting?",
@@ -629,7 +628,6 @@
   "note_due_today": "today",
   "note_overdue_days": "{count} days overdue",
   "note_overdue_day": "1 day overdue",
-
   "notes_export_report": "Export Notes",
   "no_notes_to_export": "No notes to export",
   "generating_notes_report": "Generating notes report...",
@@ -639,7 +637,6 @@
   "failed_export_notes": "Failed to export notes: {error}",
   "archive": "Archive",
   "unarchive": "Unarchive",
-
   "note_completed_on": "Completed {date}",
   "note_created_on": "Created {date}",
   "note_completed_early": "Completed {count} days early",
@@ -662,7 +659,6 @@
   "note_export_success": "Note exported successfully",
   "note_export_failed": "Failed to export note: {error}",
   "failed_create_application": "Failed to create application: {error}",
-
   "edit_content": "Edit Content",
   "saving": "Saving...",
   "all_changes_saved": "All changes saved",
@@ -671,7 +667,6 @@
   "unsaved_changes_leave_message": "You have unsaved changes. Are you sure you want to leave?",
   "save_and_close": "Save & Close",
   "failed_update_app_details": "Failed to update application details",
-
   "tab_details": "Details",
   "tab_personal": "Personal",
   "tab_experience": "Experience",
@@ -680,7 +675,6 @@
   "tab_interests": "Interests",
   "tab_education": "Education",
   "tab_cover_letter": "Cover Letter",
-
   "application_details": "Application Details",
   "application_details_desc": "Edit application metadata and track progress",
   "application_status": "Application Status",
@@ -700,10 +694,8 @@
   "contact_email": "Contact Email",
   "notes_word": "Notes",
   "application_notes": "Application Notes",
-
   "customize_contact_desc": "Customize your contact information for this job application",
   "contact_details": "Contact Details",
-
   "work_exp_subtitle": "{count} {label}",
   "entry": "entry",
   "entries": "entries",
@@ -711,18 +703,13 @@
   "no_work_exp_yet": "No work experience yet",
   "no_work_exp_desc": "Add your work history to build a complete CV",
   "tailor_summary": "Tailor your summary for {position} at {company}",
-
   "edu_subtitle": "{count} {label}",
   "no_education_yet": "No education added yet",
   "no_education_desc": "Add your educational background to complete your CV",
-
   "skills_subtitle": "Manage your skills for this application",
-
   "languages_subtitle": "Language skills included in this application",
   "no_languages_desc": "Add languages to showcase your linguistic skills",
-
   "interests_subtitle": "Personal interests included in this application",
-
   "cl_personalize": "Personalize your cover letter for this application",
   "recipient_info": "Recipient Information",
   "recipient_name": "Recipient Name",
@@ -734,9 +721,7 @@
   "letter_body": "Letter Body",
   "chars_words": "{chars} chars, {words} words",
   "closing": "Closing",
-
   "failed_set_picture": "Failed to set profile picture",
-
   "delete_experience": "Delete Work Experience",
   "delete_experience_confirm": "Remove \"{position}\" at {company}?",
   "delete_education_confirm_job": "Remove \"{degree}\" from {institution}?",
@@ -745,9 +730,7 @@
   "delete_skill_confirm": "Remove \"{name}\" from your skills?",
   "delete_interest": "Delete Interest",
   "delete_interest_confirm": "Remove \"{name}\" from your interests?",
-
   "import_placeholders": "Placeholders",
-
   "sidebar_accent_color": "Accent Color",
   "sidebar_font_family": "Font Family",
   "sidebar_design_preset": "Design Preset",

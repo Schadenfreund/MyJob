@@ -8,21 +8,33 @@ import '../models/user_data/interest.dart';
 import '../services/storage_service.dart';
 import '../constants/app_constants.dart';
 
-/// Provider for bilingual user profile management
+/// Provider for dynamic multilingual user profile management
 ///
-/// Manages two separate master profiles (English and German) and allows
-/// switching between them. Each profile is completely independent.
+/// Manages profiles for any number of languages. Each profile is completely
+/// independent and stored in profiles/{langCode}/. Profiles are auto-discovered
+/// from the file system on load.
 class UserDataProvider with ChangeNotifier {
   final StorageService _storage = StorageService.instance;
 
-  // Current active language and profile
-  DocumentLanguage _currentLanguage = DocumentLanguage.en;
-  MasterProfile? _enProfile;
-  MasterProfile? _deProfile;
+  // Dynamic profile map keyed by language code (e.g. 'en', 'de', 'hr')
+  final Map<String, MasterProfile?> _profiles = {};
+  String _currentLanguageCode = 'en';
+
+  /// Called whenever the active language code changes (switch or new profile).
+  /// Wired once at app startup to sync the UI language.
+  Future<void> Function(String langCode)? _onLanguageSwitch;
+  void setLanguageSwitchCallback(Future<void> Function(String) callback) {
+    _onLanguageSwitch = callback;
+  }
 
   // Getters for current profile data
-  DocumentLanguage get currentLanguage => _currentLanguage;
-  MasterProfile? get currentProfile => _getCurrentProfile();
+  /// Backward-compat getter for code that still uses DocumentLanguage
+  DocumentLanguage get currentLanguage =>
+      DocumentLanguage.fromCode(_currentLanguageCode);
+  String get currentLanguageCode => _currentLanguageCode;
+  List<String> get profileLanguageCodes => _profiles.keys.toList();
+
+  MasterProfile? get currentProfile => _profiles[_currentLanguageCode];
 
   PersonalInfo? get personalInfo => currentProfile?.personalInfo;
   List<WorkExperience> get experiences => currentProfile?.experiences ?? [];
@@ -48,34 +60,61 @@ class UserDataProvider with ChangeNotifier {
         profile.defaultCoverLetterBody.isNotEmpty;
   }
 
-  /// Get the profile for a specific language
+  /// Get the profile for a specific DocumentLanguage (backward compat)
   MasterProfile? getProfileForLanguage(DocumentLanguage language) {
-    return language == DocumentLanguage.en ? _enProfile : _deProfile;
+    return _profiles[language.code];
   }
 
-  /// Get the current active profile
-  MasterProfile? _getCurrentProfile() {
-    return _currentLanguage == DocumentLanguage.en ? _enProfile : _deProfile;
-  }
-
-  /// Load all profiles
+  /// Load all profiles by discovering them from the file system
   Future<void> loadAll() async {
-    _enProfile = await _storage.loadMasterProfile(DocumentLanguage.en);
-    _deProfile = await _storage.loadMasterProfile(DocumentLanguage.de);
+    _profiles.clear();
+    final codes = await _storage.discoverProfileLanguageCodes();
+    for (final code in codes) {
+      _profiles[code] = await _storage.loadMasterProfile(code);
+    }
+    // If current code not in discovered profiles, switch to first available
+    if (_profiles.isNotEmpty && !_profiles.containsKey(_currentLanguageCode)) {
+      _currentLanguageCode = _profiles.keys.first;
+    }
     notifyListeners();
   }
 
-  /// Switch active language
-  Future<void> switchLanguage(DocumentLanguage language) async {
-    if (_currentLanguage == language) return;
+  /// Switch to a profile by language code
+  Future<void> switchProfile(String langCode) async {
+    if (_currentLanguageCode == langCode) return;
+    _currentLanguageCode = langCode;
+    notifyListeners();
+    await _onLanguageSwitch?.call(langCode);
+  }
 
-    _currentLanguage = language;
+  /// Switch active language (backward compat wrapper)
+  Future<void> switchLanguage(DocumentLanguage language) =>
+      switchProfile(language.code);
+
+  /// Add a new profile for a language code
+  Future<void> addProfile(String langCode) async {
+    final profile = MasterProfile.empty(langCode);
+    _profiles[langCode] = profile;
+    _currentLanguageCode = langCode;
+    await _storage.saveMasterProfile(profile);
+    notifyListeners();
+    await _onLanguageSwitch?.call(langCode);
+  }
+
+  /// Delete a profile entirely (removes folder from disk)
+  Future<void> deleteProfile(String langCode) async {
+    _profiles.remove(langCode);
+    await _storage.deleteProfileFolder(langCode);
+    if (_currentLanguageCode == langCode) {
+      _currentLanguageCode =
+          _profiles.isNotEmpty ? _profiles.keys.first : 'en';
+    }
     notifyListeners();
   }
 
   /// Update personal info for current language
   Future<void> updatePersonalInfo(PersonalInfo info) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final updated = profile.copyWith(personalInfo: info);
@@ -84,7 +123,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Update default cover letter body
   Future<void> updateDefaultCoverLetterBody(String body) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final updated = profile.copyWith(defaultCoverLetterBody: body);
@@ -93,7 +132,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Update profile summary
   Future<void> updateProfileSummary(String summary) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final updated = profile.copyWith(profileSummary: summary);
@@ -102,7 +141,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Add experience
   Future<void> addExperience(WorkExperience experience) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final updated = profile.copyWith(
@@ -113,7 +152,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Update experience
   Future<void> updateExperience(WorkExperience experience) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final experiences = List<WorkExperience>.from(profile.experiences);
@@ -127,7 +166,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Delete experience
   Future<void> deleteExperience(String id) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final updated = profile.copyWith(
@@ -138,7 +177,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Add education
   Future<void> addEducation(Education edu) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final updated = profile.copyWith(
@@ -149,7 +188,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Update education
   Future<void> updateEducation(Education edu) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final education = List<Education>.from(profile.education);
@@ -163,7 +202,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Delete education
   Future<void> deleteEducation(String id) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final updated = profile.copyWith(
@@ -174,7 +213,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Add skill
   Future<void> addSkill(Skill skill) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final updated = profile.copyWith(
@@ -185,7 +224,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Update skill
   Future<void> updateSkill(Skill skill) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final skills = List<Skill>.from(profile.skills);
@@ -199,7 +238,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Delete skill
   Future<void> deleteSkill(String id) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final updated = profile.copyWith(
@@ -210,7 +249,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Add language
   Future<void> addLanguage(Language language) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final updated = profile.copyWith(
@@ -221,7 +260,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Update language
   Future<void> updateLanguage(Language language) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final languages = List<Language>.from(profile.languages);
@@ -235,7 +274,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Delete language
   Future<void> deleteLanguage(String id) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final updated = profile.copyWith(
@@ -246,7 +285,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Add interest
   Future<void> addInterest(Interest interest) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final updated = profile.copyWith(
@@ -257,7 +296,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Update interest
   Future<void> updateInterest(Interest interest) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final interests = List<Interest>.from(profile.interests);
@@ -271,7 +310,7 @@ class UserDataProvider with ChangeNotifier {
 
   /// Delete interest
   Future<void> deleteInterest(String id) async {
-    final profile = _getCurrentProfile();
+    final profile = currentProfile;
     if (profile == null) return;
 
     final updated = profile.copyWith(
@@ -282,19 +321,14 @@ class UserDataProvider with ChangeNotifier {
 
   /// Save the updated profile
   Future<void> _saveProfile(MasterProfile profile) async {
-    if (profile.language == DocumentLanguage.en) {
-      _enProfile = profile;
-    } else {
-      _deProfile = profile;
-    }
-
+    _profiles[profile.language] = profile;
     await _storage.saveMasterProfile(profile);
     notifyListeners();
   }
 
-  /// Clear current profile data (language specific)
+  /// Clear current profile data (resets to empty, keeps the profile slot)
   Future<void> clearCurrentProfile() async {
-    final empty = MasterProfile.empty(_currentLanguage);
+    final empty = MasterProfile.empty(_currentLanguageCode);
     await _saveProfile(empty);
   }
 

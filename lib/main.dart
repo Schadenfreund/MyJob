@@ -151,6 +151,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       final settings = context.read<SettingsService>();
       final loc = context.read<AppLocalizations>();
       loc.initialize(languageCode: settings.appLanguage);
+
+      // Wire language sync once: switching profiles also switches the app UI language.
+      context.read<UserDataProvider>().setLanguageSwitchCallback((code) async {
+        final switched = await loc.setLanguage(code);
+        if (switched) await settings.setAppLanguage(code);
+      });
     }
   }
 

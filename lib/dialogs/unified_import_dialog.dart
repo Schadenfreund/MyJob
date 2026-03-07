@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../constants/app_constants.dart';
 import '../localization/app_localizations.dart';
 import '../providers/user_data_provider.dart';
 import '../services/unified_yaml_import_service.dart';
@@ -139,7 +138,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
     final fileName =
         _selectedFile?.path.split(Platform.pathSeparator).last ?? '';
     final userDataProvider = context.watch<UserDataProvider>();
-    final currentLang = userDataProvider.currentLanguage;
+    final currentCode = userDataProvider.currentLanguageCode;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -219,7 +218,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
           Row(
             children: [
               Text(
-                context.tr('target_language'),
+                context.tr('import_dialog_target_profile'),
                 style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color:
@@ -237,25 +236,28 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildLanguageToggle(
-                      context,
-                      userDataProvider,
-                      DocumentLanguage.en,
-                      currentLang == DocumentLanguage.en,
-                    ),
-                    Container(
-                      width: 1,
-                      height: 32,
-                      color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                    ),
-                    _buildLanguageToggle(
-                      context,
-                      userDataProvider,
-                      DocumentLanguage.de,
-                      currentLang == DocumentLanguage.de,
-                    ),
-                  ],
+                  children: userDataProvider.profileLanguageCodes
+                      .asMap()
+                      .entries
+                      .expand((entry) {
+                    final idx = entry.key;
+                    final code = entry.value;
+                    return [
+                      if (idx > 0)
+                        Container(
+                          width: 1,
+                          height: 32,
+                          color: theme.colorScheme.outline
+                              .withValues(alpha: 0.2),
+                        ),
+                      _buildProfileChip(
+                        context,
+                        userDataProvider,
+                        code,
+                        code == currentCode,
+                      ),
+                    ];
+                  }).toList(),
                 ),
               ),
             ],
@@ -265,13 +267,18 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
     );
   }
 
-  Widget _buildLanguageToggle(
+  Widget _buildProfileChip(
     BuildContext context,
     UserDataProvider provider,
-    DocumentLanguage language,
+    String langCode,
     bool isSelected,
   ) {
     final theme = Theme.of(context);
+    final langInfo = AppLocalizations.of(context).availableLanguages.firstWhere(
+          (l) => l.code == langCode,
+          orElse: () =>
+              LanguageInfo(code: langCode, name: langCode.toUpperCase(), flag: '🌐'),
+        );
 
     return Material(
       color: isSelected
@@ -279,31 +286,17 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
           : Colors.transparent,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
-        onTap: () => provider.switchLanguage(language),
+        onTap: () => provider.switchProfile(langCode),
         borderRadius: BorderRadius.circular(8),
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Flag with subtle background
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? theme.colorScheme.primary.withValues(alpha: 0.1)
-                      : theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  language.flag,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Language label
+              Text(langInfo.flag, style: const TextStyle(fontSize: 12)),
+              const SizedBox(width: 4),
               Text(
-                language.code.toUpperCase(),
+                langCode.toUpperCase(),
                 style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected
@@ -947,16 +940,9 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
     // Detect language and switch to it if needed
     if (result.language != null) {
       final lang = result.language!.toLowerCase();
-      DocumentLanguage targetLang;
-
-      if (lang == 'german' || lang == 'de' || lang == 'deutsch') {
-        targetLang = DocumentLanguage.de;
-      } else {
-        targetLang = DocumentLanguage.en;
-      }
-
-      // Switch to the target language
-      await userDataProvider.switchLanguage(targetLang);
+      final targetCode =
+          (lang == 'german' || lang == 'de' || lang == 'deutsch') ? 'de' : 'en';
+      await userDataProvider.switchProfile(targetCode);
     }
 
     // Build the complete cover letter body

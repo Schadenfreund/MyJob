@@ -394,7 +394,7 @@ class BackupService {
           final json =
               jsonDecode(await file.readAsString()) as Map<String, dynamic>;
           final folderPath = json['folderPath'] as String?;
-          if (folderPath != null && folderPath.isNotEmpty) {
+          if (folderPath != null && folderPath.isNotEmpty && p.isAbsolute(folderPath)) {
             // folderPath = <oldUserData>/applications/<foldername>
             return p.dirname(p.dirname(folderPath));
           }
@@ -414,7 +414,7 @@ class BackupService {
           final picPath =
               (json['personalInfo'] as Map<String, dynamic>?)?['profilePicturePath']
                   as String?;
-          if (picPath != null && picPath.isNotEmpty) {
+          if (picPath != null && picPath.isNotEmpty && p.isAbsolute(picPath)) {
             // picPath = <oldUserData>/profiles/<lang>/profile_picture.<ext>
             return p.dirname(p.dirname(p.dirname(picPath)));
           }

@@ -108,7 +108,7 @@ class ApplicationsProvider extends ChangeNotifier {
 
     // Load the master profile for the selected language if not provided
     final profileToUse =
-        masterProfile ?? await _storage.loadMasterProfile(baseLanguage);
+        masterProfile ?? await _storage.loadMasterProfile(baseLanguage.code);
 
     debugPrint('[CreateApp] Language selected: $baseLanguage');
     debugPrint(

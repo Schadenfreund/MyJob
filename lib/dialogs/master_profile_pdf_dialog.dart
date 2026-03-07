@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../constants/app_constants.dart';
 import '../models/pdf_document_type.dart';
 import '../models/master_profile.dart';
 import '../models/template_style.dart';
@@ -101,7 +102,7 @@ class _MasterProfilePdfDialogState
           // No saved settings yet — default to the profile's language
           controller.updateCustomization(
             controller.customization
-                .copyWith(language: widget.profile.language.code),
+                .copyWith(language: widget.profile.language),
           );
         }
         debugPrint('[Master PDF Dialog] Loaded saved settings');
@@ -111,7 +112,7 @@ class _MasterProfilePdfDialogState
       // Default to profile language on error
       controller.updateCustomization(
         controller.customization
-            .copyWith(language: widget.profile.language.code),
+            .copyWith(language: widget.profile.language),
       );
     }
   }
@@ -301,7 +302,7 @@ class _MasterProfilePdfDialogState
   @override
   String getDocumentName() {
     final type = widget.isCV ? 'CV' : 'CoverLetter';
-    final lang = widget.profile.language.code.toUpperCase();
+    final lang = widget.profile.language.toUpperCase();
     return 'MasterProfile_${lang}_$type';
   }
 
@@ -331,9 +332,9 @@ class _MasterProfilePdfDialogState
 
     // Convert MasterProfile to CvData format
     final cvData = CvData(
-      id: 'master_${widget.profile.language.code}',
-      name: 'Master Profile - ${widget.profile.language.label}',
-      language: widget.profile.language,
+      id: 'master_${widget.profile.language}',
+      name: 'Master Profile - ${widget.profile.language.toUpperCase()}',
+      language: DocumentLanguage.fromCode(widget.profile.language),
       profile: widget.profile.profileSummary,
       skills: widget.profile.skills.map((s) => s.name).toList(),
       languages: widget.profile.languages
@@ -382,8 +383,8 @@ class _MasterProfilePdfDialogState
   Future<Uint8List> _generateCoverLetterPdf() async {
     // Create a sample cover letter from the default body
     final coverLetter = CoverLetter(
-      id: 'master_${widget.profile.language.code}',
-      name: 'Master Cover Letter - ${widget.profile.language.label}',
+      id: 'master_${widget.profile.language}',
+      name: 'Master Cover Letter - ${widget.profile.language.toUpperCase()}',
       recipientName: 'Hiring Manager',
       companyName: '[Company Name]',
       subject: '',
@@ -449,6 +450,16 @@ class _MasterProfilePdfDialogState
     ];
   }
 
+  String _getLanguageName(BuildContext context) {
+    final langCode = widget.profile.language;
+    final info = AppLocalizations.of(context).availableLanguages.firstWhere(
+          (l) => l.code == langCode,
+          orElse: () =>
+              LanguageInfo(code: langCode, name: langCode.toUpperCase(), flag: '🌐'),
+        );
+    return info.name;
+  }
+
   Widget _buildProfileInfoSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,7 +481,7 @@ class _MasterProfilePdfDialogState
           ],
         ),
         const SizedBox(height: 12),
-        _buildInfoRow(context.tr('pdf_info_language'), widget.profile.language.label),
+        _buildInfoRow(context.tr('pdf_info_language'), _getLanguageName(context)),
         _buildInfoRow(
           context.tr('pdf_info_document'),
           widget.isCV ? context.tr('pdf_doc_type_cv') : context.tr('cover_letter'),

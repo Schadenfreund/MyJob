@@ -125,22 +125,62 @@ class _ChangelogContent extends StatelessWidget {
 
   const _ChangelogContent({required this.changelog});
 
+  // Parses **bold** and `code` inline markers into TextSpans.
+  static List<TextSpan> _parseInline(
+      String text, TextStyle base, TextStyle bold, TextStyle code) {
+    final spans = <TextSpan>[];
+    final pattern = RegExp(r'\*\*(.+?)\*\*|`(.+?)`');
+    int last = 0;
+    for (final match in pattern.allMatches(text)) {
+      if (match.start > last) {
+        spans.add(TextSpan(text: text.substring(last, match.start), style: base));
+      }
+      if (match.group(1) != null) {
+        spans.add(TextSpan(text: match.group(1), style: bold));
+      } else {
+        spans.add(TextSpan(text: match.group(2), style: code));
+      }
+      last = match.end;
+    }
+    if (last < text.length) {
+      spans.add(TextSpan(text: text.substring(last), style: base));
+    }
+    return spans;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final settings = context.watch<SettingsService>();
 
+    final secondaryColor =
+        isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+
+    final baseStyle = theme.textTheme.bodyMedium ?? const TextStyle();
+    final boldStyle = baseStyle.copyWith(fontWeight: FontWeight.w600);
+    final codeStyle = baseStyle.copyWith(
+      fontFamily: 'monospace',
+      color: settings.accentColor,
+    );
+
     // Parse the changelog into sections
     final lines = changelog.split('\n');
     final widgets = <Widget>[];
 
-    for (var i = 0; i < lines.length; i++) {
-      final line = lines[i].trim();
+    for (final raw in lines) {
+      final line = raw.trim();
       if (line.isEmpty) continue;
 
-      // Section headers (## Added, ## Fixed, etc.)
-      if (line.startsWith('## ')) {
+      // Horizontal rule
+      if (line == '---') {
+        widgets.add(const Padding(
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          child: Divider(),
+        ));
+      }
+      // ## Section headers (## Fixed, ## Added, etc.)
+      else if (line.startsWith('## ')) {
         widgets.add(
           Padding(
             padding: EdgeInsets.only(
@@ -157,7 +197,7 @@ class _ChangelogContent extends StatelessWidget {
           ),
         );
       }
-      // Sub-section headers (### Category)
+      // ### Sub-section headers
       else if (line.startsWith('### ')) {
         widgets.add(
           Padding(
@@ -174,8 +214,27 @@ class _ChangelogContent extends StatelessWidget {
           ),
         );
       }
+      // #### Sub-sub-section headers
+      else if (line.startsWith('#### ')) {
+        widgets.add(
+          Padding(
+            padding: EdgeInsets.only(
+              top: widgets.isEmpty ? 0 : AppSpacing.sm,
+              bottom: AppSpacing.xs,
+            ),
+            child: Text(
+              line.substring(5),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: secondaryColor,
+              ),
+            ),
+          ),
+        );
+      }
       // Bullet points
       else if (line.startsWith('- ') || line.startsWith('* ')) {
+        final spans = _parseInline(line.substring(2), baseStyle, boldStyle, codeStyle);
         widgets.add(
           Padding(
             padding: const EdgeInsets.only(
@@ -195,9 +254,8 @@ class _ChangelogContent extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: Text(
-                    line.substring(2),
-                    style: theme.textTheme.bodyMedium,
+                  child: RichText(
+                    text: TextSpan(children: spans),
                   ),
                 ),
               ],
@@ -212,11 +270,7 @@ class _ChangelogContent extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: AppSpacing.xs),
             child: Text(
               line,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
-              ),
+              style: baseStyle.copyWith(color: secondaryColor),
             ),
           ),
         );
@@ -226,11 +280,9 @@ class _ChangelogContent extends StatelessWidget {
     if (widgets.isEmpty) {
       return Text(
         context.tr('no_release_notes'),
-        style: theme.textTheme.bodyMedium?.copyWith(
+        style: baseStyle.copyWith(
           fontStyle: FontStyle.italic,
-          color: isDark
-              ? AppColors.darkTextSecondary
-              : AppColors.lightTextSecondary,
+          color: secondaryColor,
         ),
       );
     }

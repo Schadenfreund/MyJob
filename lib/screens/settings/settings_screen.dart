@@ -284,14 +284,14 @@ class SettingsScreen extends StatelessWidget {
                                       lang.code,
                                       lang.name,
                                     ),
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(8),
                                     child: Container(
-                                      padding: const EdgeInsets.all(6),
+                                      padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
                                         color: AppColors.lightDanger
                                             .withValues(alpha: 0.1),
                                         borderRadius:
-                                            BorderRadius.circular(6),
+                                            BorderRadius.circular(8),
                                         border: Border.all(
                                           color: AppColors.lightDanger
                                               .withValues(alpha: 0.3),
@@ -300,7 +300,7 @@ class SettingsScreen extends StatelessWidget {
                                       ),
                                       child: Icon(
                                         Icons.delete_outline,
-                                        size: 14,
+                                        size: 16,
                                         color: AppColors.lightDanger,
                                       ),
                                     ),
@@ -904,7 +904,7 @@ class _LanguageButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: AppDurations.quick,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
               ? accentColor.withValues(alpha: 0.12)
@@ -924,8 +924,8 @@ class _LanguageButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 28,
-              height: 28,
+              width: 24,
+              height: 24,
               decoration: BoxDecoration(
                 color: isSelected
                     ? accentColor.withValues(alpha: 0.2)
@@ -947,12 +947,12 @@ class _LanguageButton extends StatelessWidget {
                         ? accentColor
                         : theme.textTheme.bodySmall?.color
                             ?.withValues(alpha: 0.7),
-                    fontSize: 10,
+                    fontSize: 9,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Text(
               languageName,
               style: theme.textTheme.bodyMedium?.copyWith(

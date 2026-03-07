@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.5] - 2026-03-07
+
+### Fixed
+
+#### UserData Portability
+- **Relative path storage** — `folderPath` and `profilePicturePath` are now stored as paths relative to the UserData root instead of absolute paths. Existing UserData folders can be freely moved or copied to a new location without breaking application links or profile pictures.
+- **Backward-compatible path resolution** — Stale absolute paths from a previous location are transparently recovered at load time by scanning path segments for known top-level directory names (`applications`, `profiles`, etc.) and re-anchoring them to the current UserData root.
+- **Backup/restore guard** — `_detectOldUserDataPath` in the backup service now requires an absolute path before attempting path remapping, preventing catastrophic JSON corruption when relative paths (e.g. `applications\folder`) were mistakenly used as the base for string replacement.
+
+#### Notes — Formatting Preserved on Reopen
+- **Multi-line note text now round-trips correctly** — Literal newlines in note descriptions, URLs, and other string fields were silently collapsed to spaces by the YAML double-quoted scalar line-folding rule. The custom `_jsonToYaml` serializer now escapes `\n`, `\r`, and `\\` correctly so the YAML reader restores the original text exactly.
+
+#### Notes — Clearing Nullable Fields
+- **Nullable note fields can now be explicitly cleared** — `NoteItem.copyWith` used the `value ?? this.value` pattern, which made it impossible to set a nullable field (description, URL, contact person, contact email, location, due date, completedAt) back to `null`. Fixed with a private `_unset` Object sentinel so `copyWith(description: null)` correctly clears the field.
+
+---
+
 ## [1.1.4] - 2026-02-24
 
 ### Added

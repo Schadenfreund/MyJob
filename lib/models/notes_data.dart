@@ -1,5 +1,8 @@
 import 'package:uuid/uuid.dart';
 
+// Sentinel used by NoteItem.copyWith to distinguish "not provided" from null.
+const _unset = Object();
+
 /// Represents a single note or todo item
 class NoteItem {
   final String id;
@@ -46,38 +49,38 @@ class NoteItem {
 
   NoteItem copyWith({
     String? title,
-    String? description,
+    Object? description = _unset,
     NoteType? type,
     NotePriority? priority,
     bool? completed,
     bool? archived,
-    DateTime? completedAt,
-    DateTime? dueDate,
+    Object? completedAt = _unset,
+    Object? dueDate = _unset,
     List<String>? tags,
     int? sortOrder,
-    String? url,
-    String? contactPerson,
-    String? contactEmail,
-    String? location,
+    Object? url = _unset,
+    Object? contactPerson = _unset,
+    Object? contactEmail = _unset,
+    Object? location = _unset,
     LeadStatus? leadStatus,
   }) {
     return NoteItem(
       id: id,
       title: title ?? this.title,
-      description: description ?? this.description,
+      description: description == _unset ? this.description : description as String?,
       type: type ?? this.type,
       priority: priority ?? this.priority,
       completed: completed ?? this.completed,
       archived: archived ?? this.archived,
       createdAt: createdAt,
-      completedAt: completedAt ?? this.completedAt,
-      dueDate: dueDate ?? this.dueDate,
+      completedAt: completedAt == _unset ? this.completedAt : completedAt as DateTime?,
+      dueDate: dueDate == _unset ? this.dueDate : dueDate as DateTime?,
       tags: tags ?? this.tags,
       sortOrder: sortOrder ?? this.sortOrder,
-      url: url ?? this.url,
-      contactPerson: contactPerson ?? this.contactPerson,
-      contactEmail: contactEmail ?? this.contactEmail,
-      location: location ?? this.location,
+      url: url == _unset ? this.url : url as String?,
+      contactPerson: contactPerson == _unset ? this.contactPerson : contactPerson as String?,
+      contactEmail: contactEmail == _unset ? this.contactEmail : contactEmail as String?,
+      location: location == _unset ? this.location : location as String?,
       leadStatus: leadStatus ?? this.leadStatus,
     );
   }

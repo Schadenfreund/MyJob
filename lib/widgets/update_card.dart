@@ -264,14 +264,45 @@ class _ChangelogPreview extends StatelessWidget {
     required this.version,
   });
 
+  // Parses **bold** and `code` inline markers into TextSpans.
+  static List<TextSpan> _parseInline(
+      String text, TextStyle base, TextStyle bold, TextStyle code) {
+    final spans = <TextSpan>[];
+    final pattern = RegExp(r'\*\*(.+?)\*\*|`(.+?)`');
+    int last = 0;
+    for (final match in pattern.allMatches(text)) {
+      if (match.start > last) {
+        spans.add(TextSpan(text: text.substring(last, match.start), style: base));
+      }
+      if (match.group(1) != null) {
+        spans.add(TextSpan(text: match.group(1), style: bold));
+      } else {
+        spans.add(TextSpan(text: match.group(2), style: code));
+      }
+      last = match.end;
+    }
+    if (last < text.length) {
+      spans.add(TextSpan(text: text.substring(last), style: base));
+    }
+    return spans;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final accentColor = context.read<SettingsService>().accentColor;
 
-    // Show first 3 lines of changelog
-    final lines = changelog.split('\n').where((l) => l.trim().isNotEmpty).take(3);
-    final preview = lines.join('\n');
+    final baseStyle = theme.textTheme.bodySmall ?? const TextStyle();
+    final boldStyle = baseStyle.copyWith(fontWeight: FontWeight.w600);
+    final codeStyle = baseStyle.copyWith(fontFamily: 'monospace', color: accentColor);
+
+    // Show the first 3 bullet points — skip headers and dividers
+    final bulletLines = changelog
+        .split('\n')
+        .where((l) => l.trim().startsWith('- ') || l.trim().startsWith('* '))
+        .take(3)
+        .toList();
 
     return Container(
       width: double.infinity,
@@ -295,19 +326,49 @@ class _ChangelogPreview extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          Text(
-            preview,
-            style: theme.textTheme.bodySmall,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
+          if (bulletLines.isEmpty)
+            Text(
+              changelog.split('\n').firstWhere((l) => l.trim().isNotEmpty,
+                  orElse: () => ''),
+              style: baseStyle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            )
+          else
+            ...bulletLines.map((raw) {
+              final spans = _parseInline(raw.trim().substring(2), baseStyle, boldStyle, codeStyle);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 4,
+                      margin: const EdgeInsets.only(top: 5, right: AppSpacing.xs),
+                      decoration: BoxDecoration(
+                        color: accentColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(children: spans),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
           const SizedBox(height: AppSpacing.xs),
           InkWell(
             onTap: () => _showFullChangelog(context),
             child: Text(
               context.tr('view_full_changelog'),
               style: theme.textTheme.bodySmall?.copyWith(
-                color: context.read<SettingsService>().accentColor,
+                color: accentColor,
                 fontWeight: FontWeight.w600,
               ),
             ),

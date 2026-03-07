@@ -306,7 +306,7 @@ if ($SkipBuild) {
     Write-Host ""
     Write-Host "[5/8] Building Windows release..." -ForegroundColor Yellow
     flutter clean
-    flutter pub get
+    flutter pub get --offline
     flutter build windows --release
 
     if (-not (Test-Path "$BuildPath\$ExeName")) {
