@@ -27,7 +27,7 @@ class FileConfig {
 /// Application metadata
 class AppInfo {
   static const String appName = 'MyJob';
-  static const String version = '1.1.5';
+  static const String version = '1.1.8';
   static const String description = 'Job Application Management Tool';
   static const String supportEmail = 'support@myjob.app';
 }

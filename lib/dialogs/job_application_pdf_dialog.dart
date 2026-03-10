@@ -799,6 +799,7 @@ class _JobApplicationPdfDialogState
               getFieldValue('recipientName', widget.coverLetter!.recipientName),
           companyName:
               getFieldValue('companyName', widget.coverLetter!.companyName),
+          subject: getFieldValue('subject', widget.coverLetter!.subject),
           greeting: getFieldValue('greeting', widget.coverLetter!.greeting),
           body: getFieldValue('body', widget.coverLetter!.body),
           closing: getFieldValue('closing', widget.coverLetter!.closing),

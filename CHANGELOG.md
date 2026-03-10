@@ -7,6 +7,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.8] - 2026-03-09
+
+### Added
+
+#### PDF Editor — Cover Letter Toggles in Two-Column Layout
+- **Show Greeting / Show Closing toggles** were missing from the `Two-Column` layout preset case in the sidebar. Now all four layout preset cases (Modern, Compact, Traditional, Two-Column) expose the full set of cover letter display options.
+
+### Fixed
+
+#### PDF Editor — Layout Preset Persistence
+- **Preset choice silently discarded** — `setLayoutPreset()` was not calling `_scheduleSave()`, so switching to a layout preset was never written to disk. The selection was also not setting `_hasExplicitCustomization`, meaning the async global-customization load could overwrite the preset if it resolved after the switch. Both guards are now applied.
+
+### Changed
+
+#### PDF Editor — `LayoutPreset` Locale Key
+- Added `localeKey` getter to `LayoutPreset` (e.g. `'layout_preset_modern'`). `PdfEditorController.currentLayoutPresetName` now returns this key instead of a hardcoded English string.
+- The sidebar translates `PdfPreset.basedOnPresetName` via `context.tr()`. Old saved presets that stored raw English names (`"Modern"`, `"Compact"`, etc.) fall back gracefully — `AppLocalizations.translate` returns the key itself when no match is found, so the displayed text is unchanged.
+
+#### PDF Editor — Dead Code Removal
+- Removed `setStyle()` from `PdfEditorController` — it was never called anywhere and was a confusing duplicate of `updateStyle()` with subtly different equality logic.
+- Removed the unused `label` field from the `PdfViewMode` enum. The PDF toolbar already uses its own `context.tr()` switch methods and never accessed `.label`.
+
+---
+
+## [1.1.7] - 2026-03-09
+
+### Added
+
+#### PDF Editor — Cover Letter Display Options
+- **Show Greeting toggle** — sidebar toggle to hide/show the greeting line in cover letter PDFs. Available in Modern, Compact, and Traditional layout presets.
+- **Show Closing toggle** — sidebar toggle to hide/show the closing line in cover letter PDFs. Same presets as above.
+- Both toggles persist via `TemplateCustomization` (backward-compatible: old `cv_customization.json` files without these keys default to `true`).
+- Localized in English (`Show Greeting`, `Show Closing`) and German (`Anrede anzeigen`, `Grußformel anzeigen`).
+
+### Fixed
+
+#### PDF Editor — Backward-Compatible JSON Deserialization
+- **`TypeError` on old UserData import** — `spacingScale`, `fontSizeScale`, `lineHeight`, and `sidebarWidthRatio` were deserialized with `as double?`, which throws a `TypeError` when the stored JSON value is an integer (e.g. `1` instead of `1.0`). Changed to `(as num?)?.toDouble()` for safe integer/double handling.
+
+#### PDF Editor — Race Condition on Settings Load
+- **Job-specific settings silently overwritten** — `PdfEditorController` loads global customization preferences asynchronously in its constructor. If this async load completed after the job dialog had already applied its own saved settings, the job-specific values were silently discarded. Fixed with an `_hasExplicitCustomization` guard flag that prevents the global load from overwriting explicitly-set customization.
+
+#### PDF Editor — Cover Letter Subject Not Saved
+- **Subject field edits not persisted** — Edits to the subject line in the cover letter edit panel updated the in-memory state and regenerated the PDF correctly, but `_saveFieldChanges()` omitted `subject` from the `copyWith` call so changes were never written to disk.
+
+### Changed
+
+#### PDF Code — DRY Cleanup (Cover Letter Templates)
+- Extracted `_formatDate` (identical across all 4 cover letter templates) and `splitBodyParagraphs` (paragraph normalization, also identical) into a new `CoverLetterHelpers` abstract final class in `lib/pdf/shared/cover_letter_helpers.dart`.
+- All 4 cover letter templates (`classic`, `professional`, `electric`, `modern_two`) now use `CoverLetterHelpers.formatDate()` and `CoverLetterHelpers.splitBodyParagraphs()` — the local private methods have been removed.
+- `CoverLetterHelpers` is exported from the existing `lib/pdf/shared/shared.dart` barrel file.
+
+---
+
+## [1.1.6] - 2026-03-08
+
+### Fixed
+
+#### Profile Import / Export — Full Round-Trip Fidelity
+
+- **Work experience `description` not exported** — Descriptions on work experience entries were silently dropped on export, causing data loss when re-importing an exported file. The field is now written as a YAML literal block scalar.
+- **`default_cover_letter` ignored on import** — CV YAML files that contain a `default_cover_letter` section (matching the export format) were parsed but the value was discarded. It is now applied to the profile's default cover letter body on import.
+- **Interest `level` not exported** — The optional `InterestLevel` (Casual / Moderate / Passionate) was parsed on import but never written on export. Both directions now round-trip correctly.
+- **Interest `level` not parsed on import** — Even when a YAML file contained a `level` key for an interest entry, the value was not read. A `_parseInterestLevel()` helper (matching the existing skill/language parsers) now handles it.
+
+#### Profile Import — Target Profile Selector
+
+- **Importing always wrote to the active app profile** — The import dialog now shows a **Target Profile** chip row at the top of the header, listing every available language (built-in and custom-imported). Selecting a chip sets a local target without changing the global app language. Languages that do not yet have a profile show a `NEW` badge; selecting one creates the profile automatically before importing.
+- **Cover letter import ignored the target selector** — The cover letter import path previously auto-detected language from the file name and switched the global profile as a side effect. It now respects the same target chip selection as CV imports.
+- **Silent failure on first use** — On a fresh install (no profiles created yet) the import dialog reported success while writing nothing, because every provider write method guards against a null current profile. The dialog now ensures the target profile exists (creating it if needed) before any write operations.
+
+#### Import Service — Robustness
+
+- **Duplicate language-detection code** — The identical language-detection block existed in both `_parseCvData` and `_parseCoverLetter`. Extracted into a single `_detectLanguage()` private helper.
+- **Fragile file-path basename** — `filePath.split('/').last.split('\\').last` was used to extract the file name for cover letter template naming; replaced with `File(filePath).uri.pathSegments.last` which is correct on all platforms.
+
+---
+
 ## [1.1.5] - 2026-03-07
 
 ### Fixed

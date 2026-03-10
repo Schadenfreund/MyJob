@@ -7,6 +7,7 @@ import '../../models/template_customization.dart';
 import '../shared/base_pdf_template.dart';
 import '../shared/pdf_styling.dart';
 import '../shared/cv_translations.dart';
+import '../shared/cover_letter_helpers.dart';
 import '../components/components.dart';
 
 /// Professional Cover Letter Template
@@ -110,36 +111,38 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
           ],
 
           // Greeting
-          pw.Text(
-            CvTranslations.translateGreeting(
-              coverLetter.greeting,
-              s.customization.language,
+          if (s.customization.showGreeting) ...[
+            pw.Text(
+              CvTranslations.translateGreeting(
+                coverLetter.greeting,
+                s.customization.language,
+              ),
+              style: pw.TextStyle(
+                fontSize: s.fontSizeBody,
+                fontWeight: pw.FontWeight.bold,
+                color: s.textPrimary,
+              ),
             ),
-            style: pw.TextStyle(
-              fontSize: s.fontSizeBody,
-              fontWeight: pw.FontWeight.bold,
-              color: s.textPrimary,
-            ),
-          ),
-
-          pw.SizedBox(height: s.space5),
+            pw.SizedBox(height: s.space5),
+          ],
 
           // Letter body
           _buildLetterBody(coverLetter.processedBody, s),
 
-          pw.SizedBox(height: s.space5),
-
           // Closing
-          pw.Text(
-            CvTranslations.translateClosing(
-              coverLetter.closing,
-              s.customization.language,
+          if (s.customization.showClosing) ...[
+            pw.SizedBox(height: s.space5),
+            pw.Text(
+              CvTranslations.translateClosing(
+                coverLetter.closing,
+                s.customization.language,
+              ),
+              style: pw.TextStyle(
+                fontSize: s.fontSizeBody,
+                color: s.textSecondary,
+              ),
             ),
-            style: pw.TextStyle(
-              fontSize: s.fontSizeBody,
-              color: s.textSecondary,
-            ),
-          ),
+          ],
 
           pw.SizedBox(height: s.space6),
 
@@ -162,7 +165,7 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
   /// Build the date section with accent
   pw.Widget _buildDateSection(PdfStyling s) {
     final now = DateTime.now();
-    final formattedDate = _formatDate(now);
+    final formattedDate = CoverLetterHelpers.formatDate(now);
 
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.end, // Right-align the date
@@ -237,23 +240,7 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
 
   /// Build letter body with paragraph styling
   pw.Widget _buildLetterBody(String body, PdfStyling s) {
-    // Normalize line breaks: convert single newlines within paragraphs to spaces,
-    // and preserve double newlines as paragraph breaks
-    // Also handle cases where user uses single newlines for each paragraph
-    String normalizedBody = body;
-
-    // Replace multiple consecutive newlines with a paragraph marker
-    normalizedBody = normalizedBody.replaceAll(RegExp(r'\n\s*\n+'), '§PARA§');
-
-    // Replace remaining single newlines with spaces (they're line wraps within a paragraph)
-    normalizedBody = normalizedBody.replaceAll(RegExp(r'\n'), ' ');
-
-    // Restore paragraph breaks
-    normalizedBody = normalizedBody.replaceAll('§PARA§', '\n\n');
-
-    // Split into paragraphs
-    final paragraphs =
-        normalizedBody.split('\n\n').where((p) => p.trim().isNotEmpty).toList();
+    final paragraphs = CoverLetterHelpers.splitBodyParagraphs(body);
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -387,23 +374,4 @@ class ProfessionalCoverLetterTemplate extends BasePdfTemplate<CoverLetter>
     }
   }
 
-  /// Format date in professional style
-  String _formatDate(DateTime date) {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
-  }
 }

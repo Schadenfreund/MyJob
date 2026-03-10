@@ -8,6 +8,7 @@ import '../../models/template_customization.dart';
 import '../shared/base_pdf_template.dart';
 import '../shared/pdf_styling.dart';
 import '../shared/cv_translations.dart';
+import '../shared/cover_letter_helpers.dart';
 import '../components/header_component.dart';
 import '../../services/pdf_font_service.dart';
 
@@ -109,35 +110,37 @@ class ClassicCoverLetterTemplate extends BasePdfTemplate<CoverLetter> {
           ],
 
           // Greeting
-          pw.Text(
-            CvTranslations.translateGreeting(
-              coverLetter.greeting,
-              s.customization.language,
+          if (s.customization.showGreeting) ...[
+            pw.Text(
+              CvTranslations.translateGreeting(
+                coverLetter.greeting,
+                s.customization.language,
+              ),
+              style: pw.TextStyle(
+                fontSize: s.fontSizeBody,
+                color: s.textPrimary,
+              ),
             ),
-            style: pw.TextStyle(
-              fontSize: s.fontSizeBody,
-              color: s.textPrimary,
-            ),
-          ),
-
-          pw.SizedBox(height: s.space5),
+            pw.SizedBox(height: s.space5),
+          ],
 
           // Letter body
           _buildLetterBody(coverLetter.processedBody, s),
 
-          pw.SizedBox(height: s.space5),
-
           // Closing
-          pw.Text(
-            CvTranslations.translateClosing(
-              coverLetter.closing,
-              s.customization.language,
+          if (s.customization.showClosing) ...[
+            pw.SizedBox(height: s.space5),
+            pw.Text(
+              CvTranslations.translateClosing(
+                coverLetter.closing,
+                s.customization.language,
+              ),
+              style: pw.TextStyle(
+                fontSize: s.fontSizeBody,
+                color: s.textPrimary,
+              ),
             ),
-            style: pw.TextStyle(
-              fontSize: s.fontSizeBody,
-              color: s.textPrimary,
-            ),
-          ),
+          ],
 
           pw.SizedBox(height: s.space8),
 
@@ -164,7 +167,7 @@ class ClassicCoverLetterTemplate extends BasePdfTemplate<CoverLetter> {
   /// Build date section (right-aligned)
   pw.Widget _buildDateSection(PdfStyling s) {
     final now = DateTime.now();
-    final formattedDate = _formatDate(now);
+    final formattedDate = CoverLetterHelpers.formatDate(now);
 
     return pw.Align(
       alignment: pw.Alignment.centerRight,
@@ -220,14 +223,7 @@ class ClassicCoverLetterTemplate extends BasePdfTemplate<CoverLetter> {
 
   /// Build letter body with paragraph styling
   pw.Widget _buildLetterBody(String body, PdfStyling s) {
-    // Normalize line breaks for proper paragraph formatting
-    String normalizedBody = body;
-    normalizedBody = normalizedBody.replaceAll(RegExp(r'\n\s*\n+'), '§PARA§');
-    normalizedBody = normalizedBody.replaceAll(RegExp(r'\n'), ' ');
-    normalizedBody = normalizedBody.replaceAll('§PARA§', '\n\n');
-
-    final paragraphs =
-        normalizedBody.split('\n\n').where((p) => p.trim().isNotEmpty).toList();
+    final paragraphs = CoverLetterHelpers.splitBodyParagraphs(body);
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -264,23 +260,4 @@ class ClassicCoverLetterTemplate extends BasePdfTemplate<CoverLetter> {
         (coverLetter.companyName?.isNotEmpty ?? false);
   }
 
-  /// Format date in traditional style
-  String _formatDate(DateTime date) {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
-  }
 }

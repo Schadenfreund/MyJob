@@ -31,6 +31,9 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
   String? _error;
   UnifiedImportResult? _parseResult;
 
+  // Target profile language — local state, no global side effects
+  String? _targetLanguageCode;
+
   // CV import options
   bool _importPersonalInfo = true;
   bool _importSkills = true;
@@ -50,6 +53,10 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
       });
     }
   }
+
+  /// Effective target language, falling back to the provider's current code.
+  String _effectiveTarget(UserDataProvider provider) =>
+      _targetLanguageCode ?? provider.currentLanguageCode;
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +145,9 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
     final fileName =
         _selectedFile?.path.split(Platform.pathSeparator).last ?? '';
     final userDataProvider = context.watch<UserDataProvider>();
-    final currentCode = userDataProvider.currentLanguageCode;
+    final allLanguages = AppLocalizations.of(context).availableLanguages;
+    final existingCodes = userDataProvider.profileLanguageCodes.toSet();
+    final selectedCode = _effectiveTarget(userDataProvider);
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -236,12 +245,9 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: userDataProvider.profileLanguageCodes
-                      .asMap()
-                      .entries
-                      .expand((entry) {
+                  children: allLanguages.asMap().entries.expand((entry) {
                     final idx = entry.key;
-                    final code = entry.value;
+                    final lang = entry.value;
                     return [
                       if (idx > 0)
                         Container(
@@ -252,9 +258,10 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                         ),
                       _buildProfileChip(
                         context,
-                        userDataProvider,
-                        code,
-                        code == currentCode,
+                        lang.code,
+                        lang.flag,
+                        isSelected: lang.code == selectedCode,
+                        hasProfile: existingCodes.contains(lang.code),
                       ),
                     ];
                   }).toList(),
@@ -269,16 +276,12 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
 
   Widget _buildProfileChip(
     BuildContext context,
-    UserDataProvider provider,
     String langCode,
-    bool isSelected,
-  ) {
+    String flag, {
+    required bool isSelected,
+    required bool hasProfile,
+  }) {
     final theme = Theme.of(context);
-    final langInfo = AppLocalizations.of(context).availableLanguages.firstWhere(
-          (l) => l.code == langCode,
-          orElse: () =>
-              LanguageInfo(code: langCode, name: langCode.toUpperCase(), flag: '🌐'),
-        );
 
     return Material(
       color: isSelected
@@ -286,14 +289,14 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
           : Colors.transparent,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
-        onTap: () => provider.switchProfile(langCode),
+        onTap: () => setState(() => _targetLanguageCode = langCode),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(langInfo.flag, style: const TextStyle(fontSize: 12)),
+              Text(flag, style: const TextStyle(fontSize: 12)),
               const SizedBox(width: 4),
               Text(
                 langCode.toUpperCase(),
@@ -306,6 +309,27 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                   letterSpacing: 0.5,
                 ),
               ),
+              if (!hasProfile) ...[
+                const SizedBox(width: 5),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondary
+                        .withValues(alpha: isSelected ? 0.25 : 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'NEW',
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.secondary,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -875,6 +899,17 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
   Future<void> _importCvData() async {
     final userDataProvider = context.read<UserDataProvider>();
     final result = _parseResult!;
+    final targetCode = _effectiveTarget(userDataProvider);
+
+    // Switch to the target profile, creating it if it doesn't exist yet.
+    if (userDataProvider.currentLanguageCode != targetCode ||
+        userDataProvider.currentProfile == null) {
+      if (userDataProvider.profileLanguageCodes.contains(targetCode)) {
+        await userDataProvider.switchProfile(targetCode);
+      } else {
+        await userDataProvider.addProfile(targetCode);
+      }
+    }
 
     // Import to Profile (UserDataProvider)
     if (_importPersonalInfo && result.personalInfo != null) {
@@ -886,7 +921,13 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
       await userDataProvider.updateProfileSummary(result.profileSummary);
     }
 
-    //Always replace (clear existing data before import)
+    // Import default cover letter embedded in the CV file
+    if (result.defaultCoverLetterBody.isNotEmpty) {
+      await userDataProvider
+          .updateDefaultCoverLetterBody(result.defaultCoverLetterBody);
+    }
+
+    // Always replace (clear existing data before import)
     if (_importSkills && result.skills.isNotEmpty) {
       for (final skill in userDataProvider.skills) {
         await userDataProvider.deleteSkill(skill.id);
@@ -936,13 +977,16 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
   Future<void> _importCoverLetter() async {
     final userDataProvider = context.read<UserDataProvider>();
     final result = _parseResult!;
+    final targetCode = _effectiveTarget(userDataProvider);
 
-    // Detect language and switch to it if needed
-    if (result.language != null) {
-      final lang = result.language!.toLowerCase();
-      final targetCode =
-          (lang == 'german' || lang == 'de' || lang == 'deutsch') ? 'de' : 'en';
-      await userDataProvider.switchProfile(targetCode);
+    // Switch to (or create) the user-selected target profile.
+    if (userDataProvider.currentLanguageCode != targetCode ||
+        userDataProvider.currentProfile == null) {
+      if (userDataProvider.profileLanguageCodes.contains(targetCode)) {
+        await userDataProvider.switchProfile(targetCode);
+      } else {
+        await userDataProvider.addProfile(targetCode);
+      }
     }
 
     // Build the complete cover letter body

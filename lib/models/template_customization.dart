@@ -318,6 +318,12 @@ class TemplateCustomization {
   /// Show recipient name and title in cover letters
   final bool showRecipient;
 
+  /// Show greeting line in cover letters
+  final bool showGreeting;
+
+  /// Show closing line in cover letters
+  final bool showClosing;
+
   // -------------------------------------------------------------------------
   // LANGUAGE OPTIONS
   // -------------------------------------------------------------------------
@@ -364,6 +370,8 @@ class TemplateCustomization {
     this.showProficiencyBars = true,
     this.showSubject = true,
     this.showRecipient = true,
+    this.showGreeting = true,
+    this.showClosing = true,
     // Language
     this.language = 'en',
     // Page breaks
@@ -399,6 +407,8 @@ class TemplateCustomization {
       'showProficiencyBars': showProficiencyBars,
       'showSubject': showSubject,
       'showRecipient': showRecipient,
+      'showGreeting': showGreeting,
+      'showClosing': showClosing,
       'language': language,
       'sectionPageBreaks': sectionPageBreaks.toJson(),
     };
@@ -407,9 +417,9 @@ class TemplateCustomization {
   /// Create from JSON
   factory TemplateCustomization.fromJson(Map<String, dynamic> json) {
     return TemplateCustomization(
-      spacingScale: json['spacingScale'] as double? ?? 1.0,
-      fontSizeScale: json['fontSizeScale'] as double? ?? 1.0,
-      lineHeight: json['lineHeight'] as double? ?? 1.4,
+      spacingScale: (json['spacingScale'] as num?)?.toDouble() ?? 1.0,
+      fontSizeScale: (json['fontSizeScale'] as num?)?.toDouble() ?? 1.0,
+      lineHeight: (json['lineHeight'] as num?)?.toDouble() ?? 1.4,
       marginPreset: MarginPreset.values.firstWhere(
         (e) => e.name == json['marginPreset'],
         orElse: () => MarginPreset.normal,
@@ -419,7 +429,7 @@ class TemplateCustomization {
         orElse: () => CvLayoutMode.modern,
       ),
       useTwoColumnLayout: json['useTwoColumnLayout'] as bool? ?? false,
-      sidebarWidthRatio: json['sidebarWidthRatio'] as double? ?? 0.35,
+      sidebarWidthRatio: (json['sidebarWidthRatio'] as num?)?.toDouble() ?? 0.35,
       sectionOrderPreset: SectionOrderPreset.values.firstWhere(
         (e) => e.name == json['sectionOrderPreset'],
         orElse: () => SectionOrderPreset.standard,
@@ -450,6 +460,8 @@ class TemplateCustomization {
       showProficiencyBars: json['showProficiencyBars'] as bool? ?? true,
       showSubject: json['showSubject'] as bool? ?? true,
       showRecipient: json['showRecipient'] as bool? ?? true,
+      showGreeting: json['showGreeting'] as bool? ?? true,
+      showClosing: json['showClosing'] as bool? ?? true,
       language: _parseLegacyLanguageCode(json['language'] as String?),
       sectionPageBreaks: SectionPageBreaks.fromJson(
         json['sectionPageBreaks'] as Map<String, dynamic>?,
@@ -601,6 +613,8 @@ class TemplateCustomization {
     bool? showProficiencyBars,
     bool? showSubject,
     bool? showRecipient,
+    bool? showGreeting,
+    bool? showClosing,
     String? language,
     SectionPageBreaks? sectionPageBreaks,
   }) {
@@ -627,6 +641,8 @@ class TemplateCustomization {
       showProficiencyBars: showProficiencyBars ?? this.showProficiencyBars,
       showSubject: showSubject ?? this.showSubject,
       showRecipient: showRecipient ?? this.showRecipient,
+      showGreeting: showGreeting ?? this.showGreeting,
+      showClosing: showClosing ?? this.showClosing,
       language: language ?? this.language,
       sectionPageBreaks: sectionPageBreaks ?? this.sectionPageBreaks,
     );
@@ -677,6 +693,24 @@ enum LayoutPreset {
         return TemplateCustomization.traditional();
       case LayoutPreset.twoColumn:
         return TemplateCustomization.twoColumn();
+    }
+  }
+
+  /// Locale key for this preset's display name.
+  ///
+  /// Used when storing [basedOnPresetName] in [PdfPreset] and when
+  /// translating the label via `context.tr(localeKey)`.
+  /// Falls back gracefully for old stored values that were raw English strings.
+  String get localeKey {
+    switch (this) {
+      case LayoutPreset.modern:
+        return 'layout_preset_modern';
+      case LayoutPreset.compact:
+        return 'layout_preset_compact';
+      case LayoutPreset.traditional:
+        return 'layout_preset_traditional';
+      case LayoutPreset.twoColumn:
+        return 'layout_preset_two_column';
     }
   }
 

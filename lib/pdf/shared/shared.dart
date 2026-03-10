@@ -12,3 +12,4 @@ export 'pdf_styling.dart';
 export 'base_pdf_template.dart';
 export 'pdf_icons.dart';
 export 'template_registry.dart';
+export 'cover_letter_helpers.dart';

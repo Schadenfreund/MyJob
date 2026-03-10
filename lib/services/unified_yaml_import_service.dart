@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:uuid/uuid.dart';
 import 'package:yaml/yaml.dart';
 import '../models/user_data/personal_info.dart';
 import '../models/user_data/skill.dart';
@@ -61,23 +62,7 @@ class UnifiedYamlImportService {
 
   /// Parse CV data from YAML
   UnifiedImportResult _parseCvData(YamlMap yamlData, String filePath) {
-    // Try to detect language from multiple sources
-    String? detectedLanguage = yamlData['language'] as String?;
-
-    // If not specified, try to detect from file path
-    if (detectedLanguage == null) {
-      final fileName = filePath.toLowerCase();
-      if (fileName.contains('german') ||
-          fileName.contains('deutsch') ||
-          fileName.contains('_de')) {
-        detectedLanguage = 'german';
-      } else if (fileName.contains('english') || fileName.contains('_en')) {
-        detectedLanguage = 'english';
-      }
-    }
-
-    // Default to English if still not detected
-    detectedLanguage ??= 'english';
+    final detectedLanguage = _detectLanguage(yamlData, filePath);
 
     PersonalInfo? personalInfo;
     String profileSummary = '';
@@ -137,6 +122,7 @@ class UnifiedYamlImportService {
         interests.add(Interest(
           name: interestData['name'] as String,
           category: interestData['category'] as String?,
+          level: _parseInterestLevel(interestData['level'] as String?),
         ));
       }
     }
@@ -154,9 +140,9 @@ class UnifiedYamlImportService {
         workExperiences.add(WorkExperience(
           company: expData['company'] as String,
           position: expData['position'] as String,
-          startDate: DateTime.parse(expData['start_date'] as String),
+          startDate: _parseDate(expData['start_date']),
           endDate: expData['end_date'] != null
-              ? DateTime.parse(expData['end_date'] as String)
+              ? _parseDate(expData['end_date'])
               : null,
           isCurrent: expData['is_current'] as bool? ?? false,
           location: expData['location'] as String?,
@@ -166,31 +152,38 @@ class UnifiedYamlImportService {
       }
     }
 
-    // Parse education
+    // Parse education — supports both camelCase (DEMO_DATA) and snake_case (exported files)
     if (yamlData['education'] != null) {
       final eduList = yamlData['education'] as YamlList;
       for (final eduData in eduList) {
+        final startRaw = eduData['startDate'] ?? eduData['start_date'];
+        final endRaw = eduData['endDate'] ?? eduData['end_date'];
+        final fieldOfStudy =
+            eduData['fieldOfStudy'] as String? ?? eduData['field_of_study'] as String? ?? '';
         education.add(Education(
-          id: eduData['id'] as String,
+          id: eduData['id'] as String? ?? const Uuid().v4(),
           institution: eduData['institution'] as String,
           degree: eduData['degree'] as String,
-          fieldOfStudy: eduData['fieldOfStudy'] as String,
-          startDate: DateTime.parse(eduData['startDate'] as String),
-          endDate: eduData['endDate'] != null
-              ? DateTime.parse(eduData['endDate'] as String)
-              : null,
-          isCurrent: eduData['isCurrent'] as bool? ?? false,
+          fieldOfStudy: fieldOfStudy,
+          startDate: _parseDate(startRaw),
+          endDate: endRaw != null ? _parseDate(endRaw) : null,
+          isCurrent: eduData['isCurrent'] as bool? ?? eduData['is_current'] as bool? ?? false,
           description: eduData['description'] as String?,
           grade: eduData['grade'] as String?,
         ));
       }
     }
 
+    // Parse optional default cover letter body
+    final defaultCoverLetterBody =
+        yamlData['default_cover_letter'] as String? ?? '';
+
     return UnifiedImportResult.cv(
       filePath: filePath,
       language: detectedLanguage,
       personalInfo: personalInfo,
       profileSummary: profileSummary,
+      defaultCoverLetterBody: defaultCoverLetterBody,
       skills: skills,
       languages: languages,
       interests: interests,
@@ -201,23 +194,7 @@ class UnifiedYamlImportService {
 
   /// Parse cover letter template from YAML
   UnifiedImportResult _parseCoverLetter(YamlMap yamlData, String filePath) {
-    // Try to detect language from multiple sources
-    String? detectedLanguage = yamlData['language'] as String?;
-
-    // If not specified, try to detect from file path
-    if (detectedLanguage == null) {
-      final fileName = filePath.toLowerCase();
-      if (fileName.contains('german') ||
-          fileName.contains('deutsch') ||
-          fileName.contains('_de')) {
-        detectedLanguage = 'german';
-      } else if (fileName.contains('english') || fileName.contains('_en')) {
-        detectedLanguage = 'english';
-      }
-    }
-
-    // Default to English if still not detected
-    detectedLanguage ??= 'english';
+    final detectedLanguage = _detectLanguage(yamlData, filePath);
 
     final version = yamlData['version'] as String? ?? 'current';
 
@@ -256,8 +233,8 @@ class UnifiedYamlImportService {
       }
     }
 
-    // Extract template name from file path
-    final fileName = filePath.split('/').last.split('\\').last;
+    // Extract template name from file path (handles both / and \ separators)
+    final fileName = File(filePath).uri.pathSegments.last;
     final templateName = _formatTemplateName(fileName);
 
     return UnifiedImportResult.coverLetter(
@@ -283,6 +260,46 @@ class UnifiedYamlImportService {
       if (word.isEmpty) return word;
       return word[0].toUpperCase() + word.substring(1);
     }).join(' ');
+  }
+
+  /// Detect language from the YAML `language` key or the file path.
+  /// Returns a lowercase language code hint ('english', 'german', …).
+  String _detectLanguage(YamlMap data, String filePath) {
+    final explicit = data['language'] as String?;
+    if (explicit != null) {
+      return explicit.toLowerCase();
+    }
+
+    final lower = filePath.toLowerCase();
+    if (lower.contains('german') ||
+        lower.contains('deutsch') ||
+        lower.contains('_de')) return 'german';
+    if (lower.contains('english') || lower.contains('_en')) return 'english';
+
+    return 'english'; // safe default
+  }
+
+  /// Parse a date from either a String or a DateTime (YAML 1.1 auto-parses
+  /// unquoted YYYY-MM-DD scalars as DateTime, so we must handle both).
+  DateTime _parseDate(dynamic value) {
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.parse(value);
+    throw ArgumentError('Cannot parse date from: $value (${value.runtimeType})');
+  }
+
+  /// Parse interest level from string
+  InterestLevel? _parseInterestLevel(String? level) {
+    if (level == null) return null;
+    switch (level.toLowerCase()) {
+      case 'casual':
+        return InterestLevel.casual;
+      case 'moderate':
+        return InterestLevel.moderate;
+      case 'passionate':
+        return InterestLevel.passionate;
+      default:
+        return null;
+    }
   }
 
   /// Parse skill level from string
@@ -339,6 +356,7 @@ class UnifiedImportResult {
   // CV Data fields
   final PersonalInfo? personalInfo;
   final String profileSummary;
+  final String defaultCoverLetterBody;
   final List<Skill> skills;
   final List<Language> languages;
   final List<Interest> interests;
@@ -362,6 +380,7 @@ class UnifiedImportResult {
     this.filePath,
     this.personalInfo,
     this.profileSummary = '',
+    this.defaultCoverLetterBody = '',
     this.skills = const [],
     this.languages = const [],
     this.interests = const [],
@@ -383,6 +402,7 @@ class UnifiedImportResult {
     String? language,
     PersonalInfo? personalInfo,
     String profileSummary = '',
+    String defaultCoverLetterBody = '',
     List<Skill> skills = const [],
     List<Language> languages = const [],
     List<Interest> interests = const [],
@@ -396,6 +416,7 @@ class UnifiedImportResult {
       language: language,
       personalInfo: personalInfo,
       profileSummary: profileSummary,
+      defaultCoverLetterBody: defaultCoverLetterBody,
       skills: skills,
       languages: languages,
       interests: interests,

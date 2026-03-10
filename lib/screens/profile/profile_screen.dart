@@ -467,6 +467,12 @@ class ProfileScreen extends StatelessWidget {
               '    end_date: "${exp.endDate!.year}-${exp.endDate!.month.toString().padLeft(2, '0')}-${exp.endDate!.day.toString().padLeft(2, '0')}"');
         }
         buffer.writeln('    is_current: ${exp.isCurrent}');
+        if (exp.description != null) {
+          buffer.writeln('    description: |');
+          for (final line in exp.description!.split('\n')) {
+            buffer.writeln('      $line');
+          }
+        }
         if (exp.responsibilities.isNotEmpty) {
           buffer.writeln('    responsibilities:');
           for (final resp in exp.responsibilities) {
@@ -481,16 +487,24 @@ class ProfileScreen extends StatelessWidget {
     if (profile.education.isNotEmpty) {
       buffer.writeln('education:');
       for (final edu in profile.education) {
-        buffer.writeln('  - degree: "${edu.degree}"');
+        buffer.writeln('  - id: "${edu.id}"');
+        buffer.writeln('    degree: "${edu.degree}"');
         buffer.writeln('    institution: "${edu.institution}"');
-        buffer.writeln('    field_of_study: "${edu.fieldOfStudy}"');
+        buffer.writeln('    fieldOfStudy: "${edu.fieldOfStudy}"');
         buffer.writeln(
-            '    start_date: "${edu.startDate.year}-${edu.startDate.month.toString().padLeft(2, '0')}"');
+            '    startDate: "${edu.startDate.year}-${edu.startDate.month.toString().padLeft(2, '0')}-${edu.startDate.day.toString().padLeft(2, '0')}"');
         if (edu.endDate != null) {
           buffer.writeln(
-              '    end_date: "${edu.endDate!.year}-${edu.endDate!.month.toString().padLeft(2, '0')}"');
+              '    endDate: "${edu.endDate!.year}-${edu.endDate!.month.toString().padLeft(2, '0')}-${edu.endDate!.day.toString().padLeft(2, '0')}"');
         }
+        buffer.writeln('    isCurrent: ${edu.isCurrent}');
         if (edu.grade != null) buffer.writeln('    grade: "${edu.grade}"');
+        if (edu.description != null) {
+          buffer.writeln('    description: |');
+          for (final line in edu.description!.split('\n')) {
+            buffer.writeln('      $line');
+          }
+        }
       }
       buffer.writeln();
     }
@@ -524,7 +538,13 @@ class ProfileScreen extends StatelessWidget {
     if (profile.interests.isNotEmpty) {
       buffer.writeln('interests:');
       for (final interest in profile.interests) {
-        buffer.writeln('  - "${interest.name}"');
+        buffer.writeln('  - name: "${interest.name}"');
+        if (interest.category != null) {
+          buffer.writeln('    category: "${interest.category}"');
+        }
+        if (interest.level != null) {
+          buffer.writeln('    level: "${interest.level!.name}"');
+        }
       }
       buffer.writeln();
     }

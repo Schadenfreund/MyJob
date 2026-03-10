@@ -751,6 +751,8 @@
   "sidebar_show_photo": "Show Profile Photo",
   "sidebar_show_recipient": "Show Recipient Info",
   "sidebar_show_subject": "Show Subject Line",
+  "sidebar_show_greeting": "Show Greeting",
+  "sidebar_show_closing": "Show Closing",
   "sidebar_uppercase_headers": "Uppercase Headers",
   "sidebar_display_options": "Display Options",
   "sidebar_spacing": "Spacing",

@@ -983,6 +983,24 @@ class PdfEditorSidebar extends StatelessWidget {
                 ),
               ),
             ),
+            _buildToggle(
+              context.tr('sidebar_show_greeting'),
+              controller.customization.showGreeting,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showGreeting: !controller.customization.showGreeting,
+                ),
+              ),
+            ),
+            _buildToggle(
+              context.tr('sidebar_show_closing'),
+              controller.customization.showClosing,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showClosing: !controller.customization.showClosing,
+                ),
+              ),
+            ),
           ],
         ]);
         break;
@@ -1017,6 +1035,24 @@ class PdfEditorSidebar extends StatelessWidget {
                 ),
               ),
             ),
+            _buildToggle(
+              context.tr('sidebar_show_greeting'),
+              controller.customization.showGreeting,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showGreeting: !controller.customization.showGreeting,
+                ),
+              ),
+            ),
+            _buildToggle(
+              context.tr('sidebar_show_closing'),
+              controller.customization.showClosing,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showClosing: !controller.customization.showClosing,
+                ),
+              ),
+            ),
           ],
         ]);
         break;
@@ -1048,6 +1084,24 @@ class PdfEditorSidebar extends StatelessWidget {
               () => controller.updateCustomization(
                 controller.customization.copyWith(
                   showSubject: !controller.customization.showSubject,
+                ),
+              ),
+            ),
+            _buildToggle(
+              context.tr('sidebar_show_greeting'),
+              controller.customization.showGreeting,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showGreeting: !controller.customization.showGreeting,
+                ),
+              ),
+            ),
+            _buildToggle(
+              context.tr('sidebar_show_closing'),
+              controller.customization.showClosing,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showClosing: !controller.customization.showClosing,
                 ),
               ),
             ),
@@ -1099,6 +1153,24 @@ class PdfEditorSidebar extends StatelessWidget {
               () => controller.updateCustomization(
                 controller.customization.copyWith(
                   showSubject: !controller.customization.showSubject,
+                ),
+              ),
+            ),
+            _buildToggle(
+              context.tr('sidebar_show_greeting'),
+              controller.customization.showGreeting,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showGreeting: !controller.customization.showGreeting,
+                ),
+              ),
+            ),
+            _buildToggle(
+              context.tr('sidebar_show_closing'),
+              controller.customization.showClosing,
+              () => controller.updateCustomization(
+                controller.customization.copyWith(
+                  showClosing: !controller.customization.showClosing,
                 ),
               ),
             ),
@@ -1241,11 +1313,7 @@ class PdfEditorSidebar extends StatelessWidget {
           )
         else
           ...presets.map((preset) {
-            // Check if current style matches preset
-            final isStyleMatch = controller.style.type == preset.style.type &&
-                controller.style.accentColor.toARGB32() ==
-                    preset.style.accentColor.toARGB32() &&
-                controller.style.fontFamily == preset.style.fontFamily;
+            final isSelected = controller.activePresetId == preset.id;
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 6),
@@ -1253,6 +1321,7 @@ class PdfEditorSidebar extends StatelessWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
+                    controller.setActivePresetId(preset.id);
                     controller.updateStyle(preset.style);
                     controller.updateCustomization(preset.customization);
                   },
@@ -1261,15 +1330,15 @@ class PdfEditorSidebar extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
-                      color: isStyleMatch
+                      color: isSelected
                           ? controller.style.accentColor.withValues(alpha: 0.1)
                           : Colors.white.withValues(alpha: 0.03),
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                        color: isStyleMatch
+                        color: isSelected
                             ? controller.style.accentColor
                             : Colors.white.withValues(alpha: 0.05),
-                        width: isStyleMatch ? 1.5 : 1,
+                        width: isSelected ? 1.5 : 1,
                       ),
                     ),
                     child: Row(
@@ -1282,31 +1351,32 @@ class PdfEditorSidebar extends StatelessWidget {
                               Text(
                                 preset.name,
                                 style: TextStyle(
-                                  color: isStyleMatch
+                                  color: isSelected
                                       ? Colors.white
                                       : Colors.white70,
                                   fontSize: 11,
-                                  fontWeight: isStyleMatch
+                                  fontWeight: isSelected
                                       ? FontWeight.bold
                                       : FontWeight.w500,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              if (preset.basedOnPresetName != null)
-                                Text(
-                                  preset.basedOnPresetName!,
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.3),
-                                    fontSize: 9,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                              Text(
+                                preset.basedOnPresetName != null
+                                    ? context.tr(preset.basedOnPresetName!)
+                                    : '',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  fontSize: 9,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ],
                           ),
                         ),
-                        if (isStyleMatch)
+                        if (isSelected)
                           Icon(Icons.check,
                               color: controller.style.accentColor, size: 14),
                         const SizedBox(width: 4),
@@ -1341,7 +1411,7 @@ class PdfEditorSidebar extends StatelessWidget {
   }
 
   void _showSavePresetDialog(BuildContext context) {
-    final controller = TextEditingController();
+    final nameController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1358,18 +1428,17 @@ class PdfEditorSidebar extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: controller,
+              controller: nameController,
               style: const TextStyle(color: Colors.white),
               autofocus: true,
               decoration: InputDecoration(
                 labelText: context.tr('sidebar_preset_name'),
-                labelStyle: TextStyle(color: this.controller.style.accentColor),
+                labelStyle: TextStyle(color: controller.style.accentColor),
                 enabledBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white24),
                 ),
                 focusedBorder: UnderlineInputBorder(
-                  borderSide:
-                      BorderSide(color: this.controller.style.accentColor),
+                  borderSide: BorderSide(color: controller.style.accentColor),
                 ),
               ),
             ),
@@ -1383,20 +1452,22 @@ class PdfEditorSidebar extends StatelessWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: this.controller.style.accentColor,
+              backgroundColor: controller.style.accentColor,
               foregroundColor: Colors.black,
             ),
-            onPressed: () {
-              final name = controller.text.trim();
+            onPressed: () async {
+              final name = nameController.text.trim();
               if (name.isNotEmpty) {
-                context.read<PdfPresetsProvider>().savePreset(
-                      name,
-                      this.controller.style,
-                      this.controller.customization,
-                      type: documentType,
-                      basedOnPresetName:
-                          this.controller.currentLayoutPresetName,
-                    );
+                final newPreset =
+                    await context.read<PdfPresetsProvider>().savePreset(
+                          name,
+                          controller.style,
+                          controller.customization,
+                          type: documentType,
+                          basedOnPresetName: controller.currentLayoutPresetName,
+                        );
+                controller.setActivePresetId(newPreset.id);
+                if (!context.mounted) return;
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -1470,6 +1541,7 @@ class PdfEditorSidebar extends StatelessWidget {
                   createdAt: preset.createdAt,
                 );
                 context.read<PdfPresetsProvider>().updatePreset(updatedPreset);
+                controller.setActivePresetId(preset.id);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

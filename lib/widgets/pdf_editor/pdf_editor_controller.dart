@@ -46,11 +46,16 @@ class PdfEditorController extends ChangeNotifier {
   /// Delay before triggering PDF regeneration after style changes
   final Duration regenerationDelay;
 
-  /// Load saved customization from persistence
+  /// Load saved customization from persistence.
+  ///
+  /// Only applied if [updateCustomization] has not been called yet — this
+  /// prevents a race condition where job-specific settings (loaded async by a
+  /// subclass dialog) would be silently overwritten by the global preference.
   Future<void> _loadSavedCustomization() async {
     final saved = await CustomizationPersistence.load();
-    if (saved != null) {
+    if (saved != null && !_hasExplicitCustomization) {
       _customization = saved;
+      _lastAppliedPreset = LayoutPreset.fromCustomization(saved);
       notifyListeners();
     }
   }
@@ -61,6 +66,11 @@ class PdfEditorController extends ChangeNotifier {
 
   TemplateStyle _style;
   TemplateCustomization _customization;
+  // Set to true the first time updateCustomization() is called explicitly.
+  // Prevents the async global-customization load from overwriting job-specific
+  // settings if it resolves after the subclass has already applied its own data.
+  bool _hasExplicitCustomization = false;
+  String? _activePresetId;
   PdfViewMode _viewMode =
       PdfViewMode.singlePage; // Default to single page for stability
   double _zoom = 1.5; // Default zoom to 150%
@@ -100,22 +110,21 @@ class PdfEditorController extends ChangeNotifier {
   /// Whether the PDF needs to be regenerated
   bool get needsRegeneration => _needsRegeneration;
 
-  /// The name of the last applied layout preset
-  String? get currentLayoutPresetName {
-    if (_lastAppliedPreset != null) {
-      switch (_lastAppliedPreset!) {
-        case LayoutPreset.modern:
-          return 'Modern';
-        case LayoutPreset.compact:
-          return 'Compact';
-        case LayoutPreset.traditional:
-          return 'Traditional';
-        case LayoutPreset.twoColumn:
-          return 'Two Column';
-      }
-    }
-    return null;
-  }
+  /// ID of the last applied saved preset, for selection highlight in the sidebar.
+  ///
+  /// Set when a saved preset is applied via [setActivePresetId].
+  /// Cleared when a built-in layout preset is applied via [setLayoutPreset].
+  String? get activePresetId => _activePresetId;
+
+  /// Set the active saved preset ID (called by the sidebar when a preset is tapped).
+  void setActivePresetId(String? id) => _activePresetId = id;
+
+  /// Locale key for the last applied layout preset.
+  ///
+  /// Returns a key suitable for `context.tr()` (e.g. `'layout_preset_modern'`).
+  /// Old [PdfPreset] records that stored raw English names fall back gracefully
+  /// because [AppLocalizations.translate] returns the key itself when not found.
+  String? get currentLayoutPresetName => _lastAppliedPreset?.localeKey;
 
   // ============================================================================
   // VIEW MODE
@@ -220,6 +229,8 @@ class PdfEditorController extends ChangeNotifier {
   // ============================================================================
 
   void updateCustomization(TemplateCustomization newCustomization) {
+    _hasExplicitCustomization = true;
+    _lastAppliedPreset = LayoutPreset.fromCustomization(newCustomization);
     _customization = newCustomization;
     _scheduleRegeneration();
     _scheduleSave();
@@ -234,28 +245,17 @@ class PdfEditorController extends ChangeNotifier {
   }
 
   // ============================================================================
-  // STYLE MANAGEMENT
-  // ============================================================================
-
-  /// Set template style (triggers PDF regeneration)
-  void setStyle(TemplateStyle newStyle) {
-    if (_style.type != newStyle.type ||
-        _style.accentColor != newStyle.accentColor ||
-        _style.fontFamily != newStyle.fontFamily) {
-      _style = newStyle;
-      regenerate();
-    }
-  }
-
-  // ============================================================================
   // LAYOUT MANAGEMENT
   // ============================================================================
 
   /// Apply a layout preset
   void setLayoutPreset(LayoutPreset preset) {
+    _hasExplicitCustomization = true;
+    _activePresetId = null;
     _lastAppliedPreset = preset;
     _customization = preset.toCustomization();
     _scheduleRegeneration();
+    _scheduleSave();
   }
 
   /// Set margin preset
@@ -490,18 +490,15 @@ class PdfEditorController extends ChangeNotifier {
 /// PDF viewing modes
 enum PdfViewMode {
   /// Single page view (scrollable vertical list)
-  singlePage('Single Page', Icons.view_agenda),
+  singlePage(Icons.view_agenda),
 
   /// Side-by-side two-page spread view
-  sideBySide('Side by Side', Icons.view_week),
+  sideBySide(Icons.view_week),
 
   /// Fit content to available width
-  fitWidth('Fit Width', Icons.fit_screen);
+  fitWidth(Icons.fit_screen);
 
-  const PdfViewMode(this.label, this.icon);
-
-  /// Display label for the mode
-  final String label;
+  const PdfViewMode(this.icon);
 
   /// Icon representing the mode
   final IconData icon;

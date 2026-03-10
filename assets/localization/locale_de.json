@@ -752,6 +752,8 @@
   "sidebar_show_photo": "Profilfoto anzeigen",
   "sidebar_show_recipient": "Empfänger anzeigen",
   "sidebar_show_subject": "Betreff anzeigen",
+  "sidebar_show_greeting": "Anrede anzeigen",
+  "sidebar_show_closing": "Grußformel anzeigen",
   "sidebar_uppercase_headers": "Überschriften in Großbuchstaben",
   "sidebar_display_options": "Anzeigeoptionen",
   "sidebar_spacing": "Abstände",
