@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/user_data_provider.dart';
 import '../../../models/user_data/personal_info.dart';
 import '../../../services/templates_storage_service.dart';
+import '../../../services/log_service.dart';
 import '../../../widgets/profile_picture_picker.dart';
 import '../../../constants/ui_constants.dart';
 import '../../../localization/app_localizations.dart';
@@ -256,8 +257,8 @@ class PersonalInfoSection extends StatelessWidget {
     String newPath,
   ) async {
     try {
-      debugPrint('[PersonalInfoSection] === Profile Picture Update ===');
-      debugPrint('[PersonalInfoSection] New path from picker: "$newPath"');
+      logDebug('=== Profile Picture Update ===', tag: 'PersonalInfo');
+      logDebug('New path from picker: "$newPath"', tag: 'PersonalInfo');
 
       String? storedPath = newPath;
 
@@ -265,34 +266,30 @@ class PersonalInfoSection extends StatelessWidget {
       if (newPath.isNotEmpty) {
         final storage = TemplatesStorageService.instance;
         final isAlreadyStored = await storage.isStoredProfilePicture(newPath);
-        debugPrint('[PersonalInfoSection] Is already stored: $isAlreadyStored');
+        logDebug('Is already stored: $isAlreadyStored', tag: 'PersonalInfo');
 
         if (!isAlreadyStored) {
           // Copy to UserData folder (language-specific)
           final currentLanguage = provider.currentLanguage;
-          debugPrint(
-              '[PersonalInfoSection] Copying to UserData folder for language: ${currentLanguage.code}');
+          logDebug('Copying to UserData folder for language: ${currentLanguage.code}', tag: 'PersonalInfo');
           final copiedPath = await storage.saveProfilePicture(newPath,
               language: currentLanguage);
-          debugPrint('[PersonalInfoSection] Copied to: "$copiedPath"');
+          logDebug('Copied to: "$copiedPath"', tag: 'PersonalInfo');
           if (copiedPath != null) {
             storedPath = copiedPath;
           }
         }
       } else {
         // Removing picture
-        debugPrint('[PersonalInfoSection] Removing picture');
+        logDebug('Removing picture', tag: 'PersonalInfo');
         storedPath = null;
       }
 
       // Update the personal info with new picture path
-      debugPrint(
-          '[PersonalInfoSection] Updating PersonalInfo with path: "$storedPath"');
+      logDebug('Updating PersonalInfo with path: "$storedPath"', tag: 'PersonalInfo');
       final updatedInfo = info.copyWith(profilePicturePath: storedPath ?? '');
-      debugPrint(
-          '[PersonalInfoSection] Updated info has picture: ${updatedInfo.hasProfilePicture}');
-      debugPrint(
-          '[PersonalInfoSection] Updated info path: "${updatedInfo.profilePicturePath}"');
+      logDebug('Updated info has picture: ${updatedInfo.hasProfilePicture}', tag: 'PersonalInfo');
+      logDebug('Updated info path: "${updatedInfo.profilePicturePath}"', tag: 'PersonalInfo');
 
       await provider.updatePersonalInfo(updatedInfo);
 

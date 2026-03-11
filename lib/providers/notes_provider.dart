@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/notes_data.dart';
 import '../services/storage_service.dart';
+import '../services/log_service.dart';
 
 /// Provider for managing notes
 class NotesProvider with ChangeNotifier {
@@ -103,15 +104,6 @@ class NotesProvider with ChangeNotifier {
       _notes.where((note) => note.archived).toList()
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder)));
 
-  // Legacy getters for backward compatibility
-  @Deprecated('Use activeTasks or other category-specific getters')
-  List<NoteItem> get activeNotes => _filterBySearch(
-      _notes.where((note) => !note.completed && !note.archived).toList());
-
-  @Deprecated('Use completedTasks or other category-specific getters')
-  List<NoteItem> get completedNotes => _filterBySearch(
-      _notes.where((note) => note.completed && !note.archived).toList());
-
   /// Load all notes
   Future<void> loadNotes() async {
     _isLoading = true;
@@ -120,7 +112,7 @@ class NotesProvider with ChangeNotifier {
     try {
       _notes = await _storage.loadNotes();
     } catch (e) {
-      debugPrint('Error loading notes: $e');
+      logError('Error loading notes', error: e, tag: 'Notes');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -141,7 +133,7 @@ class NotesProvider with ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('Error saving note: $e');
+      logError('Error saving note', error: e, tag: 'Notes');
       rethrow;
     }
   }
@@ -153,7 +145,7 @@ class NotesProvider with ChangeNotifier {
       _notes.removeWhere((note) => note.id == id);
       notifyListeners();
     } catch (e) {
-      debugPrint('Error deleting note: $e');
+      logError('Error deleting note', error: e, tag: 'Notes');
       rethrow;
     }
   }
@@ -224,7 +216,7 @@ class NotesProvider with ChangeNotifier {
       await _storage.saveAllNotes(_notes);
       notifyListeners();
     } catch (e) {
-      debugPrint('Error reordering notes: $e');
+      logError('Error reordering notes', error: e, tag: 'Notes');
       rethrow;
     }
   }

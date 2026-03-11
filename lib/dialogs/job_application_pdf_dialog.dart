@@ -13,11 +13,14 @@ import '../models/template_customization.dart';
 import '../models/cv_data.dart';
 import '../models/cv_data.dart' as cv_data;
 import '../models/cover_letter.dart';
+import '../utils/platform_utils.dart';
 import '../models/user_data/work_experience.dart';
 import '../models/user_data/skill.dart';
 import '../constants/app_constants.dart';
+import '../services/log_service.dart';
 import '../services/pdf_service.dart';
 import '../services/storage_service.dart';
+import '../utils/app_date_utils.dart';
 import '../utils/data_converters.dart';
 import '../widgets/pdf_editor/template_edit_panel.dart';
 import '../widgets/pdf_editor/pdf_editor_sidebar.dart'
@@ -72,8 +75,8 @@ class _JobApplicationPdfDialogState
 
     // Load saved PDF settings FIRST
     _loadSavedSettings().then((_) {
-      debugPrint(
-          '[Job PDF] Settings loaded - style: ${controller.style.type}, accent: ${controller.style.accentColor}');
+      logDebug(
+          'Settings loaded - style: ${controller.style.type}, accent: ${controller.style.accentColor}', tag: 'JobPDF');
 
       // Re-add the base class listener
       addBaseControllerListener();
@@ -82,7 +85,7 @@ class _JobApplicationPdfDialogState
       controller.addListener(_onPdfSettingsChanged);
 
       // Force immediate regeneration with loaded settings
-      debugPrint('[Job PDF] Forcing PDF regeneration with loaded settings');
+      logDebug('Forcing PDF regeneration with loaded settings', tag: 'JobPDF');
       generatePdf();
     });
   }
@@ -108,12 +111,12 @@ class _JobApplicationPdfDialogState
           // Respect the user's saved language choice
           controller.updateCustomization(customization);
         }
-        debugPrint('[PDF Dialog] Loaded saved settings');
+        logDebug('Loaded saved settings', tag: 'JobPDF');
         // No else needed: StorageService initialises pdf_settings.json with
         // the correct baseLanguage when the application folder is created.
       }
     } catch (e) {
-      debugPrint('[PDF Dialog] No saved settings or error loading: $e');
+      logError('No saved settings or error loading', error: e, tag: 'JobPDF');
     }
   }
 
@@ -148,7 +151,7 @@ class _JobApplicationPdfDialogState
         );
       }
     } catch (e) {
-      debugPrint('Failed to save PDF settings: $e');
+      logError('Failed to save PDF settings', error: e, tag: 'JobPDF');
     }
   }
 
@@ -349,33 +352,8 @@ class _JobApplicationPdfDialogState
     return safeName;
   }
 
-  /// Sanitize a string to be safe for use in filenames
-  /// Removes Windows invalid characters: < > : " / \ | ? *
-  /// Also removes control characters and trims whitespace
-  String _sanitizeFilename(String input) {
-    if (input.isEmpty) return input;
-
-    // Replace invalid Windows filename characters with underscores
-    // Invalid chars: < > : " / \ | ? * and control characters (0x00-0x1F)
-    String sanitized = input
-        .replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_')
-        .replaceAll(RegExp(r'\s+'), '_') // Replace whitespace with underscores
-        .replaceAll(RegExp(r'_+'), '_') // Collapse multiple underscores
-        .trim();
-
-    // Remove leading/trailing underscores
-    sanitized = sanitized.replaceAll(RegExp(r'^_+|_+$'), '');
-
-    // Ensure the result isn't empty and doesn't exceed Windows max filename length (255)
-    if (sanitized.isEmpty) {
-      sanitized = 'Document';
-    } else if (sanitized.length > 200) {
-      // Leave room for the suffix and extension
-      sanitized = sanitized.substring(0, 200);
-    }
-
-    return sanitized;
-  }
+  String _sanitizeFilename(String input) =>
+      FileConfig.sanitizeFilename(input, useUnderscores: true);
 
   @override
   Future<Uint8List> generatePdfBytes() async {
@@ -388,10 +366,10 @@ class _JobApplicationPdfDialogState
 
   Future<Uint8List> _generateCvPdf() async {
     // Debug: Check professional summary value
-    debugPrint(
-        '[PDF Gen] Professional Summary: "${widget.cvData.professionalSummary}"');
-    debugPrint(
-        '[PDF Gen] Summary length: ${widget.cvData.professionalSummary.length}');
+    logDebug(
+        'Professional Summary: "${widget.cvData.professionalSummary}"', tag: 'JobPDF');
+    logDebug(
+        'Summary length: ${widget.cvData.professionalSummary.length}', tag: 'JobPDF');
 
     // Load profile picture if available
     Uint8List? profileImageBytes;
@@ -401,13 +379,13 @@ class _JobApplicationPdfDialogState
         final file = File(profilePicturePath);
         if (await file.exists()) {
           profileImageBytes = await file.readAsBytes();
-          debugPrint('[PDF Gen] Loaded profile picture: $profilePicturePath');
+          logDebug('Loaded profile picture: $profilePicturePath', tag: 'JobPDF');
         } else {
-          debugPrint(
-              '[PDF Gen] Profile picture file not found: $profilePicturePath');
+          logWarning(
+              'Profile picture file not found: $profilePicturePath', tag: 'JobPDF');
         }
       } catch (e) {
-        debugPrint('[PDF Gen] Error loading profile picture: $e');
+        logError('Error loading profile picture', error: e, tag: 'JobPDF');
       }
     }
 
@@ -437,7 +415,7 @@ class _JobApplicationPdfDialogState
           company: exp.company,
           title: exp.position,
           startDate: _formatDate(exp.startDate),
-          endDate: exp.endDate != null ? _formatDate(exp.endDate!) : 'Present',
+          endDate: exp.endDate != null ? _formatDate(exp.endDate!) : context.tr('present'),
           description: getFieldValue('exp_${i}_desc', exp.description ?? ''),
           bullets: exp.responsibilities,
         );
@@ -448,7 +426,7 @@ class _JobApplicationPdfDialogState
                 degree: edu.degree,
                 startDate: _formatDate(edu.startDate),
                 endDate:
-                    edu.endDate != null ? _formatDate(edu.endDate!) : 'Present',
+                    edu.endDate != null ? _formatDate(edu.endDate!) : context.tr('present'),
                 description: edu.description ?? '',
               ))
           .toList()
@@ -456,16 +434,16 @@ class _JobApplicationPdfDialogState
     );
 
     // Debug: Verify CvData.profile is set
-    debugPrint('[PDF Gen] CvData.profile: "${cvData.profile}"');
-    debugPrint('[PDF Gen] CvData.profile length: ${cvData.profile.length}');
-    debugPrint(
-        '[PDF Gen] Application language: ${widget.application.baseLanguage}');
-    debugPrint('[PDF Gen] Customization language: ${customization.language}');
-    debugPrint('[PDF Gen] CvData.language: ${cvData.language}');
-    debugPrint(
-        '[PDF Gen] Profile picture loaded: ${profileImageBytes != null}');
-    debugPrint(
-        '[PDF Gen] *** Using style: ${selectedStyle.type}, accent: ${selectedStyle.accentColor}');
+    logDebug('CvData.profile: "${cvData.profile}"', tag: 'JobPDF');
+    logDebug('CvData.profile length: ${cvData.profile.length}', tag: 'JobPDF');
+    logDebug(
+        'Application language: ${widget.application.baseLanguage}', tag: 'JobPDF');
+    logDebug('Customization language: ${customization.language}', tag: 'JobPDF');
+    logDebug('CvData.language: ${cvData.language}', tag: 'JobPDF');
+    logDebug(
+        'Profile picture loaded: ${profileImageBytes != null}', tag: 'JobPDF');
+    logDebug(
+        '*** Using style: ${selectedStyle.type}, accent: ${selectedStyle.accentColor}', tag: 'JobPDF');
 
     return await PdfService.instance.generateCvPdf(
       cvData,
@@ -520,7 +498,7 @@ class _JobApplicationPdfDialogState
   /// Get and ensure exports folder exists
   String? _getOrCreateExportsFolder() {
     if (widget.application.folderPath == null) {
-      debugPrint('[Export] No folder path set for application');
+      logWarning('No folder path set for application', tag: 'JobPDF');
       return null;
     }
 
@@ -530,7 +508,7 @@ class _JobApplicationPdfDialogState
     // Create exports folder if it doesn't exist
     if (!exportsDir.existsSync()) {
       exportsDir.createSync(recursive: true);
-      debugPrint('[Export] Created exports folder: $exportsPath');
+      logDebug('Created exports folder: $exportsPath', tag: 'JobPDF');
     }
 
     return exportsPath;
@@ -541,7 +519,7 @@ class _JobApplicationPdfDialogState
   String? getInitialExportDirectory() {
     final exportsPath = _getOrCreateExportsFolder();
     if (exportsPath != null) {
-      debugPrint('[Export] Initial directory set to: $exportsPath');
+      logDebug('Initial directory set to: $exportsPath', tag: 'JobPDF');
     }
     return exportsPath;
   }
@@ -561,19 +539,7 @@ class _JobApplicationPdfDialogState
     final exportsPath = _getOrCreateExportsFolder();
     if (exportsPath == null) return;
 
-    try {
-      if (Platform.isWindows) {
-        await Process.run('explorer', [exportsPath]);
-      } else if (Platform.isMacOS) {
-        await Process.run('open', [exportsPath]);
-      } else if (Platform.isLinux) {
-        await Process.run('xdg-open', [exportsPath]);
-      }
-
-      debugPrint('[Export] Opened exports folder: $exportsPath');
-    } catch (e) {
-      debugPrint('[Export] Error opening exports folder: $e');
-    }
+    await PlatformUtils.openFolder(exportsPath);
   }
 
   @override
@@ -596,7 +562,7 @@ class _JobApplicationPdfDialogState
           value: getFieldValue('profile', ''),
           onChanged: (value) => updateFieldValue('profile', value),
           maxLines: 5,
-          hint: 'Tailor your professional summary for this role...',
+          hint: context.tr('pdf_hint_summary'),
         ),
         // Skills editing section
         EditableField(
@@ -608,7 +574,7 @@ class _JobApplicationPdfDialogState
             _saveSkillsChanges(value);
           },
           maxLines: 3,
-          hint: 'Add or remove skills relevant to this job (comma-separated)',
+          hint: context.tr('pdf_hint_skills'),
         ),
       ];
 
@@ -618,16 +584,16 @@ class _JobApplicationPdfDialogState
         fields.add(
           EditableField(
             id: 'exp_${i}_desc',
-            label: '${exp.position} at ${exp.company}',
+            label: context.tr('pdf_position_at_company', {'position': exp.position, 'company': exp.company}),
             value: getFieldValue('exp_${i}_desc', exp.description ?? ''),
             onChanged: (value) {
               updateFieldValue('exp_${i}_desc', value);
               _saveExperienceChanges();
             },
             maxLines: 3,
-            hint: 'Highlight achievements relevant to this job...',
+            hint: context.tr('pdf_hint_experience'),
             actionIcon: Icons.delete_outline,
-            actionTooltip: 'Remove this experience',
+            actionTooltip: context.tr('pdf_remove_experience'),
             onAction: () => _removeExperience(i),
           ),
         );
@@ -639,42 +605,40 @@ class _JobApplicationPdfDialogState
       return [
         EditableField(
           id: 'recipientName',
-          label: 'Recipient Name',
+          label: context.tr('pdf_field_recipient_name'),
           value: getFieldValue(
               'recipientName', widget.coverLetter?.recipientName ?? ''),
           onChanged: (value) => updateFieldValue('recipientName', value),
           maxLines: 1,
-          hint: 'Hiring Manager',
+          hint: context.tr('pdf_hint_recipient_name'),
         ),
         EditableField(
           id: 'companyName',
-          label: 'Company Name',
+          label: context.tr('pdf_field_company_name'),
           value: getFieldValue(
               'companyName', widget.coverLetter?.companyName ?? ''),
           onChanged: (value) => updateFieldValue('companyName', value),
           maxLines: 1,
-          hint: 'Company name',
+          hint: context.tr('pdf_hint_company_name'),
         ),
         EditableField(
           id: 'subject',
-          label: widget.application.baseLanguage == DocumentLanguage.de
-              ? 'Betreff'
-              : 'Subject',
+          label: context.tr('pdf_field_subject'),
           value: getFieldValue('subject', widget.coverLetter?.subject ?? ''),
           onChanged: (value) => updateFieldValue('subject', value),
           maxLines: 1,
           hint: widget.application.baseLanguage == DocumentLanguage.de
-              ? 'Bewerbung als ...'
-              : 'Application for ...',
+              ? context.tr('pdf_hint_subject_de')
+              : context.tr('pdf_hint_subject_en'),
         ),
         EditableField(
           id: 'greeting',
           label: context.tr('pdf_field_greeting'),
           value: getFieldValue('greeting',
-              widget.coverLetter?.greeting ?? 'Dear Hiring Manager,'),
+              widget.coverLetter?.greeting ?? context.tr('pdf_hint_greeting')),
           onChanged: (value) => updateFieldValue('greeting', value),
           maxLines: 1,
-          hint: 'Dear Hiring Manager,',
+          hint: context.tr('pdf_hint_greeting'),
         ),
         EditableField(
           id: 'body',
@@ -682,16 +646,16 @@ class _JobApplicationPdfDialogState
           value: getFieldValue('body', widget.coverLetter?.body ?? ''),
           onChanged: (value) => updateFieldValue('body', value),
           maxLines: 12,
-          hint: 'Write your personalized cover letter...',
+          hint: context.tr('pdf_hint_letter_body'),
         ),
         EditableField(
           id: 'closing',
           label: context.tr('pdf_field_closing'),
           value: getFieldValue(
-              'closing', widget.coverLetter?.closing ?? 'Sincerely,'),
+              'closing', widget.coverLetter?.closing ?? context.tr('pdf_hint_closing')),
           onChanged: (value) => updateFieldValue('closing', value),
           maxLines: 1,
-          hint: 'Sincerely,',
+          hint: context.tr('pdf_hint_closing'),
         ),
       ];
     }
@@ -759,23 +723,7 @@ class _JobApplicationPdfDialogState
     );
   }
 
-  String _formatDate(DateTime date) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
-    return '${months[date.month - 1]} ${date.year}';
-  }
+  String _formatDate(DateTime date) => AppDateUtils.formatShort(date);
 
   @override
   void updateFieldValue(String fieldId, String value) {
@@ -812,7 +760,7 @@ class _JobApplicationPdfDialogState
       }
     } catch (e) {
       // Silent fail - user will see unsaved changes in editor
-      debugPrint('Failed to auto-save field changes: $e');
+      logError('Failed to auto-save field changes', error: e, tag: 'JobPDF');
     }
   }
 
@@ -844,7 +792,7 @@ class _JobApplicationPdfDialogState
         updatedCvData,
       );
     } catch (e) {
-      debugPrint('Failed to save experience changes: $e');
+      logError('Failed to save experience changes', error: e, tag: 'JobPDF');
     }
   }
 
@@ -888,7 +836,7 @@ class _JobApplicationPdfDialogState
         updatedCvData,
       );
     } catch (e) {
-      debugPrint('Failed to save skills changes: $e');
+      logError('Failed to save skills changes', error: e, tag: 'JobPDF');
     }
   }
 
@@ -916,7 +864,7 @@ class _JobApplicationPdfDialogState
       // Trigger rebuild to update UI
       setState(() {});
     } catch (e) {
-      debugPrint('Failed to remove experience: $e');
+      logError('Failed to remove experience', error: e, tag: 'JobPDF');
     }
   }
 

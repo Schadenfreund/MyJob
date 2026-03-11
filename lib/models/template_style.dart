@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pdf_font_family.dart';
+import '../services/log_service.dart';
 
 /// Template styles for PDF generation - Magazine-inspired layouts
 enum TemplateType {
@@ -61,7 +62,8 @@ class TemplateStyle {
           (e) => e.name == fontFamilyStr.toLowerCase(),
           orElse: () => PdfFontFamily.roboto,
         );
-      } catch (_) {
+      } catch (e) {
+        logError('Failed to parse font family "$fontFamilyStr"', error: e, tag: 'TemplateStyle');
         fontFamily = PdfFontFamily.roboto;
       }
     }

@@ -12,6 +12,7 @@ import '../../constants/app_constants.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/ui_utils.dart';
 import '../../utils/dialog_utils.dart';
+import '../../utils/platform_utils.dart';
 import '../../services/preferences_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/application_statistics_markdown_service.dart';
@@ -982,13 +983,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     }
 
     try {
-      if (Platform.isWindows) {
-        await Process.run('explorer.exe', [folderPath]);
-      } else if (Platform.isMacOS) {
-        await Process.run('open', [folderPath]);
-      } else if (Platform.isLinux) {
-        await Process.run('xdg-open', [folderPath]);
-      }
+      await PlatformUtils.openFolder(folderPath);
     } catch (e) {
       if (context.mounted) {
         UIUtils.showError(
@@ -1072,17 +1067,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         );
 
         if (shouldOpen == true) {
-          try {
-            if (Platform.isWindows) {
-              await Process.run('explorer', [result]);
-            } else if (Platform.isMacOS) {
-              await Process.run('open', [result]);
-            } else if (Platform.isLinux) {
-              await Process.run('xdg-open', [result]);
-            }
-          } catch (e) {
-            debugPrint('Failed to open folder: $e');
-          }
+          await PlatformUtils.openFolder(result);
         }
       }
     } catch (e) {

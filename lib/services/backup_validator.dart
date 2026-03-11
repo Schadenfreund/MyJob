@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:archive/archive_io.dart';
-import 'package:flutter/foundation.dart';
 import '../models/backup_manifest.dart';
+import 'log_service.dart';
 
 /// Validates backup zip files before restoration
 class BackupValidator {
@@ -48,13 +48,13 @@ class BackupValidator {
         return securityResult;
       }
 
-      debugPrint('[Validator] Backup validation successful');
+      logInfo('Backup validation successful', tag: 'Validator');
       return BackupValidationResult(
         isValid: true,
         manifest: manifestResult.manifest,
       );
     } catch (e) {
-      debugPrint('[Validator] Validation error: $e');
+      logError('Validation error', error: e, tag: 'Validator');
       return BackupValidationResult(
         isValid: false,
         errorMessage: 'Error validating backup: $e',
@@ -81,7 +81,7 @@ class BackupValidator {
 
       return BackupManifest.fromJson(manifestJson);
     } catch (e) {
-      debugPrint('[Validator] Error extracting manifest: $e');
+      logError('Error extracting manifest', error: e, tag: 'Validator');
       return null;
     }
   }
@@ -95,10 +95,9 @@ class BackupValidator {
     try {
       manifestFile =
           archive.firstWhere((file) => file.name == 'manifest.json');
-    } catch (_) {
+    } catch (e) {
       // No manifest — legacy backup format, proceed without version check
-      debugPrint(
-          '[Validator] No manifest found - treating as legacy backup (pre-1.1.1)');
+      logInfo('No manifest found - treating as legacy backup (pre-1.1.1)', tag: 'Validator');
       return BackupValidationResult(isValid: true);
     }
 
@@ -110,8 +109,8 @@ class BackupValidator {
           jsonDecode(manifestContent) as Map<String, dynamic>;
       final manifest = BackupManifest.fromJson(manifestJson);
 
-      debugPrint('[Validator] Manifest found: v${manifest.backupVersion}, '
-          'app v${manifest.appVersion}, ${manifest.stats.totalFiles} files');
+      logInfo('Manifest found: v${manifest.backupVersion}, '
+          'app v${manifest.appVersion}, ${manifest.stats.totalFiles} files', tag: 'Validator');
 
       return BackupValidationResult(isValid: true, manifest: manifest);
     } catch (e) {
@@ -140,7 +139,7 @@ class BackupValidator {
       );
     }
 
-    debugPrint('[Validator] Backup structure validated successfully');
+    logInfo('Backup structure validated successfully', tag: 'Validator');
     return BackupValidationResult(isValid: true);
   }
 

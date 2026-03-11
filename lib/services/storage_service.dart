@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
+import 'log_service.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 import '../models/job_application.dart';
@@ -132,7 +132,7 @@ class StorageService {
                   : app,
             );
           } catch (e) {
-            debugPrint('Error loading application ${file.path}: $e');
+            logError('Error loading application ${file.path}', error: e, tag: 'Storage');
           }
         }
       }
@@ -146,7 +146,7 @@ class StorageService {
 
       return applications;
     } catch (e) {
-      debugPrint('Error loading applications: $e');
+      logError('Error loading applications', error: e, tag: 'Storage');
       return [];
     }
   }
@@ -162,9 +162,9 @@ class StorageService {
       json['folderPath'] = _toRelativePath(json['folderPath'] as String?, userDataPath);
       await file.writeAsString(JsonConstants.prettyEncoder.convert(json));
 
-      debugPrint('Application saved: ${application.id}');
+      logInfo('Application saved: ${application.id}', tag: 'Storage');
     } catch (e) {
-      debugPrint('Error saving application: $e');
+      logError('Error saving application', error: e, tag: 'Storage');
       rethrow;
     }
   }
@@ -186,7 +186,7 @@ class StorageService {
               ? app.copyWith(folderPath: resolvedPath)
               : app;
         } catch (e) {
-          debugPrint('Error loading application for deletion: $e');
+          logError('Error loading application for deletion', error: e, tag: 'Storage');
         }
       }
 
@@ -195,17 +195,17 @@ class StorageService {
         final folderDir = Directory(application!.folderPath!);
         if (folderDir.existsSync()) {
           await folderDir.delete(recursive: true);
-          debugPrint('Application folder deleted: ${application.folderPath}');
+          logInfo('Application folder deleted: ${application.folderPath}', tag: 'Storage');
         }
       }
 
       // Delete the JSON metadata file
       if (file.existsSync()) {
         await file.delete();
-        debugPrint('Application metadata deleted: $id');
+        logInfo('Application metadata deleted: $id', tag: 'Storage');
       }
     } catch (e) {
-      debugPrint('Error deleting application: $e');
+      logError('Error deleting application', error: e, tag: 'Storage');
       rethrow;
     }
   }
@@ -229,7 +229,7 @@ class StorageService {
             final json = jsonDecode(content) as Map<String, dynamic>;
             cvs.add(CvData.fromJson(json));
           } catch (e) {
-            debugPrint('Error loading CV ${file.path}: $e');
+            logError('Error loading CV ${file.path}', error: e, tag: 'Storage');
           }
         }
       }
@@ -243,7 +243,7 @@ class StorageService {
 
       return cvs;
     } catch (e) {
-      debugPrint('Error loading CVs: $e');
+      logError('Error loading CVs', error: e, tag: 'Storage');
       return [];
     }
   }
@@ -258,9 +258,9 @@ class StorageService {
         JsonConstants.prettyEncoder.convert(updatedCv.toJson()),
       );
 
-      debugPrint('CV saved: ${cv.id}');
+      logInfo('CV saved: ${cv.id}', tag: 'Storage');
     } catch (e) {
-      debugPrint('Error saving CV: $e');
+      logError('Error saving CV', error: e, tag: 'Storage');
       rethrow;
     }
   }
@@ -272,10 +272,10 @@ class StorageService {
 
       if (file.existsSync()) {
         await file.delete();
-        debugPrint('CV deleted: $id');
+        logInfo('CV deleted: $id', tag: 'Storage');
       }
     } catch (e) {
-      debugPrint('Error deleting CV: $e');
+      logError('Error deleting CV', error: e, tag: 'Storage');
       rethrow;
     }
   }
@@ -291,7 +291,7 @@ class StorageService {
       final json = jsonDecode(content) as Map<String, dynamic>;
       return CvData.fromJson(json);
     } catch (e) {
-      debugPrint('Error loading CV $id: $e');
+      logError('Error loading CV $id', error: e, tag: 'Storage');
       return null;
     }
   }
@@ -315,7 +315,7 @@ class StorageService {
             final json = jsonDecode(content) as Map<String, dynamic>;
             letters.add(CoverLetter.fromJson(json));
           } catch (e) {
-            debugPrint('Error loading cover letter ${file.path}: $e');
+            logError('Error loading cover letter ${file.path}', error: e, tag: 'Storage');
           }
         }
       }
@@ -329,7 +329,7 @@ class StorageService {
 
       return letters;
     } catch (e) {
-      debugPrint('Error loading cover letters: $e');
+      logError('Error loading cover letters', error: e, tag: 'Storage');
       return [];
     }
   }
@@ -345,9 +345,9 @@ class StorageService {
         JsonConstants.prettyEncoder.convert(updatedLetter.toJson()),
       );
 
-      debugPrint('Cover letter saved: ${letter.id}');
+      logInfo('Cover letter saved: ${letter.id}', tag: 'Storage');
     } catch (e) {
-      debugPrint('Error saving cover letter: $e');
+      logError('Error saving cover letter', error: e, tag: 'Storage');
       rethrow;
     }
   }
@@ -359,10 +359,10 @@ class StorageService {
 
       if (file.existsSync()) {
         await file.delete();
-        debugPrint('Cover letter deleted: $id');
+        logInfo('Cover letter deleted: $id', tag: 'Storage');
       }
     } catch (e) {
-      debugPrint('Error deleting cover letter: $e');
+      logError('Error deleting cover letter', error: e, tag: 'Storage');
       rethrow;
     }
   }
@@ -378,7 +378,7 @@ class StorageService {
       final json = jsonDecode(content) as Map<String, dynamic>;
       return CoverLetter.fromJson(json);
     } catch (e) {
-      debugPrint('Error loading cover letter $id: $e');
+      logError('Error loading cover letter $id', error: e, tag: 'Storage');
       return null;
     }
   }
@@ -442,9 +442,9 @@ class StorageService {
         }
       }
 
-      debugPrint('Data imported successfully');
+      logInfo('Data imported successfully', tag: 'Storage');
     } catch (e) {
-      debugPrint('Error importing data: $e');
+      logError('Error importing data', error: e, tag: 'Storage');
       rethrow;
     }
   }
@@ -470,7 +470,7 @@ class StorageService {
       }
       return codes;
     } catch (e) {
-      debugPrint('Error discovering profile language codes: $e');
+      logError('Error discovering profile language codes', error: e, tag: 'Storage');
       return [];
     }
   }
@@ -482,10 +482,10 @@ class StorageService {
       final dir = Directory(p.join(userDataPath, 'profiles', langCode));
       if (dir.existsSync()) {
         await dir.delete(recursive: true);
-        debugPrint('Profile folder deleted ($langCode)');
+        logInfo('Profile folder deleted ($langCode)', tag: 'Storage');
       }
     } catch (e) {
-      debugPrint('Error deleting profile folder ($langCode): $e');
+      logError('Error deleting profile folder ($langCode)', error: e, tag: 'Storage');
       rethrow;
     }
   }
@@ -512,7 +512,7 @@ class StorageService {
       }
       return MasterProfile.fromJson(json);
     } catch (e) {
-      debugPrint('Error loading master profile ($langCode): $e');
+      logError('Error loading master profile ($langCode)', error: e, tag: 'Storage');
       return MasterProfile.empty(langCode);
     }
   }
@@ -537,9 +537,9 @@ class StorageService {
       }
       await file.writeAsString(JsonConstants.prettyEncoder.convert(json));
 
-      debugPrint('Master profile saved (${profile.language})');
+      logInfo('Master profile saved (${profile.language})', tag: 'Storage');
     } catch (e) {
-      debugPrint('Error saving master profile: $e');
+      logError('Error saving master profile', error: e, tag: 'Storage');
       rethrow;
     }
   }
@@ -585,28 +585,22 @@ class StorageService {
       final folderPath = await createJobApplicationFolder(application);
 
       // Debug: Check what's being cloned
-      debugPrint(
-          '[Clone] Profile Summary from MasterProfile: "${profile.profileSummary}"');
-      debugPrint(
-          '[Clone] Profile Summary length: ${profile.profileSummary.length}');
+      logDebug('Profile Summary from MasterProfile: "${profile.profileSummary}"', tag: 'Storage');
+      logDebug('Profile Summary length: ${profile.profileSummary.length}', tag: 'Storage');
 
       // Clone CV data
       var cvData = JobCvData.fromMasterProfile(profile);
 
       // Debug: Verify it was copied
-      debugPrint(
-          '[Clone] CV Data Professional Summary: "${cvData.professionalSummary}"');
-      debugPrint(
-          '[Clone] CV Data Professional Summary length: ${cvData.professionalSummary.length}');
+      logDebug('CV Data Professional Summary: "${cvData.professionalSummary}"', tag: 'Storage');
+      logDebug('CV Data Professional Summary length: ${cvData.professionalSummary.length}', tag: 'Storage');
 
       // Debug: Check profile picture state
-      debugPrint('[Clone] === Profile Picture Cloning ===');
-      debugPrint('[Clone] Has PersonalInfo: ${profile.personalInfo != null}');
+      logDebug('=== Profile Picture Cloning ===', tag: 'Storage');
+      logDebug('Has PersonalInfo: ${profile.personalInfo != null}', tag: 'Storage');
       if (profile.personalInfo != null) {
-        debugPrint(
-            '[Clone] Profile picture path: "${profile.personalInfo!.profilePicturePath}"');
-        debugPrint(
-            '[Clone] Has profile picture: ${profile.personalInfo!.hasProfilePicture}');
+        logDebug('Profile picture path: "${profile.personalInfo!.profilePicturePath}"', tag: 'Storage');
+        logDebug('Has profile picture: ${profile.personalInfo!.hasProfilePicture}', tag: 'Storage');
       }
 
       // Copy profile picture if it exists in master profile
@@ -614,11 +608,11 @@ class StorageService {
           profile.personalInfo!.profilePicturePath!.isNotEmpty) {
         try {
           final sourcePath = profile.personalInfo!.profilePicturePath!;
-          debugPrint('[Clone] Attempting to copy from: $sourcePath');
+          logDebug('Attempting to copy from: $sourcePath', tag: 'Storage');
 
           final sourceFile = File(sourcePath);
           final fileExists = await sourceFile.exists();
-          debugPrint('[Clone] Source file exists: $fileExists');
+          logDebug('Source file exists: $fileExists', tag: 'Storage');
 
           if (fileExists) {
             // Determine file extension
@@ -626,12 +620,12 @@ class StorageService {
             final targetFileName = 'profile_picture$extension';
             final targetPath = p.join(folderPath, targetFileName);
 
-            debugPrint('[Clone] Copying to: $targetPath');
+            logDebug('Copying to: $targetPath', tag: 'Storage');
 
             // Copy the file
             await sourceFile.copy(targetPath);
 
-            debugPrint('[Clone] ✓ Profile picture copied successfully');
+            logInfo('Profile picture copied successfully', tag: 'Storage');
 
             // Update CV data with new path
             cvData = cvData.copyWith(
@@ -640,18 +634,16 @@ class StorageService {
               ),
             );
 
-            debugPrint('[Clone] ✓ CV data updated with new path');
+            logDebug('CV data updated with new path', tag: 'Storage');
           } else {
-            debugPrint(
-                '[Clone] ✗ Source profile picture not found: $sourcePath');
+            logWarning('Source profile picture not found: $sourcePath', tag: 'Storage');
           }
         } catch (e) {
-          debugPrint('[Clone] ✗ Error copying profile picture: $e');
+          logError('Error copying profile picture', error: e, tag: 'Storage');
           // Continue without profile picture - not a critical error
         }
       } else {
-        debugPrint(
-            '[Clone] No profile picture to copy (path is null or empty)');
+        logDebug('No profile picture to copy (path is null or empty)', tag: 'Storage');
       }
 
       final cvFile = File(p.join(folderPath, 'cv_data.json'));
@@ -666,12 +658,10 @@ class StorageService {
       await cvFile.writeAsString(JsonConstants.prettyEncoder.convert(cvJson));
 
       // Clone cover letter with defaults from profile
-      debugPrint(
-          '[Clone] Default cover letter body length: ${profile.defaultCoverLetterBody.length}');
-      debugPrint(
-          '[Clone] Default cover letter preview: "${profile.defaultCoverLetterBody.length > 50 ? '${profile.defaultCoverLetterBody.substring(0, 50)}...' : profile.defaultCoverLetterBody}"');
-      debugPrint('[Clone] Default greeting: "${profile.defaultGreeting}"');
-      debugPrint('[Clone] Default closing: "${profile.defaultClosing}"');
+      logDebug('Default cover letter body length: ${profile.defaultCoverLetterBody.length}', tag: 'Storage');
+      logDebug('Default cover letter preview: "${profile.defaultCoverLetterBody.length > 50 ? '${profile.defaultCoverLetterBody.substring(0, 50)}...' : profile.defaultCoverLetterBody}"', tag: 'Storage');
+      logDebug('Default greeting: "${profile.defaultGreeting}"', tag: 'Storage');
+      logDebug('Default closing: "${profile.defaultClosing}"', tag: 'Storage');
 
       final coverLetter = JobCoverLetter.fromDefault(
         defaultBody: profile.defaultCoverLetterBody,
@@ -680,10 +670,9 @@ class StorageService {
         defaultClosing: profile.defaultClosing,
       );
 
-      debugPrint(
-          '[Clone] JobCoverLetter body length: ${coverLetter.body.length}');
-      debugPrint('[Clone] JobCoverLetter greeting: "${coverLetter.greeting}"');
-      debugPrint('[Clone] JobCoverLetter closing: "${coverLetter.closing}"');
+      logDebug('JobCoverLetter body length: ${coverLetter.body.length}', tag: 'Storage');
+      logDebug('JobCoverLetter greeting: "${coverLetter.greeting}"', tag: 'Storage');
+      logDebug('JobCoverLetter closing: "${coverLetter.closing}"', tag: 'Storage');
 
       final clFile = File(p.join(folderPath, 'cl_data.json'));
       await clFile.writeAsString(
@@ -702,9 +691,9 @@ class StorageService {
       final updatedApp = application.copyWith(folderPath: folderPath);
       await saveApplication(updatedApp);
 
-      debugPrint('Profile cloned to: $folderPath');
+      logInfo('Profile cloned to: $folderPath', tag: 'Storage');
     } catch (e) {
-      debugPrint('Error cloning profile to application: $e');
+      logError('Error cloning profile to application', error: e, tag: 'Storage');
       rethrow;
     }
   }
@@ -727,7 +716,7 @@ class StorageService {
       }
       return JobCvData.fromJson(json);
     } catch (e) {
-      debugPrint('Error loading job CV data: $e');
+      logError('Error loading job CV data', error: e, tag: 'Storage');
       return null;
     }
   }
@@ -746,9 +735,9 @@ class StorageService {
         );
       }
       await file.writeAsString(JsonConstants.prettyEncoder.convert(json));
-      debugPrint('Job CV data saved');
+      logDebug('Job CV data saved', tag: 'Storage');
     } catch (e) {
-      debugPrint('Error saving job CV data: $e');
+      logError('Error saving job CV data', error: e, tag: 'Storage');
       rethrow;
     }
   }
@@ -763,7 +752,7 @@ class StorageService {
       final json = jsonDecode(content) as Map<String, dynamic>;
       return JobCoverLetter.fromJson(json);
     } catch (e) {
-      debugPrint('Error loading job cover letter: $e');
+      logError('Error loading job cover letter', error: e, tag: 'Storage');
       return null;
     }
   }
@@ -776,12 +765,65 @@ class StorageService {
       await file.writeAsString(
         JsonConstants.prettyEncoder.convert(letter.toJson()),
       );
-      debugPrint('Job cover letter saved');
+      logDebug('Job cover letter saved', tag: 'Storage');
     } catch (e) {
-      debugPrint('Error saving job cover letter: $e');
+      logError('Error saving job cover letter', error: e, tag: 'Storage');
       rethrow;
     }
   }
+
+  // ── Generic PDF Settings I/O ──────────────────────────────────────────
+
+  /// Load style + customization from a JSON file with `style` and
+  /// `customization` keys. Returns `(null, null)` if the file does
+  /// not exist or cannot be parsed.
+  Future<(TemplateStyle?, TemplateCustomization?)> _loadPdfSettings(
+      String filePath) async {
+    try {
+      final file = File(filePath);
+      if (!file.existsSync()) return (null, null);
+
+      final content = await file.readAsString();
+      final json = jsonDecode(content) as Map<String, dynamic>;
+
+      final style = json.containsKey('style')
+          ? TemplateStyle.fromJson(json['style'] as Map<String, dynamic>)
+          : null;
+
+      final customization = json.containsKey('customization')
+          ? TemplateCustomization.fromJson(
+              json['customization'] as Map<String, dynamic>)
+          : null;
+
+      return (style, customization);
+    } catch (e) {
+      logError('Error loading PDF settings from $filePath', error: e, tag: 'Storage');
+      return (null, null);
+    }
+  }
+
+  /// Save style + customization to a JSON file.
+  Future<void> _savePdfSettings(
+    String filePath,
+    TemplateStyle style,
+    TemplateCustomization customization,
+  ) async {
+    try {
+      final file = File(filePath);
+      final settings = {
+        'style': style.toJson(),
+        'customization': customization.toJson(),
+      };
+      await file.writeAsString(
+        JsonConstants.prettyEncoder.convert(settings),
+      );
+    } catch (e) {
+      logError('Error saving PDF settings to $filePath', error: e, tag: 'Storage');
+      rethrow;
+    }
+  }
+
+  // ── Job-Specific PDF Settings ───────────────────────────────────────
 
   /// Load job-specific PDF settings (legacy - loads CV settings)
   Future<(TemplateStyle?, TemplateCustomization?)> loadJobPdfSettings(
@@ -792,90 +834,21 @@ class StorageService {
   /// Load job-specific CV PDF settings
   Future<(TemplateStyle?, TemplateCustomization?)> loadJobCvPdfSettings(
       String folderPath) async {
-    try {
-      final file = File(p.join(folderPath, 'cv_pdf_settings.json'));
-      if (!file.existsSync()) {
-        // Try loading from legacy file
-        return _loadLegacyPdfSettings(folderPath);
-      }
-
-      final content = await file.readAsString();
-      final json = jsonDecode(content) as Map<String, dynamic>;
-
-      final style = json.containsKey('style')
-          ? TemplateStyle.fromJson(json['style'] as Map<String, dynamic>)
-          : null;
-
-      final customization = json.containsKey('customization')
-          ? TemplateCustomization.fromJson(
-              json['customization'] as Map<String, dynamic>)
-          : null;
-
-      return (style, customization);
-    } catch (e) {
-      debugPrint('Error loading job CV PDF settings: $e');
-      return (null, null);
-    }
+    final result =
+        await _loadPdfSettings(p.join(folderPath, 'cv_pdf_settings.json'));
+    if (result.$1 != null || result.$2 != null) return result;
+    // Fall back to legacy file
+    return _loadPdfSettings(p.join(folderPath, 'pdf_settings.json'));
   }
 
   /// Load job-specific Cover Letter PDF settings
   Future<(TemplateStyle?, TemplateCustomization?)> loadJobClPdfSettings(
       String folderPath) async {
-    try {
-      final file = File(p.join(folderPath, 'cl_pdf_settings.json'));
-      if (!file.existsSync()) {
-        // Try loading from legacy file, or return defaults
-        final legacy = await _loadLegacyPdfSettings(folderPath);
-        if (legacy.$1 != null || legacy.$2 != null) {
-          return legacy;
-        }
-        return (null, null);
-      }
-
-      final content = await file.readAsString();
-      final json = jsonDecode(content) as Map<String, dynamic>;
-
-      final style = json.containsKey('style')
-          ? TemplateStyle.fromJson(json['style'] as Map<String, dynamic>)
-          : null;
-
-      final customization = json.containsKey('customization')
-          ? TemplateCustomization.fromJson(
-              json['customization'] as Map<String, dynamic>)
-          : null;
-
-      return (style, customization);
-    } catch (e) {
-      debugPrint('Error loading job CL PDF settings: $e');
-      return (null, null);
-    }
-  }
-
-  /// Load legacy PDF settings (before CV/CL split)
-  Future<(TemplateStyle?, TemplateCustomization?)> _loadLegacyPdfSettings(
-      String folderPath) async {
-    try {
-      final file = File(p.join(folderPath, 'pdf_settings.json'));
-      if (!file.existsSync()) {
-        return (null, null);
-      }
-
-      final content = await file.readAsString();
-      final json = jsonDecode(content) as Map<String, dynamic>;
-
-      final style = json.containsKey('style')
-          ? TemplateStyle.fromJson(json['style'] as Map<String, dynamic>)
-          : null;
-
-      final customization = json.containsKey('customization')
-          ? TemplateCustomization.fromJson(
-              json['customization'] as Map<String, dynamic>)
-          : null;
-
-      return (style, customization);
-    } catch (e) {
-      return (null, null);
-    }
+    final result =
+        await _loadPdfSettings(p.join(folderPath, 'cl_pdf_settings.json'));
+    if (result.$1 != null || result.$2 != null) return result;
+    // Fall back to legacy file
+    return _loadPdfSettings(p.join(folderPath, 'pdf_settings.json'));
   }
 
   /// Save job-specific PDF settings (legacy - saves to CV)
@@ -893,20 +866,8 @@ class StorageService {
     TemplateStyle style,
     TemplateCustomization customization,
   ) async {
-    try {
-      final file = File(p.join(folderPath, 'cv_pdf_settings.json'));
-      final settings = {
-        'style': style.toJson(),
-        'customization': customization.toJson(),
-      };
-      await file.writeAsString(
-        JsonConstants.prettyEncoder.convert(settings),
-      );
-      debugPrint('Job CV PDF settings saved');
-    } catch (e) {
-      debugPrint('Error saving job CV PDF settings: $e');
-      rethrow;
-    }
+    await _savePdfSettings(
+        p.join(folderPath, 'cv_pdf_settings.json'), style, customization);
   }
 
   /// Save job-specific Cover Letter PDF settings
@@ -915,140 +876,56 @@ class StorageService {
     TemplateStyle style,
     TemplateCustomization customization,
   ) async {
-    try {
-      final file = File(p.join(folderPath, 'cl_pdf_settings.json'));
-      final settings = {
-        'style': style.toJson(),
-        'customization': customization.toJson(),
-      };
-      await file.writeAsString(
-        JsonConstants.prettyEncoder.convert(settings),
-      );
-      debugPrint('Job CL PDF settings saved');
-    } catch (e) {
-      debugPrint('Error saving job CL PDF settings: $e');
-      rethrow;
-    }
+    await _savePdfSettings(
+        p.join(folderPath, 'cl_pdf_settings.json'), style, customization);
   }
 
   // ============================================================================
   // MASTER PROFILE PDF SETTINGS (Default Presets)
   // ============================================================================
 
-  /// Load master profile CV PDF settings (used as default for new applications)
+  /// Load master profile CV PDF settings
   Future<(TemplateStyle?, TemplateCustomization?)>
       loadMasterProfileCvPdfSettings(String langCode) async {
-    try {
-      final userDataPath = await getUserDataPath();
-      final file = File(p.join(
-          userDataPath, 'profiles', langCode, 'cv_pdf_settings.json'));
-
-      if (!file.existsSync()) {
-        return (null, null);
-      }
-
-      final content = await file.readAsString();
-      final json = jsonDecode(content) as Map<String, dynamic>;
-
-      final style = json.containsKey('style')
-          ? TemplateStyle.fromJson(json['style'] as Map<String, dynamic>)
-          : null;
-
-      final customization = json.containsKey('customization')
-          ? TemplateCustomization.fromJson(
-              json['customization'] as Map<String, dynamic>)
-          : null;
-
-      return (style, customization);
-    } catch (e) {
-      debugPrint('Error loading master profile CV PDF settings: $e');
-      return (null, null);
-    }
+    final userDataPath = await getUserDataPath();
+    return _loadPdfSettings(
+        p.join(userDataPath, 'profiles', langCode, 'cv_pdf_settings.json'));
   }
 
-  /// Save master profile CV PDF settings (used as default for new applications)
+  /// Save master profile CV PDF settings
   Future<void> saveMasterProfileCvPdfSettings(
     String langCode,
     TemplateStyle style,
     TemplateCustomization customization,
   ) async {
-    try {
-      final userDataPath = await getUserDataPath();
-      final file = File(p.join(
-          userDataPath, 'profiles', langCode, 'cv_pdf_settings.json'));
-
-      final settings = {
-        'style': style.toJson(),
-        'customization': customization.toJson(),
-      };
-
-      await file.writeAsString(
-        JsonConstants.prettyEncoder.convert(settings),
-      );
-
-      debugPrint('Master profile CV PDF settings saved ($langCode)');
-    } catch (e) {
-      debugPrint('Error saving master profile CV PDF settings: $e');
-      rethrow;
-    }
+    final userDataPath = await getUserDataPath();
+    await _savePdfSettings(
+      p.join(userDataPath, 'profiles', langCode, 'cv_pdf_settings.json'),
+      style,
+      customization,
+    );
   }
 
-  /// Load master profile Cover Letter PDF settings (used as default for new applications)
+  /// Load master profile Cover Letter PDF settings
   Future<(TemplateStyle?, TemplateCustomization?)>
       loadMasterProfileClPdfSettings(String langCode) async {
-    try {
-      final userDataPath = await getUserDataPath();
-      final file = File(p.join(
-          userDataPath, 'profiles', langCode, 'cl_pdf_settings.json'));
-
-      if (!file.existsSync()) {
-        return (null, null);
-      }
-
-      final content = await file.readAsString();
-      final json = jsonDecode(content) as Map<String, dynamic>;
-
-      final style = json.containsKey('style')
-          ? TemplateStyle.fromJson(json['style'] as Map<String, dynamic>)
-          : null;
-
-      final customization = json.containsKey('customization')
-          ? TemplateCustomization.fromJson(
-              json['customization'] as Map<String, dynamic>)
-          : null;
-
-      return (style, customization);
-    } catch (e) {
-      debugPrint('Error loading master profile CL PDF settings: $e');
-      return (null, null);
-    }
+    final userDataPath = await getUserDataPath();
+    return _loadPdfSettings(
+        p.join(userDataPath, 'profiles', langCode, 'cl_pdf_settings.json'));
   }
 
-  /// Save master profile Cover Letter PDF settings (used as default for new applications)
+  /// Save master profile Cover Letter PDF settings
   Future<void> saveMasterProfileClPdfSettings(
     String langCode,
     TemplateStyle style,
     TemplateCustomization customization,
   ) async {
-    try {
-      final userDataPath = await getUserDataPath();
-      final file = File(p.join(
-          userDataPath, 'profiles', langCode, 'cl_pdf_settings.json'));
-
-      final settings = {
-        'style': style.toJson(),
-        'customization': customization.toJson(),
-      };
-
-      await file.writeAsString(
-        JsonConstants.prettyEncoder.convert(settings),
-      );
-
-      debugPrint('Master profile CL PDF settings saved ($langCode)');
-    } catch (e) {
-      debugPrint('Error saving master profile CL PDF settings: $e');
-      rethrow;
-    }
+    final userDataPath = await getUserDataPath();
+    await _savePdfSettings(
+      p.join(userDataPath, 'profiles', langCode, 'cl_pdf_settings.json'),
+      style,
+      customization,
+    );
   }
 
   // ============================================================================
@@ -1071,16 +948,15 @@ class StorageService {
             final yaml = loadYaml(content);
 
             if (yaml is! YamlMap) {
-              debugPrint(
-                  'Warning: ${file.path} does not contain a valid YAML map, skipping');
+              logWarning(
+                  '${file.path} does not contain a valid YAML map, skipping', tag: 'Storage');
               continue;
             }
 
             final json = _yamlToJson(yaml);
             notes.add(NoteItem.fromJson(json));
           } catch (e, stackTrace) {
-            debugPrint('Error loading note ${file.path}: $e');
-            debugPrint('Stack trace: $stackTrace');
+            logError('Error loading note ${file.path}', error: e, stackTrace: stackTrace, tag: 'Storage');
             // Continue loading other notes even if one fails
           }
         }
@@ -1091,7 +967,7 @@ class StorageService {
 
       return notes;
     } catch (e) {
-      debugPrint('Error loading notes: $e');
+      logError('Error loading notes', error: e, tag: 'Storage');
       return [];
     }
   }
@@ -1121,9 +997,9 @@ class StorageService {
       final yaml = _jsonToYaml(note.toJson());
 
       await file.writeAsString(yaml);
-      debugPrint('Note saved: $fileName');
+      logDebug('Note saved: $fileName', tag: 'Storage');
     } catch (e) {
-      debugPrint('Error saving note: $e');
+      logError('Error saving note', error: e, tag: 'Storage');
       rethrow;
     }
   }
@@ -1138,12 +1014,12 @@ class StorageService {
         for (final entity in notesDir.listSync()) {
           if (entity is File && entity.path.contains(id)) {
             await entity.delete();
-            debugPrint('Note file deleted for ID: $id');
+            logDebug('Note file deleted for ID: $id', tag: 'Storage');
           }
         }
       }
     } catch (e) {
-      debugPrint('Error deleting note: $e');
+      logError('Error deleting note', error: e, tag: 'Storage');
       rethrow;
     }
   }
@@ -1154,9 +1030,9 @@ class StorageService {
       for (final note in notes) {
         await saveNote(note);
       }
-      debugPrint('All notes saved (${notes.length} notes)');
+      logDebug('All notes saved (${notes.length} notes)', tag: 'Storage');
     } catch (e) {
-      debugPrint('Error saving all notes: $e');
+      logError('Error saving all notes', error: e, tag: 'Storage');
       rethrow;
     }
   }

@@ -29,6 +29,7 @@ import '../utils/ui_utils.dart';
 import '../utils/dialog_utils.dart';
 import '../constants/app_constants.dart';
 import '../localization/app_localizations.dart';
+import '../services/log_service.dart';
 
 /// Modern tabbed CV content editor for job applications
 ///
@@ -291,9 +292,9 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
 
     try {
       await _storage.saveJobCoverLetter(folderPath, coverLetter);
-      debugPrint('[CoverLetter] Auto-saved to $folderPath');
+      logDebug('Auto-saved to $folderPath', tag: 'CoverLetter');
     } catch (e) {
-      debugPrint('[CoverLetter] Failed to auto-save: $e');
+      logError('Failed to auto-save', error: e, tag: 'CoverLetter');
     }
   }
 
@@ -1625,7 +1626,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   Future<void> _handleProfilePictureSelected(String selectedPath) async {
     final folderPath = widget.applicationContext?.folderPath;
     if (folderPath == null) {
-      debugPrint('[ProfilePicture] No folder path for application');
+      logWarning('No folder path for application', tag: 'ProfilePicture');
       return;
     }
 
@@ -1639,7 +1640,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       final sourceFile = File(selectedPath);
       final targetFile = await sourceFile.copy(targetPath);
 
-      debugPrint('[ProfilePicture] Copied to: $targetPath');
+      logDebug('Copied to: $targetPath', tag: 'ProfilePicture');
 
       // Update CV data with the new path
       final info = _cvData.personalInfo ?? PersonalInfo(fullName: '');
@@ -1664,7 +1665,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
         );
       }
     } catch (e) {
-      debugPrint('[ProfilePicture] Error copying image: $e');
+      logError('Error copying image', error: e, tag: 'ProfilePicture');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

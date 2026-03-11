@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import '../models/template_customization.dart';
 import 'storage_service.dart';
+import 'log_service.dart';
 import '../constants/json_constants.dart';
 
 /// Service for persisting template customization settings in UserData folder
@@ -26,7 +26,7 @@ class CustomizationPersistence {
         JsonConstants.prettyEncoder.convert(json),
       );
     } catch (e) {
-      debugPrint('[CustomizationPersistence] Failed to save: $e');
+      logError('Failed to save customization', error: e, tag: 'Customization');
     }
   }
 
@@ -42,7 +42,7 @@ class CustomizationPersistence {
 
       // Handle empty or whitespace-only files
       if (jsonString.trim().isEmpty) {
-        debugPrint('[CustomizationPersistence] File is empty, using defaults');
+        logWarning('Customization file is empty, using defaults', tag: 'Customization');
         await _safeDeleteFile(file);
         return null;
       }
@@ -50,7 +50,7 @@ class CustomizationPersistence {
       final json = jsonDecode(jsonString) as Map<String, dynamic>;
       return TemplateCustomization.fromJson(json);
     } catch (e) {
-      debugPrint('[CustomizationPersistence] Failed to load: $e');
+      logError('Failed to load customization', error: e, tag: 'Customization');
       // Delete corrupted file to prevent repeated errors
       await _deleteCorruptedFile();
       return null;
@@ -66,7 +66,7 @@ class CustomizationPersistence {
         await file.delete();
       }
     } catch (e) {
-      debugPrint('[CustomizationPersistence] Failed to clear: $e');
+      logError('Failed to clear customization', error: e, tag: 'Customization');
     }
   }
 
@@ -75,10 +75,10 @@ class CustomizationPersistence {
     try {
       if (await file.exists()) {
         await file.delete();
-        debugPrint('[CustomizationPersistence] Deleted file: ${file.path}');
+        logDebug('Deleted customization file: ${file.path}', tag: 'Customization');
       }
     } catch (e) {
-      debugPrint('[CustomizationPersistence] Failed to delete file: $e');
+      logWarning('Failed to delete customization file: $e', tag: 'Customization');
     }
   }
 
@@ -88,8 +88,7 @@ class CustomizationPersistence {
       final filePath = await _getFilePath();
       await _safeDeleteFile(File(filePath));
     } catch (e) {
-      debugPrint(
-          '[CustomizationPersistence] Failed to delete corrupted file: $e');
+      logWarning('Failed to delete corrupted customization file: $e', tag: 'Customization');
     }
   }
 }

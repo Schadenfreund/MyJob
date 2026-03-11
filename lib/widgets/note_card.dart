@@ -1,9 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/notes_data.dart';
 import '../theme/app_theme.dart';
 import '../localization/app_localizations.dart';
+import '../utils/platform_utils.dart';
 
 /// Type-specific card for displaying notes with distinct visual styles
 class NoteCard extends StatefulWidget {
@@ -1041,23 +1041,7 @@ class _NoteCardState extends State<NoteCard> {
   // ── URL/Email Opening ─────────────────────────────────────────────────
 
   Future<void> _openUrl(String urlString) async {
-    try {
-      final url = urlString.startsWith('http://') ||
-              urlString.startsWith('https://') ||
-              urlString.startsWith('mailto:')
-          ? urlString
-          : 'https://$urlString';
-
-      if (Platform.isWindows) {
-        await Process.run('cmd', ['/c', 'start', url]);
-      } else if (Platform.isMacOS) {
-        await Process.run('open', [url]);
-      } else if (Platform.isLinux) {
-        await Process.run('xdg-open', [url]);
-      }
-    } catch (e) {
-      debugPrint('Failed to open URL: $e');
-    }
+    await PlatformUtils.openUrl(urlString);
   }
 
   // ── Color/Icon Helpers ────────────────────────────────────────────────

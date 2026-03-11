@@ -350,24 +350,4 @@ class UserDataProvider with ChangeNotifier {
     return experiences.where((e) => e.isCurrent).toList();
   }
 
-  /// Legacy compatibility - map old method names
-  @Deprecated('Use experiences instead')
-  List<WorkExperience> get workExperiences => experiences;
-
-  @Deprecated('Use addExperience instead')
-  Future<void> addWorkExperience(WorkExperience experience) =>
-      addExperience(experience);
-
-  @Deprecated('Use updateExperience instead')
-  Future<void> updateWorkExperience(WorkExperience experience) =>
-      updateExperience(experience);
-
-  @Deprecated('Use deleteExperience instead')
-  Future<void> deleteWorkExperience(String id) => deleteExperience(id);
-
-  @Deprecated('Use sortedExperiences instead')
-  List<WorkExperience> get sortedWorkExperiences => sortedExperiences;
-
-  @Deprecated('Use currentExperiences instead')
-  List<WorkExperience> get currentWorkExperiences => currentExperiences;
 }

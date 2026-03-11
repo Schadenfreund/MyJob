@@ -8,6 +8,7 @@ import '../../providers/notes_provider.dart';
 import '../../models/notes_data.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/ui_utils.dart';
+import '../../utils/platform_utils.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/note_card.dart';
 import '../../utils/dialog_utils.dart';
@@ -1324,17 +1325,7 @@ class _NotesScreenState extends State<NotesScreen> {
         );
 
         if (shouldOpen == true) {
-          try {
-            if (Platform.isWindows) {
-              await Process.run('explorer', [result]);
-            } else if (Platform.isMacOS) {
-              await Process.run('open', [result]);
-            } else if (Platform.isLinux) {
-              await Process.run('xdg-open', [result]);
-            }
-          } catch (e) {
-            debugPrint('Failed to open folder: $e');
-          }
+          await PlatformUtils.openFolder(result);
         }
       }
     } catch (e) {

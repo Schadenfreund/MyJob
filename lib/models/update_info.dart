@@ -85,6 +85,7 @@ enum UpdateState {
   upToDate('Up to date'),
   available('Update available'),
   downloading('Downloading update...'),
+  verifying('Verifying integrity...'),
   extracting('Preparing update...'),
   readyToInstall('Ready to install'),
   installing('Installing...'),
@@ -94,7 +95,7 @@ enum UpdateState {
   final String label;
 
   bool get isLoading =>
-      this == checking || this == downloading || this == extracting;
+      this == checking || this == downloading || this == verifying || this == extracting;
   bool get canCheck => this == idle || this == upToDate || this == error;
   bool get canDownload => this == available;
   bool get canInstall => this == readyToInstall;

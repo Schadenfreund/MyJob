@@ -83,6 +83,8 @@ class MyJobApp extends StatelessWidget {
             theme: AppTheme.lightTheme(settings.accentColor),
             darkTheme: AppTheme.darkTheme(settings.accentColor),
             themeMode: settings.themeMode,
+            // Disable semantics tree to prevent Flutter Windows AXTree errors
+            builder: (context, child) => ExcludeSemantics(child: child!),
             home: const MainNavigationScreen(),
           );
         },

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import '../models/master_profile.dart';
 import '../models/user_data/personal_info.dart';
@@ -9,6 +8,7 @@ import '../models/user_data/work_experience.dart';
 import '../models/user_data/language.dart';
 import '../models/user_data/interest.dart';
 import '../services/storage_service.dart';
+import '../services/log_service.dart';
 
 /// Service to migrate legacy user data to new bilingual structure
 class MigrationService {
@@ -26,20 +26,20 @@ class MigrationService {
 
       // Check if already migrated
       if (migrationMarkerFile.existsSync()) {
-        debugPrint('Migration already completed');
+        logDebug('Migration already completed', tag: 'Migration');
         return false;
       }
 
       // Check if old data exists
       if (!oldDataFile.existsSync()) {
-        debugPrint('No legacy data found, creating migration marker');
+        logDebug('No legacy data found, creating migration marker', tag: 'Migration');
         // Create marker to prevent future checks
         await migrationMarkerFile
             .writeAsString(DateTime.now().toIso8601String());
         return false;
       }
 
-      debugPrint('Legacy user data found, starting migration...');
+      logInfo('Legacy user data found, starting migration...', tag: 'Migration');
 
       // Read old data
       final content = await oldDataFile.readAsString();
@@ -62,14 +62,11 @@ class MigrationService {
       final backupFile = File(p.join(userDataPath, 'user_data.json.backup'));
       await oldDataFile.copy(backupFile.path);
 
-      debugPrint('Migration completed successfully');
-      debugPrint('- English profile created with legacy data');
-      debugPrint('- German profile created (empty)');
-      debugPrint('- Legacy data backed up to user_data.json.backup');
+      logInfo('Migration completed: EN profile from legacy data, DE profile empty, backup created', tag: 'Migration');
 
       return true;
     } catch (e) {
-      debugPrint('Error during migration: $e');
+      logError('Error during migration', error: e, tag: 'Migration');
       return false;
     }
   }
@@ -122,7 +119,7 @@ class MigrationService {
 
       return MigrationStatus.notNeeded;
     } catch (e) {
-      debugPrint('Error checking migration status: $e');
+      logError('Error checking migration status', error: e, tag: 'Migration');
       return MigrationStatus.error;
     }
   }

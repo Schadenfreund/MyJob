@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
+import 'log_service.dart';
 import 'package:path/path.dart' as p;
 import '../models/cv_template.dart';
 import '../models/cover_letter_template.dart';
@@ -56,14 +56,14 @@ class TemplatesStorageService {
   Future<String?> saveProfilePicture(String sourcePath,
       {DocumentLanguage? language}) async {
     try {
-      debugPrint('[TemplatesStorage] === Saving Profile Picture ===');
-      debugPrint('[TemplatesStorage] Source path: "$sourcePath"');
-      debugPrint(
-          '[TemplatesStorage] Language: ${language?.code ?? "not specified"}');
+      logInfo('Saving profile picture', tag: 'TemplatesStorage');
+      logDebug('Source path: "$sourcePath"', tag: 'TemplatesStorage');
+      logDebug(
+          'Language: ${language?.code ?? "not specified"}', tag: 'TemplatesStorage');
 
       final sourceFile = File(sourcePath);
       if (!sourceFile.existsSync()) {
-        debugPrint('[TemplatesStorage] ✗ Source file not found: $sourcePath');
+        logWarning('Source file not found: $sourcePath', tag: 'TemplatesStorage');
         return null;
       }
 
@@ -80,19 +80,19 @@ class TemplatesStorageService {
           dir.createSync(recursive: true);
         }
         destPath = p.join(profileDir, 'profile_picture$extension');
-        debugPrint('[TemplatesStorage] Saving to profile folder: $destPath');
+        logDebug('Saving to profile folder: $destPath', tag: 'TemplatesStorage');
       } else {
         final filename =
             'profile_${DateTime.now().millisecondsSinceEpoch}$extension';
         destPath = p.join(userDataPath, 'profile_pictures', filename);
-        debugPrint('[TemplatesStorage] Saving to generic folder: $destPath');
+        logDebug('Saving to generic folder: $destPath', tag: 'TemplatesStorage');
       }
 
       await sourceFile.copy(destPath);
-      debugPrint('[TemplatesStorage] ✓ Profile picture saved: $destPath');
+      logInfo('Profile picture saved: $destPath', tag: 'TemplatesStorage');
       return destPath;
     } catch (e) {
-      debugPrint('[TemplatesStorage] ✗ Error saving profile picture: $e');
+      logError('Error saving profile picture', error: e, tag: 'TemplatesStorage');
       return null;
     }
   }
@@ -106,7 +106,7 @@ class TemplatesStorageService {
         return await file.readAsBytes();
       }
     } catch (e) {
-      debugPrint('Error loading profile picture: $e');
+      logError('Error loading profile picture', error: e, tag: 'TemplatesStorage');
     }
     return null;
   }
@@ -118,10 +118,10 @@ class TemplatesStorageService {
       final file = File(imagePath);
       if (file.existsSync()) {
         await file.delete();
-        debugPrint('Profile picture deleted: $imagePath');
+        logInfo('Profile picture deleted: $imagePath', tag: 'TemplatesStorage');
       }
     } catch (e) {
-      debugPrint('Error deleting profile picture: $e');
+      logError('Error deleting profile picture', error: e, tag: 'TemplatesStorage');
     }
   }
 
@@ -149,7 +149,7 @@ class TemplatesStorageService {
           (a, b) => b.statSync().modified.compareTo(a.statSync().modified));
       return files.first.path;
     } catch (e) {
-      debugPrint('Error getting default profile picture: $e');
+      logError('Error getting default profile picture', error: e, tag: 'TemplatesStorage');
       return null;
     }
   }
@@ -173,7 +173,7 @@ class TemplatesStorageService {
             final json = jsonDecode(content) as Map<String, dynamic>;
             templates.add(CvTemplate.fromJson(json));
           } catch (e) {
-            debugPrint('Error loading CV template ${file.path}: $e');
+            logError('Error loading CV template ${file.path}', error: e, tag: 'TemplatesStorage');
           }
         }
       }
@@ -186,7 +186,7 @@ class TemplatesStorageService {
 
       return templates;
     } catch (e) {
-      debugPrint('Error loading CV templates: $e');
+      logError('Error loading CV templates', error: e, tag: 'TemplatesStorage');
       return [];
     }
   }
@@ -202,9 +202,9 @@ class TemplatesStorageService {
         JsonConstants.prettyEncoder.convert(updatedTemplate.toJson()),
       );
 
-      debugPrint('CV template saved: ${template.id}');
+      logInfo('CV template saved: ${template.id}', tag: 'TemplatesStorage');
     } catch (e) {
-      debugPrint('Error saving CV template: $e');
+      logError('Error saving CV template', error: e, tag: 'TemplatesStorage');
       rethrow;
     }
   }
@@ -216,10 +216,10 @@ class TemplatesStorageService {
 
       if (file.existsSync()) {
         await file.delete();
-        debugPrint('CV template deleted: $id');
+        logInfo('CV template deleted: $id', tag: 'TemplatesStorage');
       }
     } catch (e) {
-      debugPrint('Error deleting CV template: $e');
+      logError('Error deleting CV template', error: e, tag: 'TemplatesStorage');
       rethrow;
     }
   }
@@ -235,7 +235,7 @@ class TemplatesStorageService {
       final json = jsonDecode(content) as Map<String, dynamic>;
       return CvTemplate.fromJson(json);
     } catch (e) {
-      debugPrint('Error loading CV template $id: $e');
+      logError('Error loading CV template $id', error: e, tag: 'TemplatesStorage');
       return null;
     }
   }
@@ -259,7 +259,7 @@ class TemplatesStorageService {
             final json = jsonDecode(content) as Map<String, dynamic>;
             templates.add(CoverLetterTemplate.fromJson(json));
           } catch (e) {
-            debugPrint('Error loading cover letter template ${file.path}: $e');
+            logError('Error loading cover letter template ${file.path}', error: e, tag: 'TemplatesStorage');
           }
         }
       }
@@ -272,7 +272,7 @@ class TemplatesStorageService {
 
       return templates;
     } catch (e) {
-      debugPrint('Error loading cover letter templates: $e');
+      logError('Error loading cover letter templates', error: e, tag: 'TemplatesStorage');
       return [];
     }
   }
@@ -288,9 +288,9 @@ class TemplatesStorageService {
         JsonConstants.prettyEncoder.convert(updatedTemplate.toJson()),
       );
 
-      debugPrint('Cover letter template saved: ${template.id}');
+      logInfo('Cover letter template saved: ${template.id}', tag: 'TemplatesStorage');
     } catch (e) {
-      debugPrint('Error saving cover letter template: $e');
+      logError('Error saving cover letter template', error: e, tag: 'TemplatesStorage');
       rethrow;
     }
   }
@@ -303,10 +303,10 @@ class TemplatesStorageService {
 
       if (file.existsSync()) {
         await file.delete();
-        debugPrint('Cover letter template deleted: $id');
+        logInfo('Cover letter template deleted: $id', tag: 'TemplatesStorage');
       }
     } catch (e) {
-      debugPrint('Error deleting cover letter template: $e');
+      logError('Error deleting cover letter template', error: e, tag: 'TemplatesStorage');
       rethrow;
     }
   }
@@ -323,7 +323,7 @@ class TemplatesStorageService {
       final json = jsonDecode(content) as Map<String, dynamic>;
       return CoverLetterTemplate.fromJson(json);
     } catch (e) {
-      debugPrint('Error loading cover letter template $id: $e');
+      logError('Error loading cover letter template $id', error: e, tag: 'TemplatesStorage');
       return null;
     }
   }
@@ -347,14 +347,14 @@ class TemplatesStorageService {
             final json = jsonDecode(content) as Map<String, dynamic>;
             instances.add(CvInstance.fromJson(json));
           } catch (e) {
-            debugPrint('Error loading CV instance ${file.path}: $e');
+            logError('Error loading CV instance ${file.path}', error: e, tag: 'TemplatesStorage');
           }
         }
       }
 
       return instances;
     } catch (e) {
-      debugPrint('Error loading CV instances: $e');
+      logError('Error loading CV instances', error: e, tag: 'TemplatesStorage');
       return [];
     }
   }
@@ -370,9 +370,9 @@ class TemplatesStorageService {
         JsonConstants.prettyEncoder.convert(updatedInstance.toJson()),
       );
 
-      debugPrint('CV instance saved: ${instance.id}');
+      logInfo('CV instance saved: ${instance.id}', tag: 'TemplatesStorage');
     } catch (e) {
-      debugPrint('Error saving CV instance: $e');
+      logError('Error saving CV instance', error: e, tag: 'TemplatesStorage');
       rethrow;
     }
   }
@@ -384,10 +384,10 @@ class TemplatesStorageService {
 
       if (file.existsSync()) {
         await file.delete();
-        debugPrint('CV instance deleted: $id');
+        logInfo('CV instance deleted: $id', tag: 'TemplatesStorage');
       }
     } catch (e) {
-      debugPrint('Error deleting CV instance: $e');
+      logError('Error deleting CV instance', error: e, tag: 'TemplatesStorage');
       rethrow;
     }
   }
@@ -403,7 +403,7 @@ class TemplatesStorageService {
       final json = jsonDecode(content) as Map<String, dynamic>;
       return CvInstance.fromJson(json);
     } catch (e) {
-      debugPrint('Error loading CV instance $id: $e');
+      logError('Error loading CV instance $id', error: e, tag: 'TemplatesStorage');
       return null;
     }
   }
@@ -427,14 +427,14 @@ class TemplatesStorageService {
             final json = jsonDecode(content) as Map<String, dynamic>;
             instances.add(CoverLetterInstance.fromJson(json));
           } catch (e) {
-            debugPrint('Error loading cover letter instance ${file.path}: $e');
+            logError('Error loading cover letter instance ${file.path}', error: e, tag: 'TemplatesStorage');
           }
         }
       }
 
       return instances;
     } catch (e) {
-      debugPrint('Error loading cover letter instances: $e');
+      logError('Error loading cover letter instances', error: e, tag: 'TemplatesStorage');
       return [];
     }
   }
@@ -450,9 +450,9 @@ class TemplatesStorageService {
         JsonConstants.prettyEncoder.convert(updatedInstance.toJson()),
       );
 
-      debugPrint('Cover letter instance saved: ${instance.id}');
+      logInfo('Cover letter instance saved: ${instance.id}', tag: 'TemplatesStorage');
     } catch (e) {
-      debugPrint('Error saving cover letter instance: $e');
+      logError('Error saving cover letter instance', error: e, tag: 'TemplatesStorage');
       rethrow;
     }
   }
@@ -465,10 +465,10 @@ class TemplatesStorageService {
 
       if (file.existsSync()) {
         await file.delete();
-        debugPrint('Cover letter instance deleted: $id');
+        logInfo('Cover letter instance deleted: $id', tag: 'TemplatesStorage');
       }
     } catch (e) {
-      debugPrint('Error deleting cover letter instance: $e');
+      logError('Error deleting cover letter instance', error: e, tag: 'TemplatesStorage');
       rethrow;
     }
   }
@@ -485,7 +485,7 @@ class TemplatesStorageService {
       final json = jsonDecode(content) as Map<String, dynamic>;
       return CoverLetterInstance.fromJson(json);
     } catch (e) {
-      debugPrint('Error loading cover letter instance $id: $e');
+      logError('Error loading cover letter instance $id', error: e, tag: 'Templates');
       return null;
     }
   }

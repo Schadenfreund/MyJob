@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 import '../models/pdf_document_type.dart';
 import '../models/pdf_preset.dart';
 import '../services/storage_service.dart';
+import '../services/log_service.dart';
 import '../constants/json_constants.dart';
 
 class PdfPresetsProvider extends ChangeNotifier {
@@ -54,7 +55,7 @@ class PdfPresetsProvider extends ChangeNotifier {
               final json = jsonDecode(content) as Map<String, dynamic>;
               loadedPresets.add(PdfPreset.fromJson(json));
             } catch (e) {
-              debugPrint('Error loading preset ${file.path}: $e');
+              logWarning('Error loading preset ${file.path}: $e', tag: 'Presets');
             }
           }
         }
@@ -64,7 +65,7 @@ class PdfPresetsProvider extends ChangeNotifier {
       loadedPresets.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       _presets = loadedPresets;
     } catch (e) {
-      debugPrint('Error loading presets: $e');
+      logError('Error loading presets', error: e, tag: 'Presets');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -124,7 +125,7 @@ class PdfPresetsProvider extends ChangeNotifier {
       _presets.removeWhere((p) => p.id == id);
       notifyListeners();
     } catch (e) {
-      debugPrint('Error deleting preset: $e');
+      logError('Error deleting preset', error: e, tag: 'Presets');
     }
   }
 }

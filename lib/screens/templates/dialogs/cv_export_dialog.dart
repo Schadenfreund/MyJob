@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -6,6 +5,7 @@ import '../../../providers/user_data_provider.dart';
 import '../../../services/pdf_service.dart';
 import '../../../services/settings_service.dart';
 import '../../../localization/app_localizations.dart';
+import '../../../utils/platform_utils.dart';
 
 /// Dialog for exporting CV as PDF
 class CvExportDialog extends StatefulWidget {
@@ -79,7 +79,7 @@ class _CvExportDialogState extends State<CvExportDialog> {
               _InfoRow(
                 icon: Icons.work,
                 label: context.tr('work_experience'),
-                value: context.tr('n_entries', {'count': '${userDataProvider.workExperiences.length}'}),
+                value: context.tr('n_entries', {'count': '${userDataProvider.experiences.length}'}),
               ),
               _InfoRow(
                 icon: Icons.star,
@@ -149,7 +149,7 @@ class _CvExportDialogState extends State<CvExportDialog> {
       await PdfService.instance.generateCvFromUserData(
         personalInfo: userDataProvider.personalInfo!,
         skills: userDataProvider.skills,
-        workExperiences: userDataProvider.workExperiences,
+        workExperiences: userDataProvider.experiences,
         languages: userDataProvider.languages,
         interests: userDataProvider.interests,
         outputPath: result,
@@ -166,9 +166,7 @@ class _CvExportDialogState extends State<CvExportDialog> {
               label: context.tr('open_folder'),
               textColor: Colors.white,
               onPressed: () {
-                // Open folder containing the file
-                final file = File(result);
-                Process.run('explorer.exe', ['/select,', file.path]);
+                PlatformUtils.openFolderAndSelect(result);
               },
             ),
           ),

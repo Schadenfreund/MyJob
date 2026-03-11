@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import '../models/template_style.dart';
 import '../constants/json_constants.dart';
 import 'storage_service.dart';
+import 'log_service.dart';
 
 /// Portable settings service that stores configuration in a JSON file
 class SettingsService extends ChangeNotifier {
@@ -40,7 +41,7 @@ class SettingsService extends ChangeNotifier {
       final file = await _getSettingsFile();
 
       if (!file.existsSync()) {
-        debugPrint('No settings file found, using defaults');
+        logDebug('No settings file found, using defaults', tag: 'Settings');
         return;
       }
 
@@ -75,10 +76,10 @@ class SettingsService extends ChangeNotifier {
       _backupPath = json['backupPath'] as String?;
       _appLanguage = json['appLanguage'] as String? ?? 'en';
 
-      debugPrint('Settings loaded successfully');
+      logInfo('Settings loaded successfully', tag: 'Settings');
       notifyListeners();
     } catch (e) {
-      debugPrint('Error loading settings: $e');
+      logError('Error loading settings', error: e, tag: 'Settings');
     }
   }
 
@@ -99,9 +100,9 @@ class SettingsService extends ChangeNotifier {
         JsonConstants.prettyEncoder.convert(json),
       );
 
-      debugPrint('Settings saved');
+      logDebug('Settings saved', tag: 'Settings');
     } catch (e) {
-      debugPrint('Error saving settings: $e');
+      logError('Error saving settings', error: e, tag: 'Settings');
     }
   }
 
@@ -160,6 +161,6 @@ class SettingsService extends ChangeNotifier {
     notifyListeners();
     await _saveSettings();
 
-    debugPrint('Settings reset to defaults');
+    logInfo('Settings reset to defaults', tag: 'Settings');
   }
 }

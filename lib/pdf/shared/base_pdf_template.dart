@@ -4,6 +4,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../models/template_style.dart';
 import '../../models/template_customization.dart';
 import '../../services/pdf_font_service.dart';
+import '../../services/log_service.dart';
 import 'pdf_styling.dart';
 
 /// Describes a PDF template for the registry
@@ -79,7 +80,8 @@ mixin PdfTemplateHelpers {
     if (bytes == null || bytes.isEmpty) return null;
     try {
       return pw.MemoryImage(bytes);
-    } catch (_) {
+    } catch (e) {
+      logWarning('Failed to decode profile image bytes', tag: 'PDF');
       return null;
     }
   }

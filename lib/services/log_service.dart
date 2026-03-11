@@ -23,7 +23,7 @@ class LogService {
 
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final logDir = Directory('${directory.path}/MyLife/logs');
+      final logDir = Directory('${directory.path}/MyJob/logs');
 
       if (!await logDir.exists()) {
         await logDir.create(recursive: true);

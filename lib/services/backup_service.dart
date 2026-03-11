@@ -7,6 +7,7 @@ import 'storage_service.dart';
 import '../models/backup_manifest.dart';
 import '../constants/app_constants.dart';
 import 'backup_validator.dart';
+import 'log_service.dart';
 import '../exceptions/backup_exceptions.dart';
 
 /// Service for creating zips of UserData for backups
@@ -43,7 +44,7 @@ class BackupService {
       final userDataDir = Directory(userDataPath);
 
       if (!userDataDir.existsSync()) {
-        debugPrint('UserData folder does not exist at $userDataPath');
+        logWarning('UserData folder does not exist at $userDataPath', tag: 'Backup');
         return null;
       }
 
@@ -63,7 +64,7 @@ class BackupService {
 
       return await _createBackupZip(absoluteUserDataPath, destinationDir);
     } catch (e) {
-      debugPrint('Error creating backup: $e');
+      logError('Error creating backup', error: e, tag: 'Backup');
       rethrow;
     }
   }
@@ -74,10 +75,10 @@ class BackupService {
     try {
       final userDataPath = await StorageService.instance.getUserDataPath();
 
-      debugPrint('Starting restore: $zipPath -> $userDataPath');
+      logInfo('Starting restore: $zipPath -> $userDataPath', tag: 'Backup');
 
       // Step 1: Validate backup file
-      debugPrint('[Restore] Step 1: Validating backup file...');
+      logInfo('Step 1: Validating backup file...', tag: 'Backup');
       final validator = BackupValidator();
       final validationResult = await validator.validateZip(zipPath);
 
@@ -85,50 +86,49 @@ class BackupService {
         throw BackupValidationException(
             validationResult.errorMessage ?? 'Backup validation failed');
       }
-      debugPrint('[Restore] Validation successful');
+      logInfo('Validation successful', tag: 'Backup');
 
       // Step 2: Create safety backup of current UserData
-      debugPrint('[Restore] Step 2: Creating safety backup...');
+      logInfo('Step 2: Creating safety backup...', tag: 'Backup');
       await _createSafetyBackup();
-      debugPrint('[Restore] Safety backup created');
+      logInfo('Safety backup created', tag: 'Backup');
 
       // Step 3: Extract to temporary directory
-      debugPrint('[Restore] Step 3: Extracting to temporary directory...');
+      logInfo('Step 3: Extracting to temporary directory...', tag: 'Backup');
       tempDir = await _extractToTemp(zipPath);
-      debugPrint('[Restore] Extraction complete: $tempDir');
+      logInfo('Extraction complete: $tempDir', tag: 'Backup');
 
       // Step 4: Atomic replacement
-      debugPrint('[Restore] Step 4: Performing atomic replacement...');
+      logInfo('Step 4: Performing atomic replacement...', tag: 'Backup');
       await _atomicReplace(tempDir);
-      debugPrint('[Restore] Atomic replacement complete');
+      logInfo('Atomic replacement complete', tag: 'Backup');
 
       // Step 4.5: Remap absolute paths (folderPath, profilePicturePath)
       // Backups store absolute paths, which are stale when restored to a
       // different location. Detect the old UserData prefix and rewrite it.
-      debugPrint('[Restore] Step 4.5: Remapping absolute paths...');
+      logInfo('Step 4.5: Remapping absolute paths...', tag: 'Backup');
       await _remapAbsolutePaths(userDataPath);
-      debugPrint('[Restore] Path remapping complete');
+      logInfo('Path remapping complete', tag: 'Backup');
 
       // Step 5: Cleanup temp directory
-      debugPrint('[Restore] Step 5: Cleaning up...');
+      logInfo('Step 5: Cleaning up...', tag: 'Backup');
       await Directory(tempDir).delete(recursive: true);
-      debugPrint('[Restore] Cleanup complete');
+      logInfo('Cleanup complete', tag: 'Backup');
 
       // Step 6: Cleanup old safety backups (keep last 2)
       await _cleanupSafetyBackups();
 
-      debugPrint('[Restore] Restore completed successfully!');
+      logInfo('Restore completed successfully', tag: 'Backup');
       return true;
     } catch (e) {
-      debugPrint('[Restore] ERROR: Restore failed - $e');
-      debugPrint('[Restore] Attempting rollback...');
+      logError('Restore failed', error: e, tag: 'Backup');
+      logWarning('Attempting rollback...', tag: 'Backup');
 
       try {
         await _rollback();
-        debugPrint('[Restore] Rollback successful - original data restored');
+        logInfo('Rollback successful - original data restored', tag: 'Backup');
       } catch (rollbackError) {
-        debugPrint(
-            '[Restore] CRITICAL: Rollback failed - $rollbackError. Check .backup_safety/ for manual recovery');
+        logError('CRITICAL: Rollback failed. Check .backup_safety/ for manual recovery', error: rollbackError, tag: 'Backup');
       }
 
       if (tempDir != null) {
@@ -137,7 +137,9 @@ class BackupService {
           if (tempDirectory.existsSync()) {
             await tempDirectory.delete(recursive: true);
           }
-        } catch (_) {}
+        } catch (e) {
+          logWarning('Failed to clean up temp directory', tag: 'Backup');
+        }
       }
 
       rethrow;
@@ -171,7 +173,7 @@ class BackupService {
     final backupFileName = 'MyJob_Backup_$timestamp.zip';
     final backupPath = p.join(destinationDir, backupFileName);
 
-    debugPrint('[Backup] Creating zip: $sourcePath -> $backupPath');
+    logInfo('Creating zip: $sourcePath -> $backupPath', tag: 'Backup');
 
     final resultPath = await compute(_zipUserData, {
       'sourcePath': sourcePath,
@@ -219,7 +221,7 @@ class BackupService {
         final oldDir = Directory(oldPath);
         if (oldDir.existsSync()) await oldDir.delete(recursive: true);
         await existing.rename(oldPath);
-        debugPrint('[Restore] Renamed $dirName -> .old_$dirName');
+        logDebug('Renamed $dirName -> .old_$dirName', tag: 'Backup');
       }
     }
     for (final fileName in _knownFiles) {
@@ -229,7 +231,7 @@ class BackupService {
         final oldFile = File(oldPath);
         if (oldFile.existsSync()) await oldFile.delete();
         await existing.rename(oldPath);
-        debugPrint('[Restore] Renamed $fileName -> .old_$fileName');
+        logDebug('Renamed $fileName -> .old_$fileName', tag: 'Backup');
       }
     }
 
@@ -238,14 +240,14 @@ class BackupService {
       final src = Directory(p.join(tempDir, dirName));
       if (src.existsSync()) {
         await src.rename(p.join(userDataPath, dirName));
-        debugPrint('[Restore] Moved $dirName to UserData');
+        logDebug('Moved $dirName to UserData', tag: 'Backup');
       }
     }
     for (final fileName in _knownFiles) {
       final src = File(p.join(tempDir, fileName));
       if (src.existsSync()) {
         await src.rename(p.join(userDataPath, fileName));
-        debugPrint('[Restore] Moved $fileName to UserData');
+        logDebug('Moved $fileName to UserData', tag: 'Backup');
       }
     }
 
@@ -254,14 +256,14 @@ class BackupService {
       final oldDir = Directory(p.join(userDataPath, '.old_$dirName'));
       if (oldDir.existsSync()) {
         await oldDir.delete(recursive: true);
-        debugPrint('[Restore] Deleted .old_$dirName');
+        logDebug('Deleted .old_$dirName', tag: 'Backup');
       }
     }
     for (final fileName in _knownFiles) {
       final oldFile = File(p.join(userDataPath, '.old_$fileName'));
       if (oldFile.existsSync()) {
         await oldFile.delete();
-        debugPrint('[Restore] Deleted .old_$fileName');
+        logDebug('Deleted .old_$fileName', tag: 'Backup');
       }
     }
   }
@@ -276,7 +278,7 @@ class BackupService {
         final dest = Directory(p.join(userDataPath, dirName));
         if (dest.existsSync()) await dest.delete(recursive: true);
         await oldDir.rename(dest.path);
-        debugPrint('[Rollback] Restored .old_$dirName -> $dirName');
+        logInfo('Restored .old_$dirName -> $dirName', tag: 'Backup');
       }
     }
     for (final fileName in _knownFiles) {
@@ -285,7 +287,7 @@ class BackupService {
         final dest = File(p.join(userDataPath, fileName));
         if (dest.existsSync()) await dest.delete();
         await oldFile.rename(dest.path);
-        debugPrint('[Rollback] Restored .old_$fileName -> $fileName');
+        logInfo('Restored .old_$fileName -> $fileName', tag: 'Backup');
       }
     }
   }
@@ -309,10 +311,10 @@ class BackupService {
 
       for (int i = keepCount; i < backups.length; i++) {
         await backups[i].delete();
-        debugPrint('[Cleanup] Deleted old safety backup: ${backups[i].path}');
+        logInfo('Deleted old safety backup: ${backups[i].path}', tag: 'Backup');
       }
     } catch (e) {
-      debugPrint('[Cleanup] Error cleaning up safety backups: $e');
+      logWarning('Error cleaning up safety backups: $e', tag: 'Backup');
       // Non-critical — don't rethrow
     }
   }
@@ -325,16 +327,16 @@ class BackupService {
   Future<void> _remapAbsolutePaths(String userDataPath) async {
     final oldUserDataPath = await _detectOldUserDataPath(userDataPath);
     if (oldUserDataPath == null) {
-      debugPrint('[Restore] No stored absolute paths found, skipping remapping');
+      logInfo('No stored absolute paths found, skipping remapping', tag: 'Backup');
       return;
     }
 
     if (p.normalize(oldUserDataPath) == p.normalize(userDataPath)) {
-      debugPrint('[Restore] Paths are identical, no remapping needed');
+      logInfo('Paths are identical, no remapping needed', tag: 'Backup');
       return;
     }
 
-    debugPrint('[Restore] Remapping: "$oldUserDataPath" -> "$userDataPath"');
+    logInfo('Remapping: "$oldUserDataPath" -> "$userDataPath"', tag: 'Restore');
 
     // JSON stores Windows backslashes doubled: C:\\foo\\bar
     final oldJson = oldUserDataPath.replaceAll(r'\', r'\\');
@@ -378,7 +380,7 @@ class BackupService {
       }
     }
 
-    debugPrint('[Restore] Path remapping done: $count file(s) patched');
+    logInfo('Path remapping done: $count file(s) patched', tag: 'Restore');
   }
 
   /// Detect the old UserData base path by reading absolute paths stored inside
@@ -398,7 +400,9 @@ class BackupService {
             // folderPath = <oldUserData>/applications/<foldername>
             return p.dirname(p.dirname(folderPath));
           }
-        } catch (_) {}
+        } catch (e) {
+          logDebug('Skipping ${file.path} during path detection: $e', tag: 'Restore');
+        }
       }
     }
 
@@ -418,7 +422,9 @@ class BackupService {
             // picPath = <oldUserData>/profiles/<lang>/profile_picture.<ext>
             return p.dirname(p.dirname(p.dirname(picPath)));
           }
-        } catch (_) {}
+        } catch (e) {
+          logDebug('Skipping ${f.path} during path detection: $e', tag: 'Restore');
+        }
       }
     }
 
@@ -440,10 +446,10 @@ class BackupService {
       if (oldFwd != oldJson) patched = patched.replaceAll(oldFwd, newFwd);
       if (patched == original) return false;
       await file.writeAsString(patched);
-      debugPrint('[Restore] Patched paths in: ${p.basename(file.path)}');
+      logDebug('Patched paths in: ${p.basename(file.path)}', tag: 'Restore');
       return true;
     } catch (e) {
-      debugPrint('[Restore] Error patching ${file.path}: $e');
+      logError('Error patching ${file.path}', error: e, tag: 'Restore');
       return false;
     }
   }

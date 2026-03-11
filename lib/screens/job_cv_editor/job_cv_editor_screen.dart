@@ -9,6 +9,7 @@ import '../../widgets/job_cv_editor_widget.dart';
 import '../../dialogs/job_application_pdf_dialog.dart';
 import '../../widgets/draggable_dialog_wrapper.dart';
 import '../../localization/app_localizations.dart';
+import '../../services/log_service.dart';
 
 /// Full content editor for job-specific CV
 ///
@@ -63,7 +64,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Failed to reload cover letter: $e');
+      logError('Failed to reload cover letter', error: e, tag: 'CvEditor');
     }
   }
 
@@ -85,7 +86,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
 
       // Silently saved - no snackbar needed (matches behavior of CV data changes)
     } catch (e) {
-      debugPrint('Failed to save application metadata: $e');
+      logError('Failed to save application metadata', error: e, tag: 'CvEditor');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -116,7 +117,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Auto-save failed: $e');
+      logError('Auto-save failed', error: e, tag: 'CvEditor');
       if (mounted) {
         setState(() => _isSaving = false);
       }

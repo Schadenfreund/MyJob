@@ -49,6 +49,7 @@
   "download_update": "Preuzmi ažuriranje",
   "later": "Kasnije",
   "downloading_update": "Preuzimanje ažuriranja... {percentage}%",
+  "verifying_update": "Provjera integriteta...",
   "preparing_update": "Priprema ažuriranja...",
   "update_ready": "Ažuriranje je spremno za instalaciju!",
   "update_restart_notice": "Aplikacija će se automatski zatvoriti i pokrenuti.",

@@ -1412,18 +1412,21 @@ class PdfEditorSidebar extends StatelessWidget {
 
   void _showSavePresetDialog(BuildContext context) {
     final nameController = TextEditingController();
+    final baseName = controller.currentLayoutPresetName ??
+        LayoutPreset.fromCustomization(controller.customization).localeKey;
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      useRootNavigator: true,
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
-        title: Text(context.tr('sidebar_save_preset_title'),
+        title: Text(dialogContext.tr('sidebar_save_preset_title'),
             style: const TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              context.tr('sidebar_save_preset_desc'),
+              dialogContext.tr('sidebar_save_preset_desc'),
               style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
             const SizedBox(height: 16),
@@ -1432,7 +1435,7 @@ class PdfEditorSidebar extends StatelessWidget {
               style: const TextStyle(color: Colors.white),
               autofocus: true,
               decoration: InputDecoration(
-                labelText: context.tr('sidebar_preset_name'),
+                labelText: dialogContext.tr('sidebar_preset_name'),
                 labelStyle: TextStyle(color: controller.style.accentColor),
                 enabledBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white24),
@@ -1446,8 +1449,8 @@ class PdfEditorSidebar extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.tr('cancel'),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(dialogContext.tr('cancel'),
                 style: const TextStyle(color: Colors.white38)),
           ),
           FilledButton(
@@ -1459,26 +1462,26 @@ class PdfEditorSidebar extends StatelessWidget {
               final name = nameController.text.trim();
               if (name.isNotEmpty) {
                 final newPreset =
-                    await context.read<PdfPresetsProvider>().savePreset(
+                    await dialogContext.read<PdfPresetsProvider>().savePreset(
                           name,
                           controller.style,
                           controller.customization,
                           type: documentType,
-                          basedOnPresetName: controller.currentLayoutPresetName,
+                          basedOnPresetName: baseName,
                         );
                 controller.setActivePresetId(newPreset.id);
-                if (!context.mounted) return;
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
+                if (!dialogContext.mounted) return;
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
                   SnackBar(
                     content: Text(
-                        context.tr('sidebar_preset_saved', {'name': name})),
+                        dialogContext.tr('sidebar_preset_saved', {'name': name})),
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
               }
             },
-            child: Text(context.tr('save')),
+            child: Text(dialogContext.tr('save')),
           ),
         ],
       ),
@@ -1487,11 +1490,14 @@ class PdfEditorSidebar extends StatelessWidget {
 
   void _showEditPresetDialog(BuildContext context, PdfPreset preset) {
     final nameController = TextEditingController(text: preset.name);
+    final baseName = controller.currentLayoutPresetName ??
+        LayoutPreset.fromCustomization(controller.customization).localeKey;
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      useRootNavigator: true,
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
-        title: Text(context.tr('sidebar_edit_preset_title'),
+        title: Text(dialogContext.tr('sidebar_edit_preset_title'),
             style: const TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1502,7 +1508,7 @@ class PdfEditorSidebar extends StatelessWidget {
               style: const TextStyle(color: Colors.white),
               autofocus: true,
               decoration: InputDecoration(
-                labelText: context.tr('sidebar_preset_name'),
+                labelText: dialogContext.tr('sidebar_preset_name'),
                 labelStyle: TextStyle(color: controller.style.accentColor),
                 enabledBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white24),
@@ -1514,7 +1520,7 @@ class PdfEditorSidebar extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              context.tr('sidebar_update_preset_desc'),
+              dialogContext.tr('sidebar_update_preset_desc'),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.6),
                 fontSize: 12,
@@ -1524,8 +1530,8 @@ class PdfEditorSidebar extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.tr('cancel'),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(dialogContext.tr('cancel'),
                 style: const TextStyle(color: Colors.white38)),
           ),
           TextButton(
@@ -1535,17 +1541,17 @@ class PdfEditorSidebar extends StatelessWidget {
                 final updatedPreset = PdfPreset(
                   id: preset.id,
                   name: newName,
-                  basedOnPresetName: controller.currentLayoutPresetName,
+                  basedOnPresetName: baseName,
                   style: controller.style,
                   customization: controller.customization,
                   createdAt: preset.createdAt,
                 );
-                context.read<PdfPresetsProvider>().updatePreset(updatedPreset);
+                dialogContext.read<PdfPresetsProvider>().updatePreset(updatedPreset);
                 controller.setActivePresetId(preset.id);
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
                   SnackBar(
-                    content: Text(context.tr(
+                    content: Text(dialogContext.tr(
                         'sidebar_preset_updated', {'name': newName})),
                     behavior: SnackBarBehavior.floating,
                   ),
@@ -1553,7 +1559,7 @@ class PdfEditorSidebar extends StatelessWidget {
               }
             },
             child: Text(
-              context.tr('sidebar_update_style_save'),
+              dialogContext.tr('sidebar_update_style_save'),
               style: TextStyle(color: controller.style.accentColor),
             ),
           ),
@@ -1573,11 +1579,11 @@ class PdfEditorSidebar extends StatelessWidget {
                   customization: preset.customization,
                   createdAt: preset.createdAt,
                 );
-                context.read<PdfPresetsProvider>().updatePreset(updatedPreset);
-                Navigator.pop(context);
+                dialogContext.read<PdfPresetsProvider>().updatePreset(updatedPreset);
+                Navigator.pop(dialogContext);
               }
             },
-            child: Text(context.tr('sidebar_rename_only')),
+            child: Text(dialogContext.tr('sidebar_rename_only')),
           ),
         ],
       ),

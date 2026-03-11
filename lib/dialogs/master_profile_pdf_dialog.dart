@@ -11,8 +11,10 @@ import '../models/template_customization.dart';
 import '../models/cv_data.dart';
 import '../models/cv_data.dart' as cv_data;
 import '../models/cover_letter.dart';
+import '../services/log_service.dart';
 import '../services/pdf_service.dart';
 import '../services/storage_service.dart';
+import '../utils/app_date_utils.dart';
 import '../utils/data_converters.dart';
 import '../widgets/pdf_editor/template_edit_panel.dart';
 import '../widgets/pdf_editor/pdf_editor_sidebar.dart'
@@ -64,8 +66,9 @@ class _MasterProfilePdfDialogState
 
     // Load saved PDF settings FIRST
     _loadSavedSettings().then((_) {
-      debugPrint(
-          '[Master PDF] Settings loaded - style: ${controller.style.type}, accent: ${controller.style.accentColor}');
+      logDebug(
+          'Settings loaded - style: ${controller.style.type}, accent: ${controller.style.accentColor}',
+          tag: 'MasterPDF');
 
       // Re-add the base class listener
       addBaseControllerListener();
@@ -74,7 +77,7 @@ class _MasterProfilePdfDialogState
       controller.addListener(_onPdfSettingsChanged);
 
       // Force immediate regeneration with loaded settings
-      debugPrint('[Master PDF] Forcing PDF regeneration with loaded settings');
+      logDebug('Forcing PDF regeneration with loaded settings', tag: 'MasterPDF');
       generatePdf();
     });
   }
@@ -105,10 +108,10 @@ class _MasterProfilePdfDialogState
                 .copyWith(language: widget.profile.language),
           );
         }
-        debugPrint('[Master PDF Dialog] Loaded saved settings');
+        logDebug('Loaded saved settings', tag: 'MasterPDF');
       }
     } catch (e) {
-      debugPrint('[Master PDF Dialog] No saved settings or error loading: $e');
+      logError('No saved settings or error loading', error: e, tag: 'MasterPDF');
       // Default to profile language on error
       controller.updateCustomization(
         controller.customization
@@ -144,9 +147,9 @@ class _MasterProfilePdfDialogState
           controller.customization,
         );
       }
-      debugPrint('[Master PDF Dialog] Settings saved as preset');
+      logDebug('Settings saved as preset', tag: 'MasterPDF');
     } catch (e) {
-      debugPrint('Failed to save PDF settings: $e');
+      logError('Failed to save PDF settings', error: e, tag: 'MasterPDF');
     }
   }
 
@@ -326,7 +329,7 @@ class _MasterProfilePdfDialogState
           profileImageBytes = await file.readAsBytes();
         }
       } catch (e) {
-        debugPrint('[Master PDF Gen] Error loading profile picture: $e');
+        logError('Error loading profile picture', error: e, tag: 'MasterPDF');
       }
     }
 
@@ -354,7 +357,7 @@ class _MasterProfilePdfDialogState
           company: exp.company,
           title: exp.position,
           startDate: _formatDate(exp.startDate),
-          endDate: exp.endDate != null ? _formatDate(exp.endDate!) : 'Present',
+          endDate: exp.endDate != null ? _formatDate(exp.endDate!) : context.tr('present'),
           description: exp.description ?? '',
           bullets: exp.responsibilities,
         );
@@ -365,7 +368,7 @@ class _MasterProfilePdfDialogState
                 degree: edu.degree,
                 startDate: _formatDate(edu.startDate),
                 endDate:
-                    edu.endDate != null ? _formatDate(edu.endDate!) : 'Present',
+                    edu.endDate != null ? _formatDate(edu.endDate!) : context.tr('present'),
                 description: edu.description ?? '',
               ))
           .toList()
@@ -409,23 +412,7 @@ class _MasterProfilePdfDialogState
     );
   }
 
-  String _formatDate(DateTime date) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
-    return '${months[date.month - 1]} ${date.year}';
-  }
+  String _formatDate(DateTime date) => AppDateUtils.formatShort(date);
 
   @override
   String? getInitialExportDirectory() {
@@ -438,7 +425,7 @@ class _MasterProfilePdfDialogState
     final bytes = await generatePdfBytes();
     final file = File(outputPath);
     await file.writeAsBytes(bytes);
-    debugPrint('[Master PDF] Exported to: $outputPath');
+    logDebug('Exported to: $outputPath', tag: 'MasterPDF');
   }
 
   @override

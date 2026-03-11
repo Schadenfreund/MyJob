@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../models/job_application.dart';
 import '../../../constants/app_constants.dart';
@@ -8,6 +7,8 @@ import '../../../utils/application_status_helper.dart';
 import '../../../utils/app_date_utils.dart';
 import '../../../widgets/app_card.dart';
 import '../../../localization/app_localizations.dart';
+import '../../../services/log_service.dart';
+import '../../../utils/platform_utils.dart';
 
 /// Compact, collapsible application card for MyJob
 class CompactApplicationCard extends StatefulWidget {
@@ -342,24 +343,10 @@ class _CompactApplicationCardState extends State<CompactApplicationCard> {
                             InkWell(
                               onTap: () async {
                                 try {
-                                  final urlString = widget.application.jobUrl!;
-                                  // Ensure URL has a scheme
-                                  final url = urlString.startsWith('http://') ||
-                                          urlString.startsWith('https://')
-                                      ? urlString
-                                      : 'https://$urlString';
-
-                                  // Use the same method as the support button in settings
-                                  if (Platform.isWindows) {
-                                    await Process.run(
-                                        'cmd', ['/c', 'start', url]);
-                                  } else if (Platform.isMacOS) {
-                                    await Process.run('open', [url]);
-                                  } else if (Platform.isLinux) {
-                                    await Process.run('xdg-open', [url]);
-                                  }
+                                  await PlatformUtils.openUrl(
+                                      widget.application.jobUrl!);
                                 } catch (e) {
-                                  debugPrint('Failed to open job URL: $e');
+                                  logError('Failed to open job URL', error: e, tag: 'AppCard');
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(

@@ -13,15 +13,48 @@ class HttpConfig {
 
 /// File validation constants
 class FileConfig {
-  static final RegExp invalidFilenameChars = RegExp(r'[\\/:*?"<>|]');
-  static final RegExp multipleSpaces = RegExp(r'\s+');
-
-  static String sanitizeFilename(String filename) => filename
-      .replaceAll(invalidFilenameChars, '')
-      .replaceAll(multipleSpaces, ' ')
-      .trim();
+  static final RegExp _invalidChars = RegExp(r'[<>:"/\\|?*\x00-\x1F]');
+  static final RegExp _multiUnderscores = RegExp(r'_+');
+  static final RegExp _leadingTrailingUnderscores = RegExp(r'^_+|_+$');
 
   static const int maxFilenameLength = 200;
+
+  /// Sanitize a string for safe use as a filename.
+  ///
+  /// Replaces Windows-invalid characters and control characters with
+  /// underscores, collapses whitespace runs, strips leading/trailing
+  /// underscores, and enforces [maxFilenameLength].
+  ///
+  /// If [useUnderscores] is true (default), whitespace is replaced
+  /// with underscores; otherwise spaces are preserved but collapsed.
+  static String sanitizeFilename(
+    String filename, {
+    bool useUnderscores = false,
+  }) {
+    if (filename.isEmpty) return 'Document';
+
+    var result = filename.replaceAll(_invalidChars, '_');
+
+    if (useUnderscores) {
+      result = result
+          .replaceAll(RegExp(r'\s+'), '_')
+          .replaceAll(_multiUnderscores, '_');
+    } else {
+      result = result
+          .replaceAll(_multiUnderscores, '_')
+          .replaceAll(RegExp(r'\s+'), ' ');
+    }
+
+    result = result
+        .replaceAll(_leadingTrailingUnderscores, '')
+        .trim();
+
+    if (result.isEmpty) return 'Document';
+    if (result.length > maxFilenameLength) {
+      result = result.substring(0, maxFilenameLength);
+    }
+    return result;
+  }
 }
 
 /// Application metadata

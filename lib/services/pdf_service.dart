@@ -19,6 +19,7 @@ import '../pdf/shared/pdf_icons.dart';
 import '../pdf/cover_letter_templates/modern_two_cover_letter_template.dart';
 import '../pdf/cover_letter_templates/professional_cover_letter_template.dart';
 import '../pdf/cover_letter_templates/classic_cover_letter_template.dart';
+import '../utils/app_date_utils.dart';
 import 'pdf_font_service.dart';
 import 'log_service.dart';
 
@@ -289,8 +290,8 @@ class PdfService {
       if (await file.exists()) {
         return await file.readAsBytes();
       }
-    } catch (_) {
-      // Ignore file read errors - return null for no image
+    } catch (e) {
+      logWarning('Failed to load image $imagePath: $e', tag: 'PdfService');
     }
     return null;
   }
@@ -342,21 +343,5 @@ class PdfService {
   }
 
   /// Format a single date (MMM yyyy)
-  String _formatDate(DateTime date) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
-    return '${months[date.month - 1]} ${date.year}';
-  }
+  String _formatDate(DateTime date) => AppDateUtils.formatShort(date);
 }

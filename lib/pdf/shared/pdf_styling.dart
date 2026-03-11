@@ -122,10 +122,6 @@ class PdfStyling {
   double get lineHeightNormal => 1.4; // Body text
   double get lineHeightRelaxed => 1.6; // Paragraphs
 
-  // Deprecated (use context-specific)
-  @Deprecated('Use lineHeightNormal, lineHeightTight, or lineHeightRelaxed')
-  double get lineHeight => customization.lineHeight;
-
   // ===========================================================================
   // SPACING - 8px grid system
   // ===========================================================================

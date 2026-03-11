@@ -7,6 +7,7 @@ import '../../theme/app_theme.dart';
 import '../../constants/app_constants.dart';
 import '../../utils/dialog_utils.dart';
 import '../../utils/ui_utils.dart';
+import '../../utils/platform_utils.dart';
 import '../../services/backup_service.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/update_card.dart';
@@ -573,18 +574,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _openSupportLink() async {
-    const url = 'https://www.paypal.com/paypalme/ivburic';
-    try {
-      if (Platform.isWindows) {
-        await Process.run('cmd', ['/c', 'start', url]);
-      } else if (Platform.isMacOS) {
-        await Process.run('open', [url]);
-      } else if (Platform.isLinux) {
-        await Process.run('xdg-open', [url]);
-      }
-    } catch (e) {
-      debugPrint('Failed to open support link: $e');
-    }
+    await PlatformUtils.openUrl('https://www.paypal.com/paypalme/ivburic');
   }
 
   void _importLanguageFile(

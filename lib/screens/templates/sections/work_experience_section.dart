@@ -321,9 +321,9 @@ class WorkExperienceSection extends StatelessWidget {
     if (result != null && context.mounted) {
       final provider = context.read<UserDataProvider>();
       if (existingExp == null) {
-        await provider.addWorkExperience(result);
+        await provider.addExperience(result);
       } else {
-        await provider.updateWorkExperience(result);
+        await provider.updateExperience(result);
       }
     }
   }

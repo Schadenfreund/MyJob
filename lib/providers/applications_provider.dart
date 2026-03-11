@@ -4,6 +4,7 @@ import '../models/job_application.dart';
 import '../models/master_profile.dart';
 import '../constants/app_constants.dart';
 import '../services/storage_service.dart';
+import '../services/log_service.dart';
 
 /// Provider for managing job applications
 class ApplicationsProvider extends ChangeNotifier {
@@ -13,6 +14,7 @@ class ApplicationsProvider extends ChangeNotifier {
   StorageService get storage => _storage;
 
   List<JobApplication> _applications = [];
+  List<JobApplication>? _cachedFiltered;
   bool _isLoading = false;
   String? _error;
   ApplicationStatus? _statusFilter;
@@ -26,6 +28,8 @@ class ApplicationsProvider extends ChangeNotifier {
   String get searchQuery => _searchQuery;
 
   List<JobApplication> get _filteredApplications {
+    if (_cachedFiltered != null) return _cachedFiltered!;
+
     var filtered = _applications;
 
     if (_statusFilter != null) {
@@ -41,7 +45,12 @@ class ApplicationsProvider extends ChangeNotifier {
       }).toList();
     }
 
+    _cachedFiltered = filtered;
     return filtered;
+  }
+
+  void _invalidateCache() {
+    _cachedFiltered = null;
   }
 
   /// Get application count by status
@@ -68,6 +77,7 @@ class ApplicationsProvider extends ChangeNotifier {
 
     try {
       _applications = await _storage.loadApplications();
+      _invalidateCache();
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -110,11 +120,9 @@ class ApplicationsProvider extends ChangeNotifier {
     final profileToUse =
         masterProfile ?? await _storage.loadMasterProfile(baseLanguage.code);
 
-    debugPrint('[CreateApp] Language selected: $baseLanguage');
-    debugPrint(
-        '[CreateApp] Profile summary in master: "${profileToUse.profileSummary}"');
-    debugPrint(
-        '[CreateApp] Cover letter body in master (chars: ${profileToUse.defaultCoverLetterBody.length})');
+    logDebug('Language selected: $baseLanguage', tag: 'Applications');
+    logDebug('Profile summary in master: "${profileToUse.profileSummary}"', tag: 'Applications');
+    logDebug('Cover letter body in master (chars: ${profileToUse.defaultCoverLetterBody.length})', tag: 'Applications');
 
     // Clone the profile data to the job application folder
     await _storage.cloneProfileToApplication(profileToUse, application);
@@ -125,6 +133,7 @@ class ApplicationsProvider extends ChangeNotifier {
         applications.firstWhere((app) => app.id == application.id);
 
     _applications.insert(0, createdApp);
+    _invalidateCache();
     notifyListeners();
 
     return createdApp;
@@ -138,6 +147,7 @@ class ApplicationsProvider extends ChangeNotifier {
     final index = _applications.indexWhere((app) => app.id == application.id);
     if (index != -1) {
       _applications[index] = updated;
+      _invalidateCache();
       notifyListeners();
     }
   }
@@ -155,6 +165,7 @@ class ApplicationsProvider extends ChangeNotifier {
       );
       await _storage.saveApplication(updated);
       _applications[index] = updated;
+      _invalidateCache();
       notifyListeners();
     }
   }
@@ -163,6 +174,7 @@ class ApplicationsProvider extends ChangeNotifier {
   Future<void> deleteApplication(String id) async {
     await _storage.deleteApplication(id);
     _applications.removeWhere((app) => app.id == id);
+    _invalidateCache();
     notifyListeners();
   }
 
@@ -178,12 +190,14 @@ class ApplicationsProvider extends ChangeNotifier {
   /// Set status filter
   void setStatusFilter(ApplicationStatus? status) {
     _statusFilter = status;
+    _invalidateCache();
     notifyListeners();
   }
 
   /// Set search query
   void setSearchQuery(String query) {
     _searchQuery = query;
+    _invalidateCache();
     notifyListeners();
   }
 
@@ -191,6 +205,7 @@ class ApplicationsProvider extends ChangeNotifier {
   void clearFilters() {
     _statusFilter = null;
     _searchQuery = '';
+    _invalidateCache();
     notifyListeners();
   }
 }

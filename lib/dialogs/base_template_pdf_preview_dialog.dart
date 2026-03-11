@@ -501,7 +501,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
     return Stack(
       children: [
         Container(
-          color: Colors.grey.shade300,
+          color: const Color(0xFF2A2A2A),
           child: _cachedPdf != null
               ? EnhancedPdfViewer(
                   key: ValueKey('pdf_${_controller.pdfVersion}'),
@@ -524,8 +524,8 @@ abstract class BaseTemplatePdfPreviewDialogState<
                       const SizedBox(height: 20),
                       Text(
                         context.tr('generating_pdf_preview'),
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
+                        style: const TextStyle(
+                          color: Color(0xFF999999),
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),

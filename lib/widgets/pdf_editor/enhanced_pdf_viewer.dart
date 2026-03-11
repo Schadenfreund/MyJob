@@ -138,7 +138,7 @@ class _EnhancedPdfViewerState extends State<EnhancedPdfViewer> {
             final viewMode = widget.controller.viewMode;
 
             return Container(
-              color: const Color(0xFFF0F0F0), // Neutral library background
+              color: const Color(0xFF2A2A2A), // Dark background matching editor theme
               child: _buildContent(constraints, zoom, viewMode),
             );
           },
@@ -162,7 +162,7 @@ class _EnhancedPdfViewerState extends State<EnhancedPdfViewer> {
             const Text(
               'Rendering Document...',
               style: TextStyle(
-                color: Color(0xFF666666),
+                color: Color(0xFF999999),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -302,28 +302,30 @@ class _EnhancedPdfViewerState extends State<EnhancedPdfViewer> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(2),
         boxShadow: [
-          // Multi-layered shadow for professional depth
+          // Multi-layered shadow for professional depth on dark background
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 1,
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 2,
             spreadRadius: 0,
             offset: const Offset(0, 1),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 12,
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 20,
             spreadRadius: -2,
             offset: const Offset(0, 8),
           ),
         ],
       ),
       child: pageImage != null
-          ? RawImage(
-              image: pageImage,
-              width: width,
-              height: height,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.medium,
+          ? ExcludeSemantics(
+              child: RawImage(
+                image: pageImage,
+                width: width,
+                height: height,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.medium,
+              ),
             )
           : const Center(
               child: SizedBox(

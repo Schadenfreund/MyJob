@@ -40,6 +40,8 @@ class UpdateCard extends StatelessWidget {
         return _UpdateAvailableState(updateService: updateService);
       case UpdateState.downloading:
         return _DownloadingState(updateService: updateService);
+      case UpdateState.verifying:
+        return const _VerifyingState();
       case UpdateState.extracting:
         return const _ExtractingState();
       case UpdateState.readyToInstall:
@@ -440,6 +442,33 @@ class _DownloadingState extends StatelessWidget {
             ),
           ),
         ],
+      ],
+    );
+  }
+}
+
+class _VerifyingState extends StatelessWidget {
+  const _VerifyingState();
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsService>();
+
+    return Row(
+      children: [
+        SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation(settings.accentColor),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Text(
+          context.tr('verifying_update'),
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
       ],
     );
   }

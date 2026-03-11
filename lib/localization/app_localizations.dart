@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
+import '../services/log_service.dart';
 
 /// Metadata about a language (from the _meta section of the JSON file)
 class LanguageInfo {
@@ -118,7 +119,7 @@ class AppLocalizations extends ChangeNotifier {
         if (customPath != null && File(customPath).existsSync()) {
           translations = await _loadLocaleFromFile(customPath);
         } else {
-          debugPrint('Locale "$code" not found, falling back to English');
+          logWarning('Locale "$code" not found, falling back to English', tag: 'Localization');
           translations = _fallbackTranslations;
           code = 'en';
         }
@@ -130,7 +131,7 @@ class AppLocalizations extends ChangeNotifier {
       if (notify) notifyListeners();
       return true;
     } catch (e) {
-      debugPrint('Error loading locale "$code": $e');
+      logError('Error loading locale "$code"', error: e, tag: 'Localization');
       _translations = _fallbackTranslations;
       _currentLanguageCode = 'en';
       if (notify) notifyListeners();
@@ -230,12 +231,12 @@ class AppLocalizations extends ChangeNotifier {
               ),
             );
           } catch (e) {
-            debugPrint('Error reading custom locale ${file.path}: $e');
+            logError('Error reading custom locale ${file.path}', error: e, tag: 'Localization');
           }
         }
       }
     } catch (e) {
-      debugPrint('Error scanning for custom locales: $e');
+      logError('Error scanning for custom locales', error: e, tag: 'Localization');
     }
 
     _availableLanguages = languages;
@@ -259,7 +260,7 @@ class AppLocalizations extends ChangeNotifier {
       );
       return _parseLocaleJson(jsonString);
     } catch (e) {
-      debugPrint('Error loading built-in locale "$code": $e');
+      logError('Error loading built-in locale "$code"', error: e, tag: 'Localization');
       return {};
     }
   }
@@ -329,7 +330,7 @@ class AppLocalizations extends ChangeNotifier {
       // Extract meta
       final meta = json['_meta'] as Map<String, dynamic>?;
       if (meta == null || meta['language_code'] == null) {
-        debugPrint('Invalid locale file: missing _meta.language_code');
+        logWarning('Invalid locale file: missing _meta.language_code', tag: 'Localization');
         return null;
       }
 
@@ -361,7 +362,7 @@ class AppLocalizations extends ChangeNotifier {
         ),
       );
     } catch (e) {
-      debugPrint('Error importing locale file: $e');
+      logError('Error importing locale file', error: e, tag: 'Localization');
       return null;
     }
   }
@@ -387,20 +388,17 @@ class AppLocalizations extends ChangeNotifier {
       await refreshAvailableLanguages();
       return true;
     } catch (e) {
-      debugPrint('Error deleting custom locale: $e');
+      logError('Error deleting custom locale', error: e, tag: 'Localization');
       return false;
     }
   }
 
   /// Get the current language info
   LanguageInfo? get currentLanguage {
-    try {
-      return _availableLanguages.firstWhere(
-        (l) => l.code == _currentLanguageCode,
-      );
-    } catch (_) {
-      return null;
+    for (final l in _availableLanguages) {
+      if (l.code == _currentLanguageCode) return l;
     }
+    return null;
   }
 }
 

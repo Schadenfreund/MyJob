@@ -23,12 +23,6 @@ enum ProfilePhotoShape {
   const ProfilePhotoShape(this.displayName, this.icon);
 }
 
-/// Profile photo color style (only color - grayscale removed as PDF library doesn't support it)
-enum ProfilePhotoStyle {
-  color, // Full color photo
-  // grayscale, // Removed - not supported by pdf package
-}
-
 /// CV Layout modes for the professional template
 enum CvLayoutMode {
   modern('Modern', 'Single column with timeline experience', Icons.view_agenda),
@@ -296,9 +290,6 @@ class TemplateCustomization {
   /// Profile photo shape (circle, rounded, square)
   final ProfilePhotoShape profilePhotoShape;
 
-  /// Profile photo color style (color or grayscale)
-  final ProfilePhotoStyle profilePhotoStyle;
-
   /// Custom scale factor for profile photo size
   /// Range: 0.8 to 1.2, default: 1.0
   final double profilePhotoSize;
@@ -363,7 +354,6 @@ class TemplateCustomization {
     // Visibility
     this.showProfilePhoto = true,
     this.profilePhotoShape = ProfilePhotoShape.square,
-    this.profilePhotoStyle = ProfilePhotoStyle.color,
     this.profilePhotoSize = 1.0,
     this.showContactIcons = true,
     this.showSkillLevels = true,
@@ -400,7 +390,6 @@ class TemplateCustomization {
       'uppercaseHeaders': uppercaseHeaders,
       'showProfilePhoto': showProfilePhoto,
       'profilePhotoShape': profilePhotoShape.name,
-      'profilePhotoStyle': profilePhotoStyle.name,
       'profilePhotoSize': profilePhotoSize,
       'showContactIcons': showContactIcons,
       'showSkillLevels': showSkillLevels,
@@ -450,10 +439,7 @@ class TemplateCustomization {
         (e) => e.name == json['profilePhotoShape'],
         orElse: () => ProfilePhotoShape.square,
       ),
-      profilePhotoStyle: ProfilePhotoStyle.values.firstWhere(
-        (e) => e.name == json['profilePhotoStyle'],
-        orElse: () => ProfilePhotoStyle.color,
-      ),
+      // Note: 'profilePhotoStyle' key in old JSON is silently ignored
       profilePhotoSize: (json['profilePhotoSize'] as num?)?.toDouble() ?? 1.0,
       showContactIcons: json['showContactIcons'] as bool? ?? true,
       showSkillLevels: json['showSkillLevels'] as bool? ?? true,
@@ -606,7 +592,6 @@ class TemplateCustomization {
     bool? uppercaseHeaders,
     bool? showProfilePhoto,
     ProfilePhotoShape? profilePhotoShape,
-    ProfilePhotoStyle? profilePhotoStyle,
     double? profilePhotoSize,
     bool? showContactIcons,
     bool? showSkillLevels,
@@ -634,7 +619,6 @@ class TemplateCustomization {
       uppercaseHeaders: uppercaseHeaders ?? this.uppercaseHeaders,
       showProfilePhoto: showProfilePhoto ?? this.showProfilePhoto,
       profilePhotoShape: profilePhotoShape ?? this.profilePhotoShape,
-      profilePhotoStyle: profilePhotoStyle ?? this.profilePhotoStyle,
       profilePhotoSize: profilePhotoSize ?? this.profilePhotoSize,
       showContactIcons: showContactIcons ?? this.showContactIcons,
       showSkillLevels: showSkillLevels ?? this.showSkillLevels,

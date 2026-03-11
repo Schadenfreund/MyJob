@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:archive/archive_io.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import '../constants/app_constants.dart';
 import '../models/update_info.dart';
 import '../utils/version_utils.dart';
+import '../utils/platform_utils.dart';
+import 'log_service.dart';
 
 /// Service for checking and installing application updates from GitHub releases
 class UpdateService extends ChangeNotifier {
@@ -37,8 +40,8 @@ class UpdateService extends ChangeNotifier {
     if (!force && _lastCheckTime != null) {
       final elapsed = DateTime.now().difference(_lastCheckTime!);
       if (elapsed < UpdateConfig.minCheckInterval) {
-        debugPrint(
-            'Skipping update check - last check was ${elapsed.inMinutes} minutes ago');
+        logDebug(
+            'Skipping update check - last check was ${elapsed.inMinutes} minutes ago', tag: 'Update');
         return;
       }
     }
@@ -73,17 +76,17 @@ class UpdateService extends ChangeNotifier {
 
           if (latest.isNewerThan(current)) {
             _setState(UpdateState.available);
-            debugPrint(
+            logInfo(
                 'Update available: $currentVersion -> ${_updateInfo!.version}'
-                '${_updateInfo!.hasValidDownload ? '' : ' (no direct download)'}');
+                '${_updateInfo!.hasValidDownload ? '' : ' (no direct download)'}', tag: 'Update');
           } else {
             _setState(UpdateState.upToDate);
-            debugPrint('Already on latest version: $currentVersion');
+            logInfo('Already on latest version: $currentVersion', tag: 'Update');
           }
         } else if (response.statusCode == 404) {
           // No published releases found on GitHub
           _setError('No releases found. Check manually at github.com');
-          debugPrint('No releases found on GitHub (404)');
+          logWarning('No releases found on GitHub (404)', tag: 'Update');
         } else if (response.statusCode == 403) {
           // Rate limited
           _setError('GitHub API rate limit exceeded. Try again later.');
@@ -110,7 +113,7 @@ class UpdateService extends ChangeNotifier {
 
     // No direct download URL — fall back to the releases page
     if (!_updateInfo!.hasValidDownload) {
-      debugPrint('No direct download URL, opening releases page');
+      logInfo('No direct download URL, opening releases page', tag: 'Update');
       await openReleasesPage();
       return;
     }
@@ -126,7 +129,7 @@ class UpdateService extends ChangeNotifier {
           'MyJob-v${_updateInfo!.version}-windows.zip';
       final zipPath = p.join(tempDir.path, zipFilename);
 
-      debugPrint('Downloading update to: $zipPath');
+      logInfo('Downloading update to: $zipPath', tag: 'Update');
 
       // Download with progress tracking
       final client = http.Client();
@@ -148,7 +151,7 @@ class UpdateService extends ChangeNotifier {
 
         await for (final chunk in response.stream) {
           if (_downloadCancelled) {
-            debugPrint('Download cancelled by user');
+            logInfo('Download cancelled by user', tag: 'Update');
             _setState(UpdateState.available);
             return;
           }
@@ -167,7 +170,10 @@ class UpdateService extends ChangeNotifier {
         await zipFile.writeAsBytes(bytes);
         _downloadedZipPath = zipPath;
 
-        debugPrint('Download complete: ${bytes.length} bytes');
+        logInfo('Download complete: ${bytes.length} bytes', tag: 'Update');
+
+        // Verify integrity before extraction
+        if (!await _verifyChecksum(bytes)) return;
 
         // Extract the update
         await _extractUpdate();
@@ -184,6 +190,57 @@ class UpdateService extends ChangeNotifier {
   /// Cancel an ongoing download
   void cancelDownload() {
     _downloadCancelled = true;
+  }
+
+  /// Verify the downloaded ZIP against the published SHA256 checksum.
+  /// Returns true if verification passes or no checksum is available.
+  Future<bool> _verifyChecksum(List<int> bytes) async {
+    if (_updateInfo?.checksumUrl == null) {
+      logDebug('No checksum URL available — skipping verification', tag: 'Update');
+      return true;
+    }
+
+    _setState(UpdateState.verifying);
+
+    try {
+      final client = http.Client();
+      try {
+        final response = await client
+            .get(
+              Uri.parse(_updateInfo!.checksumUrl!),
+              headers: {'User-Agent': 'MyJob-App/${AppInfo.version}'},
+            )
+            .timeout(UpdateConfig.checkTimeout);
+
+        if (response.statusCode != 200) {
+          logWarning('Could not fetch checksum (${response.statusCode}) '
+              '— skipping verification', tag: 'Update');
+          return true;
+        }
+
+        // .sha256 files typically contain: "<hash>  <filename>" or just "<hash>"
+        final expectedHash =
+            response.body.trim().split(RegExp(r'\s+')).first.toLowerCase();
+        final actualHash = sha256.convert(bytes).toString().toLowerCase();
+
+        if (expectedHash == actualHash) {
+          logInfo('Checksum verified: $actualHash', tag: 'Update');
+          return true;
+        } else {
+          logError(
+              'Checksum mismatch! Expected: $expectedHash, Got: $actualHash', tag: 'Update');
+          _setError(
+              'Download integrity check failed. The file may be corrupted. '
+              'Please try again.');
+          return false;
+        }
+      } finally {
+        client.close();
+      }
+    } catch (e) {
+      logWarning('Checksum verification error: $e — skipping', tag: 'Update');
+      return true;
+    }
   }
 
   /// Extract the downloaded ZIP to a temp folder
@@ -203,7 +260,7 @@ class UpdateService extends ChangeNotifier {
       }
       extractDir.createSync(recursive: true);
 
-      debugPrint('Extracting update to: $extractPath');
+      logInfo('Extracting update to: $extractPath', tag: 'Update');
 
       // Extract in isolate to keep UI responsive
       final success = await compute(_extractZipIsolate, {
@@ -214,7 +271,7 @@ class UpdateService extends ChangeNotifier {
       if (success) {
         _extractedUpdatePath = extractPath;
         _setState(UpdateState.readyToInstall);
-        debugPrint('Extraction complete');
+        logInfo('Extraction complete', tag: 'Update');
       } else {
         _setError('Failed to extract update. The download may be corrupted.');
       }
@@ -233,7 +290,7 @@ class UpdateService extends ChangeNotifier {
       final appDir = p.dirname(Platform.resolvedExecutable);
       final scriptPath = await _generateUpdaterScript(appDir);
 
-      debugPrint('Launching updater script: $scriptPath');
+      logInfo('Launching updater script: $scriptPath', tag: 'Update');
 
       // Launch the updater script as a detached process
       await Process.start(
@@ -244,7 +301,7 @@ class UpdateService extends ChangeNotifier {
       );
 
       // Exit the app so the updater can replace files
-      debugPrint('Exiting app for update...');
+      logInfo('Exiting app for update...', tag: 'Update');
       exit(0);
     } catch (e) {
       _setError('Failed to start update installer: $e');
@@ -343,17 +400,13 @@ start "" "%APP_DIR%\\%EXE_NAME%"
     final scriptFile = File(scriptPath);
     await scriptFile.writeAsString(script);
 
-    debugPrint('Updater script generated at: $scriptPath');
+    logDebug('Updater script generated at: $scriptPath', tag: 'Update');
     return scriptPath;
   }
 
   /// Open the GitHub releases page in browser (fallback for manual update)
   Future<void> openReleasesPage() async {
-    try {
-      await Process.run('cmd', ['/c', 'start', UpdateConfig.releasesPageUrl]);
-    } catch (e) {
-      debugPrint('Failed to open releases page: $e');
-    }
+    await PlatformUtils.openUrl(UpdateConfig.releasesPageUrl);
   }
 
   /// Reset state (e.g., after dismissing an error)
@@ -373,7 +426,7 @@ start "" "%APP_DIR%\\%EXE_NAME%"
     _errorMessage = message;
     _state = UpdateState.error;
     notifyListeners();
-    debugPrint('Update error: $message');
+    logError('Update error: $message', tag: 'Update');
   }
 
   /// Isolate function for ZIP extraction
@@ -389,13 +442,27 @@ start "" "%APP_DIR%\\%EXE_NAME%"
 
       for (final file in archive) {
         final filename = file.name;
+
+        // Reject path traversal attempts
+        if (filename.contains('..') || filename.startsWith('/') || filename.startsWith('\\')) {
+          debugPrint('[Update Isolate] Skipping suspicious entry: $filename');
+          continue;
+        }
+
+        // Verify resolved path stays within destination
+        final resolvedPath = p.normalize(p.join(destPath, filename));
+        if (!resolvedPath.startsWith(destPath)) {
+          debugPrint('[Update Isolate] Path traversal blocked: $filename');
+          continue;
+        }
+
         if (file.isFile) {
           final data = file.content as List<int>;
-          final outFile = File(p.join(destPath, filename));
+          final outFile = File(resolvedPath);
           outFile.parent.createSync(recursive: true);
           outFile.writeAsBytesSync(data);
         } else {
-          final outDir = Directory(p.join(destPath, filename));
+          final outDir = Directory(resolvedPath);
           outDir.createSync(recursive: true);
         }
       }

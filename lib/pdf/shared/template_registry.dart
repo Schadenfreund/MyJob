@@ -60,22 +60,19 @@ class PdfTemplateRegistry {
 
   /// Get CV template by ID
   static BasePdfTemplate<CvData>? getCvTemplateById(String id) {
-    try {
-      return cvTemplates.firstWhere((t) => t.info.id == id);
-    } catch (_) {
-      return null;
+    for (final t in cvTemplates) {
+      if (t.info.id == id) return t;
     }
+    return null;
   }
 
   /// Get CV template by name
   static BasePdfTemplate<CvData>? getCvTemplateByName(String name) {
-    try {
-      return cvTemplates.firstWhere(
-        (t) => t.templateName.toLowerCase() == name.toLowerCase(),
-      );
-    } catch (_) {
-      return null;
+    final lower = name.toLowerCase();
+    for (final t in cvTemplates) {
+      if (t.templateName.toLowerCase() == lower) return t;
     }
+    return null;
   }
 
   // ===========================================================================
@@ -97,22 +94,19 @@ class PdfTemplateRegistry {
   /// Get cover letter template by name
   static BasePdfTemplate<CoverLetter>? getCoverLetterTemplateByName(
       String name) {
-    try {
-      return coverLetterTemplates.firstWhere(
-        (t) => t.templateName.toLowerCase() == name.toLowerCase(),
-      );
-    } catch (_) {
-      return null;
+    final lower = name.toLowerCase();
+    for (final t in coverLetterTemplates) {
+      if (t.templateName.toLowerCase() == lower) return t;
     }
+    return null;
   }
 
   /// Get cover letter template by ID
   static BasePdfTemplate<CoverLetter>? getCoverLetterTemplateById(String id) {
-    try {
-      return coverLetterTemplates.firstWhere((t) => t.info.id == id);
-    } catch (_) {
-      return null;
+    for (final t in coverLetterTemplates) {
+      if (t.info.id == id) return t;
     }
+    return null;
   }
 
   // ===========================================================================
