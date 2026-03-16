@@ -811,7 +811,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
   }
 
   Future<void> _addEducation() async {
-    final result = await showDialog<Education>(
+    final result = await showDialog<CvEducation>(
       context: context,
       builder: (context) => const _EducationDialog(),
     );
@@ -825,7 +825,7 @@ class _TabbedCvEditorState extends State<TabbedCvEditor>
   }
 
   Future<void> _editEducation(int index) async {
-    final result = await showDialog<Education>(
+    final result = await showDialog<CvEducation>(
       context: context,
       builder: (context) =>
           _EducationDialog(education: widget.template.education[index]),
@@ -1126,7 +1126,7 @@ class _ExperienceDialogState extends State<_ExperienceDialog> {
 class _EducationDialog extends StatefulWidget {
   const _EducationDialog({this.education});
 
-  final Education? education;
+  final CvEducation? education;
 
   @override
   State<_EducationDialog> createState() => _EducationDialogState();
@@ -1247,7 +1247,7 @@ class _EducationDialogState extends State<_EducationDialog> {
             if (_formKey.currentState?.validate() ?? false) {
               Navigator.pop(
                 context,
-                Education(
+                CvEducation(
                   institution: _institutionController.text.trim(),
                   degree: _degreeController.text.trim(),
                   startDate: _startDateController.text.trim(),

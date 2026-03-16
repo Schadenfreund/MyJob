@@ -105,7 +105,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                               _parseResult!.success) ...[
                             _buildPreview(context),
                             const SizedBox(height: 20),
-                            if (_parseResult!.isCvData) ...[
+                            if (_parseResult is CvImportResult) ...[
                               _buildCvImportOptions(context),
                             ],
                           ],
@@ -594,54 +594,56 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildFilterChip(
-                context,
-                label: context.tr('personal_info'),
-                icon: Icons.person_rounded,
-                selected: _importPersonalInfo,
-                onSelected: (v) => setState(() => _importPersonalInfo = v),
-                enabled: _parseResult?.personalInfo != null,
-              ),
-              _buildFilterChip(
-                context,
-                label: context.tr('skills'),
-                icon: Icons.construction_rounded,
-                selected: _importSkills,
-                onSelected: (v) => setState(() => _importSkills = v),
-                enabled: _parseResult?.skills.isNotEmpty ?? false,
-              ),
-              _buildFilterChip(
-                context,
-                label: context.tr('languages_section'),
-                icon: Icons.language_rounded,
-                selected: _importLanguages,
-                onSelected: (v) => setState(() => _importLanguages = v),
-                enabled: _parseResult?.languages.isNotEmpty ?? false,
-              ),
-              _buildFilterChip(
-                context,
-                label: context.tr('interests'),
-                icon: Icons.favorite_rounded,
-                selected: _importInterests,
-                onSelected: (v) => setState(() => _importInterests = v),
-                enabled: _parseResult?.interests.isNotEmpty ?? false,
-              ),
-              _buildFilterChip(
-                context,
-                label: context.tr('work_experience'),
-                icon: Icons.work_rounded,
-                selected: _importWorkExperience,
-                onSelected: (v) => setState(() => _importWorkExperience = v),
-                enabled: _parseResult?.workExperiences.isNotEmpty ?? false,
-              ),
-              _buildFilterChip(
-                context,
-                label: context.tr('education'),
-                icon: Icons.school_rounded,
-                selected: _importEducation,
-                onSelected: (v) => setState(() => _importEducation = v),
-                enabled: _parseResult?.education.isNotEmpty ?? false,
-              ),
+              if (_parseResult case final CvImportResult cv) ...[
+                _buildFilterChip(
+                  context,
+                  label: context.tr('personal_info'),
+                  icon: Icons.person_rounded,
+                  selected: _importPersonalInfo,
+                  onSelected: (v) => setState(() => _importPersonalInfo = v),
+                  enabled: cv.personalInfo != null,
+                ),
+                _buildFilterChip(
+                  context,
+                  label: context.tr('skills'),
+                  icon: Icons.construction_rounded,
+                  selected: _importSkills,
+                  onSelected: (v) => setState(() => _importSkills = v),
+                  enabled: cv.skills.isNotEmpty,
+                ),
+                _buildFilterChip(
+                  context,
+                  label: context.tr('languages_section'),
+                  icon: Icons.language_rounded,
+                  selected: _importLanguages,
+                  onSelected: (v) => setState(() => _importLanguages = v),
+                  enabled: cv.languages.isNotEmpty,
+                ),
+                _buildFilterChip(
+                  context,
+                  label: context.tr('interests'),
+                  icon: Icons.favorite_rounded,
+                  selected: _importInterests,
+                  onSelected: (v) => setState(() => _importInterests = v),
+                  enabled: cv.interests.isNotEmpty,
+                ),
+                _buildFilterChip(
+                  context,
+                  label: context.tr('work_experience'),
+                  icon: Icons.work_rounded,
+                  selected: _importWorkExperience,
+                  onSelected: (v) => setState(() => _importWorkExperience = v),
+                  enabled: cv.workExperiences.isNotEmpty,
+                ),
+                _buildFilterChip(
+                  context,
+                  label: context.tr('education'),
+                  icon: Icons.school_rounded,
+                  selected: _importEducation,
+                  onSelected: (v) => setState(() => _importEducation = v),
+                  enabled: cv.education.isNotEmpty,
+                ),
+              ],
             ],
           ),
         ],
@@ -852,9 +854,9 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
       final service = UnifiedYamlImportService();
       final result = await service.importYamlFile(file);
 
-      if (!result.success) {
+      if (result case ImportError(:final error)) {
         setState(() {
-          _error = result.error;
+          _error = error;
           _isLoading = false;
         });
         return;
@@ -873,15 +875,19 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
   }
 
   Future<void> _performImport() async {
-    if (_parseResult == null || !_parseResult!.success) return;
+    final result = _parseResult;
+    if (result == null || !result.success) return;
 
     setState(() => _isLoading = true);
 
     try {
-      if (_parseResult!.isCvData) {
-        await _importCvData();
-      } else if (_parseResult!.isCoverLetter) {
-        await _importCoverLetter();
+      switch (result) {
+        case CvImportResult():
+          await _importCvData(result);
+        case CoverLetterImportResult():
+          await _importCoverLetter(result);
+        case ImportError():
+          return; // unreachable — guarded above
       }
 
       // Close dialog immediately after successful import
@@ -896,9 +902,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
     }
   }
 
-  Future<void> _importCvData() async {
+  Future<void> _importCvData(CvImportResult result) async {
     final userDataProvider = context.read<UserDataProvider>();
-    final result = _parseResult!;
     final targetCode = _effectiveTarget(userDataProvider);
 
     // Switch to the target profile, creating it if it doesn't exist yet.
@@ -974,9 +979,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
     }
   }
 
-  Future<void> _importCoverLetter() async {
+  Future<void> _importCoverLetter(CoverLetterImportResult result) async {
     final userDataProvider = context.read<UserDataProvider>();
-    final result = _parseResult!;
     final targetCode = _effectiveTarget(userDataProvider);
 
     // Switch to (or create) the user-selected target profile.

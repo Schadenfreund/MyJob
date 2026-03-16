@@ -346,14 +346,76 @@ enum YamlFileType {
   unknown,
 }
 
-/// Unified import result that handles both CV and Cover Letter data
-class UnifiedImportResult {
-  final bool success;
-  final String? error;
-  final YamlFileType fileType;
-  final String? filePath;
+/// Sealed import result hierarchy — each variant carries only the fields
+/// that belong to it, eliminating nullable-field ambiguity.
+sealed class UnifiedImportResult {
+  const UnifiedImportResult();
 
-  // CV Data fields
+  /// Whether the import was successful.
+  bool get success;
+
+  /// Convenience type-checks (kept for minimal diff in UI code).
+  bool get isCvData => this is CvImportResult;
+  bool get isCoverLetter => this is CoverLetterImportResult;
+
+  /// Display name for the detected file type.
+  String get fileTypeDisplay;
+
+  /// Summary items for the preview UI.
+  List<ImportSummaryItem> get importSummary;
+
+  // ---------------------------------------------------------------------------
+  // Factory constructors — backward-compatible call sites
+  // ---------------------------------------------------------------------------
+
+  /// Create a successful CV import result.
+  factory UnifiedImportResult.cv({
+    required String filePath,
+    String? language,
+    PersonalInfo? personalInfo,
+    String profileSummary,
+    String defaultCoverLetterBody,
+    List<Skill> skills,
+    List<Language> languages,
+    List<Interest> interests,
+    List<WorkExperience> workExperiences,
+    List<Education> education,
+  }) = CvImportResult;
+
+  /// Create a successful cover letter import result.
+  factory UnifiedImportResult.coverLetter({
+    required String filePath,
+    required String templateName,
+    String? language,
+    String? version,
+    String? greeting,
+    List<String> paragraphs,
+    String? closing,
+    String? signature,
+    List<CoverLetterPlaceholder> placeholders,
+  }) = CoverLetterImportResult;
+
+  /// Create an error result.
+  factory UnifiedImportResult.error(String message) = ImportError;
+}
+
+/// Successful CV data import.
+class CvImportResult extends UnifiedImportResult {
+  const CvImportResult({
+    required this.filePath,
+    this.language,
+    this.personalInfo,
+    this.profileSummary = '',
+    this.defaultCoverLetterBody = '',
+    this.skills = const [],
+    this.languages = const [],
+    this.interests = const [],
+    this.workExperiences = const [],
+    this.education = const [],
+  });
+
+  final String filePath;
+  final String? language;
   final PersonalInfo? personalInfo;
   final String profileSummary;
   final String defaultCoverLetterBody;
@@ -363,30 +425,70 @@ class UnifiedImportResult {
   final List<WorkExperience> workExperiences;
   final List<Education> education;
 
-  // Cover Letter fields
-  final String? templateName;
-  final String? language;
-  final String? version;
-  final String? greeting;
-  final List<String> paragraphs;
-  final String? closing;
-  final String? signature;
-  final List<CoverLetterPlaceholder> placeholders;
+  @override
+  bool get success => true;
 
-  UnifiedImportResult._({
-    required this.success,
-    this.error,
-    required this.fileType,
-    this.filePath,
-    this.personalInfo,
-    this.profileSummary = '',
-    this.defaultCoverLetterBody = '',
-    this.skills = const [],
-    this.languages = const [],
-    this.interests = const [],
-    this.workExperiences = const [],
-    this.education = const [],
-    this.templateName,
+  @override
+  String get fileTypeDisplay => 'CV / Resume Data';
+
+  @override
+  List<ImportSummaryItem> get importSummary {
+    final items = <ImportSummaryItem>[];
+    if (personalInfo != null) {
+      items.add(ImportSummaryItem(
+        icon: 'person',
+        label: 'personal_info',
+        detail: personalInfo!.fullName,
+      ));
+    }
+    if (skills.isNotEmpty) {
+      items.add(ImportSummaryItem(
+        icon: 'build',
+        label: 'skills',
+        detail: '${skills.length} skill${skills.length == 1 ? '' : 's'}',
+      ));
+    }
+    if (languages.isNotEmpty) {
+      items.add(ImportSummaryItem(
+        icon: 'language',
+        label: 'languages_section',
+        detail:
+            '${languages.length} language${languages.length == 1 ? '' : 's'}',
+      ));
+    }
+    if (interests.isNotEmpty) {
+      items.add(ImportSummaryItem(
+        icon: 'interests',
+        label: 'interests',
+        detail:
+            '${interests.length} interest${interests.length == 1 ? '' : 's'}',
+      ));
+    }
+    if (workExperiences.isNotEmpty) {
+      items.add(ImportSummaryItem(
+        icon: 'work',
+        label: 'work_experience',
+        detail:
+            '${workExperiences.length} position${workExperiences.length == 1 ? '' : 's'}',
+      ));
+    }
+    if (education.isNotEmpty) {
+      items.add(ImportSummaryItem(
+        icon: 'school',
+        label: 'education',
+        detail:
+            '${education.length} ${education.length == 1 ? 'degree' : 'degrees'}',
+      ));
+    }
+    return items;
+  }
+}
+
+/// Successful cover letter import.
+class CoverLetterImportResult extends UnifiedImportResult {
+  const CoverLetterImportResult({
+    required this.filePath,
+    required this.templateName,
     this.language,
     this.version,
     this.greeting,
@@ -396,157 +498,56 @@ class UnifiedImportResult {
     this.placeholders = const [],
   });
 
-  /// Create a successful CV import result
-  factory UnifiedImportResult.cv({
-    required String filePath,
-    String? language,
-    PersonalInfo? personalInfo,
-    String profileSummary = '',
-    String defaultCoverLetterBody = '',
-    List<Skill> skills = const [],
-    List<Language> languages = const [],
-    List<Interest> interests = const [],
-    List<WorkExperience> workExperiences = const [],
-    List<Education> education = const [],
-  }) {
-    return UnifiedImportResult._(
-      success: true,
-      fileType: YamlFileType.cvData,
-      filePath: filePath,
-      language: language,
-      personalInfo: personalInfo,
-      profileSummary: profileSummary,
-      defaultCoverLetterBody: defaultCoverLetterBody,
-      skills: skills,
-      languages: languages,
-      interests: interests,
-      workExperiences: workExperiences,
-      education: education,
-    );
-  }
+  final String filePath;
+  final String templateName;
+  final String? language;
+  final String? version;
+  final String? greeting;
+  final List<String> paragraphs;
+  final String? closing;
+  final String? signature;
+  final List<CoverLetterPlaceholder> placeholders;
 
-  /// Create a successful cover letter import result
-  factory UnifiedImportResult.coverLetter({
-    required String filePath,
-    required String templateName,
-    String? language,
-    String? version,
-    String? greeting,
-    List<String> paragraphs = const [],
-    String? closing,
-    String? signature,
-    List<CoverLetterPlaceholder> placeholders = const [],
-  }) {
-    return UnifiedImportResult._(
-      success: true,
-      fileType: YamlFileType.coverLetter,
-      filePath: filePath,
-      templateName: templateName,
-      language: language,
-      version: version,
-      greeting: greeting,
-      paragraphs: paragraphs,
-      closing: closing,
-      signature: signature,
-      placeholders: placeholders,
-    );
-  }
+  @override
+  bool get success => true;
 
-  /// Create an error result
-  factory UnifiedImportResult.error(String message) {
-    return UnifiedImportResult._(
-      success: false,
-      error: message,
-      fileType: YamlFileType.unknown,
-    );
-  }
+  @override
+  String get fileTypeDisplay => 'Cover Letter Template';
 
-  /// Check if this is CV data
-  bool get isCvData => fileType == YamlFileType.cvData;
-
-  /// Check if this is a cover letter
-  bool get isCoverLetter => fileType == YamlFileType.coverLetter;
-
-  /// Get the file type as a display string
-  String get fileTypeDisplay {
-    switch (fileType) {
-      case YamlFileType.cvData:
-        return 'CV / Resume Data';
-      case YamlFileType.coverLetter:
-        return 'Cover Letter Template';
-      case YamlFileType.unknown:
-        return 'Unknown';
-    }
-  }
-
-  /// Get summary of what will be imported
+  @override
   List<ImportSummaryItem> get importSummary {
-    final items = <ImportSummaryItem>[];
-
-    if (isCvData) {
-      if (personalInfo != null) {
-        items.add(ImportSummaryItem(
-          icon: 'person',
-          label: 'personal_info',
-          detail: personalInfo!.fullName,
-        ));
-      }
-      if (skills.isNotEmpty) {
-        items.add(ImportSummaryItem(
-          icon: 'build',
-          label: 'skills',
-          detail: '${skills.length} skill${skills.length == 1 ? '' : 's'}',
-        ));
-      }
-      if (languages.isNotEmpty) {
-        items.add(ImportSummaryItem(
-          icon: 'language',
-          label: 'languages_section',
-          detail:
-              '${languages.length} language${languages.length == 1 ? '' : 's'}',
-        ));
-      }
-      if (interests.isNotEmpty) {
-        items.add(ImportSummaryItem(
-          icon: 'interests',
-          label: 'interests',
-          detail:
-              '${interests.length} interest${interests.length == 1 ? '' : 's'}',
-        ));
-      }
-      if (workExperiences.isNotEmpty) {
-        items.add(ImportSummaryItem(
-          icon: 'work',
-          label: 'work_experience',
-          detail:
-              '${workExperiences.length} position${workExperiences.length == 1 ? '' : 's'}',
-        ));
-      }
-      if (education.isNotEmpty) {
-        items.add(ImportSummaryItem(
-          icon: 'school',
-          label: 'education',
-          detail:
-              '${education.length} ${education.length == 1 ? 'degree' : 'degrees'}',
-        ));
-      }
-    } else if (isCoverLetter) {
-      items.add(ImportSummaryItem(
+    final items = <ImportSummaryItem>[
+      ImportSummaryItem(
         icon: 'mail',
         label: 'cover_letter',
-        detail: templateName ?? 'Template',
+        detail: templateName,
+      ),
+    ];
+    if (placeholders.isNotEmpty) {
+      items.add(ImportSummaryItem(
+        icon: 'edit',
+        label: 'import_placeholders',
+        detail: '${placeholders.length} to fill',
       ));
-      if (placeholders.isNotEmpty) {
-        items.add(ImportSummaryItem(
-          icon: 'edit',
-          label: 'import_placeholders',
-          detail: '${placeholders.length} to fill',
-        ));
-      }
     }
-
     return items;
   }
+}
+
+/// Import failure.
+class ImportError extends UnifiedImportResult {
+  const ImportError(this.error);
+
+  final String error;
+
+  @override
+  bool get success => false;
+
+  @override
+  String get fileTypeDisplay => 'Unknown';
+
+  @override
+  List<ImportSummaryItem> get importSummary => const [];
 }
 
 /// Summary item for display in the import preview
@@ -576,3 +577,4 @@ class CoverLetterPlaceholder {
     required this.example,
   });
 }
+

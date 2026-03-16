@@ -81,7 +81,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   late TextEditingController _contactEmailController;
   late TextEditingController _notesController;
 
-  final _storage = StorageService.instance;
+  final _appRepo = StorageService.instance.applications;
 
   // No additional controllers needed for CV sections
 
@@ -291,7 +291,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     if (folderPath == null) return;
 
     try {
-      await _storage.saveJobCoverLetter(folderPath, coverLetter);
+      await _appRepo.saveCoverLetter(folderPath, coverLetter);
       logDebug('Auto-saved to $folderPath', tag: 'CoverLetter');
     } catch (e) {
       logError('Failed to auto-save', error: e, tag: 'CoverLetter');

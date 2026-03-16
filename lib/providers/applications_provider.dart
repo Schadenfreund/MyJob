@@ -4,14 +4,42 @@ import '../models/job_application.dart';
 import '../models/master_profile.dart';
 import '../constants/app_constants.dart';
 import '../services/storage_service.dart';
+import '../services/application_repository.dart';
 import '../services/log_service.dart';
+
+/// Pre-computed statistics for the applications dashboard.
+///
+/// Avoids inline counting in build methods — compute once, display everywhere.
+class ApplicationStatistics {
+  const ApplicationStatistics({
+    required this.total,
+    required this.draft,
+    required this.applied,
+    required this.interviewing,
+    required this.successful,
+    required this.rejected,
+    required this.noResponse,
+  });
+
+  final int total;
+  final int draft;
+  final int applied;
+  final int interviewing;
+  final int successful;
+  final int rejected;
+  final int noResponse;
+
+  int get active => draft + applied + interviewing;
+  int get closed => successful + rejected + noResponse;
+}
 
 /// Provider for managing job applications
 class ApplicationsProvider extends ChangeNotifier {
-  final StorageService _storage = StorageService.instance;
+  final _appRepo = StorageService.instance.applications;
+  final _profileRepo = StorageService.instance.profiles;
   final Uuid _uuid = const Uuid();
 
-  StorageService get storage => _storage;
+  ApplicationRepository get storage => _appRepo;
 
   List<JobApplication> _applications = [];
   List<JobApplication>? _cachedFiltered;
@@ -53,14 +81,103 @@ class ApplicationsProvider extends ChangeNotifier {
     _cachedFiltered = null;
   }
 
-  /// Get application count by status
-  Map<ApplicationStatus, int> get statusCounts {
-    final counts = <ApplicationStatus, int>{};
-    for (final status in ApplicationStatus.values) {
-      counts[status] =
-          _applications.where((app) => app.status == status).length;
+  // ===========================================================================
+  // STATISTICS & GROUPING
+  // ===========================================================================
+
+  /// Filter applications by a named time range.
+  ///
+  /// [timeRange] is one of `'all'`, `'month'`, `'quarter'`, `'year'`.
+  List<JobApplication> filterByTimeRange(
+    List<JobApplication> apps,
+    String timeRange,
+  ) {
+    if (timeRange == 'all') return apps;
+
+    final now = DateTime.now();
+    final DateTime cutoffDate;
+
+    switch (timeRange) {
+      case 'month':
+        cutoffDate = DateTime(now.year, now.month - 1, now.day);
+      case 'quarter':
+        cutoffDate = DateTime(now.year, now.month - 3, now.day);
+      case 'year':
+        cutoffDate = DateTime(now.year - 1, now.month, now.day);
+      default:
+        return apps;
     }
-    return counts;
+
+    return apps.where((app) {
+      if (app.applicationDate == null) return false;
+      return app.applicationDate!.isAfter(cutoffDate);
+    }).toList();
+  }
+
+  /// Compute statistics for the given list of applications.
+  ApplicationStatistics computeStatistics(List<JobApplication> apps) {
+    int draft = 0, applied = 0, interviewing = 0;
+    int successful = 0, rejected = 0, noResponse = 0;
+
+    for (final app in apps) {
+      switch (app.status) {
+        case ApplicationStatus.draft:
+          draft++;
+        case ApplicationStatus.applied:
+          applied++;
+        case ApplicationStatus.interviewing:
+          interviewing++;
+        case ApplicationStatus.successful:
+          successful++;
+        case ApplicationStatus.rejected:
+          rejected++;
+        case ApplicationStatus.noResponse:
+          noResponse++;
+      }
+    }
+
+    return ApplicationStatistics(
+      total: apps.length,
+      draft: draft,
+      applied: applied,
+      interviewing: interviewing,
+      successful: successful,
+      rejected: rejected,
+      noResponse: noResponse,
+    );
+  }
+
+  /// Group applications by status category for the collapsible sections.
+  ///
+  /// Returns a map with keys: `active`, `successful`, `noResponse`, `rejected`.
+  Map<String, List<JobApplication>> groupByCategory(
+      List<JobApplication> apps) {
+    final active = <JobApplication>[];
+    final successful = <JobApplication>[];
+    final noResponse = <JobApplication>[];
+    final rejected = <JobApplication>[];
+
+    for (final app in apps) {
+      switch (app.status) {
+        case ApplicationStatus.draft:
+        case ApplicationStatus.applied:
+        case ApplicationStatus.interviewing:
+          active.add(app);
+        case ApplicationStatus.successful:
+          successful.add(app);
+        case ApplicationStatus.noResponse:
+          noResponse.add(app);
+        case ApplicationStatus.rejected:
+          rejected.add(app);
+      }
+    }
+
+    return {
+      'active': active,
+      'successful': successful,
+      'noResponse': noResponse,
+      'rejected': rejected,
+    };
   }
 
   /// Get total application count
@@ -76,7 +193,7 @@ class ApplicationsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _applications = await _storage.loadApplications();
+      _applications = await _appRepo.loadAll();
       _invalidateCache();
       _isLoading = false;
       notifyListeners();
@@ -118,17 +235,17 @@ class ApplicationsProvider extends ChangeNotifier {
 
     // Load the master profile for the selected language if not provided
     final profileToUse =
-        masterProfile ?? await _storage.loadMasterProfile(baseLanguage.code);
+        masterProfile ?? await _profileRepo.load(baseLanguage.code);
 
     logDebug('Language selected: $baseLanguage', tag: 'Applications');
     logDebug('Profile summary in master: "${profileToUse.profileSummary}"', tag: 'Applications');
     logDebug('Cover letter body in master (chars: ${profileToUse.defaultCoverLetterBody.length})', tag: 'Applications');
 
     // Clone the profile data to the job application folder
-    await _storage.cloneProfileToApplication(profileToUse, application);
+    await _appRepo.cloneProfile(profileToUse, application);
 
     // Reload the application to get the updated folderPath
-    final applications = await _storage.loadApplications();
+    final applications = await _appRepo.loadAll();
     final createdApp =
         applications.firstWhere((app) => app.id == application.id);
 
@@ -142,7 +259,7 @@ class ApplicationsProvider extends ChangeNotifier {
   /// Update an existing application
   Future<void> updateApplication(JobApplication application) async {
     final updated = application.copyWith(lastUpdated: DateTime.now());
-    await _storage.saveApplication(updated);
+    await _appRepo.save(updated);
 
     final index = _applications.indexWhere((app) => app.id == application.id);
     if (index != -1) {
@@ -163,7 +280,7 @@ class ApplicationsProvider extends ChangeNotifier {
             ? DateTime.now()
             : _applications[index].applicationDate,
       );
-      await _storage.saveApplication(updated);
+      await _appRepo.save(updated);
       _applications[index] = updated;
       _invalidateCache();
       notifyListeners();
@@ -172,7 +289,7 @@ class ApplicationsProvider extends ChangeNotifier {
 
   /// Delete an application
   Future<void> deleteApplication(String id) async {
-    await _storage.deleteApplication(id);
+    await _appRepo.delete(id);
     _applications.removeWhere((app) => app.id == id);
     _invalidateCache();
     notifyListeners();

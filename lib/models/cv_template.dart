@@ -50,7 +50,7 @@ class CvTemplate {
               .toList() ??
           [],
       education: (json['education'] as List<dynamic>?)
-              ?.map((e) => Education.fromJson(e as Map<String, dynamic>))
+              ?.map((e) => CvEducation.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       templateStyle: json['templateStyle'] != null
@@ -75,7 +75,7 @@ class CvTemplate {
   final List<String> interests;
   final ContactDetails? contactDetails;
   final List<Experience> experiences;
-  final List<Education> education;
+  final List<CvEducation> education;
   final TemplateStyle? templateStyle;
   final DateTime? createdAt;
   final DateTime? lastModified;
@@ -106,7 +106,7 @@ class CvTemplate {
     List<String>? interests,
     ContactDetails? contactDetails,
     List<Experience>? experiences,
-    List<Education>? education,
+    List<CvEducation>? education,
     TemplateStyle? templateStyle,
     DateTime? createdAt,
     DateTime? lastModified,
@@ -197,7 +197,7 @@ class CvInstance {
               .toList() ??
           [],
       education: (json['education'] as List<dynamic>?)
-              ?.map((e) => Education.fromJson(e as Map<String, dynamic>))
+              ?.map((e) => CvEducation.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       customizations: (json['customizations'] as Map<String, dynamic>?)
@@ -243,7 +243,7 @@ class CvInstance {
   final List<String> interests;
   final ContactDetails? contactDetails;
   final List<Experience> experiences;
-  final List<Education> education;
+  final List<CvEducation> education;
   final Map<String, String> customizations;
   final DateTime? lastModified;
 
@@ -276,7 +276,7 @@ class CvInstance {
     List<String>? interests,
     ContactDetails? contactDetails,
     List<Experience>? experiences,
-    List<Education>? education,
+    List<CvEducation>? education,
     Map<String, String>? customizations,
     DateTime? lastModified,
   }) {

@@ -16,6 +16,7 @@ class MigrationService {
   MigrationService._();
 
   final StorageService _storage = StorageService.instance;
+  final _profileRepo = StorageService.instance.profiles;
 
   /// Check if migration is needed and perform it
   Future<bool> migrateIfNeeded() async {
@@ -49,11 +50,11 @@ class MigrationService {
       final enProfile = _createProfileFromLegacyData(json, 'en');
 
       // Save to new location
-      await _storage.saveMasterProfile(enProfile);
+      await _profileRepo.save(enProfile);
 
       // Create empty German profile
       final deProfile = MasterProfile.empty('de');
-      await _storage.saveMasterProfile(deProfile);
+      await _profileRepo.save(deProfile);
 
       // Create migration marker
       await migrationMarkerFile.writeAsString(DateTime.now().toIso8601String());

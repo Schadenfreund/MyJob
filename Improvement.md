@@ -7,6 +7,40 @@
 
 ---
 
+## App Context (for future sessions)
+
+**MyJob** is a Windows-first Flutter desktop app for managing job applications.
+
+### Intended Workflow
+1. **Profile tab** — User imports or creates profile data (supports multiple languages) for CV and cover letter fields.
+2. **Applications tab** — User creates job applications using stored profile data as a template, customizes per-job, generates CV and cover letter PDFs. Application status is tracked here. Profile data is **never edited** here — only in the Profile tab.
+3. **Notes tab** — To-dos, company leads, general notes, reminders.
+4. **Settings tab** — Backup/restore all data, add custom languages, choose theme.
+
+### Project Structure
+- **Models:** `master_profile`, `cv_data` (`CvEducation`), `job_application`, `cover_letter`, `cv_template`, `template_customization`, `note_item`
+- **Providers:** `UserDataProvider`, `ApplicationsProvider`, `NotesProvider`, `SettingsProvider`
+- **Services:** `StorageService` (central persistence), `BackupService`, `PdfService`, `UpdateService`, `LogService`, `UnifiedYamlImportService`, `ApplicationExportService`
+- **PDF system:** `BasePdfTemplate` contract, components in `lib/pdf/components/`, shared helpers in `lib/pdf/shared/`, cover letter + CV templates
+- **Screens:** Profile, Applications, Notes, Settings (in `lib/screens/`)
+- **Utils:** `PlatformUtils` (safe URL/folder opening), `AppDateUtils`, `FileConfig.sanitizeFilename`
+
+### Coding Principles
+- **DRY** — Reuse existing utilities (`PlatformUtils`, `AppDateUtils`, `CoverLetterHelpers`, `FileConfig.sanitizeFilename`, generic `_loadPdfSettings`/`_savePdfSettings`)
+- **Backwards compatibility** — Old UserData folders, JSON presets, and backups must load without errors. Graceful fallbacks for missing/unknown keys.
+- **Robust error handling** — Use `LogService` (not `debugPrint`), no silent `catch (_)` in critical paths
+- **No over-engineering** — Minimal changes, no speculative abstractions
+- **Backup/restore integrity** — Atomic operations, relative path storage, path remapping on restore, validation
+- **Security** — No command injection (`PlatformUtils`), path traversal checks, checksum verification for updates
+
+### Open Items Summary
+- **Phase 1–2:** All fixes applied; remaining items are **manual verification** tasks (URLs with `&`, mismatched hash, `../` traversal, filename output, PDF settings, preset loading)
+- **Phase 3.5:** `StorageService` scope reduction — done (3 repositories extracted)
+- **Phase 4.2:** Surface critical operation errors to UI — ✅ resolved
+- **Backwards Compatibility Checklist:** All items need verification pass before shipping
+
+---
+
 ## Phase 1 — Bugs & Security (Priority: Immediate)
 
 Complexity: Low | Effort: ~2-3 hours | Breaking changes: None
@@ -140,61 +174,107 @@ Complexity: Medium-High | Effort: ~2-3 days | Breaking changes: Low (see notes)
 
 > These are worthwhile but not urgent. Tackle when actively feeling the pain or before a major feature addition.
 
-### 3.1 Migrate legacy cover letter templates to `BasePdfTemplate` contract
-- **Files:** `lib/pdf/cover_letter_templates/electric_cover_letter_template.dart`, `modern_two_cover_letter_template.dart`
-- **Issue:** These use `static void build(pw.Document, ...)` instead of extending `BasePdfTemplate<CoverLetter>`. They're commented out of the template registry.
-- **Fix:** Rewrite to extend `BasePdfTemplate<CoverLetter>`, implement the `build()` → `Future<Uint8List>` contract. Re-register in `PdfTemplateRegistry`.
-- **Breaking:** None — templates generate PDFs on the fly, nothing is persisted about which class was used.
-- [ ] ElectricCoverLetterTemplate migrated
-- [ ] ModernTwoCoverLetterTemplate migrated
-- [ ] Both registered in PdfTemplateRegistry
-- [ ] Verified: PDF output matches previous
+### ~~3.1 Migrate legacy cover letter templates to `BasePdfTemplate` contract~~
+- **Status:** Resolved (v1.1.8)
+- **Electric:** Deleted — 100% dead code, zero active callers, commented out of registry.
+- **ModernTwo:** Actively used as the `Compact` cover letter preset in `PdfService`.
+  Still uses old `static build()` pattern but works correctly. Not worth migrating
+  unless the template itself is being reworked.
+- [x] ElectricCoverLetterTemplate deleted (dead code)
+- [x] Registry reference removed
+- [x] PDF README updated
 
-### 3.2 Refactor `UnifiedImportResult` into sealed class hierarchy
-- **File:** `lib/services/unified_yaml_import_service.dart:350-549`
-- **Issue:** Single class carries nullable fields for both CV and cover letter import results.
-- **Fix:** `sealed class ImportResult` with `CvImportResult` and `CoverLetterImportResult` subclasses.
-- **Breaking:** None — only affects in-memory import flow.
-- [ ] Sealed classes created
-- [ ] Import dialog updated to pattern-match
-- [ ] Verified: YAML import still works for both types
+### ~~3.2 Refactor `UnifiedImportResult` into sealed class hierarchy~~
+- **Status:** Resolved (v1.1.8)
+- **What changed:**
+  - `UnifiedImportResult` is now a `sealed class` with three subtypes:
+    `CvImportResult`, `CoverLetterImportResult`, `ImportError`
+  - Each subtype carries only its own fields — no more nullable cross-type ambiguity
+  - Factory constructors (`UnifiedImportResult.cv()`, `.coverLetter()`, `.error()`) preserved
+    for zero-diff in the service layer
+  - Dialog updated to use Dart 3 pattern matching (`switch`, `case ... :final`)
+  - `isCvData` / `isCoverLetter` convenience getters kept on the sealed base
+- [x] Sealed classes created
+- [x] Import dialog updated to pattern-match
+- [x] Verified: analyzer reports zero errors
 
-### 3.3 Unify or rename duplicate `Education` model
-- **Files:** `lib/models/master_profile.dart:134` (DateTime fields, has `id`) vs `lib/models/cv_data.dart:326` (String fields, no `id`)
-- **Issue:** Two classes named `Education` with different fields. Dialog code manually converts between them.
-- **Fix:** Either unify into one class or rename the CV version to `CvEducationEntry`. Ensure `fromJson` accepts both old and new key formats for backwards compatibility.
-- **Breaking:** **Medium risk** — saved JSON must still parse. Use migration-aware `fromJson`.
-- [ ] Models unified or renamed
-- [ ] Backwards-compatible fromJson
-- [ ] Verified: old saved data loads correctly
+### ~~3.3 Unify or rename duplicate `Education` model~~
+- **Status:** Resolved
+- **Files:** `lib/models/master_profile.dart:134` vs `lib/models/cv_data.dart:326`
+- **Analysis findings:**
+  - `master_profile.Education` is the **canonical data model** — used everywhere in the GUI:
+    - Profile tab (CRUD via `EducationSection` + `EducationEditDialog`)
+    - `JobCvData` (per-application clones, serialised to JSON)
+    - `UserDataProvider` (state management)
+    - `UnifiedYamlImportService` (YAML import)
+    - Fields: `id`, `institution`, `degree`, `fieldOfStudy`, `startDate` (DateTime),
+      `endDate` (DateTime?), `isCurrent`, `description`, `grade`
+  - `cv_data.Education` was a **PDF display model** — only used in:
+    - `CvData` model (old-style CV data container for PDF templates)
+    - PDF components (`education_component.dart`)
+    - PDF templates (`professional_cv_template.dart`, `electric_cv_template.dart`)
+    - Fields: `institution`, `degree`, `startDate` (String), `endDate` (String?), `description`
+  - **Conversion point:** `job_application_pdf_dialog.dart` and `master_profile_pdf_dialog.dart` —
+    inline `.map()` converts `master_profile.Education` → `CvEducation` using `_formatDate()`.
+  - The two models serve **fundamentally different purposes** (rich data vs pre-formatted display).
+- **What changed:**
+  - Renamed `cv_data.Education` → `CvEducation` in `lib/models/cv_data.dart`
+  - Renamed `EducationComponent` → `CvEducationComponent` and `EducationStyle` → `CvEducationStyle`
+    in `lib/pdf/components/education_component.dart`
+  - Updated `professional_cv_template.dart` to use renamed component/style
+  - Updated `cv_template.dart` (both `CvTemplate` and `CvInstance` classes)
+  - Updated `tabbed_cv_editor.dart` (_EducationDialog and callers)
+  - Updated `job_application_pdf_dialog.dart` — removed `as cv_data` alias import
+  - Updated `master_profile_pdf_dialog.dart` — removed `as cv_data` alias import
+  - Analyzer reports zero errors from the rename
+- [x] Renamed `cv_data.Education` → `CvEducation`
+- [x] Updated all PDF template / component references
+- [x] Removed `as cv_data` import alias from both PDF dialog files
+- [x] Verified: analyzer reports zero errors
 
-### 3.4 Extract business logic from `ApplicationsScreen` (1097 lines)
-- **File:** `lib/screens/applications/applications_screen.dart`
-- **Issue:** Statistics computation, file export logic, and folder opening mixed into the widget.
-- **Fix:** Move statistics into `ApplicationsProvider`, export logic into a service method.
-- **Breaking:** None.
-- [ ] Statistics moved to provider
-- [ ] Export logic moved to service
-- [ ] Screen simplified
+### ~~3.4 Extract business logic from `ApplicationsScreen`~~
+- **Status:** Resolved (v1.1.8)
+- **What changed:**
+  - Created `ApplicationStatistics` data class in `applications_provider.dart`
+  - Moved `filterByTimeRange()`, `computeStatistics()`, `groupByCategory()` to provider
+  - Created `ApplicationExportService` (`lib/services/application_export_service.dart`)
+    with `ExportResult` return type — screen only handles folder picker + success/error UI
+  - Extracted `_buildStatRow()` to DRY up collapsed/expanded stat displays
+  - Extracted `_buildActionCard()` for readability
+  - Removed unused `app_constants.dart` import
+  - Screen reduced from 1082 → 999 lines; inline business logic eliminated
+- [x] Statistics moved to provider
+- [x] Export logic moved to service
+- [x] Screen simplified
 
-### 3.5 Reduce `StorageService` scope
-- **File:** `lib/services/storage_service.dart` (1100+ lines)
+### ~~3.5 Reduce `StorageService` scope~~
+- **Status:** Resolved (v1.1.9)
+- **File:** `lib/services/storage_service.dart` (1100+ lines → ~350 lines)
 - **Issue:** God class handling all persistence for every domain.
-- **Fix:** Extract domain-specific repository classes. `StorageService` becomes a coordinator or is replaced entirely.
-- **Breaking:** None — internal refactor only, file paths and JSON formats stay the same.
-- **Note:** Only worth doing if planning cloud sync, test suite, or multiple contributors. Current approach works for a solo project.
-- [ ] Domain repositories extracted
-- [ ] StorageService simplified or removed
-- [ ] All call sites updated
+- **What changed:**
+  - Extracted `ProfileRepository` (`lib/services/profile_repository.dart`) —
+    master profile CRUD, language discovery, profile PDF settings
+  - Extracted `ApplicationRepository` (`lib/services/application_repository.dart`) —
+    application CRUD, job folders, profile cloning, job CV/CL data, job PDF settings
+  - Extracted `NotesRepository` (`lib/services/notes_repository.dart`) —
+    notes CRUD, YAML serialization helpers
+  - `StorageService` retains: `getUserDataPath()`, path portability helpers,
+    shared PDF settings I/O, legacy CV/CoverLetter methods, export/import orchestration
+  - Repositories exposed as `StorageService.instance.profiles`, `.applications`, `.notes`
+  - Updated 10 caller files to use new repository API
+  - `flutter analyze` reports zero errors
+- [x] Domain repositories extracted
+- [x] StorageService simplified
+- [x] All call sites updated
 
 ### 3.6 Fix mutable lists inside "immutable" models
 - **Files:** `lib/models/master_profile.dart`, `lib/models/job_application.dart`
 - **Issue:** `MasterProfile.empty()` creates mutable `[]` lists. External code could mutate them, bypassing `copyWith`.
 - **Fix:** Use `const []` in constructors or `List.unmodifiable()` in factories.
 - **Breaking:** None if done carefully — ensure no code relies on mutating these lists directly.
-- [ ] Identified all mutable list fields
-- [ ] Made immutable
-- [ ] Verified: no code mutates lists directly
+- [x] Identified all mutable list fields (only `MasterProfile.empty()`)
+- [x] Made immutable (`const []` in factory constructor)
+- [x] Verified: no code mutates lists directly (grep confirmed)
 
 ---
 
@@ -220,7 +300,13 @@ Complexity: Low-Medium | Effort: ~1-2 days | Breaking changes: None
   (added logWarning)
 - [x] 5 intentionally kept silent: tryParse pattern (1), font path
   probing (3), enum fallback (1)
-- [ ] Critical operations surface errors to UI
+- [x] Critical operations surface errors to UI
+  - NotesProvider: added `_error` state + error display with retry in notes_screen
+  - ApplicationsScreen: added error display with retry for load failures
+  - Base PDF dialog: made `showError`/`showSuccess` protected for subclass access
+  - JobApplicationPdfDialog: 5 catch blocks now call `showError()` (save settings, field changes, experience, skills, remove experience)
+  - MasterProfilePdfDialog: save settings catch block now calls `showError()`
+  - Added `error_loading_applications`, `error_loading_notes`, `retry` translation keys (EN + DE)
 
 ### 4.3 Fix inconsistent log directory path
 - **File:** `lib/services/log_service.dart`

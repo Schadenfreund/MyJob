@@ -5,12 +5,14 @@ import '../services/log_service.dart';
 
 /// Provider for managing notes
 class NotesProvider with ChangeNotifier {
-  final _storage = StorageService.instance;
+  final _notesRepo = StorageService.instance.notes;
   List<NoteItem> _notes = [];
   bool _isLoading = false;
+  String? _error;
 
   List<NoteItem> get notes => _notes;
   bool get isLoading => _isLoading;
+  String? get error => _error;
 
   String _searchQuery = '';
   String get searchQuery => _searchQuery;
@@ -107,11 +109,13 @@ class NotesProvider with ChangeNotifier {
   /// Load all notes
   Future<void> loadNotes() async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
-      _notes = await _storage.loadNotes();
+      _notes = await _notesRepo.loadAll();
     } catch (e) {
+      _error = 'Failed to load notes: $e';
       logError('Error loading notes', error: e, tag: 'Notes');
     } finally {
       _isLoading = false;
@@ -122,7 +126,7 @@ class NotesProvider with ChangeNotifier {
   /// Add or update a note
   Future<void> saveNote(NoteItem note) async {
     try {
-      await _storage.saveNote(note);
+      await _notesRepo.save(note);
 
       final index = _notes.indexWhere((n) => n.id == note.id);
       if (index >= 0) {
@@ -141,7 +145,7 @@ class NotesProvider with ChangeNotifier {
   /// Delete a note
   Future<void> deleteNote(String id) async {
     try {
-      await _storage.deleteNote(id);
+      await _notesRepo.delete(id);
       _notes.removeWhere((note) => note.id == id);
       notifyListeners();
     } catch (e) {
@@ -213,7 +217,7 @@ class NotesProvider with ChangeNotifier {
       }
 
       // Save all updated notes
-      await _storage.saveAllNotes(_notes);
+      await _notesRepo.saveAll(_notes);
       notifyListeners();
     } catch (e) {
       logError('Error reordering notes', error: e, tag: 'Notes');

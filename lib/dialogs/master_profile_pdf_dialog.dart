@@ -9,7 +9,7 @@ import '../models/master_profile.dart';
 import '../models/template_style.dart';
 import '../models/template_customization.dart';
 import '../models/cv_data.dart';
-import '../models/cv_data.dart' as cv_data;
+
 import '../models/cover_letter.dart';
 import '../services/log_service.dart';
 import '../services/pdf_service.dart';
@@ -51,7 +51,7 @@ class MasterProfilePdfDialog extends BaseTemplatePdfPreviewDialog {
 
 class _MasterProfilePdfDialogState
     extends BaseTemplatePdfPreviewDialogState<MasterProfilePdfDialog> {
-  final StorageService _storage = StorageService.instance;
+  final _profileRepo = StorageService.instance.profiles;
 
   @override
   void initState() {
@@ -89,10 +89,10 @@ class _MasterProfilePdfDialogState
   Future<void> _loadSavedSettings() async {
     try {
       final settings = widget.isCV
-          ? await _storage
-              .loadMasterProfileCvPdfSettings(widget.profile.language)
-          : await _storage
-              .loadMasterProfileClPdfSettings(widget.profile.language);
+          ? await _profileRepo
+              .loadCvPdfSettings(widget.profile.language)
+          : await _profileRepo
+              .loadClPdfSettings(widget.profile.language);
 
       if (mounted) {
         final (style, customization) = settings;
@@ -135,13 +135,13 @@ class _MasterProfilePdfDialogState
   Future<void> _savePdfSettings() async {
     try {
       if (widget.isCV) {
-        await _storage.saveMasterProfileCvPdfSettings(
+        await _profileRepo.saveCvPdfSettings(
           widget.profile.language,
           selectedStyle,
           controller.customization,
         );
       } else {
-        await _storage.saveMasterProfileClPdfSettings(
+        await _profileRepo.saveClPdfSettings(
           widget.profile.language,
           selectedStyle,
           controller.customization,
@@ -150,6 +150,7 @@ class _MasterProfilePdfDialogState
       logDebug('Settings saved as preset', tag: 'MasterPDF');
     } catch (e) {
       logError('Failed to save PDF settings', error: e, tag: 'MasterPDF');
+      showError('Failed to save PDF settings: $e');
     }
   }
 
@@ -363,7 +364,7 @@ class _MasterProfilePdfDialogState
         );
       }).toList(),
       education: widget.profile.education
-          .map((edu) => cv_data.Education(
+          .map((edu) => CvEducation(
                 institution: edu.institution,
                 degree: edu.degree,
                 startDate: _formatDate(edu.startDate),
@@ -371,8 +372,7 @@ class _MasterProfilePdfDialogState
                     edu.endDate != null ? _formatDate(edu.endDate!) : context.tr('present'),
                 description: edu.description ?? '',
               ))
-          .toList()
-          .cast<cv_data.Education>(),
+          .toList(),
     );
 
     return await PdfService.instance.generateCvPdf(

@@ -23,7 +23,8 @@ lib/pdf/
 │   ├── professional_cv_template.dart  # Main flexible template
 │   └── electric_cv_template.dart      # Legacy template
 └── cover_letter_templates/   # Cover letter implementations
-    ├── electric_cover_letter_template.dart
+    ├── classic_cover_letter_template.dart
+    ├── modern_two_cover_letter_template.dart
     └── professional_cover_letter_template.dart
 ```
 

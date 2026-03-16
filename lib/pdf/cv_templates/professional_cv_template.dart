@@ -1565,7 +1565,7 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
           title: 'Education',
           styling: s,
           addBottomMargin: false,
-          content: EducationComponent.section(
+          content: CvEducationComponent.section(
             education: cv.education,
             styling: s,
           ),
@@ -1995,10 +1995,10 @@ class ProfessionalCvTemplate extends BasePdfTemplate<CvData>
       styling: s,
       iconType: 'school',
       addBottomMargin: addBottomMargin,
-      content: EducationComponent.section(
+      content: CvEducationComponent.section(
         education: cv.education,
         styling: s,
-        style: isCompact ? EducationStyle.compact : EducationStyle.standard,
+        style: isCompact ? CvEducationStyle.compact : CvEducationStyle.standard,
       ),
     );
   }

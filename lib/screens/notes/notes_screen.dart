@@ -85,6 +85,26 @@ class _NotesScreenState extends State<NotesScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    if (notesProvider.error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+            const SizedBox(height: 16),
+            Text(context.tr('error_loading_notes'),
+                style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              onPressed: () => notesProvider.loadNotes(),
+              icon: const Icon(Icons.refresh),
+              label: Text(context.tr('retry')),
+            ),
+          ],
+        ),
+      );
+    }
+
     // Get categorized notes
     final activeTodos = notesProvider.activeTodos;
     final completedTodos = notesProvider.completedTodos;

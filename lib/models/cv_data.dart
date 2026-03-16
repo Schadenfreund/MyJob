@@ -46,7 +46,7 @@ class CvData {
               .toList() ??
           [],
       education: (json['education'] as List<dynamic>?)
-              ?.map((e) => Education.fromJson(e as Map<String, dynamic>))
+              ?.map((e) => CvEducation.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       lastModified: json['lastModified'] != null
@@ -64,7 +64,7 @@ class CvData {
   final List<String> interests;
   final ContactDetails? contactDetails;
   final List<Experience> experiences;
-  final List<Education> education;
+  final List<CvEducation> education;
   final DateTime? lastModified;
 
   Map<String, dynamic> toJson() => {
@@ -91,7 +91,7 @@ class CvData {
     List<String>? interests,
     ContactDetails? contactDetails,
     List<Experience>? experiences,
-    List<Education>? education,
+    List<CvEducation>? education,
     DateTime? lastModified,
   }) {
     return CvData(
@@ -164,13 +164,13 @@ class CvData {
         ),
       ],
       education: [
-        Education(
+        CvEducation(
           institution: 'University of Technology',
           degree: 'Master of Business Administration',
           startDate: '2015',
           endDate: '2017',
         ),
-        Education(
+        CvEducation(
           institution: 'State University',
           degree: 'Bachelor of Science in Computer Science',
           startDate: '2011',
@@ -322,9 +322,12 @@ class Experience {
   String get dateRange => endDate != null ? '$startDate - $endDate' : startDate;
 }
 
-/// Education entry
-class Education {
-  Education({
+/// Education entry for PDF display (pre-formatted string dates)
+///
+/// This is distinct from `master_profile.Education` which is the canonical
+/// data model with DateTime fields, id, fieldOfStudy, grade, etc.
+class CvEducation {
+  CvEducation({
     required this.institution,
     required this.degree,
     required this.startDate,
@@ -332,8 +335,8 @@ class Education {
     this.description,
   });
 
-  factory Education.fromJson(Map<String, dynamic> json) {
-    return Education(
+  factory CvEducation.fromJson(Map<String, dynamic> json) {
+    return CvEducation(
       institution: json['institution'] as String,
       degree: json['degree'] as String,
       startDate: json['startDate'] as String,

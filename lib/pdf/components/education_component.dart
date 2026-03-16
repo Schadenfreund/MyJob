@@ -3,15 +3,15 @@ import '../../models/cv_data.dart';
 import '../shared/pdf_styling.dart';
 import '../shared/pdf_icons.dart';
 
-/// Education Component - Professional education rendering
+/// CvEducation Component - Professional education rendering
 ///
 /// Provides clean education entry rendering with consistent styling.
-class EducationComponent {
-  EducationComponent._();
+class CvEducationComponent {
+  CvEducationComponent._();
 
   /// Render a single education entry
   static pw.Widget entry({
-    required Education education,
+    required CvEducation education,
     required PdfStyling styling,
     bool showIcon = true,
   }) {
@@ -97,7 +97,7 @@ class EducationComponent {
 
   /// Render a compact education entry (one-liner)
   static pw.Widget compactEntry({
-    required Education education,
+    required CvEducation education,
     required PdfStyling styling,
   }) {
     return pw.Container(
@@ -148,7 +148,7 @@ class EducationComponent {
 
   /// Render education entry in card format
   static pw.Widget cardEntry({
-    required Education education,
+    required CvEducation education,
     required PdfStyling styling,
   }) {
     return pw.Container(
@@ -227,9 +227,9 @@ class EducationComponent {
 
   /// Render all education entries in a section
   static pw.Widget section({
-    required List<Education> education,
+    required List<CvEducation> education,
     required PdfStyling styling,
-    EducationStyle style = EducationStyle.standard,
+    CvEducationStyle style = CvEducationStyle.standard,
   }) {
     if (education.isEmpty) {
       return pw.SizedBox();
@@ -239,13 +239,13 @@ class EducationComponent {
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: education.map((edu) {
         switch (style) {
-          case EducationStyle.standard:
+          case CvEducationStyle.standard:
             return entry(education: edu, styling: styling);
 
-          case EducationStyle.compact:
+          case CvEducationStyle.compact:
             return compactEntry(education: edu, styling: styling);
 
-          case EducationStyle.cards:
+          case CvEducationStyle.cards:
             return cardEntry(education: edu, styling: styling);
         }
       }).toList(),
@@ -253,8 +253,8 @@ class EducationComponent {
   }
 }
 
-/// Education rendering styles
-enum EducationStyle {
+/// CvEducation rendering styles
+enum CvEducationStyle {
   standard, // Default style with full details
   compact, // One-liner format
   cards, // Card-based layout

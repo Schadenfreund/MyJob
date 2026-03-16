@@ -280,7 +280,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
           error: e, stackTrace: stackTrace, tag: 'PdfPreview');
       if (mounted) {
         _controller.setGenerating(false);
-        _showError('Error generating PDF: $e');
+        showError('Error generating PDF: $e');
       }
     }
   }
@@ -308,11 +308,11 @@ abstract class BaseTemplatePdfPreviewDialogState<
       if (!mounted) return;
       _controller.setGenerating(false);
 
-      _showSuccess('PDF exported to ${path.basename(result)}');
+      showSuccess('PDF exported to ${path.basename(result)}');
     } catch (e) {
       if (!mounted) return;
       _controller.setGenerating(false);
-      _showError('Error exporting PDF: $e');
+      showError('Error exporting PDF: $e');
     }
   }
 
@@ -325,7 +325,7 @@ abstract class BaseTemplatePdfPreviewDialogState<
         name: '${getDocumentName()}.pdf',
       );
     } catch (e) {
-      _showError('Error printing PDF: $e');
+      showError('Error printing PDF: $e');
     }
   }
 
@@ -555,7 +555,8 @@ abstract class BaseTemplatePdfPreviewDialogState<
   // HELPERS
   // ============================================================================
 
-  void _showSuccess(String message) {
+  @protected
+  void showSuccess(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -566,7 +567,8 @@ abstract class BaseTemplatePdfPreviewDialogState<
     );
   }
 
-  void _showError(String message) {
+  @protected
+  void showError(String message) {
     // Log error for debugging
     logError(message, tag: 'PdfPreview');
 

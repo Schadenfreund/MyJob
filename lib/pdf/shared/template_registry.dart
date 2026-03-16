@@ -83,7 +83,6 @@ class PdfTemplateRegistry {
   static final List<BasePdfTemplate<CoverLetter>> coverLetterTemplates = [
     ProfessionalCoverLetterTemplate
         .instance, // New professional template (recommended)
-    // ElectricCoverLetterTemplate.instance, // Legacy - not compatible with BasePdfTemplate
     // Add more cover letter templates here:
   ];
 

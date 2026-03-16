@@ -11,7 +11,7 @@ import '../models/job_cover_letter.dart';
 import '../models/template_style.dart';
 import '../models/template_customization.dart';
 import '../models/cv_data.dart';
-import '../models/cv_data.dart' as cv_data;
+
 import '../models/cover_letter.dart';
 import '../utils/platform_utils.dart';
 import '../models/user_data/work_experience.dart';
@@ -63,7 +63,7 @@ class JobApplicationPdfDialog extends BaseTemplatePdfPreviewDialog {
 
 class _JobApplicationPdfDialogState
     extends BaseTemplatePdfPreviewDialogState<JobApplicationPdfDialog> {
-  final StorageService _storage = StorageService.instance;
+  final _appRepo = StorageService.instance.applications;
 
   @override
   void initState() {
@@ -100,8 +100,8 @@ class _JobApplicationPdfDialogState
     try {
       // Load settings based on document type (CV or Cover Letter)
       final settings = widget.isCV
-          ? await _storage.loadJobCvPdfSettings(widget.application.folderPath!)
-          : await _storage.loadJobClPdfSettings(widget.application.folderPath!);
+          ? await _appRepo.loadCvPdfSettings(widget.application.folderPath!)
+          : await _appRepo.loadClPdfSettings(widget.application.folderPath!);
 
       if (mounted) {
         final (style, customization) = settings;
@@ -138,13 +138,13 @@ class _JobApplicationPdfDialogState
     try {
       // Save to correct file based on document type (CV or Cover Letter)
       if (widget.isCV) {
-        await _storage.saveJobCvPdfSettings(
+        await _appRepo.saveCvPdfSettings(
           widget.application.folderPath!,
           selectedStyle,
           controller.customization,
         );
       } else {
-        await _storage.saveJobClPdfSettings(
+        await _appRepo.saveClPdfSettings(
           widget.application.folderPath!,
           selectedStyle,
           controller.customization,
@@ -152,6 +152,7 @@ class _JobApplicationPdfDialogState
       }
     } catch (e) {
       logError('Failed to save PDF settings', error: e, tag: 'JobPDF');
+      showError('Failed to save PDF settings: $e');
     }
   }
 
@@ -421,7 +422,7 @@ class _JobApplicationPdfDialogState
         );
       }).toList(),
       education: widget.cvData.education
-          .map((edu) => cv_data.Education(
+          .map((edu) => CvEducation(
                 institution: edu.institution,
                 degree: edu.degree,
                 startDate: _formatDate(edu.startDate),
@@ -429,8 +430,7 @@ class _JobApplicationPdfDialogState
                     edu.endDate != null ? _formatDate(edu.endDate!) : context.tr('present'),
                 description: edu.description ?? '',
               ))
-          .toList()
-          .cast<cv_data.Education>(),
+          .toList(),
     );
 
     // Debug: Verify CvData.profile is set
@@ -753,14 +753,14 @@ class _JobApplicationPdfDialogState
           closing: getFieldValue('closing', widget.coverLetter!.closing),
         );
 
-        await _storage.saveJobCoverLetter(
+        await _appRepo.saveCoverLetter(
           widget.application.folderPath!,
           updatedCoverLetter,
         );
       }
     } catch (e) {
-      // Silent fail - user will see unsaved changes in editor
       logError('Failed to auto-save field changes', error: e, tag: 'JobPDF');
+      showError('Failed to save field changes: $e');
     }
   }
 
@@ -787,12 +787,13 @@ class _JobApplicationPdfDialogState
       );
 
       // Save to job folder
-      await _storage.saveJobCvData(
+      await _appRepo.saveCvData(
         widget.application.folderPath!,
         updatedCvData,
       );
     } catch (e) {
       logError('Failed to save experience changes', error: e, tag: 'JobPDF');
+      showError('Failed to save experience changes: $e');
     }
   }
 
@@ -831,12 +832,13 @@ class _JobApplicationPdfDialogState
       );
 
       // Save to job folder
-      await _storage.saveJobCvData(
+      await _appRepo.saveCvData(
         widget.application.folderPath!,
         updatedCvData,
       );
     } catch (e) {
       logError('Failed to save skills changes', error: e, tag: 'JobPDF');
+      showError('Failed to save skills changes: $e');
     }
   }
 
@@ -856,7 +858,7 @@ class _JobApplicationPdfDialogState
       );
 
       // Save to job folder
-      await _storage.saveJobCvData(
+      await _appRepo.saveCvData(
         widget.application.folderPath!,
         updatedCvData,
       );
@@ -865,6 +867,7 @@ class _JobApplicationPdfDialogState
       setState(() {});
     } catch (e) {
       logError('Failed to remove experience', error: e, tag: 'JobPDF');
+      showError('Failed to remove experience: $e');
     }
   }
 

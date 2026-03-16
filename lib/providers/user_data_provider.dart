@@ -14,7 +14,7 @@ import '../constants/app_constants.dart';
 /// independent and stored in profiles/{langCode}/. Profiles are auto-discovered
 /// from the file system on load.
 class UserDataProvider with ChangeNotifier {
-  final StorageService _storage = StorageService.instance;
+  final _profileRepo = StorageService.instance.profiles;
 
   // Dynamic profile map keyed by language code (e.g. 'en', 'de', 'hr')
   final Map<String, MasterProfile?> _profiles = {};
@@ -68,9 +68,9 @@ class UserDataProvider with ChangeNotifier {
   /// Load all profiles by discovering them from the file system
   Future<void> loadAll() async {
     _profiles.clear();
-    final codes = await _storage.discoverProfileLanguageCodes();
+    final codes = await _profileRepo.discoverLanguageCodes();
     for (final code in codes) {
-      _profiles[code] = await _storage.loadMasterProfile(code);
+      _profiles[code] = await _profileRepo.load(code);
     }
     // If current code not in discovered profiles, switch to first available
     if (_profiles.isNotEmpty && !_profiles.containsKey(_currentLanguageCode)) {
@@ -96,7 +96,7 @@ class UserDataProvider with ChangeNotifier {
     final profile = MasterProfile.empty(langCode);
     _profiles[langCode] = profile;
     _currentLanguageCode = langCode;
-    await _storage.saveMasterProfile(profile);
+    await _profileRepo.save(profile);
     notifyListeners();
     await _onLanguageSwitch?.call(langCode);
   }
@@ -104,7 +104,7 @@ class UserDataProvider with ChangeNotifier {
   /// Delete a profile entirely (removes folder from disk)
   Future<void> deleteProfile(String langCode) async {
     _profiles.remove(langCode);
-    await _storage.deleteProfileFolder(langCode);
+    await _profileRepo.deleteFolder(langCode);
     if (_currentLanguageCode == langCode) {
       _currentLanguageCode =
           _profiles.isNotEmpty ? _profiles.keys.first : 'en';
@@ -322,7 +322,7 @@ class UserDataProvider with ChangeNotifier {
   /// Save the updated profile
   Future<void> _saveProfile(MasterProfile profile) async {
     _profiles[profile.language] = profile;
-    await _storage.saveMasterProfile(profile);
+    await _profileRepo.save(profile);
     notifyListeners();
   }
 

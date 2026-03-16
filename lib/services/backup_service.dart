@@ -24,6 +24,7 @@ class BackupService {
     'profiles',
     'notes',
     'pdf_presets',
+    'localization', // custom language files
     'cvs', // legacy
     'cover_letters', // legacy
   ];
@@ -562,14 +563,26 @@ class BackupService {
       int fileCount = 0;
       for (final file in archive) {
         final filename = file.name;
+
+        // Path traversal guard — skip entries that escape destPath
+        if (filename.contains('..') || filename.startsWith('/') || filename.startsWith('\\')) {
+          debugPrint('[Restore Isolate] Skipping suspicious entry: $filename');
+          continue;
+        }
+        final resolvedPath = p.normalize(p.join(destPath, filename));
+        if (!resolvedPath.startsWith(destPath)) {
+          debugPrint('[Restore Isolate] Skipping path traversal: $filename');
+          continue;
+        }
+
         if (file.isFile) {
           final data = file.content as List<int>;
-          final outFile = File(p.join(destPath, filename));
+          final outFile = File(resolvedPath);
           outFile.parent.createSync(recursive: true);
           outFile.writeAsBytesSync(data);
           fileCount++;
         } else {
-          Directory(p.join(destPath, filename)).createSync(recursive: true);
+          Directory(resolvedPath).createSync(recursive: true);
         }
       }
 

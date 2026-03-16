@@ -37,7 +37,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
   bool _hasUnsavedChanges = false;
   bool _isSaving = false;
   int _currentTabIndex = 0; // Track current tab (0-7, where 7 is Cover Letter)
-  final _storage = StorageService.instance;
+  final _appRepo = StorageService.instance.applications;
 
   @override
   void initState() {
@@ -54,7 +54,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
     if (widget.application.folderPath == null) return;
 
     try {
-      final coverLetter = await _storage.loadJobCoverLetter(
+      final coverLetter = await _appRepo.loadCoverLetter(
         widget.application.folderPath!,
       );
 
@@ -105,7 +105,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
     setState(() => _isSaving = true);
 
     try {
-      await _storage.saveJobCvData(
+      await _appRepo.saveCvData(
         widget.application.folderPath!,
         _currentCvData,
       );
@@ -131,7 +131,7 @@ class _JobCvEditorScreenState extends State<JobCvEditorScreen> {
     setState(() => _isSaving = true);
 
     try {
-      await _storage.saveJobCvData(
+      await _appRepo.saveCvData(
         widget.application.folderPath!,
         _currentCvData,
       );

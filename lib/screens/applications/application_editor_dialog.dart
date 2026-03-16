@@ -106,7 +106,7 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
       // Load cover letter to get subject
       if (_existingApplication!.folderPath != null) {
         final cl = await provider.storage
-            .loadJobCoverLetter(_existingApplication!.folderPath!);
+            .loadCoverLetter(_existingApplication!.folderPath!);
         if (cl != null) {
           _subjectController.text = cl.subject;
         }
@@ -411,9 +411,9 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
       // Save subject to cover letter if it changed
       if (_existingApplication!.folderPath != null) {
         final cl = await applicationsProvider.storage
-            .loadJobCoverLetter(_existingApplication!.folderPath!);
+            .loadCoverLetter(_existingApplication!.folderPath!);
         if (cl != null) {
-          await applicationsProvider.storage.saveJobCoverLetter(
+          await applicationsProvider.storage.saveCoverLetter(
             _existingApplication!.folderPath!,
             cl.copyWith(subject: _subjectController.text),
           );
@@ -449,9 +449,9 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
       // Save subject to newly created cover letter if provided
       if (_subjectController.text.isNotEmpty && newApp.folderPath != null) {
         final cl = await applicationsProvider.storage
-            .loadJobCoverLetter(newApp.folderPath!);
+            .loadCoverLetter(newApp.folderPath!);
         if (cl != null) {
-          await applicationsProvider.storage.saveJobCoverLetter(
+          await applicationsProvider.storage.saveCoverLetter(
             newApp.folderPath!,
             cl.copyWith(subject: _subjectController.text),
           );

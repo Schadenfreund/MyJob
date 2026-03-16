@@ -1,21 +1,18 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:io';
-import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
-import 'package:intl/intl.dart';
 import '../../providers/applications_provider.dart';
 import '../../providers/user_data_provider.dart';
 import '../../providers/app_state.dart';
 import '../../models/job_application.dart';
-import '../../constants/app_constants.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/ui_utils.dart';
 import '../../utils/dialog_utils.dart';
 import '../../utils/platform_utils.dart';
 import '../../services/preferences_service.dart';
 import '../../services/storage_service.dart';
-import '../../services/application_statistics_markdown_service.dart';
+import '../../services/application_export_service.dart';
 import 'application_editor_dialog.dart';
 import '../../dialogs/job_application_pdf_dialog.dart';
 import '../job_cv_editor/job_cv_editor_screen.dart';
@@ -104,33 +101,6 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
   Future<void> _saveRejectedExpanded(bool value) => _saveExpandedState(
       _prefKeyRejectedExpanded, value, (v) => _rejectedExpanded = v);
 
-  List<JobApplication> _filterApplicationsByTimeRange(
-      List<JobApplication> apps) {
-    if (_timeRange == 'all') return apps;
-
-    final now = DateTime.now();
-    DateTime cutoffDate;
-
-    switch (_timeRange) {
-      case 'month':
-        cutoffDate = DateTime(now.year, now.month - 1, now.day);
-        break;
-      case 'quarter':
-        cutoffDate = DateTime(now.year, now.month - 3, now.day);
-        break;
-      case 'year':
-        cutoffDate = DateTime(now.year - 1, now.month, now.day);
-        break;
-      default:
-        return apps;
-    }
-
-    return apps.where((app) {
-      if (app.applicationDate == null) return false;
-      return app.applicationDate!.isAfter(cutoffDate);
-    }).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -138,6 +108,27 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
 
     if (applicationsProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (applicationsProvider.error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline,
+                size: 48, color: theme.colorScheme.error),
+            const SizedBox(height: 16),
+            Text(context.tr('error_loading_applications'),
+                style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              onPressed: () => applicationsProvider.loadApplications(),
+              icon: const Icon(Icons.refresh),
+              label: Text(context.tr('retry')),
+            ),
+          ],
+        ),
+      );
     }
 
     return Container(
@@ -156,108 +147,8 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
             ),
             const SizedBox(height: AppSpacing.lg),
 
-            // Top Action Card - Refactored to match Profile style
-            AppCardContainer(
-              padding: EdgeInsets.zero,
-              useAccentBorder: true,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary.withOpacity(0.08),
-                      theme.colorScheme.primary.withOpacity(0.02),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius:
-                      BorderRadius.circular(AppDimensions.cardBorderRadius),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Row(
-                    children: [
-                      // Icon with accent
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.sm),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(
-                              AppDimensions.inputBorderRadius),
-                        ),
-                        child: Icon(
-                          Icons.add_task_outlined,
-                          color: theme.colorScheme.primary,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      // Text content
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  context.tr('new_opportunity'),
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    context.tr('add_here'),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: theme.colorScheme.onPrimary,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              context.tr('new_opportunity_desc'),
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.textTheme.bodySmall?.color
-                                    ?.withOpacity(0.8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Row(
-                        children: [
-                          AppCardActionButton(
-                            onPressed: () => _showAddDialog(context),
-                            icon: Icons.add,
-                            label: context.tr('add'),
-                            isFilled: true,
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          AppCardActionButton(
-                            onPressed: () => _exportStatisticsPdf(context, applicationsProvider),
-                            icon: Icons.download,
-                            label: context.tr('export_report'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            // Top Action Card
+            _buildActionCard(context, applicationsProvider),
             const SizedBox(height: AppSpacing.md),
 
             // Search Bar
@@ -276,28 +167,128 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     );
   }
 
+  // ===========================================================================
+  // ACTION CARD
+  // ===========================================================================
+
+  Widget _buildActionCard(
+      BuildContext context, ApplicationsProvider provider) {
+    final theme = Theme.of(context);
+
+    return AppCardContainer(
+      padding: EdgeInsets.zero,
+      useAccentBorder: true,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primary.withOpacity(0.08),
+              theme.colorScheme.primary.withOpacity(0.02),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius:
+              BorderRadius.circular(AppDimensions.cardBorderRadius),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            children: [
+              // Icon with accent
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(
+                      AppDimensions.inputBorderRadius),
+                ),
+                child: Icon(
+                  Icons.add_task_outlined,
+                  color: theme.colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              // Text content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          context.tr('new_opportunity'),
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            context.tr('add_here'),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: theme.colorScheme.onPrimary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      context.tr('new_opportunity_desc'),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.textTheme.bodySmall?.color
+                            ?.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Row(
+                children: [
+                  AppCardActionButton(
+                    onPressed: () => _showAddDialog(context),
+                    icon: Icons.add,
+                    label: context.tr('add'),
+                    isFilled: true,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  AppCardActionButton(
+                    onPressed: () =>
+                        _exportStatistics(context, provider),
+                    icon: Icons.download,
+                    label: context.tr('export_report'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // STATISTICS CARD
+  // ===========================================================================
+
   Widget _buildStatisticsCard(
       BuildContext context, ApplicationsProvider provider) {
     final theme = Theme.of(context);
-    final allApps = provider.allApplications;
-    final apps = _filterApplicationsByTimeRange(allApps);
-
-    final total = apps.length;
-    final draft =
-        apps.where((app) => app.status == ApplicationStatus.draft).length;
-    final applied =
-        apps.where((app) => app.status == ApplicationStatus.applied).length;
-    final interviewing = apps
-        .where((app) => app.status == ApplicationStatus.interviewing)
-        .length;
-    final successful =
-        apps.where((app) => app.status == ApplicationStatus.successful).length;
-    final rejected =
-        apps.where((app) => app.status == ApplicationStatus.rejected).length;
-    final noResponse =
-        apps.where((app) => app.status == ApplicationStatus.noResponse).length;
-
-    final active = draft + applied + interviewing;
+    final apps = provider.filterByTimeRange(
+        provider.allApplications, _timeRange);
+    final stats = provider.computeStatistics(apps);
 
     return AppCardContainer(
       padding: EdgeInsets.zero,
@@ -337,59 +328,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(
                   AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildCompactStatItem(
-                      context,
-                      label: context.tr('stat_total'),
-                      value: total.toString(),
-                      icon: Icons.folder_outlined,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildCompactStatItem(
-                      context,
-                      label: context.tr('stat_active'),
-                      value: active.toString(),
-                      icon: Icons.pending_actions,
-                      color: AppColors.statusApplied,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildCompactStatItem(
-                      context,
-                      label: context.tr('stat_success'),
-                      value: successful.toString(),
-                      icon: Icons.check_circle_outline,
-                      color: AppColors.statusAccepted,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildCompactStatItem(
-                      context,
-                      label: context.tr('stat_rejected'),
-                      value: rejected.toString(),
-                      icon: Icons.cancel_outlined,
-                      color: AppColors.statusRejected,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildCompactStatItem(
-                      context,
-                      label: context.tr('stat_no_response'),
-                      value: noResponse.toString(),
-                      icon: Icons.schedule,
-                      color: AppColors.statusWithdrawn,
-                    ),
-                  ),
-                ],
-              ),
+              child: _buildStatRow(context, stats),
             ),
           ] else ...[
             const SizedBox.shrink(),
@@ -422,65 +361,73 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildCompactStatItem(
-                          context,
-                          label: context.tr('stat_total'),
-                          value: total.toString(),
-                          icon: Icons.folder_outlined,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _buildCompactStatItem(
-                          context,
-                          label: context.tr('stat_active'),
-                          value: active.toString(),
-                          icon: Icons.pending_actions,
-                          color: AppColors.statusApplied,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _buildCompactStatItem(
-                          context,
-                          label: context.tr('stat_successful'),
-                          value: successful.toString(),
-                          icon: Icons.check_circle_outline,
-                          color: AppColors.statusAccepted,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _buildCompactStatItem(
-                          context,
-                          label: context.tr('stat_rejected'),
-                          value: rejected.toString(),
-                          icon: Icons.cancel_outlined,
-                          color: AppColors.statusRejected,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _buildCompactStatItem(
-                          context,
-                          label: context.tr('stat_no_response'),
-                          value: noResponse.toString(),
-                          icon: Icons.schedule,
-                          color: AppColors.statusWithdrawn,
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildStatRow(context, stats),
                 ],
               ),
             ),
           ],
         ],
       ),
+    );
+  }
+
+  /// Builds the row of stat items — used in both collapsed and expanded views.
+  Widget _buildStatRow(BuildContext context, ApplicationStatistics stats) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: _buildCompactStatItem(
+            context,
+            label: context.tr('stat_total'),
+            value: stats.total.toString(),
+            icon: Icons.folder_outlined,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildCompactStatItem(
+            context,
+            label: context.tr('stat_active'),
+            value: stats.active.toString(),
+            icon: Icons.pending_actions,
+            color: AppColors.statusApplied,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildCompactStatItem(
+            context,
+            label: _statsExpanded
+                ? context.tr('stat_successful')
+                : context.tr('stat_success'),
+            value: stats.successful.toString(),
+            icon: Icons.check_circle_outline,
+            color: AppColors.statusAccepted,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildCompactStatItem(
+            context,
+            label: context.tr('stat_rejected'),
+            value: stats.rejected.toString(),
+            icon: Icons.cancel_outlined,
+            color: AppColors.statusRejected,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildCompactStatItem(
+            context,
+            label: context.tr('stat_no_response'),
+            value: stats.noResponse.toString(),
+            icon: Icons.schedule,
+            color: AppColors.statusWithdrawn,
+          ),
+        ),
+      ],
     );
   }
 
@@ -568,6 +515,10 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     );
   }
 
+  // ===========================================================================
+  // SEARCH BAR
+  // ===========================================================================
+
   Widget _buildSearchBar(BuildContext context, ApplicationsProvider provider) {
     final theme = Theme.of(context);
 
@@ -596,6 +547,10 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     );
   }
 
+  // ===========================================================================
+  // APPLICATIONS LIST
+  // ===========================================================================
+
   Widget _buildApplicationsList(
       BuildContext context, ApplicationsProvider provider) {
     final apps = provider.applications;
@@ -615,23 +570,11 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
       );
     }
 
-    final activeApps = apps
-        .where((app) =>
-            app.status == ApplicationStatus.draft ||
-            app.status == ApplicationStatus.applied ||
-            app.status == ApplicationStatus.interviewing)
-        .toList();
-
-    final successfulApps = apps
-        .where((app) => app.status == ApplicationStatus.successful)
-        .toList();
-
-    final noResponseApps = apps
-        .where((app) => app.status == ApplicationStatus.noResponse)
-        .toList();
-
-    final rejectedApps =
-        apps.where((app) => app.status == ApplicationStatus.rejected).toList();
+    final groups = provider.groupByCategory(apps);
+    final activeApps = groups['active']!;
+    final successfulApps = groups['successful']!;
+    final noResponseApps = groups['noResponse']!;
+    final rejectedApps = groups['rejected']!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -794,6 +737,10 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     );
   }
 
+  // ===========================================================================
+  // USER ACTIONS
+  // ===========================================================================
+
   void _showAddDialog(BuildContext context) async {
     // Check if profile has data
     final userDataProvider = context.read<UserDataProvider>();
@@ -885,10 +832,10 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         DialogUtils.showLoading(context, message: context.tr('opening_editor'));
 
     try {
-      final storage = StorageService.instance;
-      final cvData = await storage.loadJobCvData(application.folderPath!);
+      final appRepo = StorageService.instance.applications;
+      final cvData = await appRepo.loadCvData(application.folderPath!);
       final coverLetter =
-          await storage.loadJobCoverLetter(application.folderPath!);
+          await appRepo.loadCoverLetter(application.folderPath!);
 
       if (context.mounted) {
         closeLoading();
@@ -937,10 +884,10 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         message: context.tr('loading_document'));
 
     try {
-      final storage = StorageService.instance;
-      final cvData = await storage.loadJobCvData(application.folderPath!);
+      final appRepo = StorageService.instance.applications;
+      final cvData = await appRepo.loadCvData(application.folderPath!);
       final coverLetter =
-          await storage.loadJobCoverLetter(application.folderPath!);
+          await appRepo.loadCoverLetter(application.folderPath!);
 
       if (context.mounted) {
         closeLoading();
@@ -992,87 +939,78 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     }
   }
 
-  /// Export comprehensive statistics as separate English and German markdowns
-  Future<void> _exportStatisticsPdf(
-      BuildContext context, ApplicationsProvider provider) async {
-    try {
-      final apps = provider.allApplications;
+  // ===========================================================================
+  // EXPORT
+  // ===========================================================================
 
-      if (apps.isEmpty) {
-        if (context.mounted) {
-          UIUtils.showError(context, context.tr('no_apps_to_export'));
-        }
+  /// Export comprehensive statistics as separate English and German markdowns
+  Future<void> _exportStatistics(
+      BuildContext context, ApplicationsProvider provider) async {
+    final apps = provider.allApplications;
+
+    if (apps.isEmpty) {
+      if (context.mounted) {
+        UIUtils.showError(context, context.tr('no_apps_to_export'));
+      }
+      return;
+    }
+
+    // Let user choose save location
+    final outputDir = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: context.tr('select_folder_save'),
+    );
+
+    if (outputDir == null) return; // User cancelled
+
+    if (!context.mounted) return;
+
+    final closeLoading = DialogUtils.showLoading(context,
+        message: context.tr('generating_statistics'));
+
+    try {
+      final result = await ApplicationExportService.instance
+          .exportStatisticsMarkdown(
+        applications: apps,
+        outputDir: outputDir,
+      );
+
+      if (!context.mounted) return;
+      closeLoading();
+
+      if (!result.success) {
+        UIUtils.showError(context,
+            context.tr('failed_export_stats', {'error': result.error ?? ''}));
         return;
       }
 
-      // Show loading
-      if (context.mounted) {
-        DialogUtils.showLoading(context,
-            message: context.tr('generating_statistics'));
-      }
+      UIUtils.showSuccess(context, context.tr('stats_exported'));
 
-      // Generate both English and German markdown
-      final englishMarkdown =
-          ApplicationStatisticsMarkdownService.generateEnglishMarkdown(
-        applications: apps,
+      // Offer to open folder
+      final shouldOpen = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(context.tr('export_successful_title')),
+          content: Text(context.tr('export_successful_message',
+              {'date': result.dateString ?? ''})),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(context.tr('no')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(context.tr('open_folder')),
+            ),
+          ],
+        ),
       );
 
-      final germanMarkdown =
-          ApplicationStatisticsMarkdownService.generateGermanMarkdown(
-        applications: apps,
-      );
-
-      if (context.mounted) {
-        Navigator.of(context).pop(); // Close loading
-      }
-
-      // Let user choose save location for the folder
-      final result = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: context.tr('select_folder_save'),
-      );
-
-      if (result == null) return;
-
-      // Create filenames with date
-      final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      final englishFile =
-          File('$result\\Application_Statistics_EN_$dateStr.md');
-      final germanFile = File('$result\\Application_Statistics_DE_$dateStr.md');
-
-      // Save both files
-      await englishFile.writeAsString(englishMarkdown, encoding: utf8);
-      await germanFile.writeAsString(germanMarkdown, encoding: utf8);
-
-      if (context.mounted) {
-        UIUtils.showSuccess(context, context.tr('stats_exported'));
-
-        // Offer to open folder
-        final shouldOpen = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(context.tr('export_successful_title')),
-            content: Text(
-                context.tr('export_successful_message', {'date': dateStr})),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(context.tr('no')),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(context.tr('open_folder')),
-              ),
-            ],
-          ),
-        );
-
-        if (shouldOpen == true) {
-          await PlatformUtils.openFolder(result);
-        }
+      if (shouldOpen == true) {
+        await PlatformUtils.openFolder(outputDir);
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close loading if still open
+        closeLoading();
         UIUtils.showError(context,
             context.tr('failed_export_stats', {'error': e.toString()}));
       }
