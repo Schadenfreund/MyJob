@@ -165,11 +165,17 @@ class CoverLetterInstance {
     required String applicationId,
     String? companyName,
     String? jobTitle,
+    String? contactPerson,
+    String? location,
+    String? salary,
   }) {
     // Auto-fill placeholders
     final placeholders = <String, String>{};
     if (companyName != null) placeholders['COMPANY'] = companyName;
     if (jobTitle != null) placeholders['POSITION'] = jobTitle;
+    if (contactPerson != null) placeholders['RECIPIENT_NAME'] = contactPerson;
+    if (location != null) placeholders['LOCATION'] = location;
+    if (salary != null) placeholders['SALARY'] = salary;
 
     return CoverLetterInstance(
       id: instanceId,

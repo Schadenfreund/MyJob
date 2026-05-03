@@ -5,6 +5,8 @@ import '../providers/user_data_provider.dart';
 import '../services/profile_autofill_service.dart';
 import '../widgets/common/custom_text_field.dart';
 import '../widgets/autofill_button.dart';
+import '../widgets/profile_long_text_editor.dart'
+    show InsertableChip, PlaceholderHighlightController;
 import '../utils/ui_utils.dart';
 import '../localization/app_localizations.dart';
 
@@ -39,8 +41,9 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
 
   // Letter content controllers
   late TextEditingController _greetingController;
-  late TextEditingController _bodyController;
+  late PlaceholderHighlightController _bodyController;
   late TextEditingController _closingController;
+  late FocusNode _bodyFocusNode;
 
   @override
   void initState() {
@@ -56,7 +59,8 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
     _companyNameController = TextEditingController();
     _jobTitleController = TextEditingController();
     _greetingController = TextEditingController(text: widget.template.greeting);
-    _bodyController = TextEditingController(text: widget.template.body);
+    _bodyController = PlaceholderHighlightController(text: widget.template.body);
+    _bodyFocusNode = FocusNode();
     _closingController = TextEditingController(text: widget.template.closing);
 
     // Add listeners (recipient fields are read-only in template mode)
@@ -76,6 +80,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
     _jobTitleController.dispose();
     _greetingController.dispose();
     _bodyController.dispose();
+    _bodyFocusNode.dispose();
     _closingController.dispose();
     super.dispose();
   }
@@ -302,8 +307,149 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
     );
   }
 
+  void _insertAtBodyCursor(String text) {
+    final selection = _bodyController.selection;
+    final currentText = _bodyController.text;
+
+    if (selection.isValid && selection.start >= 0) {
+      final newText = currentText.replaceRange(
+        selection.start,
+        selection.end,
+        text,
+      );
+      _bodyController.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(
+          offset: selection.start + text.length,
+        ),
+      );
+    } else {
+      _bodyController.value = TextEditingValue(
+        text: '$currentText$text',
+        selection: TextSelection.collapsed(
+          offset: currentText.length + text.length,
+        ),
+      );
+    }
+    _bodyFocusNode.requestFocus();
+  }
+
+  Widget _buildPlaceholderChips(ThemeData theme) {
+    final chips = [
+      InsertableChip(
+        label: '==COMPANY==',
+        insertText: '==COMPANY==',
+        description: context.tr('cover_letter_placeholder_company'),
+      ),
+      InsertableChip(
+        label: '==POSITION==',
+        insertText: '==POSITION==',
+        description: context.tr('cover_letter_placeholder_position'),
+      ),
+      InsertableChip(
+        label: '==RECIPIENT_NAME==',
+        insertText: '==RECIPIENT_NAME==',
+        description: context.tr('cover_letter_placeholder_recipient'),
+      ),
+      InsertableChip(
+        label: '==LOCATION==',
+        insertText: '==LOCATION==',
+        description: context.tr('cover_letter_placeholder_location'),
+      ),
+      InsertableChip(
+        label: '==SALARY==',
+        insertText: '==SALARY==',
+        description: context.tr('cover_letter_placeholder_salary'),
+      ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.touch_app_outlined,
+                  size: 14, color: theme.colorScheme.primary),
+              const SizedBox(width: 6),
+              Text(
+                context.tr('cover_letter_placeholders_title'),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: chips.map((chip) {
+              return Tooltip(
+                message: chip.description,
+                child: InkWell(
+                  onTap: () => _insertAtBodyCursor(chip.insertText),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(
+                      color:
+                          theme.colorScheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color:
+                            theme.colorScheme.primary.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add,
+                            size: 12, color: theme.colorScheme.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          chip.label,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            context.tr('cover_letter_placeholders_footer'),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLetterTab() {
     final theme = Theme.of(context);
+    _bodyController.highlightColor = theme.colorScheme.primary;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -327,44 +473,15 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
           ),
           const SizedBox(height: 12),
 
-          // Placeholder guide (BEFORE body textarea for better UX)
-          Container(
-            decoration: UIUtils.getInfoCard(context),
-            padding: const EdgeInsets.all(UIUtils.cardPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.tips_and_updates,
-                      size: 16,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      context.tr('placeholder_tips_title'),
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  context.tr('placeholder_tips_body'),
-                  style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
-                ),
-              ],
-            ),
-          ),
+          // Insertable placeholder chips
+          _buildPlaceholderChips(theme),
 
           const SizedBox(height: 12),
 
           // Body
           CustomTextField(
             controller: _bodyController,
+            focusNode: _bodyFocusNode,
             label: context.tr('letter_body'),
             hint:
                 'Write your cover letter here...\n\nUse ==COMPANY== and ==POSITION== as placeholders.',

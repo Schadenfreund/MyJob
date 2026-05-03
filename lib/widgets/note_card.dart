@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/notes_data.dart';
+import '../providers/applications_provider.dart';
 import '../theme/app_theme.dart';
 import '../localization/app_localizations.dart';
 import '../utils/platform_utils.dart';
@@ -153,10 +155,7 @@ class _NoteCardState extends State<NoteCard> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            status.icon,
-            style: const TextStyle(fontSize: 12),
-          ),
+          Icon(status.icon, size: 14, color: statusColor),
           const SizedBox(width: 6),
           Text(
             context.tr(status.localizationKey),
@@ -253,6 +252,8 @@ class _NoteCardState extends State<NoteCard> {
         return _buildGeneralNoteContent(context, theme);
       case NoteType.todo:
         return _buildTodoContent(context, theme);
+      case NoteType.interviewCheatSheet:
+        return _buildCheatSheetContent(context, theme);
     }
   }
 
@@ -631,6 +632,279 @@ class _NoteCardState extends State<NoteCard> {
     ];
   }
 
+  // ── Interview Cheat Sheet Content ────────────────────────────────────
+
+  List<Widget> _buildCheatSheetContent(BuildContext context, ThemeData theme) {
+    final items = <Widget>[];
+    const cheatSheetColor = Colors.indigo;
+
+    // ── Always visible: linked app + interview date + salary ──
+
+    // Linked application badge
+    if (note.linkedApplicationId != null) {
+      final apps = context.read<ApplicationsProvider>().allApplications;
+      final linked = apps.where((a) => a.id == note.linkedApplicationId).firstOrNull;
+      if (linked != null) {
+        items.add(const SizedBox(height: 6));
+        items.add(Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: cheatSheetColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: cheatSheetColor.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.work_outline, size: 12, color: cheatSheetColor),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  '${linked.company} — ${linked.position}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: cheatSheetColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ));
+      }
+    }
+
+    // Interview date countdown
+    if (note.interviewDate != null) {
+      items.add(const SizedBox(height: 6));
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final intDay = DateTime(note.interviewDate!.year, note.interviewDate!.month, note.interviewDate!.day);
+      final diff = intDay.difference(today).inDays;
+
+      final Color dateColor;
+      final String dateLabel;
+      if (diff < 0) {
+        dateColor = AppColors.statusRejected;
+        dateLabel = context.tr('note_cheatsheet_interview_passed');
+      } else if (diff == 0) {
+        dateColor = Colors.orange;
+        dateLabel = context.tr('note_cheatsheet_interview_today');
+      } else if (diff == 1) {
+        dateColor = Colors.orange;
+        dateLabel = context.tr('note_cheatsheet_interview_tomorrow');
+      } else {
+        dateColor = cheatSheetColor;
+        dateLabel = context.tr('note_cheatsheet_interview_in_days', {'count': '$diff'});
+      }
+
+      items.add(Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: dateColor.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: dateColor.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.event, size: 12, color: dateColor),
+            const SizedBox(width: 4),
+            Text(
+              '${DateFormat('MMM dd, yyyy').format(note.interviewDate!)} · $dateLabel',
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: dateColor,
+              ),
+            ),
+          ],
+        ),
+      ));
+    }
+
+    // Salary expectation — compact inline
+    if (note.salaryExpectation != null && note.salaryExpectation!.isNotEmpty) {
+      items.add(const SizedBox(height: 6));
+      items.add(Row(
+        children: [
+          Icon(Icons.euro, size: 13, color: cheatSheetColor.withValues(alpha: 0.6)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              note.salaryExpectation!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontSize: 12,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ));
+    }
+
+    // Filled-sections summary (e.g. "4 / 5 sections filled")
+    final sectionEntries = <String, bool>{
+      'company_bg': note.companyBackground != null && note.companyBackground!.isNotEmpty,
+      'why_fit': note.whyGoodFit != null && note.whyGoodFit!.isNotEmpty,
+      'strengths': note.strengths != null && note.strengths!.isNotEmpty,
+      'questions': note.questionsToAsk != null && note.questionsToAsk!.isNotEmpty,
+      'research': note.researchNotes != null && note.researchNotes!.isNotEmpty,
+    };
+    final filledCount = sectionEntries.values.where((v) => v).length;
+    final totalCount = sectionEntries.length;
+
+    items.add(const SizedBox(height: 6));
+    items.add(Row(
+      children: [
+        Icon(Icons.checklist, size: 13, color: cheatSheetColor.withValues(alpha: 0.6)),
+        const SizedBox(width: 6),
+        Text(
+          '$filledCount / $totalCount ${context.tr('note_cheatsheet_sections_filled')}',
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontSize: 11,
+            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+          ),
+        ),
+      ],
+    ));
+
+    // Description preview (always visible, like todo card)
+    if (note.description != null && note.description!.isNotEmpty) {
+      items.add(const SizedBox(height: 4));
+      items.add(Text(
+        note.description!,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+          fontSize: 12,
+        ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ));
+    }
+
+    // ── Expandable detail sections ──
+
+    final sections = <_CheatSheetSection>[
+      if (sectionEntries['company_bg']!)
+        _CheatSheetSection(Icons.business, context.tr('note_cheatsheet_company_bg_label'), note.companyBackground!),
+      if (sectionEntries['why_fit']!)
+        _CheatSheetSection(Icons.star_outline, context.tr('note_cheatsheet_why_fit_label'), note.whyGoodFit!),
+      if (sectionEntries['strengths']!)
+        _CheatSheetSection(Icons.fitness_center, context.tr('note_cheatsheet_strengths_label'), note.strengths!),
+      if (sectionEntries['questions']!)
+        _CheatSheetSection(Icons.help_outline, context.tr('note_cheatsheet_questions_label'), note.questionsToAsk!),
+      if (sectionEntries['research']!)
+        _CheatSheetSection(Icons.science_outlined, context.tr('note_cheatsheet_research_label'), note.researchNotes!),
+    ];
+
+    if (sections.isNotEmpty) {
+      items.add(const SizedBox(height: 8));
+      items.add(AnimatedCrossFade(
+        duration: const Duration(milliseconds: 200),
+        crossFadeState:
+            _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+        firstChild: const SizedBox.shrink(),
+        secondChild: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: cheatSheetColor.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: cheatSheetColor.withValues(alpha: 0.15)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < sections.length; i++) ...[
+                if (i > 0) const SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(sections[i].icon, size: 14, color: cheatSheetColor.withValues(alpha: 0.7)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            sections[i].label,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: cheatSheetColor,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            sections[i].value,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontSize: 12,
+                              color: theme.textTheme.bodyMedium?.color,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              // Description already shown above — no duplicate here
+            ],
+          ),
+        ),
+      ));
+
+      // Expand / collapse toggle
+      items.add(GestureDetector(
+        onTap: () => setState(() => _isExpanded = !_isExpanded),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _isExpanded ? Icons.expand_less : Icons.expand_more,
+                size: 14,
+                color: cheatSheetColor,
+              ),
+              const SizedBox(width: 2),
+              Text(
+                _isExpanded
+                    ? context.tr('note_show_less')
+                    : context.tr('note_show_more'),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: cheatSheetColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ));
+    } else if (note.description != null && note.description!.isNotEmpty) {
+      // No prep sections but has description — show it directly
+      items.add(const SizedBox(height: 8));
+      items.add(Text(
+        note.description!,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+          fontSize: 12,
+        ),
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+      ));
+    }
+
+    return items;
+  }
+
   // ── Countdown Chip (for to-dos with due dates) ───────────────────────
 
   Widget _buildCountdownChip(BuildContext context, ThemeData theme) {
@@ -1006,10 +1280,7 @@ class _NoteCardState extends State<NoteCard> {
                 ),
                 child: Row(
                   children: [
-                    Text(
-                      status.icon,
-                      style: const TextStyle(fontSize: 20),
-                    ),
+                    Icon(status.icon, size: 20, color: statusColor),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -1069,6 +1340,8 @@ class _NoteCardState extends State<NoteCard> {
         return Colors.teal;
       case NoteType.reminder:
         return Colors.pink;
+      case NoteType.interviewCheatSheet:
+        return Colors.indigo;
     }
   }
 
@@ -1082,6 +1355,16 @@ class _NoteCardState extends State<NoteCard> {
         return Icons.note;
       case NoteType.reminder:
         return Icons.alarm;
+      case NoteType.interviewCheatSheet:
+        return Icons.assignment;
     }
   }
+}
+
+/// Helper class for cheat sheet section display
+class _CheatSheetSection {
+  final IconData icon;
+  final String label;
+  final String value;
+  const _CheatSheetSection(this.icon, this.label, this.value);
 }

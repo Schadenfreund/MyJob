@@ -1,6 +1,95 @@
 import 'package:flutter/material.dart';
 import '../utils/ui_utils.dart';
 
+/// A [TextEditingController] that highlights ==PLACEHOLDER== patterns
+/// and optionally highlights filled placeholder values (actual strings).
+class PlaceholderHighlightController extends TextEditingController {
+  PlaceholderHighlightController({super.text, this.highlightColor});
+
+  Color? highlightColor;
+
+  /// Filled placeholder values to highlight (e.g. company name, position).
+  /// Only non-empty strings are matched.
+  List<String> filledValues = const [];
+
+  static final _placeholderPattern = RegExp(r'==([A-Za-z0-9_]+)==');
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    final color = highlightColor;
+    if (color == null || text.isEmpty) {
+      return super.buildTextSpan(
+          context: context, style: style, withComposing: withComposing);
+    }
+
+    // Build a combined pattern: ==PLACEHOLDER== OR filled values
+    final nonEmpty =
+        filledValues.where((v) => v.trim().isNotEmpty).toList();
+
+    Pattern? combinedPattern;
+    if (nonEmpty.isNotEmpty) {
+      // Escape special regex chars in filled values, match whole words
+      final escaped =
+          nonEmpty.map((v) => RegExp.escape(v)).join('|');
+      combinedPattern =
+          RegExp('(==(?:[A-Za-z0-9_]+)==|$escaped)');
+    } else {
+      combinedPattern = _placeholderPattern;
+    }
+
+    final children = <TextSpan>[];
+    var lastEnd = 0;
+
+    for (final match
+        in (combinedPattern as RegExp).allMatches(text)) {
+      if (match.start > lastEnd) {
+        children.add(TextSpan(text: text.substring(lastEnd, match.start)));
+      }
+      final matched = match.group(0)!;
+      final isRawPlaceholder = _placeholderPattern.hasMatch(matched);
+      children.add(TextSpan(
+        text: matched,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w600,
+          backgroundColor: isRawPlaceholder
+              ? color.withValues(alpha: 0.1)
+              : color.withValues(alpha: 0.08),
+        ),
+      ));
+      lastEnd = match.end;
+    }
+
+    if (lastEnd < text.length) {
+      children.add(TextSpan(text: text.substring(lastEnd)));
+    }
+
+    if (children.isEmpty) {
+      return super.buildTextSpan(
+          context: context, style: style, withComposing: withComposing);
+    }
+
+    return TextSpan(style: style, children: children);
+  }
+}
+
+/// A chip that can be inserted into the text editor at cursor position.
+class InsertableChip {
+  final String label;
+  final String insertText;
+  final String description;
+
+  const InsertableChip({
+    required this.label,
+    required this.insertText,
+    required this.description,
+  });
+}
+
 /// A specialized editor for long text sections in the profile (Profile Summary, Cover Letter)
 ///
 /// Features:
@@ -8,6 +97,7 @@ import '../utils/ui_utils.dart';
 /// - Detects changes from the initial value
 /// - Shows a "Save Changes" button only when modifications are detected
 /// - Consistent premium styling matching the rest of the profile
+/// - Optional insertable chips that insert text at cursor position
 class ProfileLongTextEditor extends StatefulWidget {
   const ProfileLongTextEditor({
     required this.initialValue,
@@ -16,6 +106,10 @@ class ProfileLongTextEditor extends StatefulWidget {
     this.helpText,
     this.minLines = 4,
     this.maxLines,
+    this.insertableChips,
+    this.chipsTitle,
+    this.chipsFooter,
+    this.highlightColor,
     super.key,
   });
 
@@ -25,20 +119,29 @@ class ProfileLongTextEditor extends StatefulWidget {
   final String? helpText;
   final int minLines;
   final int? maxLines;
+  final List<InsertableChip>? insertableChips;
+  final String? chipsTitle;
+  final String? chipsFooter;
+  final Color? highlightColor;
 
   @override
   State<ProfileLongTextEditor> createState() => _ProfileLongTextEditorState();
 }
 
 class _ProfileLongTextEditorState extends State<ProfileLongTextEditor> {
-  late TextEditingController _controller;
+  late PlaceholderHighlightController _controller;
+  late FocusNode _focusNode;
   bool _isModified = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.initialValue);
+    _controller = PlaceholderHighlightController(
+      text: widget.initialValue,
+      highlightColor: widget.highlightColor,
+    );
     _controller.addListener(_handleTextChanged);
+    _focusNode = FocusNode();
   }
 
   @override
@@ -49,12 +152,16 @@ class _ProfileLongTextEditorState extends State<ProfileLongTextEditor> {
     if (widget.initialValue != oldWidget.initialValue && !_isModified) {
       _controller.text = widget.initialValue;
     }
+    if (widget.highlightColor != oldWidget.highlightColor) {
+      _controller.highlightColor = widget.highlightColor;
+    }
   }
 
   @override
   void dispose() {
     _controller.removeListener(_handleTextChanged);
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -81,6 +188,35 @@ class _ProfileLongTextEditorState extends State<ProfileLongTextEditor> {
     });
   }
 
+  void _insertAtCursor(String text) {
+    final selection = _controller.selection;
+    final currentText = _controller.text;
+
+    if (selection.isValid && selection.start >= 0) {
+      final newText = currentText.replaceRange(
+        selection.start,
+        selection.end,
+        text,
+      );
+      _controller.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(
+          offset: selection.start + text.length,
+        ),
+      );
+    } else {
+      // No cursor position — append at end
+      _controller.value = TextEditingValue(
+        text: '$currentText$text',
+        selection: TextSelection.collapsed(
+          offset: currentText.length + text.length,
+        ),
+      );
+    }
+
+    _focusNode.requestFocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -99,6 +235,7 @@ class _ProfileLongTextEditorState extends State<ProfileLongTextEditor> {
         ],
         TextField(
           controller: _controller,
+          focusNode: _focusNode,
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           style: theme.textTheme.bodyMedium,
@@ -133,6 +270,12 @@ class _ProfileLongTextEditorState extends State<ProfileLongTextEditor> {
           ),
         ),
 
+        // Insertable chips
+        if (widget.insertableChips != null && widget.insertableChips!.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _buildInsertableChips(theme),
+        ],
+
         // Animated Save Bar
         AnimatedSize(
           duration: const Duration(milliseconds: 200),
@@ -160,6 +303,90 @@ class _ProfileLongTextEditorState extends State<ProfileLongTextEditor> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildInsertableChips(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (widget.chipsTitle != null) ...[
+            Row(
+              children: [
+                Icon(Icons.touch_app_outlined, size: 14, color: theme.colorScheme.primary),
+                const SizedBox(width: 6),
+                Text(
+                  widget.chipsTitle!,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: widget.insertableChips!.map((chip) {
+              return Tooltip(
+                message: chip.description,
+                child: InkWell(
+                  onTap: () => _insertAtCursor(chip.insertText),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add, size: 12, color: theme.colorScheme.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          chip.label,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          if (widget.chipsFooter != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              widget.chipsFooter!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

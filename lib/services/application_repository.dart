@@ -221,10 +221,14 @@ class ApplicationRepository {
       await cvFile
           .writeAsString(JsonConstants.prettyEncoder.convert(cvJson));
 
-      // Clone cover letter with defaults from profile
+      // Clone cover letter with defaults from profile, replacing placeholders
       final coverLetter = JobCoverLetter.fromDefault(
         defaultBody: profile.defaultCoverLetterBody,
         companyName: application.company,
+        position: application.position,
+        contactPerson: application.contactPerson,
+        location: application.location,
+        salary: application.salary,
         defaultGreeting: profile.defaultGreeting,
         defaultClosing: profile.defaultClosing,
       );

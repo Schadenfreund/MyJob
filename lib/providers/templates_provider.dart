@@ -211,6 +211,9 @@ class TemplatesProvider extends ChangeNotifier {
     required String applicationId,
     String? companyName,
     String? jobTitle,
+    String? contactPerson,
+    String? location,
+    String? salary,
   }) async {
     final template = getCoverLetterTemplateById(templateId);
     if (template == null) {
@@ -223,6 +226,9 @@ class TemplatesProvider extends ChangeNotifier {
       applicationId: applicationId,
       companyName: companyName,
       jobTitle: jobTitle,
+      contactPerson: contactPerson,
+      location: location,
+      salary: salary,
     );
 
     await _storage.saveCoverLetterInstance(instance);

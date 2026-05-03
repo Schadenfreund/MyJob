@@ -29,7 +29,12 @@ class NotesProvider with ChangeNotifier {
     return notes.where((note) {
       return note.title.toLowerCase().contains(_searchQuery) ||
           (note.description?.toLowerCase().contains(_searchQuery) ?? false) ||
-          note.tags.any((tag) => tag.toLowerCase().contains(_searchQuery));
+          note.tags.any((tag) => tag.toLowerCase().contains(_searchQuery)) ||
+          (note.companyBackground?.toLowerCase().contains(_searchQuery) ?? false) ||
+          (note.whyGoodFit?.toLowerCase().contains(_searchQuery) ?? false) ||
+          (note.strengths?.toLowerCase().contains(_searchQuery) ?? false) ||
+          (note.questionsToAsk?.toLowerCase().contains(_searchQuery) ?? false) ||
+          (note.researchNotes?.toLowerCase().contains(_searchQuery) ?? false);
     }).toList();
   }
 
@@ -98,6 +103,12 @@ class NotesProvider with ChangeNotifier {
   /// Get general notes (not archived)
   List<NoteItem> get generalNotes => _filterBySearch(_notes
       .where((note) => note.type == NoteType.generalNote && !note.archived)
+      .toList()
+    ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder)));
+
+  /// Get interview cheat sheets (not archived)
+  List<NoteItem> get interviewCheatSheets => _filterBySearch(_notes
+      .where((note) => note.type == NoteType.interviewCheatSheet && !note.archived)
       .toList()
     ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder)));
 

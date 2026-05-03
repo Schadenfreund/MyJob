@@ -30,6 +30,8 @@ import '../utils/dialog_utils.dart';
 import '../constants/app_constants.dart';
 import '../localization/app_localizations.dart';
 import '../services/log_service.dart';
+import '../widgets/profile_long_text_editor.dart'
+    show InsertableChip, PlaceholderHighlightController;
 
 /// Modern tabbed CV content editor for job applications
 ///
@@ -68,8 +70,9 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   late TextEditingController _recipientTitleController;
   late TextEditingController _subjectController;
   late TextEditingController _greetingController;
-  late TextEditingController _bodyController;
+  late PlaceholderHighlightController _bodyController;
   late TextEditingController _closingController;
+  late FocusNode _bodyFocusNode;
 
   // Application details controllers - centralized for immediate saving
   late TextEditingController _companyController;
@@ -116,9 +119,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     _greetingController = TextEditingController(
       text: _jobCoverLetter?.greeting ?? 'Dear Hiring Manager,',
     );
-    _bodyController = TextEditingController(
+    _bodyController = PlaceholderHighlightController(
       text: _jobCoverLetter?.body ?? '',
     );
+    _bodyFocusNode = FocusNode();
     _closingController = TextEditingController(
       text: _jobCoverLetter?.closing ?? 'Sincerely,',
     );
@@ -242,6 +246,7 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     _subjectController.dispose();
     _greetingController.dispose();
     _bodyController.dispose();
+    _bodyFocusNode.dispose();
     _closingController.dispose();
     _companyController.dispose();
     _positionController.dispose();
@@ -283,6 +288,34 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
 
     // Auto-save to storage
     _saveCoverLetter(updatedCoverLetter);
+  }
+
+  /// Insert text at current cursor position in the body field.
+  void _insertAtBodyCursor(String text) {
+    final selection = _bodyController.selection;
+    final currentText = _bodyController.text;
+
+    if (selection.isValid && selection.start >= 0) {
+      final newText = currentText.replaceRange(
+        selection.start,
+        selection.end,
+        text,
+      );
+      _bodyController.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(
+          offset: selection.start + text.length,
+        ),
+      );
+    } else {
+      _bodyController.value = TextEditingValue(
+        text: '$currentText$text',
+        selection: TextSelection.collapsed(
+          offset: currentText.length + text.length,
+        ),
+      );
+    }
+    _bodyFocusNode.requestFocus();
   }
 
   /// Save cover letter to storage
@@ -1308,7 +1341,16 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
 
   Widget _buildCoverLetterTab() {
     final theme = Theme.of(context);
+    _bodyController.highlightColor = theme.colorScheme.primary;
     final application = widget.applicationContext;
+    _bodyController.filledValues = [
+      if (application?.company.isNotEmpty == true) application!.company,
+      if (application?.position.isNotEmpty == true) application!.position,
+      if (application?.contactPerson?.isNotEmpty == true)
+        application!.contactPerson!,
+      if (application?.location?.isNotEmpty == true) application!.location!,
+      if (application?.salary?.isNotEmpty == true) application!.salary!,
+    ];
     final wordCount = _bodyController.text
         .trim()
         .split(RegExp(r'\s+'))
@@ -1404,39 +1446,13 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
               ),
               const SizedBox(height: AppSpacing.md),
 
-              // Placeholder guide
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.lightbulb_outline,
-                      size: 20,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        context.tr('placeholder_tip'),
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // Insertable placeholder chips
+              _buildPlaceholderChips(theme),
               const SizedBox(height: AppSpacing.md),
 
               TextFormField(
                 controller: _bodyController,
+                focusNode: _bodyFocusNode,
                 decoration: InputDecoration(
                   labelText: context.tr('letter_body'),
                   hintText:
@@ -1472,6 +1488,120 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build insertable placeholder chips for the cover letter body.
+  Widget _buildPlaceholderChips(ThemeData theme) {
+    final chips = [
+      InsertableChip(
+        label: '==COMPANY==',
+        insertText: '==COMPANY==',
+        description: context.tr('cover_letter_placeholder_company'),
+      ),
+      InsertableChip(
+        label: '==POSITION==',
+        insertText: '==POSITION==',
+        description: context.tr('cover_letter_placeholder_position'),
+      ),
+      InsertableChip(
+        label: '==RECIPIENT_NAME==',
+        insertText: '==RECIPIENT_NAME==',
+        description: context.tr('cover_letter_placeholder_recipient'),
+      ),
+      InsertableChip(
+        label: '==LOCATION==',
+        insertText: '==LOCATION==',
+        description: context.tr('cover_letter_placeholder_location'),
+      ),
+      InsertableChip(
+        label: '==SALARY==',
+        insertText: '==SALARY==',
+        description: context.tr('cover_letter_placeholder_salary'),
+      ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.touch_app_outlined,
+                  size: 14, color: theme.colorScheme.primary),
+              const SizedBox(width: 6),
+              Text(
+                context.tr('cover_letter_placeholders_title'),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: chips.map((chip) {
+              return Tooltip(
+                message: chip.description,
+                child: InkWell(
+                  onTap: () => _insertAtBodyCursor(chip.insertText),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(
+                      color:
+                          theme.colorScheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color:
+                            theme.colorScheme.primary.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add,
+                            size: 12, color: theme.colorScheme.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          chip.label,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            context.tr('cover_letter_placeholders_footer'),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ],
       ),

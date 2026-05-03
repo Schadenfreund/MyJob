@@ -462,6 +462,12 @@ class _JobApplicationPdfDialogState
     final placeholders = <String, String>{
       'COMPANY': widget.application.company,
       'POSITION': widget.application.position,
+      if (widget.application.contactPerson?.isNotEmpty == true)
+        'RECIPIENT_NAME': widget.application.contactPerson!,
+      if (widget.application.location?.isNotEmpty == true)
+        'LOCATION': widget.application.location!,
+      if (widget.application.salary?.isNotEmpty == true)
+        'SALARY': widget.application.salary!,
     };
 
     // Convert JobCoverLetter to CoverLetter format

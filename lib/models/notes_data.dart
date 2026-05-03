@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 // Sentinel used by NoteItem.copyWith to distinguish "not provided" from null.
@@ -25,6 +26,16 @@ class NoteItem {
   final String? location;
   final LeadStatus? leadStatus;
 
+  // Interview Cheat Sheet fields
+  final String? linkedApplicationId;
+  final String? salaryExpectation;
+  final String? companyBackground;
+  final String? whyGoodFit;
+  final String? questionsToAsk;
+  final String? strengths;
+  final String? researchNotes;
+  final DateTime? interviewDate;
+
   NoteItem({
     String? id,
     required this.title,
@@ -43,6 +54,14 @@ class NoteItem {
     this.contactEmail,
     this.location,
     this.leadStatus,
+    this.linkedApplicationId,
+    this.salaryExpectation,
+    this.companyBackground,
+    this.whyGoodFit,
+    this.questionsToAsk,
+    this.strengths,
+    this.researchNotes,
+    this.interviewDate,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         tags = tags ?? [];
@@ -63,6 +82,14 @@ class NoteItem {
     Object? contactEmail = _unset,
     Object? location = _unset,
     LeadStatus? leadStatus,
+    Object? linkedApplicationId = _unset,
+    Object? salaryExpectation = _unset,
+    Object? companyBackground = _unset,
+    Object? whyGoodFit = _unset,
+    Object? questionsToAsk = _unset,
+    Object? strengths = _unset,
+    Object? researchNotes = _unset,
+    Object? interviewDate = _unset,
   }) {
     return NoteItem(
       id: id,
@@ -82,6 +109,14 @@ class NoteItem {
       contactEmail: contactEmail == _unset ? this.contactEmail : contactEmail as String?,
       location: location == _unset ? this.location : location as String?,
       leadStatus: leadStatus ?? this.leadStatus,
+      linkedApplicationId: linkedApplicationId == _unset ? this.linkedApplicationId : linkedApplicationId as String?,
+      salaryExpectation: salaryExpectation == _unset ? this.salaryExpectation : salaryExpectation as String?,
+      companyBackground: companyBackground == _unset ? this.companyBackground : companyBackground as String?,
+      whyGoodFit: whyGoodFit == _unset ? this.whyGoodFit : whyGoodFit as String?,
+      questionsToAsk: questionsToAsk == _unset ? this.questionsToAsk : questionsToAsk as String?,
+      strengths: strengths == _unset ? this.strengths : strengths as String?,
+      researchNotes: researchNotes == _unset ? this.researchNotes : researchNotes as String?,
+      interviewDate: interviewDate == _unset ? this.interviewDate : interviewDate as DateTime?,
     );
   }
 
@@ -104,6 +139,14 @@ class NoteItem {
       'contactEmail': contactEmail,
       'location': location,
       'leadStatus': leadStatus?.name,
+      'linkedApplicationId': linkedApplicationId,
+      'salaryExpectation': salaryExpectation,
+      'companyBackground': companyBackground,
+      'whyGoodFit': whyGoodFit,
+      'questionsToAsk': questionsToAsk,
+      'strengths': strengths,
+      'researchNotes': researchNotes,
+      'interviewDate': interviewDate?.toIso8601String(),
     };
   }
 
@@ -141,6 +184,16 @@ class NoteItem {
               orElse: () => LeadStatus.researching,
             )
           : null,
+      linkedApplicationId: json['linkedApplicationId'] as String?,
+      salaryExpectation: json['salaryExpectation'] as String?,
+      companyBackground: json['companyBackground'] as String?,
+      whyGoodFit: json['whyGoodFit'] as String?,
+      questionsToAsk: json['questionsToAsk'] as String?,
+      strengths: json['strengths'] as String?,
+      researchNotes: json['researchNotes'] as String?,
+      interviewDate: json['interviewDate'] != null
+          ? DateTime.parse(json['interviewDate'] as String)
+          : null,
     );
   }
 }
@@ -151,6 +204,7 @@ enum NoteType {
   companyLead,
   generalNote,
   reminder,
+  interviewCheatSheet,
 }
 
 /// Priority level
@@ -173,6 +227,8 @@ extension NoteTypeExtension on NoteType {
         return 'General Note';
       case NoteType.reminder:
         return 'Reminder';
+      case NoteType.interviewCheatSheet:
+        return 'Interview Cheat Sheet';
     }
   }
 
@@ -222,16 +278,16 @@ extension LeadStatusExtension on LeadStatus {
 
   String get localizationKey => 'lead_status_$name';
 
-  String get icon {
+  IconData get icon {
     switch (this) {
       case LeadStatus.researching:
-        return '🔍';
+        return Icons.search;
       case LeadStatus.contacted:
-        return '💬';
+        return Icons.chat_bubble_outline;
       case LeadStatus.applied:
-        return '📤';
+        return Icons.send;
       case LeadStatus.interviewing:
-        return '🎯';
+        return Icons.person_search;
     }
   }
 }

@@ -22,6 +22,7 @@ class CustomTextField extends StatefulWidget {
     this.required = false,
     this.textInputAction = TextInputAction.next,
     this.controller,
+    this.focusNode,
   });
 
   final String? label;
@@ -42,6 +43,7 @@ class CustomTextField extends StatefulWidget {
   final bool required;
   final TextInputAction textInputAction;
   final TextEditingController? controller;
+  final FocusNode? focusNode;
 
   @override
   State<CustomTextField> createState() => _CustomTextFieldState();
@@ -159,6 +161,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           ),
         TextField(
           controller: _controller,
+          focusNode: widget.focusNode,
           enabled: widget.enabled,
           keyboardType: widget.keyboardType,
           obscureText: _obscureText,

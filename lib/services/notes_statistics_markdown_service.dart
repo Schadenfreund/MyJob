@@ -82,6 +82,7 @@ class NotesStatisticsMarkdownService {
     final generalNotes =
         notes.where((n) => n.type == NoteType.generalNote).length;
     final reminders = notes.where((n) => n.type == NoteType.reminder).length;
+    final cheatSheets = notes.where((n) => n.type == NoteType.interviewCheatSheet).length;
 
     final low = notes.where((n) => n.priority == NotePriority.low).length;
     final medium =
@@ -109,6 +110,7 @@ class NotesStatisticsMarkdownService {
       'companyLeads': companyLeads,
       'generalNotes': generalNotes,
       'reminders': reminders,
+      'cheatSheets': cheatSheets,
       'low': low,
       'medium': medium,
       'high': high,
@@ -173,6 +175,7 @@ class NotesStatisticsMarkdownService {
       NoteType.companyLead,
       NoteType.reminder,
       NoteType.generalNote,
+      NoteType.interviewCheatSheet,
     ];
 
     for (final type in typeOrder) {
@@ -184,6 +187,23 @@ class NotesStatisticsMarkdownService {
       buffer.writeln();
 
       switch (type) {
+        case NoteType.interviewCheatSheet:
+          buffer.writeln(isGerman
+              ? '| Titel | Interviewtermin | Gehaltsvorstellung | Status |'
+              : '| Title | Interview Date | Salary Expectation | Status |');
+          buffer.writeln('|-------|----------------|-------------------|--------|');
+          for (final note in notes) {
+            final intDate = note.interviewDate != null
+                ? DateFormat('dd.MM.yyyy').format(note.interviewDate!)
+                : '-';
+            final salary = note.salaryExpectation ?? '-';
+            final status = isGerman
+                ? (note.archived ? '📦 Archiviert' : '📌 Aktiv')
+                : (note.archived ? '📦 Archived' : '📌 Active');
+            buffer.writeln(
+                '| ${note.title} | $intDate | $salary | $status |');
+          }
+          break;
         case NoteType.companyLead:
           buffer.writeln(isGerman
               ? '| Firma | Standort | Lead-Status | Kontakt | Status |'
@@ -300,6 +320,7 @@ class NotesStatisticsMarkdownService {
       ('🏢 Company Lead', '🏢 Firmenkontakt', stats['companyLeads']),
       ('⏰ Reminder', '⏰ Erinnerung', stats['reminders']),
       ('📝 General Note', '📝 Allgemeine Notiz', stats['generalNotes']),
+      ('📋 Interview Cheat Sheet', '📋 Interview-Spickzettel', stats['cheatSheets']),
     ];
 
     for (final (labelEn, labelDe, count) in typeData) {
@@ -376,6 +397,8 @@ class NotesStatisticsMarkdownService {
         return 'General Note';
       case NoteType.reminder:
         return 'Reminder';
+      case NoteType.interviewCheatSheet:
+        return 'Interview Cheat Sheet';
     }
   }
 
@@ -389,6 +412,8 @@ class NotesStatisticsMarkdownService {
         return 'Allgemeine Notiz';
       case NoteType.reminder:
         return 'Erinnerung';
+      case NoteType.interviewCheatSheet:
+        return 'Interview-Spickzettel';
     }
   }
 

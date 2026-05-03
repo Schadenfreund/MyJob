@@ -13,9 +13,9 @@ import '../../widgets/app_card.dart';
 import '../../widgets/note_card.dart';
 import '../../utils/dialog_utils.dart';
 import '../../services/preferences_service.dart';
-import '../../services/notes_statistics_markdown_service.dart';
 import '../../services/note_export_service.dart';
 import '../../screens/applications/application_editor_dialog.dart';
+import '../../providers/applications_provider.dart';
 import 'note_editor_dialog.dart';
 import '../../localization/app_localizations.dart';
 
@@ -36,12 +36,18 @@ class _NotesScreenState extends State<NotesScreen> {
   bool _remindersExpanded = true;
   bool _companyLeadsExpanded = true;
   bool _generalNotesExpanded = true;
+  bool _cheatSheetsExpanded = true;
+  bool _archivedExpanded = true;
+  bool _timelineExpanded = true;
 
   // Preference keys
   static const String _prefKeyTodosExpanded = 'notes_todos_expanded';
   static const String _prefKeyRemindersExpanded = 'notes_reminders_expanded';
   static const String _prefKeyCompanyLeadsExpanded = 'notes_company_leads_expanded';
   static const String _prefKeyGeneralNotesExpanded = 'notes_general_notes_expanded';
+  static const String _prefKeyCheatSheetsExpanded = 'notes_cheat_sheets_expanded';
+  static const String _prefKeyArchivedExpanded = 'notes_archived_expanded';
+  static const String _prefKeyTimelineExpanded = 'notes_timeline_expanded';
 
   final _prefs = PreferencesService.instance;
   final _searchController = TextEditingController();
@@ -69,6 +75,9 @@ class _NotesScreenState extends State<NotesScreen> {
       _remindersExpanded = _prefs.getBool(_prefKeyRemindersExpanded, defaultValue: true);
       _companyLeadsExpanded = _prefs.getBool(_prefKeyCompanyLeadsExpanded, defaultValue: true);
       _generalNotesExpanded = _prefs.getBool(_prefKeyGeneralNotesExpanded, defaultValue: true);
+      _cheatSheetsExpanded = _prefs.getBool(_prefKeyCheatSheetsExpanded, defaultValue: true);
+      _archivedExpanded = _prefs.getBool(_prefKeyArchivedExpanded, defaultValue: true);
+      _timelineExpanded = _prefs.getBool(_prefKeyTimelineExpanded, defaultValue: true);
     });
   }
 
@@ -112,20 +121,26 @@ class _NotesScreenState extends State<NotesScreen> {
     final completedReminders = notesProvider.completedReminders;
     final companyLeads = notesProvider.companyLeads;
     final generalNotes = notesProvider.generalNotes;
+    final interviewCheatSheets = notesProvider.interviewCheatSheets;
+    final archivedNotes = notesProvider.archivedNotes;
 
     // Calculate total counts for category filters
     final todosCount = activeTodos.length + completedTodos.length;
     final remindersCount = activeReminders.length + completedReminders.length;
     final leadsCount = companyLeads.length;
     final notesCount = generalNotes.length;
+    final cheatSheetsCount = interviewCheatSheets.length;
     final completedCount = completedTodos.length + completedReminders.length;
+    final archivedCount = archivedNotes.length;
 
     // Apply category filter
     final showTodos = _selectedCategory == 'all' || _selectedCategory == 'todos';
     final showReminders = _selectedCategory == 'all' || _selectedCategory == 'reminders';
     final showLeads = _selectedCategory == 'all' || _selectedCategory == 'leads';
     final showNotes = _selectedCategory == 'all' || _selectedCategory == 'notes';
+    final showCheatSheets = _selectedCategory == 'all' || _selectedCategory == 'cheatsheets';
     final showCompleted = _selectedCategory == 'completed';
+    final showArchived = _selectedCategory == 'archived';
 
     // Count search results
     final searchQuery = notesProvider.searchQuery;
@@ -134,6 +149,7 @@ class _NotesScreenState extends State<NotesScreen> {
         (showReminders ? activeReminders.length + completedReminders.length : 0) +
         (showLeads ? companyLeads.length : 0) +
         (showNotes ? generalNotes.length : 0) +
+        (showCheatSheets ? interviewCheatSheets.length : 0) +
         (showCompleted ? completedCount : 0);
 
     return Container(
@@ -251,7 +267,7 @@ class _NotesScreenState extends State<NotesScreen> {
             const SizedBox(height: AppSpacing.md),
 
             // Category filter chips
-            _buildCategoryFilters(theme, todosCount, remindersCount, leadsCount, notesCount, completedCount),
+            _buildCategoryFilters(theme, todosCount, remindersCount, leadsCount, notesCount, cheatSheetsCount, completedCount, archivedCount),
             const SizedBox(height: AppSpacing.md),
 
             // Search Bar
@@ -274,6 +290,10 @@ class _NotesScreenState extends State<NotesScreen> {
                     : null,
               ),
             ),
+
+            // Upcoming events timeline
+            if (_selectedCategory != 'archived')
+              _buildUpcomingTimeline(context, theme, notesProvider),
 
             // Search results counter
             if (hasSearchResults) ...[
@@ -382,6 +402,33 @@ class _NotesScreenState extends State<NotesScreen> {
               if (generalNotes.isNotEmpty) const SizedBox(height: AppSpacing.md),
             ],
 
+            // Interview Cheat Sheets Section
+            if (showCheatSheets && !showCompleted) ...[
+              if (interviewCheatSheets.isNotEmpty)
+                _buildReorderableSection(
+                  context,
+                  title: context.tr('section_cheat_sheets'),
+                  subtitle: _buildCountSubtitle(context, interviewCheatSheets.length),
+                  notes: interviewCheatSheets,
+                  icon: Icons.assignment,
+                  color: Colors.indigo,
+                  isExpanded: _cheatSheetsExpanded,
+                  onExpandChanged: (value) {
+                    setState(() => _cheatSheetsExpanded = value);
+                    _saveExpandedState(_prefKeyCheatSheetsExpanded, value);
+                  },
+                  onReorder: (oldIndex, newIndex) => _handleReorder(
+                    context,
+                    interviewCheatSheets,
+                    oldIndex,
+                    newIndex,
+                  ),
+                  showArchiveAction: true,
+                  collapsedPreview: _buildCheatSheetsCollapsedPreview(context, Theme.of(context), interviewCheatSheets),
+                ),
+              if (interviewCheatSheets.isNotEmpty) const SizedBox(height: AppSpacing.md),
+            ],
+
             // Completed Section
             if (showCompleted) ...[
               if (completedTodos.isNotEmpty)
@@ -429,14 +476,50 @@ class _NotesScreenState extends State<NotesScreen> {
                 ),
             ],
 
+            // Archived Section
+            if (showArchived) ...[
+              if (archivedNotes.isNotEmpty)
+                _buildReorderableSection(
+                  context,
+                  title: context.tr('section_archived'),
+                  subtitle: _buildCountSubtitle(context, archivedNotes.length),
+                  notes: archivedNotes,
+                  icon: Icons.archive,
+                  color: Colors.grey,
+                  isExpanded: _archivedExpanded,
+                  onExpandChanged: (value) {
+                    setState(() => _archivedExpanded = value);
+                    _saveExpandedState(_prefKeyArchivedExpanded, value);
+                  },
+                  onReorder: (oldIndex, newIndex) => _handleReorder(
+                    context,
+                    archivedNotes,
+                    oldIndex,
+                    newIndex,
+                  ),
+                  showUnarchiveAction: true,
+                ),
+              if (archivedNotes.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                  child: UIUtils.buildEmptyState(
+                    context,
+                    icon: Icons.archive_outlined,
+                    title: context.tr('no_archived_notes_title'),
+                    message: context.tr('no_archived_notes'),
+                  ),
+                ),
+            ],
+
             // Empty state
-            if (!showCompleted &&
+            if (!showCompleted && !showArchived &&
                 activeTodos.isEmpty &&
                 completedTodos.isEmpty &&
                 activeReminders.isEmpty &&
                 completedReminders.isEmpty &&
                 companyLeads.isEmpty &&
-                generalNotes.isEmpty)
+                generalNotes.isEmpty &&
+                interviewCheatSheets.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
                 child: UIUtils.buildEmptyState(
@@ -483,13 +566,395 @@ class _NotesScreenState extends State<NotesScreen> {
     );
   }
 
+  // ── Upcoming Events Timeline ──────────────────────────────────────────
+
+  Widget _buildUpcomingTimeline(
+    BuildContext context,
+    ThemeData theme,
+    NotesProvider notesProvider,
+  ) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Collect all notes with dates (not archived)
+    final allNotes = [
+      ...notesProvider.activeTodos,
+      ...notesProvider.completedTodos,
+      ...notesProvider.activeReminders,
+      ...notesProvider.completedReminders,
+      ...notesProvider.companyLeads,
+      ...notesProvider.generalNotes,
+      ...notesProvider.interviewCheatSheets,
+    ];
+
+    // Extract events: (date, note) pairs for notes with upcoming or today dates
+    final events = <_TimelineEvent>[];
+    for (final note in allNotes) {
+      DateTime? date;
+      if (note.type == NoteType.interviewCheatSheet && note.interviewDate != null) {
+        date = note.interviewDate!;
+      } else if (note.dueDate != null) {
+        date = note.dueDate!;
+      }
+      if (date == null) continue;
+
+      final dateOnly = DateTime(date.year, date.month, date.day);
+      // Include today and future, plus up to 7 days past (for recent context)
+      if (dateOnly.difference(today).inDays >= -7) {
+        events.add(_TimelineEvent(date: dateOnly, note: note));
+      }
+    }
+
+    if (events.isEmpty) return const SizedBox.shrink();
+
+    // Sort by date, then by title
+    events.sort((a, b) {
+      final cmp = a.date.compareTo(b.date);
+      return cmp != 0 ? cmp : a.note.title.compareTo(b.note.title);
+    });
+
+    // Split into overdue/today and upcoming
+    final overdueAndToday = events.where((e) => e.date.compareTo(today) <= 0).toList();
+    final upcoming = events.where((e) => e.date.isAfter(today)).take(8).toList();
+    final displayEvents = [...overdueAndToday, ...upcoming];
+
+    if (displayEvents.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.md),
+      child: AppCardContainer(
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Tappable header
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  setState(() => _timelineExpanded = !_timelineExpanded);
+                  _saveExpandedState(_prefKeyTimelineExpanded, _timelineExpanded);
+                },
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(AppDimensions.cardBorderRadius),
+                  topRight: Radius.circular(AppDimensions.cardBorderRadius),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Row(
+                    children: [
+                      Icon(Icons.timeline, size: 18, color: theme.colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        context.tr('upcoming_timeline_title'),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${displayEvents.length}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      const Spacer(),
+                      Icon(
+                        _timelineExpanded ? Icons.expand_less : Icons.expand_more,
+                        size: 20,
+                        color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Collapsed: horizontal scrollable chips
+            if (!_timelineExpanded)
+              _buildTimelineCollapsed(context, theme, displayEvents, today),
+
+            // Expanded: vertical timeline
+            if (_timelineExpanded) ...[
+              ...displayEvents.asMap().entries.map((entry) {
+                final index = entry.key;
+                final event = entry.value;
+                final isLast = index == displayEvents.length - 1;
+                return _buildTimelineEntry(context, theme, event, today, isLast);
+              }),
+              const SizedBox(height: AppSpacing.xs),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimelineCollapsed(
+    BuildContext context,
+    ThemeData theme,
+    List<_TimelineEvent> events,
+    DateTime today,
+  ) {
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.sm),
+        itemCount: events.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final event = events[index];
+          final note = event.note;
+          final noteColor = _noteTypeColor(note.type);
+          final noteIcon = _noteTypeIcon(note.type);
+          final diff = event.date.difference(today).inDays;
+          final isPast = diff < 0;
+
+          final String dateLabel;
+          if (diff < 0) {
+            dateLabel = diff == -1
+                ? context.tr('timeline_yesterday')
+                : context.tr('timeline_days_ago', {'count': '${-diff}'});
+          } else if (diff == 0) {
+            dateLabel = context.tr('timeline_today');
+          } else if (diff == 1) {
+            dateLabel = context.tr('timeline_tomorrow');
+          } else if (diff < 7) {
+            dateLabel = DateFormat('EEE').format(event.date);
+          } else {
+            dateLabel = DateFormat('MMM dd').format(event.date);
+          }
+
+          return InkWell(
+            onTap: () => _showNoteEditor(context, note: note),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: noteColor.withValues(alpha: isPast ? 0.05 : 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: noteColor.withValues(alpha: isPast ? 0.15 : 0.25),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(noteIcon, size: 14, color: noteColor.withValues(alpha: isPast ? 0.4 : 0.8)),
+                  const SizedBox(width: 6),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 100),
+                    child: Text(
+                      note.title,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isPast
+                            ? theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4)
+                            : theme.textTheme.bodySmall?.color,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    dateLabel,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: diff == 0 ? Colors.orange : noteColor.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTimelineEntry(
+    BuildContext context,
+    ThemeData theme,
+    _TimelineEvent event,
+    DateTime today,
+    bool isLast,
+  ) {
+    final note = event.note;
+    final noteColor = _noteTypeColor(note.type);
+    final noteIcon = _noteTypeIcon(note.type);
+    final diff = event.date.difference(today).inDays;
+
+    // Date label
+    final String dateLabel;
+    final Color dateColor;
+    if (diff < 0) {
+      dateLabel = diff == -1
+          ? context.tr('timeline_yesterday')
+          : context.tr('timeline_days_ago', {'count': '${-diff}'});
+      dateColor = AppColors.statusRejected;
+    } else if (diff == 0) {
+      dateLabel = context.tr('timeline_today');
+      dateColor = Colors.orange;
+    } else if (diff == 1) {
+      dateLabel = context.tr('timeline_tomorrow');
+      dateColor = Colors.orange;
+    } else if (diff < 7) {
+      dateLabel = DateFormat('EEEE').format(event.date); // Day name
+      dateColor = noteColor;
+    } else {
+      dateLabel = DateFormat('MMM dd').format(event.date);
+      dateColor = noteColor;
+    }
+
+    final isPast = diff < 0;
+    final isToday = diff == 0;
+
+    return InkWell(
+      onTap: () => _showNoteEditor(context, note: note),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Timeline rail
+              SizedBox(
+                width: 24,
+                child: Column(
+                  children: [
+                    // Dot
+                    Container(
+                      width: isToday ? 14 : 10,
+                      height: isToday ? 14 : 10,
+                      decoration: BoxDecoration(
+                        color: noteColor.withValues(alpha: isPast ? 0.4 : 1.0),
+                        shape: BoxShape.circle,
+                        border: isToday
+                            ? Border.all(color: Colors.orange, width: 2)
+                            : null,
+                      ),
+                    ),
+                    // Line
+                    if (!isLast)
+                      Expanded(
+                        child: Container(
+                          width: 2,
+                          color: theme.dividerColor.withValues(alpha: 0.3),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Content
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: noteColor.withValues(alpha: isPast ? 0.03 : 0.06),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: noteColor.withValues(alpha: isPast ? 0.1 : 0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(noteIcon, size: 16, color: noteColor.withValues(alpha: isPast ? 0.4 : 0.8)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              note.title,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                                color: isPast
+                                    ? theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5)
+                                    : null,
+                                decoration: note.completed ? TextDecoration.lineThrough : null,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: dateColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          dateLabel,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: dateColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _noteTypeColor(NoteType type) {
+    switch (type) {
+      case NoteType.todo:
+        return AppColors.statusApplied;
+      case NoteType.companyLead:
+        return Colors.purple;
+      case NoteType.generalNote:
+        return Colors.teal;
+      case NoteType.reminder:
+        return Colors.pink;
+      case NoteType.interviewCheatSheet:
+        return Colors.indigo;
+    }
+  }
+
+  IconData _noteTypeIcon(NoteType type) {
+    switch (type) {
+      case NoteType.todo:
+        return Icons.check_circle_outline;
+      case NoteType.companyLead:
+        return Icons.business;
+      case NoteType.generalNote:
+        return Icons.note;
+      case NoteType.reminder:
+        return Icons.alarm;
+      case NoteType.interviewCheatSheet:
+        return Icons.assignment;
+    }
+  }
+
   Widget _buildCategoryFilters(
     ThemeData theme,
     int todosCount,
     int remindersCount,
     int leadsCount,
     int notesCount,
+    int cheatSheetsCount,
     int completedCount,
+    int archivedCount,
   ) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -536,10 +1001,26 @@ class _NotesScreenState extends State<NotesScreen> {
           const SizedBox(width: 8),
           _buildCategoryChip(
             theme,
+            label: context.tr('category_cheatsheets'),
+            count: cheatSheetsCount,
+            isSelected: _selectedCategory == 'cheatsheets',
+            onTap: () => setState(() => _selectedCategory = 'cheatsheets'),
+          ),
+          const SizedBox(width: 8),
+          _buildCategoryChip(
+            theme,
             label: context.tr('completed_filter'),
             count: completedCount,
             isSelected: _selectedCategory == 'completed',
             onTap: () => setState(() => _selectedCategory = 'completed'),
+          ),
+          const SizedBox(width: 8),
+          _buildCategoryChip(
+            theme,
+            label: context.tr('archive_filter'),
+            count: archivedCount,
+            isSelected: _selectedCategory == 'archived',
+            onTap: () => setState(() => _selectedCategory = 'archived'),
           ),
         ],
       ),
@@ -914,11 +1395,91 @@ class _NotesScreenState extends State<NotesScreen> {
           return _buildPreviewChip(
             context,
             theme,
-            Icons.circle,
-            '${status.icon} $count ${context.tr(status.localizationKey)}',
+            status.icon,
+            '$count ${context.tr(status.localizationKey)}',
             color,
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCheatSheetsCollapsedPreview(
+    BuildContext context,
+    ThemeData theme,
+    List<NoteItem> sheets,
+  ) {
+    const color = Colors.indigo;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final withDates = sheets.where((s) => s.interviewDate != null).toList();
+    final overdueCount = withDates.where((s) {
+      final d = DateTime(s.interviewDate!.year, s.interviewDate!.month, s.interviewDate!.day);
+      return d.isBefore(today);
+    }).length;
+    final todayCount = withDates.where((s) {
+      final d = DateTime(s.interviewDate!.year, s.interviewDate!.month, s.interviewDate!.day);
+      return d.isAtSameMomentAs(today);
+    }).length;
+    final upcoming = withDates.where((s) {
+      final d = DateTime(s.interviewDate!.year, s.interviewDate!.month, s.interviewDate!.day);
+      return d.isAfter(today);
+    }).toList()
+      ..sort((a, b) => a.interviewDate!.compareTo(b.interviewDate!));
+
+    final chips = <Widget>[];
+
+    if (todayCount > 0) {
+      chips.add(_buildPreviewChip(
+        context, theme, Icons.today,
+        '$todayCount ${context.tr('note_cheatsheet_interview_today')}',
+        Colors.orange,
+      ));
+    }
+    if (overdueCount > 0) {
+      chips.add(_buildPreviewChip(
+        context, theme, Icons.event_busy,
+        '$overdueCount ${context.tr('note_cheatsheet_interview_passed')}',
+        AppColors.statusRejected,
+      ));
+    }
+    if (upcoming.isNotEmpty) {
+      final next = upcoming.first.interviewDate!;
+      final diff = DateTime(next.year, next.month, next.day).difference(today).inDays;
+      chips.add(_buildPreviewChip(
+        context, theme, Icons.event,
+        '${DateFormat('MMM dd').format(next)} · ${context.tr('note_cheatsheet_interview_in_days', {'count': '$diff'})}',
+        color,
+      ));
+    }
+
+    // Sections fill rate across all sheets
+    final totalSections = sheets.length * 5;
+    var filledSections = 0;
+    for (final s in sheets) {
+      if (s.companyBackground != null && s.companyBackground!.isNotEmpty) filledSections++;
+      if (s.whyGoodFit != null && s.whyGoodFit!.isNotEmpty) filledSections++;
+      if (s.strengths != null && s.strengths!.isNotEmpty) filledSections++;
+      if (s.questionsToAsk != null && s.questionsToAsk!.isNotEmpty) filledSections++;
+      if (s.researchNotes != null && s.researchNotes!.isNotEmpty) filledSections++;
+    }
+    if (totalSections > 0) {
+      chips.add(_buildPreviewChip(
+        context, theme, Icons.checklist,
+        '$filledSections / $totalSections ${context.tr('note_cheatsheet_sections_filled')}',
+        color,
+      ));
+    }
+
+    if (chips.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: chips,
       ),
     );
   }
@@ -1259,8 +1820,24 @@ class _NotesScreenState extends State<NotesScreen> {
 
   Future<void> _exportSingleNote(BuildContext context, NoteItem note) async {
     try {
-      final englishMarkdown = NoteExportService.generateEnglishMarkdown(note: note);
-      final germanMarkdown = NoteExportService.generateGermanMarkdown(note: note);
+      final isGerman = context.loc.currentLanguageCode == 'de';
+
+      // Resolve linked application name for cheat sheets
+      String? linkedAppName;
+      if (note.type == NoteType.interviewCheatSheet &&
+          note.linkedApplicationId != null) {
+        final apps = context.read<ApplicationsProvider>().allApplications;
+        final app = apps.where((a) => a.id == note.linkedApplicationId).firstOrNull;
+        if (app != null) {
+          linkedAppName = '${app.company} — ${app.position}';
+        }
+      }
+
+      final markdown = NoteExportService.generateMarkdown(
+        note: note,
+        isGerman: isGerman,
+        linkedApplicationName: linkedAppName,
+      );
 
       final result = await FilePicker.platform.getDirectoryPath(
         dialogTitle: context.tr('select_folder_save'),
@@ -1272,11 +1849,10 @@ class _NotesScreenState extends State<NotesScreen> {
       final safeName = note.title
           .replaceAll(RegExp(r'[<>:"/\\|?*]'), '_')
           .replaceAll(RegExp(r'\s+'), '_');
-      final englishFile = File('$result${Platform.pathSeparator}${safeName}_EN_$dateStr.md');
-      final germanFile = File('$result${Platform.pathSeparator}${safeName}_DE_$dateStr.md');
+      final langSuffix = isGerman ? 'DE' : 'EN';
+      final file = File('$result${Platform.pathSeparator}${safeName}_${langSuffix}_$dateStr.md');
 
-      await englishFile.writeAsString(englishMarkdown, encoding: utf8);
-      await germanFile.writeAsString(germanMarkdown, encoding: utf8);
+      await file.writeAsString(markdown, encoding: utf8);
 
       if (mounted) {
         UIUtils.showSuccess(context, context.tr('note_export_success'));
@@ -1288,57 +1864,402 @@ class _NotesScreenState extends State<NotesScreen> {
     }
   }
 
-  Future<void> _exportNotes(BuildContext context, NotesProvider provider) async {
-    try {
-      final notes = provider.notes;
+  void _exportNotes(BuildContext context, NotesProvider provider) {
+    final notes = provider.notes;
 
-      if (notes.isEmpty) {
-        if (context.mounted) {
-          UIUtils.showError(context, context.tr('no_notes_to_export'));
+    if (notes.isEmpty) {
+      UIUtils.showError(context, context.tr('no_notes_to_export'));
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (_) => _ExportNotesDialog(notes: notes),
+    );
+  }
+}
+
+// ── Timeline Event ────────────────────────────────────────────────────────
+
+class _TimelineEvent {
+  final DateTime date;
+  final NoteItem note;
+  const _TimelineEvent({required this.date, required this.note});
+}
+
+// ── Export Notes Dialog ─────────────────────────────────────────────────────
+
+class _ExportNotesDialog extends StatefulWidget {
+  final List<NoteItem> notes;
+  const _ExportNotesDialog({required this.notes});
+
+  @override
+  State<_ExportNotesDialog> createState() => _ExportNotesDialogState();
+}
+
+class _ExportNotesDialogState extends State<_ExportNotesDialog> {
+  late final Set<String> _selectedIds;
+  bool _exportInGerman = false;
+  String? _searchQuery;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIds = widget.notes.map((n) => n.id).toSet();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _exportInGerman = context.loc.currentLanguageCode == 'de';
+  }
+
+  List<NoteItem> get _filteredNotes {
+    if (_searchQuery == null || _searchQuery!.isEmpty) return widget.notes;
+    final q = _searchQuery!.toLowerCase();
+    return widget.notes.where((n) {
+      return n.title.toLowerCase().contains(q) ||
+          (n.description ?? '').toLowerCase().contains(q);
+    }).toList();
+  }
+
+  bool get _allSelected =>
+      _filteredNotes.every((n) => _selectedIds.contains(n.id));
+
+  void _toggleAll() {
+    setState(() {
+      if (_allSelected) {
+        for (final n in _filteredNotes) {
+          _selectedIds.remove(n.id);
         }
-        return;
+      } else {
+        for (final n in _filteredNotes) {
+          _selectedIds.add(n.id);
+        }
       }
+    });
+  }
 
-      if (context.mounted) {
-        DialogUtils.showLoading(context, message: context.tr('generating_notes_report'));
-      }
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final filtered = _filteredNotes;
 
-      final englishMarkdown = NotesStatisticsMarkdownService.generateEnglishMarkdown(notes: notes);
-      final germanMarkdown = NotesStatisticsMarkdownService.generateGermanMarkdown(notes: notes);
+    return AlertDialog(
+      title: Row(
+        children: [
+          const Icon(Icons.download, size: 22),
+          const SizedBox(width: 10),
+          Expanded(child: Text(context.tr('notes_export_title'))),
+        ],
+      ),
+      content: SizedBox(
+        width: 520,
+        height: 480,
+        child: Column(
+          children: [
+            // ── Search + language toggle row ──
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 38,
+                    child: TextField(
+                      onChanged: (v) => setState(() => _searchQuery = v),
+                      style: theme.textTheme.bodySmall,
+                      decoration: InputDecoration(
+                        hintText: context.tr('search'),
+                        prefixIcon: const Icon(Icons.search, size: 18),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 0),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Language toggle
+                Container(
+                  height: 38,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: theme.dividerColor),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildLangChip('EN', !_exportInGerman, theme),
+                      _buildLangChip('DE', _exportInGerman, theme),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
 
-      if (context.mounted) {
-        Navigator.of(context).pop(); // Close loading
-      }
+            // ── Select all / count row ──
+            Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: Checkbox(
+                    value: _allSelected,
+                    tristate: false,
+                    onChanged: (_) => _toggleAll(),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: _toggleAll,
+                  child: Text(
+                    _allSelected
+                        ? context.tr('notes_export_deselect_all')
+                        : context.tr('notes_export_select_all'),
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${_selectedIds.length} / ${widget.notes.length}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.textTheme.bodySmall?.color
+                        ?.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Divider(height: 1),
 
+            // ── Notes list ──
+            Expanded(
+              child: filtered.isEmpty
+                  ? Center(
+                      child: Text(
+                        context.tr('no_results'),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.textTheme.bodySmall?.color
+                              ?.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final note = filtered[index];
+                        final isSelected = _selectedIds.contains(note.id);
+                        return _buildNoteRow(note, isSelected, theme);
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(context.tr('cancel')),
+        ),
+        FilledButton.icon(
+          onPressed: _selectedIds.isEmpty ? null : () => _doExport(context),
+          icon: const Icon(Icons.download, size: 18),
+          label: Text(
+            context.tr('notes_export_button', {
+              'count': '${_selectedIds.length}',
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLangChip(String label, bool active, ThemeData theme) {
+    return GestureDetector(
+      onTap: () => setState(() => _exportInGerman = label == 'DE'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active
+              ? theme.colorScheme.primary.withValues(alpha: 0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(7),
+        ),
+        child: Text(
+          label,
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+            color: active
+                ? theme.colorScheme.primary
+                : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoteRow(NoteItem note, bool isSelected, ThemeData theme) {
+    final typeColor = _noteTypeColor(note.type);
+    final typeIcon = _noteTypeIcon(note.type);
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          if (isSelected) {
+            _selectedIds.remove(note.id);
+          } else {
+            _selectedIds.add(note.id);
+          }
+        });
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: Checkbox(
+                value: isSelected,
+                onChanged: (_) {
+                  setState(() {
+                    if (isSelected) {
+                      _selectedIds.remove(note.id);
+                    } else {
+                      _selectedIds.add(note.id);
+                    }
+                  });
+                },
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            // Type icon
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: typeColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(typeIcon, size: 14, color: typeColor),
+            ),
+            const SizedBox(width: 10),
+            // Title + type label
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    note.title,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      decoration:
+                          note.completed ? TextDecoration.lineThrough : null,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    context.tr(note.type.localizationKey),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 10,
+                      color: typeColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Date
+            Text(
+              DateFormat('dd.MM.yy').format(note.createdAt),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontSize: 10,
+                color:
+                    theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _doExport(BuildContext context) async {
+    final selected = widget.notes
+        .where((n) => _selectedIds.contains(n.id))
+        .toList();
+
+    if (selected.isEmpty) return;
+
+    Navigator.pop(context); // Close dialog
+
+    try {
       final result = await FilePicker.platform.getDirectoryPath(
         dialogTitle: context.tr('select_folder_save'),
       );
-
       if (result == null) return;
 
+      final apps = context.mounted
+          ? context.read<ApplicationsProvider>().allApplications
+          : <dynamic>[];
       final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      final englishFile = File('$result${Platform.pathSeparator}Notes_Report_EN_$dateStr.md');
-      final germanFile = File('$result${Platform.pathSeparator}Notes_Report_DE_$dateStr.md');
+      final langSuffix = _exportInGerman ? 'DE' : 'EN';
 
-      await englishFile.writeAsString(englishMarkdown, encoding: utf8);
-      await germanFile.writeAsString(germanMarkdown, encoding: utf8);
+      for (final note in selected) {
+        // Resolve linked app name for cheat sheets
+        String? linkedAppName;
+        if (note.type == NoteType.interviewCheatSheet &&
+            note.linkedApplicationId != null) {
+          final app = apps.where((a) => a.id == note.linkedApplicationId).firstOrNull;
+          if (app != null) {
+            linkedAppName = '${app.company} — ${app.position}';
+          }
+        }
+
+        final markdown = NoteExportService.generateMarkdown(
+          note: note,
+          isGerman: _exportInGerman,
+          linkedApplicationName: linkedAppName,
+        );
+
+        final safeName = note.title
+            .replaceAll(RegExp(r'[<>:"/\\|?*]'), '_')
+            .replaceAll(RegExp(r'\s+'), '_');
+        final file = File(
+            '$result${Platform.pathSeparator}${safeName}_${langSuffix}_$dateStr.md');
+        await file.writeAsString(markdown, encoding: utf8);
+      }
 
       if (context.mounted) {
         UIUtils.showSuccess(context, context.tr('notes_exported'));
 
         final shouldOpen = await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
-            title: Text(context.tr('notes_export_successful_title')),
-            content: Text(context.tr('notes_export_successful_message', {'date': dateStr})),
+          builder: (ctx) => AlertDialog(
+            title: Text(ctx.tr('notes_export_successful_title')),
+            content: Text(ctx.tr('notes_export_done_message', {
+              'count': '${selected.length}',
+            })),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(context.tr('no')),
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(ctx.tr('no')),
               ),
               FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(context.tr('open_folder')),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(ctx.tr('open_folder')),
               ),
             ],
           ),
@@ -1350,9 +2271,39 @@ class _NotesScreenState extends State<NotesScreen> {
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.of(context).pop();
-        UIUtils.showError(context, context.tr('failed_export_notes', {'error': e.toString()}));
+        UIUtils.showError(
+            context, context.tr('note_export_failed', {'error': e.toString()}));
       }
+    }
+  }
+
+  static Color _noteTypeColor(NoteType type) {
+    switch (type) {
+      case NoteType.todo:
+        return AppColors.statusApplied;
+      case NoteType.companyLead:
+        return Colors.purple;
+      case NoteType.generalNote:
+        return Colors.teal;
+      case NoteType.reminder:
+        return Colors.pink;
+      case NoteType.interviewCheatSheet:
+        return Colors.indigo;
+    }
+  }
+
+  static IconData _noteTypeIcon(NoteType type) {
+    switch (type) {
+      case NoteType.todo:
+        return Icons.check_circle_outline;
+      case NoteType.companyLead:
+        return Icons.business;
+      case NoteType.generalNote:
+        return Icons.note;
+      case NoteType.reminder:
+        return Icons.alarm;
+      case NoteType.interviewCheatSheet:
+        return Icons.assignment;
     }
   }
 }

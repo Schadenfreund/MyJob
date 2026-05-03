@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.1] - 2026-03-21
+
+### Added
+
+#### Notes Screen
+- **Cheat sheet collapsed preview** — When collapsed, interview cheat sheet
+  cards now show useful chips: today's interviews, upcoming dates, and
+  sections-filled count.
+- **Archived notes section** — New "Archived" category filter with dedicated
+  section to view and unarchive archived notes.
+- **Calendar Timeline** — Vertical timeline widget showing the next upcoming
+  dated notes with type-colored dots. Collapsible with a horizontal chip view.
+  State persisted via preferences.
+
+#### Cover Letter Placeholders
+- **Clickable insertion chips** — Placeholder chips (==COMPANY==, ==POSITION==,
+  ==RECIPIENT_NAME==, ==LOCATION==, ==SALARY==) can be clicked to insert at
+  cursor position in the profile, template editor, and job application editor.
+- **Placeholder highlighting** — ==PLACEHOLDER== patterns are highlighted in
+  the accent color in all cover letter text editors.
+- **Filled value highlighting** — In the job application cover letter editor,
+  values that were auto-filled from application data (company name, position,
+  etc.) are highlighted in the accent color.
+- **Full placeholder auto-replacement** — All 5 placeholders are now replaced
+  when creating a job application, in PDF generation, and in template instances.
+
+### Fixed
+
+- **Lead status emojis** — Replaced Unicode emojis with Material icons for
+  consistency across platforms.
+- **German locale placeholders** — `cover_letter_hint` and `cover_letter_help`
+  used old German placeholder names (==FIRMA==, ==EMPFAENGER_NAME==). Now uses
+  the standardized ==COMPANY==, ==RECIPIENT_NAME== format.
+- **PDF placeholder gap** — Job application PDF generation only replaced
+  COMPANY and POSITION. Now replaces all 5 placeholders (RECIPIENT_NAME,
+  LOCATION, SALARY added).
+- **Template instance placeholder gap** — `CoverLetterInstance.fromTemplate`
+  only filled COMPANY and POSITION. Now accepts and fills all 5 placeholders.
+- **`placeholder_tip` localization** — Referenced non-existent ==NAME==
+  placeholder. Updated to list all 5 standard placeholders in EN, DE, and HR.
+- **Demo data consistency** — Removed stale custom placeholders and ambiguous
+  ==NAME== references from YAML template comments.
+
+### Changed
+
+- **`CustomTextField`** — Added `focusNode` parameter support for external
+  focus management.
+- **`PlaceholderHighlightController`** — Made public for reuse across editors.
+  Now supports both ==PLACEHOLDER== pattern highlighting and filled-value
+  string highlighting.
+- **Croatian localization** — Synced 49 missing keys for cheat sheets, archive,
+  timeline, export, and cover letter placeholders.
+
+---
+
 ## [1.2.0] - 2026-03-16
 
 ### Security

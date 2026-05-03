@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../models/notes_data.dart';
+import '../../models/job_application.dart';
+import '../../providers/applications_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/ui_utils.dart';
 import '../../localization/app_localizations.dart';
@@ -23,11 +26,19 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
   late TextEditingController _contactPersonController;
   late TextEditingController _contactEmailController;
   late TextEditingController _locationController;
+  late TextEditingController _salaryExpectationController;
+  late TextEditingController _companyBackgroundController;
+  late TextEditingController _whyGoodFitController;
+  late TextEditingController _questionsToAskController;
+  late TextEditingController _strengthsController;
+  late TextEditingController _researchNotesController;
 
   late NoteType _selectedType;
   late NotePriority _selectedPriority;
   LeadStatus? _selectedLeadStatus;
   DateTime? _dueDate;
+  DateTime? _interviewDate;
+  String? _linkedApplicationId;
 
   @override
   void initState() {
@@ -45,10 +56,24 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
         TextEditingController(text: widget.note?.contactEmail ?? '');
     _locationController =
         TextEditingController(text: widget.note?.location ?? '');
+    _salaryExpectationController =
+        TextEditingController(text: widget.note?.salaryExpectation ?? '');
+    _companyBackgroundController =
+        TextEditingController(text: widget.note?.companyBackground ?? '');
+    _whyGoodFitController =
+        TextEditingController(text: widget.note?.whyGoodFit ?? '');
+    _questionsToAskController =
+        TextEditingController(text: widget.note?.questionsToAsk ?? '');
+    _strengthsController =
+        TextEditingController(text: widget.note?.strengths ?? '');
+    _researchNotesController =
+        TextEditingController(text: widget.note?.researchNotes ?? '');
     _selectedType = widget.note?.type ?? NoteType.todo;
     _selectedPriority = widget.note?.priority ?? NotePriority.medium;
     _selectedLeadStatus = widget.note?.leadStatus;
     _dueDate = widget.note?.dueDate;
+    _interviewDate = widget.note?.interviewDate;
+    _linkedApplicationId = widget.note?.linkedApplicationId;
   }
 
   @override
@@ -60,6 +85,12 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
     _contactPersonController.dispose();
     _contactEmailController.dispose();
     _locationController.dispose();
+    _salaryExpectationController.dispose();
+    _companyBackgroundController.dispose();
+    _whyGoodFitController.dispose();
+    _questionsToAskController.dispose();
+    _strengthsController.dispose();
+    _researchNotesController.dispose();
     super.dispose();
   }
 
@@ -217,6 +248,8 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
         return _buildGeneralNoteFields(theme);
       case NoteType.reminder:
         return _buildReminderFields(theme);
+      case NoteType.interviewCheatSheet:
+        return _buildInterviewCheatSheetFields(theme);
     }
   }
 
@@ -411,6 +444,190 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
     ];
   }
 
+  // ── Interview Cheat Sheet Fields ─────────────────────────────────────
+
+  List<Widget> _buildInterviewCheatSheetFields(ThemeData theme) {
+    final applications = context.read<ApplicationsProvider>().allApplications;
+
+    return [
+      // Title (company / position)
+      TextFormField(
+        controller: _titleController,
+        decoration: InputDecoration(
+          labelText: context.tr('note_cheatsheet_title_label'),
+          hintText: context.tr('note_cheatsheet_title_hint'),
+          prefixIcon: const Icon(Icons.assignment),
+        ),
+        autofocus: widget.note == null,
+      ),
+      const SizedBox(height: AppSpacing.md),
+
+      // Link to existing application
+      DropdownButtonFormField<String>(
+        value: _linkedApplicationId,
+        decoration: InputDecoration(
+          labelText: context.tr('note_cheatsheet_linked_app_label'),
+          hintText: context.tr('note_cheatsheet_linked_app_hint'),
+          prefixIcon: const Icon(Icons.link),
+        ),
+        items: [
+          DropdownMenuItem<String>(
+            value: null,
+            child: Text(
+              context.tr('note_cheatsheet_no_link'),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontStyle: FontStyle.italic,
+                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+          ...applications.map((app) => DropdownMenuItem<String>(
+                value: app.id,
+                child: Text(
+                  '${app.company} — ${app.position}',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )),
+        ],
+        onChanged: (value) => setState(() => _linkedApplicationId = value),
+        isExpanded: true,
+      ),
+      const SizedBox(height: AppSpacing.md),
+
+      // Interview date
+      _buildInterviewDatePicker(theme),
+      const SizedBox(height: AppSpacing.lg),
+
+      // Salary expectation
+      TextFormField(
+        controller: _salaryExpectationController,
+        decoration: InputDecoration(
+          labelText: context.tr('note_cheatsheet_salary_label'),
+          hintText: context.tr('note_cheatsheet_salary_hint'),
+          prefixIcon: const Icon(Icons.euro),
+        ),
+      ),
+      const SizedBox(height: AppSpacing.md),
+
+      // Company background
+      TextFormField(
+        controller: _companyBackgroundController,
+        decoration: InputDecoration(
+          labelText: context.tr('note_cheatsheet_company_bg_label'),
+          hintText: context.tr('note_cheatsheet_company_bg_hint'),
+          prefixIcon: const Icon(Icons.business),
+          alignLabelWithHint: true,
+        ),
+        maxLines: 4,
+      ),
+      const SizedBox(height: AppSpacing.md),
+
+      // Why I'm a good fit
+      TextFormField(
+        controller: _whyGoodFitController,
+        decoration: InputDecoration(
+          labelText: context.tr('note_cheatsheet_why_fit_label'),
+          hintText: context.tr('note_cheatsheet_why_fit_hint'),
+          prefixIcon: const Icon(Icons.star_outline),
+          alignLabelWithHint: true,
+        ),
+        maxLines: 4,
+      ),
+      const SizedBox(height: AppSpacing.md),
+
+      // My strengths for this role
+      TextFormField(
+        controller: _strengthsController,
+        decoration: InputDecoration(
+          labelText: context.tr('note_cheatsheet_strengths_label'),
+          hintText: context.tr('note_cheatsheet_strengths_hint'),
+          prefixIcon: const Icon(Icons.fitness_center),
+          alignLabelWithHint: true,
+        ),
+        maxLines: 3,
+      ),
+      const SizedBox(height: AppSpacing.md),
+
+      // Questions to ask
+      TextFormField(
+        controller: _questionsToAskController,
+        decoration: InputDecoration(
+          labelText: context.tr('note_cheatsheet_questions_label'),
+          hintText: context.tr('note_cheatsheet_questions_hint'),
+          prefixIcon: const Icon(Icons.help_outline),
+          alignLabelWithHint: true,
+        ),
+        maxLines: 4,
+      ),
+      const SizedBox(height: AppSpacing.md),
+
+      // Research notes / additional prep
+      TextFormField(
+        controller: _researchNotesController,
+        decoration: InputDecoration(
+          labelText: context.tr('note_cheatsheet_research_label'),
+          hintText: context.tr('note_cheatsheet_research_hint'),
+          prefixIcon: const Icon(Icons.science_outlined),
+          alignLabelWithHint: true,
+        ),
+        maxLines: 3,
+      ),
+      const SizedBox(height: AppSpacing.md),
+
+      // General notes / description
+      TextFormField(
+        controller: _descriptionController,
+        decoration: InputDecoration(
+          labelText: context.tr('note_cheatsheet_notes_label'),
+          hintText: context.tr('note_cheatsheet_notes_hint'),
+          prefixIcon: const Icon(Icons.edit_outlined),
+          alignLabelWithHint: true,
+        ),
+        maxLines: 3,
+      ),
+      const SizedBox(height: AppSpacing.md),
+
+      _buildPriorityDropdown(theme),
+      const SizedBox(height: AppSpacing.md),
+      _buildTagsField(),
+    ];
+  }
+
+  Widget _buildInterviewDatePicker(ThemeData theme) {
+    return InkWell(
+      onTap: () async {
+        final date = await showDatePicker(
+          context: context,
+          initialDate: _interviewDate ?? DateTime.now(),
+          firstDate: DateTime.now().subtract(const Duration(days: 365)),
+          lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+        );
+        if (date != null) {
+          setState(() => _interviewDate = date);
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: context.tr('note_cheatsheet_interview_date_label'),
+          prefixIcon: const Icon(Icons.event),
+          suffixIcon: _interviewDate != null
+              ? IconButton(
+                  icon: const Icon(Icons.clear, size: 18),
+                  onPressed: () => setState(() => _interviewDate = null),
+                )
+              : const Icon(Icons.arrow_drop_down),
+        ),
+        child: Text(
+          _interviewDate != null
+              ? DateFormat('MMM dd, yyyy').format(_interviewDate!)
+              : context.tr('note_cheatsheet_no_date'),
+          style: theme.textTheme.bodyMedium,
+        ),
+      ),
+    );
+  }
+
   // ── Shared Widgets ────────────────────────────────────────────────────
 
   Widget _buildPriorityDropdown(ThemeData theme) {
@@ -460,7 +677,7 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(status.icon, style: const TextStyle(fontSize: 16)),
+              Icon(status.icon, size: 18),
               const SizedBox(width: 8),
               Text(context.tr(status.localizationKey)),
             ],
@@ -567,55 +784,58 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
         .where((tag) => tag.isNotEmpty)
         .toList();
 
+    String? trimOrNull(TextEditingController c) {
+      final v = c.text.trim();
+      return v.isEmpty ? null : v;
+    }
+
+    final isCheatSheet = _selectedType == NoteType.interviewCheatSheet;
+
     final note = widget.note?.copyWith(
           title: title,
-          description: _descriptionController.text.trim().isEmpty
-              ? null
-              : _descriptionController.text.trim(),
+          description: trimOrNull(_descriptionController),
           type: _selectedType,
           priority: _selectedPriority,
           dueDate: _dueDate,
           tags: tags,
-          url: _urlController.text.trim().isEmpty
-              ? null
-              : _urlController.text.trim(),
-          contactPerson: _contactPersonController.text.trim().isEmpty
-              ? null
-              : _contactPersonController.text.trim(),
-          contactEmail: _contactEmailController.text.trim().isEmpty
-              ? null
-              : _contactEmailController.text.trim(),
-          location: _locationController.text.trim().isEmpty
-              ? null
-              : _locationController.text.trim(),
+          url: trimOrNull(_urlController),
+          contactPerson: trimOrNull(_contactPersonController),
+          contactEmail: trimOrNull(_contactEmailController),
+          location: trimOrNull(_locationController),
           leadStatus: _selectedType == NoteType.companyLead
               ? _selectedLeadStatus
               : null,
+          linkedApplicationId: isCheatSheet ? _linkedApplicationId : null,
+          salaryExpectation: isCheatSheet ? trimOrNull(_salaryExpectationController) : null,
+          companyBackground: isCheatSheet ? trimOrNull(_companyBackgroundController) : null,
+          whyGoodFit: isCheatSheet ? trimOrNull(_whyGoodFitController) : null,
+          questionsToAsk: isCheatSheet ? trimOrNull(_questionsToAskController) : null,
+          strengths: isCheatSheet ? trimOrNull(_strengthsController) : null,
+          researchNotes: isCheatSheet ? trimOrNull(_researchNotesController) : null,
+          interviewDate: isCheatSheet ? _interviewDate : null,
         ) ??
         NoteItem(
           title: title,
-          description: _descriptionController.text.trim().isEmpty
-              ? null
-              : _descriptionController.text.trim(),
+          description: trimOrNull(_descriptionController),
           type: _selectedType,
           priority: _selectedPriority,
           dueDate: _dueDate,
           tags: tags,
-          url: _urlController.text.trim().isEmpty
-              ? null
-              : _urlController.text.trim(),
-          contactPerson: _contactPersonController.text.trim().isEmpty
-              ? null
-              : _contactPersonController.text.trim(),
-          contactEmail: _contactEmailController.text.trim().isEmpty
-              ? null
-              : _contactEmailController.text.trim(),
-          location: _locationController.text.trim().isEmpty
-              ? null
-              : _locationController.text.trim(),
+          url: trimOrNull(_urlController),
+          contactPerson: trimOrNull(_contactPersonController),
+          contactEmail: trimOrNull(_contactEmailController),
+          location: trimOrNull(_locationController),
           leadStatus: _selectedType == NoteType.companyLead
               ? (_selectedLeadStatus ?? LeadStatus.researching)
               : null,
+          linkedApplicationId: isCheatSheet ? _linkedApplicationId : null,
+          salaryExpectation: isCheatSheet ? trimOrNull(_salaryExpectationController) : null,
+          companyBackground: isCheatSheet ? trimOrNull(_companyBackgroundController) : null,
+          whyGoodFit: isCheatSheet ? trimOrNull(_whyGoodFitController) : null,
+          questionsToAsk: isCheatSheet ? trimOrNull(_questionsToAskController) : null,
+          strengths: isCheatSheet ? trimOrNull(_strengthsController) : null,
+          researchNotes: isCheatSheet ? trimOrNull(_researchNotesController) : null,
+          interviewDate: isCheatSheet ? _interviewDate : null,
         );
 
     Navigator.of(context).pop(note);
@@ -644,6 +864,8 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
         return Colors.teal;
       case NoteType.reminder:
         return Colors.pink;
+      case NoteType.interviewCheatSheet:
+        return Colors.indigo;
     }
   }
 
@@ -657,6 +879,8 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
         return Icons.note;
       case NoteType.reminder:
         return Icons.alarm;
+      case NoteType.interviewCheatSheet:
+        return Icons.assignment;
     }
   }
 }

@@ -1079,6 +1079,36 @@ class _ProfileSections extends StatelessWidget {
         hintText: context.tr('cover_letter_hint'),
         helpText: context.tr('cover_letter_help'),
         minLines: 8,
+        highlightColor: theme.colorScheme.primary,
+        chipsTitle: context.tr('cover_letter_placeholders_title'),
+        chipsFooter: context.tr('cover_letter_placeholders_footer'),
+        insertableChips: [
+          InsertableChip(
+            label: '==COMPANY==',
+            insertText: '==COMPANY==',
+            description: context.tr('cover_letter_placeholder_company'),
+          ),
+          InsertableChip(
+            label: '==POSITION==',
+            insertText: '==POSITION==',
+            description: context.tr('cover_letter_placeholder_position'),
+          ),
+          InsertableChip(
+            label: '==RECIPIENT_NAME==',
+            insertText: '==RECIPIENT_NAME==',
+            description: context.tr('cover_letter_placeholder_recipient'),
+          ),
+          InsertableChip(
+            label: '==LOCATION==',
+            insertText: '==LOCATION==',
+            description: context.tr('cover_letter_placeholder_location'),
+          ),
+          InsertableChip(
+            label: '==SALARY==',
+            insertText: '==SALARY==',
+            description: context.tr('cover_letter_placeholder_salary'),
+          ),
+        ],
       ),
     );
   }

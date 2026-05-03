@@ -17,6 +17,7 @@ MyTemplate/
 Design_Template/
 Private_Data/
 CV_Template/
+MyTemplate/
 
 # Generated files
 *.g.dart

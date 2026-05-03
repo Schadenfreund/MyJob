@@ -13,66 +13,49 @@ metadata:
 
 # Vorlageninhalt mit Platzhaltern
 template:
-  greeting: "Sehr geehrte/r ==EMPFAENGER_NAME==,"
+  greeting: "Sehr geehrte/r ==RECIPIENT_NAME==,"
 
   paragraphs:
-    - "ich schreibe Ihnen, um mein starkes Interesse an der Position ==POSITION== bei ==FIRMA== zum Ausdruck zu bringen. Mit über 35 Jahren Erfahrung als Sicherheitsinspektor im Kernkraftwerk Springfield habe ich ein einzigartiges Kompetenzprofil entwickelt, das technische Expertise mit kreativem Problemlösen und unerschütterlichem Engagement verbindet."
+    - "ich schreibe Ihnen, um mein starkes Interesse an der Position ==POSITION== bei ==COMPANY== in ==LOCATION== zum Ausdruck zu bringen. Mit über 35 Jahren Erfahrung als Sicherheitsinspektor im Kernkraftwerk Springfield habe ich ein einzigartiges Kompetenzprofil entwickelt, das technische Expertise mit kreativem Problemlösen und unerschütterlichem Engagement verbindet."
 
-    - "Im Laufe meiner Karriere habe ich erfolgreich ==HAUPTVERANTWORTUNG== verwaltet und dabei stets höchste Sicherheits- und Effizienzstandards eingehalten. Meine Erfahrung umfasst Krisenmanagement, Teamführung und innovative Ansätze für komplexe Herausforderungen. Ich fühle mich besonders zu ==FIRMA== hingezogen, da Ihr Engagement für ==FIRMENWERT== perfekt mit meinen beruflichen Werten und meiner Arbeitsethik übereinstimmt."
+    - "Im Laufe meiner Karriere habe ich erfolgreich komplexe Sicherheitsabläufe verwaltet und dabei stets höchste Effizienzstandards eingehalten. Meine Erfahrung umfasst Krisenmanagement, Teamführung und innovative Ansätze für komplexe Herausforderungen. Ich fühle mich besonders zu ==COMPANY== hingezogen, da Ihr Engagement für Exzellenz perfekt mit meinen beruflichen Werten und meiner Arbeitsethik übereinstimmt."
 
     - "Neben meiner Expertise im Bereich Nuklearsicherheit bringe ich vielfältige Erfahrungen aus verschiedenen Rollen mit, darunter Grammy-prämierter Musiker, Unternehmer (Mr. Plow Schneeräumdienst) und Gemeindevorsteher. Diese Vielfalt an Erfahrungen hat mich gelehrt, wie wichtig Anpassungsfähigkeit, Ausdauer und eine positive Einstellung auch in schwierigen Situationen sind."
 
-    - "Ich freue mich auf die Möglichkeit, zum anhaltenden Erfolg von ==FIRMA== beizutragen, und würde gerne besprechen, wie meine Fähigkeiten und Erfahrungen den Anforderungen der ==POSITION== entsprechen. Ich stehe für ein Vorstellungsgespräch zu Ihrer Verfügung und bin unter (555) 7334 oder chunkylover53@aol.com erreichbar."
+    - "Ich freue mich auf die Möglichkeit, zum anhaltenden Erfolg von ==COMPANY== beizutragen, und würde gerne besprechen, wie meine Fähigkeiten und Erfahrungen den Anforderungen der ==POSITION== entsprechen. Ich stehe für ein Vorstellungsgespräch zu Ihrer Verfügung und bin unter (555) 7334 oder chunkylover53@aol.com erreichbar."
 
-    - "Vielen Dank für die Berücksichtigung meiner Bewerbung. Ich freue mich darauf, Teil Ihres Teams zu werden und zu ==SPEZIFISCHES_ZIEL== beizutragen."
+    - "Vielen Dank für die Berücksichtigung meiner Bewerbung. Ich freue mich darauf, Teil Ihres Teams zu werden."
 
   closing: "Mit freundlichen Grüßen,"
   signature: "Homer J. Simpson"
 
 # Platzhalterdefinitionen und Beispiele
-# Diese dienen der Dokumentation - die tatsächlichen Platzhalter im Template verwenden das ==NAME== Format
+# Diese dienen der Dokumentation - die tatsächlichen Platzhalter im Template verwenden das ==PLATZHALTER_NAME== Format
 placeholders:
-  - name: EMPFAENGER_NAME
-    description: "Name des Personalverantwortlichen oder Empfängers"
-    location: "Anrede (erste Zeile)"
-    example: "Herr Burns"
-    default: "Damen und Herren"
-    required: true
-
-  - name: FIRMA
-    description: "Name des Unternehmens, bei dem Sie sich bewerben"
+  - name: COMPANY
+    description: "Name des Unternehmens (automatisch aus der Bewerbung)"
     location: "Im gesamten Brief"
     example: "Globex Corporation"
-    default: "[Firmenname]"
-    required: true
 
   - name: POSITION
-    description: "Stellenbezeichnung, auf die Sie sich bewerben"
+    description: "Stellenbezeichnung (automatisch aus der Bewerbung)"
     location: "Erster Absatz und Schluss"
     example: "Senior-Sicherheitsinspektor"
-    default: "[Position]"
-    required: true
 
-  - name: HAUPTVERANTWORTUNG
-    description: "Hauptverantwortung aus der Stellenbeschreibung"
-    location: "Zweiter Absatz"
-    example: "Reaktorüberwachung und Implementierung von Sicherheitsprotokollen"
-    default: "wichtige Verantwortlichkeiten"
-    required: false
+  - name: RECIPIENT_NAME
+    description: "Kontaktperson oder Personalverantwortliche/r (automatisch aus der Bewerbung)"
+    location: "Anrede"
+    example: "Herr Burns"
 
-  - name: FIRMENWERT
-    description: "Ein Unternehmenswert oder eine Mission, die Sie anspricht"
-    location: "Zweiter Absatz"
-    example: "Innovation und Mitarbeiterförderung"
-    default: "Ihre Werte und Mission"
-    required: false
+  - name: LOCATION
+    description: "Arbeitsort (automatisch aus der Bewerbung)"
+    location: "Erster Absatz"
+    example: "Springfield"
 
-  - name: SPEZIFISCHES_ZIEL
-    description: "Spezifisches Ziel oder Projekt des Unternehmens"
-    location: "Schlussabsatz"
-    example: "Erreichung der Klimaneutralität bis 2030"
-    default: "Ihre Unternehmensziele"
-    required: false
+  - name: SALARY
+    description: "Gehalt aus der Bewerbung (automatisch aus der Bewerbung)"
+    location: "Nach Bedarf"
+    example: "60.000 - 80.000 EUR"
 
 # Verwendungshinweise zum Verständnis des Platzhaltensystems
 usage_notes: |
@@ -80,28 +63,12 @@ usage_notes: |
   
   PLATZHALTERFORMAT:
   - Platzhalter verwenden das Format ==PLATZHALTER_NAME== (mit doppelten Gleichheitszeichen auf jeder Seite)
-  - Beispiel: ==FIRMA==, ==POSITION==, ==EMPFAENGER_NAME==
-  
-  BEIM IMPORT:
-  - Der Vorlagentext wird in Ihr Masterprofil als Standard-Anschreiben-Text importiert
-  - Wenn Sie eine Bewerbung erstellen, wird dieser Standardtext in diese spezifische Bewerbung geklont
-  - Sie können dann das Anschreiben für diese Stelle bearbeiten und Platzhalter durch tatsächliche Werte ersetzen
-  
-  VERFÜGBARE BEWERBUNGSDATEN:
-  - Beim Ansehen einer Bewerbung haben Sie Zugriff auf:
-    * Firmenname (aus application.company)
-    * Position (aus application.position)
-    * Kontaktperson (aus application.contactPerson)
-    * Standort (aus application.location)
-  
-  BEST PRACTICES:
-  1. Verwenden Sie erforderliche Platzhalter (EMPFAENGER_NAME, POSITION, FIRMA) konsistent
-  2. Optionale Platzhalter können entfernt oder ersetzt werden, wenn nicht zutreffend
-  3. Passen Sie den Inhalt an, behalten Sie dabei einen professionellen Ton bei
-  4. Ersetzen Sie ALLE verbleibenden Platzhalter, bevor Sie den finalen Brief versenden
-  
-  Die Vorlage balanciert Professionalität mit Persönlichkeit und zeigt sowohl technische 
-  Kompetenz als auch einzigartige Erfahrungen.
+  - Verfügbar: ==COMPANY==, ==POSITION==, ==RECIPIENT_NAME==, ==LOCATION==, ==SALARY==
+
+  AUTOMATISCHE ERSETZUNG:
+  - Beim Erstellen einer Bewerbung werden die Platzhalter automatisch mit den Bewerbungsdaten ersetzt
+  - ==COMPANY== → Firmenname, ==POSITION== → Stellenbezeichnung
+  - ==RECIPIENT_NAME== → Kontaktperson, ==LOCATION== → Arbeitsort, ==SALARY== → Gehalt
 
 # Beispiel, wie die Vorlage ausgefüllt aussieht (nur zur Referenz)
 example_filled_letter: |

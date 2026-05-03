@@ -25,19 +25,38 @@ class JobCoverLetter {
     );
   }
 
-  /// Create from default cover letter body with greeting and closing
+  /// Create from default cover letter body with greeting and closing.
+  /// Replaces ==PLACEHOLDER== markers with application data.
   factory JobCoverLetter.fromDefault({
     required String defaultBody,
     String? companyName,
+    String? position,
+    String? contactPerson,
+    String? location,
+    String? salary,
     String? subject,
     String defaultGreeting = 'Dear Hiring Manager,',
     String defaultClosing = 'Kind regards,',
   }) {
+    var body = defaultBody;
+    final replacements = {
+      'COMPANY': companyName,
+      'POSITION': position,
+      'RECIPIENT_NAME': contactPerson,
+      'LOCATION': location,
+      'SALARY': salary,
+    };
+    for (final entry in replacements.entries) {
+      if (entry.value != null && entry.value!.isNotEmpty) {
+        body = body.replaceAll('==${entry.key}==', entry.value!);
+      }
+    }
+
     return JobCoverLetter(
       companyName: companyName ?? '',
       subject: subject ?? '',
       greeting: defaultGreeting,
-      body: defaultBody,
+      body: body,
       closing: defaultClosing,
       signature: '',
     );

@@ -208,25 +208,25 @@ work_experience:
       - Received Denver Broncos as parting gift
 
 default_cover_letter: |
-  Dear [RECIPIENT_NAME],
+  Dear ==RECIPIENT_NAME==,
 
-  I am writing to express my enthusiastic interest in the [POSITION] position at [COMPANY_NAME]. 
-  With over three decades of experience in nuclear safety, crisis management, and innovative 
+  I am writing to express my enthusiastic interest in the ==POSITION== position at ==COMPANY==.
+  With over three decades of experience in nuclear safety, crisis management, and innovative
   problem-solving, I am confident that I would make a valuable addition to your team.
 
-  In my current role as Safety Inspector at Springfield Nuclear Power Plant, I have successfully 
-  managed complex safety protocols and prevented numerous potential incidents through quick thinking 
-  and decisive action. My experience ranges from technical operations to team leadership, and I have 
-  consistently demonstrated the ability to remain calm under pressure (even when the pressure is 
+  In my current role as Safety Inspector at Springfield Nuclear Power Plant, I have successfully
+  managed complex safety protocols and prevented numerous potential incidents through quick thinking
+  and decisive action. My experience ranges from technical operations to team leadership, and I have
+  consistently demonstrated the ability to remain calm under pressure (even when the pressure is
   several thousand PSI).
 
-  Beyond my technical expertise, I bring a unique perspective shaped by diverse experiences including 
-  Grammy Award-winning musical performance, entrepreneurial ventures, and community leadership. 
-  I am known for my creative approach to challenges and my unwavering commitment to achieving results, 
+  Beyond my technical expertise, I bring a unique perspective shaped by diverse experiences including
+  Grammy Award-winning musical performance, entrepreneurial ventures, and community leadership.
+  I am known for my creative approach to challenges and my unwavering commitment to achieving results,
   even in the face of seemingly insurmountable obstacles.
 
-  I am excited about the opportunity to bring my skills and experience to [COMPANY_NAME], and I look 
-  forward to discussing how I can contribute to your organization's success. Thank you for considering 
+  I am excited about the opportunity to bring my skills and experience to ==COMPANY==, and I look
+  forward to discussing how I can contribute to your organization's success. Thank you for considering
   my application.
 
   Sincerely,
