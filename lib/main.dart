@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
+import 'constants/app_constants.dart';
 import 'theme/app_theme.dart';
 import 'providers/app_state.dart';
 import 'providers/applications_provider.dart';
@@ -21,6 +23,9 @@ import 'localization/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  final packageInfo = await PackageInfo.fromPlatform();
+  AppInfo.version = packageInfo.version;
 
   // Initialize logging service first
   await LogService.instance.init();

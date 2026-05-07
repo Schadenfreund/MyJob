@@ -42,16 +42,31 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
   bool _importWorkExperience = true;
   bool _importEducation = true;
 
+  // YAML editor — auto-opens on parse error to allow manual fixing inline.
+  bool _showYamlEditor = false;
+  bool _autoFixApplied = false;
+  int? _errorLine;
+  int? _errorColumn;
+  late final _YamlHighlightController _yamlEditorController;
+  final _editorScrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
-    // If a file is pre-selected, parse it immediately
+    _yamlEditorController = _YamlHighlightController();
     if (widget.preSelectedFile != null) {
       _selectedFile = widget.preSelectedFile;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _parseFile(widget.preSelectedFile!);
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _yamlEditorController.dispose();
+    _editorScrollController.dispose();
+    super.dispose();
   }
 
   /// Effective target language, falling back to the provider's current code.
@@ -66,7 +81,8 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: Colors.transparent,
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 720),
+        constraints: BoxConstraints(
+            maxWidth: 600, maxHeight: _showYamlEditor ? 940 : 720),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
@@ -94,10 +110,22 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Error message
-                          if (_error != null) ...[
+                          // Error message (only when editor is not open)
+                          if (_error != null && !_showYamlEditor) ...[
                             _buildError(context),
                             const SizedBox(height: 16),
+                          ],
+
+                          // Inline YAML editor (auto-opens on parse error)
+                          if (_showYamlEditor) ...[
+                            _buildYamlEditor(context),
+                            const SizedBox(height: 16),
+                          ],
+
+                          // Auto-fix applied banner
+                          if (_autoFixApplied && !_showYamlEditor) ...[
+                            _buildAutoFixedBanner(context),
+                            const SizedBox(height: 12),
                           ],
 
                           // Parse result preview
@@ -756,6 +784,7 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
@@ -845,33 +874,85 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
   }
 
   Future<void> _parseFile(File file) async {
+    setState(() => _isLoading = true);
+    try {
+      final content = await file.readAsString();
+      await _parseContent(content, file.path);
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to read file: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Shared parse path used by both the initial file load and the in-dialog
+  /// re-parse after manual editing.
+  Future<void> _parseContent(String content, String filePath) async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
-    try {
-      final service = UnifiedYamlImportService();
-      final result = await service.importYamlFile(file);
+    var result = await UnifiedYamlImportService()
+        .importYamlString(content, filePath: filePath);
 
-      if (result case ImportError(:final error)) {
-        setState(() {
-          _error = error;
-          _isLoading = false;
-        });
-        return;
+    // On the first failure (not yet in editor mode), try auto-fix silently.
+    if (result is ImportError && !_showYamlEditor) {
+      final fixed = UnifiedYamlImportService.autoFixYaml(content);
+      if (fixed != content) {
+        final fixedResult = await UnifiedYamlImportService()
+            .importYamlString(fixed, filePath: filePath);
+        if (fixedResult.success) {
+          setState(() {
+            _parseResult = fixedResult;
+            _error = null;
+            _errorLine = null;
+            _errorColumn = null;
+            _showYamlEditor = false;
+            _isLoading = false;
+            _autoFixApplied = true;
+          });
+          return;
+        }
+        // Partial fix: load the improved content into the editor so the
+        // remaining error is easier to find and fix manually.
+        content = fixed;
+        result = fixedResult;
       }
-
-      setState(() {
-        _parseResult = result;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = 'Error parsing YAML: $e';
-        _isLoading = false;
-      });
     }
+
+    if (result case ImportError(:final error)) {
+      final line = _extractErrorLine(error);
+      final col = _extractErrorColumn(error);
+      if (!_showYamlEditor) {
+        _yamlEditorController.text = content;
+      }
+      if (line != null && line != _errorLine) _selectErrorLine(line);
+      setState(() {
+        _error = error;
+        _errorLine = line;
+        _errorColumn = col;
+        _showYamlEditor = true;
+        _isLoading = false;
+      });
+      if (line != null) {
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _scrollEditorToErrorLine(),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _parseResult = result;
+      _error = null;
+      _errorLine = null;
+      _errorColumn = null;
+      _showYamlEditor = false;
+      _isLoading = false;
+      _autoFixApplied = false;
+    });
   }
 
   Future<void> _performImport() async {
@@ -979,6 +1060,410 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // YAML editor
+  // ---------------------------------------------------------------------------
+
+  /// Moves the cursor to [lineNumber] (1-based) by selecting the full line text.
+  void _selectErrorLine(int lineNumber) {
+    final text = _yamlEditorController.text;
+    final lines = text.split('\n');
+    if (lines.isEmpty) return;
+    final target = (lineNumber - 1).clamp(0, lines.length - 1);
+    var start = 0;
+    for (var i = 0; i < target; i++) {
+      start += lines[i].length + 1;
+    }
+    _yamlEditorController.selection = TextSelection(
+      baseOffset: start,
+      extentOffset: start + lines[target].length,
+    );
+  }
+
+  static final _errorLineRe = RegExp(r'line (\d+)', caseSensitive: false);
+  static final _errorColumnRe = RegExp(r'column (\d+)', caseSensitive: false);
+
+  static int? _extractErrorLine(String error) {
+    final m = _errorLineRe.firstMatch(error);
+    return int.tryParse(m?.group(1) ?? '');
+  }
+
+  static int? _extractErrorColumn(String error) {
+    final m = _errorColumnRe.firstMatch(error);
+    return int.tryParse(m?.group(1) ?? '');
+  }
+
+  /// Re-runs the parser against the editor's current text.
+  Future<void> _reparseEditorContent() async {
+    await _parseContent(
+      _yamlEditorController.text,
+      _selectedFile?.path ?? '',
+    );
+  }
+
+  /// Applies heuristic auto-fixes to the editor content, updates the text, and
+  /// re-parses.  If the content was already correct the text is left unchanged.
+  Future<void> _autoFixAndReparse() async {
+    final current = _yamlEditorController.text;
+    final fixed = UnifiedYamlImportService.autoFixYaml(current);
+    if (fixed != current) {
+      _yamlEditorController.text = fixed;
+    }
+    await _parseContent(fixed, _selectedFile?.path ?? '');
+  }
+
+  static String _translateError(String error) {
+    final lower = error.toLowerCase();
+    if (lower.contains('expected a key while parsing') ||
+        lower.contains('block mapping')) {
+      return 'A list item or text block is not indented correctly.';
+    }
+    if (lower.contains("expected ':'")) {
+      return 'A line is missing a colon, or its content is not indented enough.';
+    }
+    if (lower.contains('mapping values are not allowed')) {
+      return 'An unexpected colon (:) was found on this line.';
+    }
+    if (lower.contains('did not find expected key') ||
+        lower.contains('could not find expected')) {
+      return 'A required key or structure is missing here.';
+    }
+    if (lower.contains('found character that cannot start any token')) {
+      return 'An invalid character was found — check for special symbols.';
+    }
+    if (lower.contains('tab character')) {
+      return 'Tab characters are not allowed — only spaces.';
+    }
+    return error.replaceFirst(RegExp(r'^line \d+,\s*column \d+:\s*'), '').trim();
+  }
+
+  static String _fixGuidance(String error) {
+    final lower = error.toLowerCase();
+    if (lower.contains('expected a key while parsing') ||
+        lower.contains('block mapping') ||
+        lower.contains("expected ':'")) {
+      return 'Indent the highlighted line further so it sits under its parent key. '
+          'Tap Auto-fix to correct indentation automatically.';
+    }
+    if (lower.contains('mapping values are not allowed')) {
+      return 'If the value contains a colon, wrap it in quotes: key: "value: here"';
+    }
+    if (lower.contains('did not find expected key') ||
+        lower.contains('could not find expected')) {
+      return 'Each nesting level must be indented 2 spaces more than its parent.';
+    }
+    if (lower.contains('found character that cannot start any token')) {
+      return 'Remove or replace the special character, or wrap the value in quotes.';
+    }
+    if (lower.contains('tab character')) {
+      return 'Auto-fix replaces tabs with spaces automatically.';
+    }
+    return 'Check the indentation around the highlighted line, or tap Auto-fix.';
+  }
+
+  Widget _buildAutoFixedBanner(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.secondary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+            color: theme.colorScheme.secondary.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.auto_fix_high_rounded,
+              size: 16, color: theme.colorScheme.secondary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              context.tr('yaml_auto_fixed'),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.secondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Animates the editor scroll so the error line is visible with two lines
+  /// of context above it.
+  void _scrollEditorToErrorLine() {
+    if (_errorLine == null || !_editorScrollController.hasClients) return;
+    const contextLines = 2.0;
+    final target = (_YamlEditorPainter.topPadding +
+            (_errorLine! - 1 - contextLines) * _YamlEditorPainter.linePixelHeight)
+        .clamp(0.0, _editorScrollController.position.maxScrollExtent);
+    _editorScrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOut,
+    );
+  }
+
+  Widget _buildYamlEditor(BuildContext context) {
+    final theme = Theme.of(context);
+    final errorColor = theme.colorScheme.error;
+    final hasError = _error != null;
+    final msg = _error != null ? _translateError(_error!) : null;
+    final guidance = _error != null ? _fixGuidance(_error!) : null;
+
+    _yamlEditorController.errorLine = _errorLine;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: hasError
+              ? errorColor.withValues(alpha: 0.4)
+              : theme.colorScheme.outline.withValues(alpha: 0.25),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Header ──────────────────────────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+            decoration: BoxDecoration(
+              color: hasError
+                  ? errorColor.withValues(alpha: 0.07)
+                  : theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.5),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(11),
+                topRight: Radius.circular(11),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  hasError
+                      ? Icons.warning_amber_rounded
+                      : Icons.code_rounded,
+                  size: 17,
+                  color: hasError ? errorColor : theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  hasError
+                      ? context.tr('yaml_error')
+                      : context.tr('yaml_editor'),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: hasError ? errorColor : null,
+                  ),
+                ),
+                if (hasError && _errorLine != null) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: errorColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _errorColumn != null
+                          ? '${context.tr('error_line_label')} $_errorLine, col $_errorColumn'
+                          : '${context.tr('error_line_label')} $_errorLine',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: errorColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                IconButton(
+                  onPressed: () => setState(() => _showYamlEditor = false),
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
+                  style: IconButton.styleFrom(
+                    foregroundColor:
+                        theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Error banner ─────────────────────────────────────────────────────
+          if (msg != null) ...[
+            Divider(height: 1, color: errorColor.withValues(alpha: 0.2)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.error_outline_rounded,
+                          size: 14, color: errorColor),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text(
+                          msg,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: errorColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (guidance != null) ...[
+                    const SizedBox(height: 5),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 21),
+                      child: Text(
+                        guidance,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+
+          Divider(
+              height: 1,
+              color: theme.colorScheme.outline.withValues(alpha: 0.15)),
+
+          // ── Editor with line-number gutter ───────────────────────────────────
+          Container(
+            height: 260,
+            margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+            clipBehavior: Clip.hardEdge,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.15)),
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                AnimatedBuilder(
+                  animation: Listenable.merge(
+                      [_editorScrollController, _yamlEditorController]),
+                  builder: (context, _) {
+                    final scrollOffset = _editorScrollController.hasClients
+                        ? _editorScrollController.offset
+                        : 0.0;
+                    return CustomPaint(
+                      painter: _YamlEditorPainter(
+                        lineCount: _yamlEditorController.lineCount,
+                        errorLine: _errorLine,
+                        errorColumn: _errorColumn,
+                        scrollOffset: scrollOffset,
+                        gutterBg: theme.colorScheme.surfaceContainerHighest,
+                        gutterBorder:
+                            theme.colorScheme.outline.withValues(alpha: 0.25),
+                        errorLineBg: errorColor.withValues(alpha: 0.13),
+                        lineNumberNormal: theme.colorScheme.outline,
+                        lineNumberError: errorColor,
+                        indentGuideColor: theme.colorScheme.outline
+                            .withValues(alpha: 0.15),
+                      ),
+                    );
+                  },
+                ),
+                TextField(
+                  controller: _yamlEditorController,
+                  scrollController: _editorScrollController,
+                  maxLines: null,
+                  expands: true,
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: _YamlEditorPainter.fontSize,
+                    height: _YamlEditorPainter.lineHeightMultiplier,
+                    color: theme.textTheme.bodyMedium?.color,
+                  ),
+                  strutStyle: const StrutStyle(
+                    fontFamily: 'monospace',
+                    fontSize: _YamlEditorPainter.fontSize,
+                    height: _YamlEditorPainter.lineHeightMultiplier,
+                    forceStrutHeight: true,
+                  ),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.fromLTRB(
+                      _YamlEditorPainter.gutterWidth + 8,
+                      _YamlEditorPainter.topPadding,
+                      14,
+                      12,
+                    ),
+                    border: InputBorder.none,
+                    isDense: true,
+                  ),
+                  keyboardType: TextInputType.multiline,
+                ),
+              ],
+            ),
+          ),
+
+          // ── Footer: Auto-fix (primary) + Re-parse (secondary) ───────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _isLoading ? null : _autoFixAndReparse,
+                    icon: _isLoading
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.auto_fix_high_rounded, size: 16),
+                    label: Text(context.tr('auto_fix')),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: theme.colorScheme.secondary,
+                      foregroundColor: theme.colorScheme.onSecondary,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      textStyle: theme.textTheme.labelMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _reparseEditorContent,
+                  icon: const Icon(Icons.refresh_rounded, size: 16),
+                  label: Text(context.tr('reparse')),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    textStyle: theme.textTheme.labelMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _importCoverLetter(CoverLetterImportResult result) async {
     final userDataProvider = context.read<UserDataProvider>();
     final targetCode = _effectiveTarget(userDataProvider);
@@ -1012,5 +1497,255 @@ class _UnifiedImportDialogState extends State<UnifiedImportDialog> {
 
     // Update the default cover letter body for the current language
     await userDataProvider.updateDefaultCoverLetterBody(fullBody);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// YAML editor painter — gutter, line numbers, error-line highlight
+// -----------------------------------------------------------------------------
+
+class _YamlEditorPainter extends CustomPainter {
+  static const double fontSize = 12.5;
+  static const double lineHeightMultiplier = 1.55;
+  static const double linePixelHeight = fontSize * lineHeightMultiplier;
+  static const double topPadding = 12.0;
+  static const double gutterWidth = 54.0;
+  // Left edge where text content begins — matches TextField contentPadding.left.
+  static const double _contentLeft = gutterWidth + 8;
+
+  const _YamlEditorPainter({
+    required this.lineCount,
+    required this.errorLine,
+    required this.errorColumn,
+    required this.scrollOffset,
+    required this.gutterBg,
+    required this.gutterBorder,
+    required this.errorLineBg,
+    required this.lineNumberNormal,
+    required this.lineNumberError,
+    required this.indentGuideColor,
+  });
+
+  final int lineCount;
+  final int? errorLine;
+  final int? errorColumn;
+  final double scrollOffset;
+  final Color gutterBg;
+  final Color gutterBorder;
+  final Color errorLineBg;
+  final Color lineNumberNormal;
+  final Color lineNumberError;
+  final Color indentGuideColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // ── Measure one monospace character for indent-guide placement ──────────
+    final charTp = TextPainter(
+      text: const TextSpan(
+        text: '0',
+        style: TextStyle(fontFamily: 'monospace', fontSize: fontSize),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final charW = charTp.width;
+    final indentStep = charW * 2; // 2 spaces per YAML indent level
+
+    // ── Indent guides — thin vertical lines at every 2-space column ─────────
+    // Drawn first so the gutter covers the portion that overlaps it.
+    final guidePaint = Paint()
+      ..color = indentGuideColor
+      ..strokeWidth = 0.5;
+    for (int n = 1; _contentLeft + n * indentStep < size.width - 4; n++) {
+      final x = _contentLeft + n * indentStep;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), guidePaint);
+    }
+
+    // ── Gutter background ────────────────────────────────────────────────────
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, gutterWidth, size.height),
+      Paint()..color = gutterBg,
+    );
+    canvas.drawLine(
+      Offset(gutterWidth, 0),
+      Offset(gutterWidth, size.height),
+      Paint()
+        ..color = gutterBorder
+        ..strokeWidth = 1,
+    );
+
+    // ── Error-line background + column marker ────────────────────────────────
+    if (errorLine != null) {
+      final y = topPadding + (errorLine! - 1) * linePixelHeight - scrollOffset;
+      if (y + linePixelHeight >= 0 && y <= size.height) {
+        canvas.drawRect(
+          Rect.fromLTWH(0, y, size.width, linePixelHeight),
+          Paint()..color = errorLineBg,
+        );
+        // Thin vertical bar at the exact column where parsing failed.
+        if (errorColumn != null && charW > 0) {
+          final colX = _contentLeft + (errorColumn! - 1) * charW;
+          if (colX >= _contentLeft && colX < size.width) {
+            canvas.drawRect(
+              Rect.fromLTWH(colX - 1, y, 2, linePixelHeight),
+              Paint()..color = lineNumberError.withValues(alpha: 0.55),
+            );
+          }
+        }
+      }
+    }
+
+    // ── Line numbers, right-aligned in the gutter ────────────────────────────
+    final tp = TextPainter(textDirection: TextDirection.ltr);
+    for (var i = 0; i < lineCount; i++) {
+      final y = topPadding + i * linePixelHeight - scrollOffset;
+      if (y + linePixelHeight < 0) continue;
+      if (y > size.height) break;
+
+      final isError = errorLine != null && (i + 1) == errorLine;
+      tp.text = TextSpan(
+        text: '${i + 1}',
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: fontSize - 1,
+          height: 1.0,
+          color: isError ? lineNumberError : lineNumberNormal,
+          fontWeight: isError ? FontWeight.bold : FontWeight.normal,
+        ),
+      );
+      tp.layout(maxWidth: gutterWidth - 10);
+      tp.paint(
+        canvas,
+        Offset(
+          gutterWidth - tp.width - 6,
+          y + (linePixelHeight - tp.height) / 2,
+        ),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_YamlEditorPainter old) =>
+      old.scrollOffset != scrollOffset ||
+      old.errorLine != errorLine ||
+      old.errorColumn != errorColumn ||
+      old.lineCount != lineCount ||
+      old.lineNumberNormal != lineNumberNormal ||
+      old.lineNumberError != lineNumberError;
+}
+
+// -----------------------------------------------------------------------------
+// YAML syntax-highlighting controller
+// -----------------------------------------------------------------------------
+
+class _YamlHighlightController extends TextEditingController {
+  int? errorLine;
+  int _lineCount = 1;
+
+  _YamlHighlightController() {
+    addListener(_updateLineCount);
+  }
+
+  int get lineCount => _lineCount;
+
+  void _updateLineCount() {
+    _lineCount = '\n'.allMatches(text).length + 1;
+  }
+
+  @override
+  void dispose() {
+    removeListener(_updateLineCount);
+    super.dispose();
+  }
+
+  static final _keyRe = RegExp(r'^(\s*)([\w][\w\s-]*)(:)(.*)$');
+  static final _listRe = RegExp(r'^(\s*)(-)(\s.*)$');
+  static final _commentRe = RegExp(r'^\s*#');
+  static final _blockScalarRe = RegExp(r'^\s*[|>]');
+
+  @override
+  TextSpan buildTextSpan(
+      {required BuildContext context,
+      TextStyle? style,
+      required bool withComposing}) {
+    final cs = Theme.of(context).colorScheme;
+    final lines = text.split('\n');
+    final children = <InlineSpan>[];
+    for (var i = 0; i < lines.length; i++) {
+      if (i > 0) children.add(const TextSpan(text: '\n'));
+      children.add(_spanForLine(lines[i], (i + 1) == errorLine, style, cs));
+    }
+    return TextSpan(children: children, style: style);
+  }
+
+  InlineSpan _spanForLine(
+      String line, bool isError, TextStyle? base, ColorScheme cs) {
+    final base_ = base ?? const TextStyle();
+    final errColor = isError ? cs.error : null;
+    final indentBg = isError ? cs.error.withValues(alpha: 0.12) : null;
+
+    // Returns a span for leading whitespace with optional error background.
+    TextSpan indentSpan(String indent) => TextSpan(
+          text: indent,
+          style: indentBg != null
+              ? base_.copyWith(backgroundColor: indentBg)
+              : base_,
+        );
+
+    if (_commentRe.hasMatch(line)) {
+      return TextSpan(
+        text: line,
+        style: base_.copyWith(
+            color: errColor ?? cs.outline, fontStyle: FontStyle.italic),
+      );
+    }
+
+    if (_blockScalarRe.hasMatch(line)) {
+      return TextSpan(
+          text: line, style: base_.copyWith(color: errColor ?? cs.secondary));
+    }
+
+    final km = _keyRe.firstMatch(line);
+    if (km != null) {
+      return TextSpan(style: base, children: [
+        if (km.group(1)!.isNotEmpty) indentSpan(km.group(1)!),
+        TextSpan(
+            text: km.group(2),
+            style: base_.copyWith(
+                color: errColor ?? cs.primary, fontWeight: FontWeight.w600)),
+        TextSpan(
+            text: km.group(3),
+            style: base_.copyWith(color: errColor ?? cs.outline)),
+        TextSpan(text: km.group(4), style: base_.copyWith(color: errColor)),
+      ]);
+    }
+
+    final lm = _listRe.firstMatch(line);
+    if (lm != null) {
+      return TextSpan(style: base, children: [
+        if (lm.group(1)!.isNotEmpty) indentSpan(lm.group(1)!),
+        TextSpan(
+            text: lm.group(2),
+            style: base_.copyWith(
+                color: errColor ?? cs.secondary, fontWeight: FontWeight.bold)),
+        TextSpan(text: lm.group(3), style: base_.copyWith(color: errColor)),
+      ]);
+    }
+
+    // Fallback: split into indent + content for background highlighting.
+    if (isError && line.isNotEmpty) {
+      final trimmed = line.trimLeft();
+      final indent = line.substring(0, line.length - trimmed.length);
+      if (indent.isNotEmpty) {
+        return TextSpan(style: base, children: [
+          indentSpan(indent),
+          TextSpan(text: trimmed, style: base_.copyWith(color: errColor)),
+        ]);
+      }
+    }
+
+    return TextSpan(
+      text: line,
+      style: errColor != null ? base_.copyWith(color: errColor) : base,
+    );
   }
 }

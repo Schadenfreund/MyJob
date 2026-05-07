@@ -31,31 +31,39 @@ class JobCoverLetter {
     required String defaultBody,
     String? companyName,
     String? position,
-    String? contactPerson,
+    String? contactFirstName,
+    String? contactLastName,
     String? location,
     String? salary,
     String? subject,
     String defaultGreeting = 'Dear Hiring Manager,',
     String defaultClosing = 'Kind regards,',
   }) {
+    final contactPerson = [contactFirstName, contactLastName]
+        .where((s) => s != null && s.isNotEmpty)
+        .join(' ');
     var body = defaultBody;
+    var greeting = defaultGreeting;
     final replacements = {
       'COMPANY': companyName,
       'POSITION': position,
-      'RECIPIENT_NAME': contactPerson,
+      'RECIPIENT_NAME': contactPerson.isEmpty ? null : contactPerson,
+      'CONTACT_FIRST_NAME': contactFirstName,
+      'CONTACT_LAST_NAME': contactLastName,
       'LOCATION': location,
       'SALARY': salary,
     };
     for (final entry in replacements.entries) {
       if (entry.value != null && entry.value!.isNotEmpty) {
         body = body.replaceAll('==${entry.key}==', entry.value!);
+        greeting = greeting.replaceAll('==${entry.key}==', entry.value!);
       }
     }
 
     return JobCoverLetter(
       companyName: companyName ?? '',
       subject: subject ?? '',
-      greeting: defaultGreeting,
+      greeting: greeting,
       body: body,
       closing: defaultClosing,
       signature: '',

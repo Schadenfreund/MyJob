@@ -7,11 +7,140 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.3] - 2026-05-07
+
+### Added
+
+#### Status History Tracking
+
+- **Full status history** — Every status transition is now recorded with a
+  timestamp and optional notes via `withStatusChange()`. Previously only the
+  current status and application date were persisted.
+- **Timeline in collapsed cards** — Compact application cards show key dates
+  inline (applied, interviewing, rejected / successful / no-response) derived
+  from the recorded history.
+- **Status history panel** — Expanded card section with a visual timeline:
+  colored dots, connectors, status labels, and dates for every recorded
+  transition.
+- **History editor** — "Edit History" entry in the change-status popup opens
+  a dialog to add, delete, re-date, and annotate individual status entries.
+  Full backward compatibility: legacy applications without recorded history
+  synthesise entries from `applicationDate` and `lastUpdated` as a starting
+  point.
+
+#### Cover Letter Placeholders
+
+- **Contact first/last name split** — `contactPerson` field replaced with
+  separate `contactFirstName` and `contactLastName` fields. Old single-field
+  JSON is split transparently on load; computed `contactPerson` getter
+  preserves all existing read sites.
+- **`==CONTACT_FIRST_NAME==` / `==CONTACT_LAST_NAME==`** — New placeholders
+  available in the profile default cover letter, tabbed cover letter editor,
+  and CV editor. Insertable via chip buttons; highlighted in the accent color.
+- **Greeting placeholder chips** — Chip row below the greeting field in the
+  profile default cover letter editor and the job application cover letter tab,
+  for inserting first name, last name, and company name directly into the
+  salutation.
+
+#### Profile — Default Cover Letter
+
+- **Greeting and closing fields** — The default cover letter card in the
+  Profile tab now matches the job application editor design: separate greeting,
+  body, and closing fields with their own placeholder chip rows and a unified
+  save/discard bar.
+
+#### Application Statistics
+
+- **Sankey funnel chart** — Expanded statistics card now includes a 3-column
+  Sankey diagram (Applied → Interviewed/Not Interviewed → outcomes). Node and
+  flow colors are sourced from `ApplicationStatusHelper` to stay consistent
+  with status chips throughout the app. Labels use an overlap-resolving
+  layout with tick lines for small nodes so every outcome is always visible.
+- **Split Applied / Interviewing stat cards** — The combined "Active" card is
+  replaced by separate Applied (amber) and Interviewing (blue) cards, matching
+  the individual status colors shown on application cards and in the funnel.
+
+#### Export Reports
+
+- **Restructured bilingual report** — Complete rewrite into six focused
+  sections: Header, At a Glance, Active Pipeline, Outcomes, Full Log, and
+  Status History. Previous structure had overlapping sections and truncated
+  notes.
+- **Status History section** — Each application gets a metadata line
+  (date · location · salary · contact), blockquoted notes, and a full
+  `| Date | Status | Notes |` history table.
+- **Days-in-stage and time-to-outcome metrics** — Active apps show days in
+  current stage; closed apps show days from application to outcome.
+- **Awaiting Response sorted by wait time** — Longest-waiting applications
+  appear first with a follow-up hint at ≥ 14 days.
+
+#### PDF Editor
+
+- **Slider manual input** — Tapping the value label next to any design slider
+  switches it to an inline text field for precise manual entry. Value is
+  clamped to `[min, max]` on submit. Styled to match the sidebar (underline
+  border, accent color on focus).
+
+### Changed
+
+- **`statusInterviewing` color changed to blue (`#3B82F6`)** — Was amber
+  (same as Applied), making the two statuses visually indistinguishable.
+  Blue matches the Sankey's "Interviewed" middle node and is now consistent
+  across status chips, the status menu, history timeline, and the funnel chart.
+- **`ApplicationStatusHelper` as single source of truth** — Stat cards,
+  section headers, and the Sankey painter all resolve status colors and icons
+  through `ApplicationStatusHelper.getColor/getIcon()`. Hard-coded
+  `AppColors.statusXxx` references removed from the screen.
+- **`withOpacity` replaced with `withValues(alpha:)`** throughout the
+  statistics section (stat cards, time range buttons, section headers).
+- **`InsertableChipRow`** promoted to a public widget in
+  `profile_long_text_editor.dart` for reuse across all three cover letter
+  editors (DRY).
+- **`contactPerson`** is now a computed getter; `contactFirstName` and
+  `contactLastName` are stored separately. Backward-compatible JSON parsing
+  splits the legacy single-field value on the first space.
+
+### Fixed
+
+- **Sankey "Successful" label missing** — The `height >= 11` threshold
+  silently dropped labels for small nodes. Replaced with an overlap-resolving
+  layout (push-down pass + tick lines) that always renders all labels.
+- **Sankey miscounted successful apps** — Apps with `status == successful`
+  but no documented interview history fell into the `default` case and were
+  counted as "No Response". Now tracked separately via `successfulDirect` and
+  routed through the "Not Interviewed" flow path.
+- **Stat "Active" count included drafts** — `stats.active` was
+  `draft + applied + interviewing`, while the Sankey excluded drafts. The
+  mismatch is eliminated by replacing the combined card with per-status cards
+  that exclude drafts by definition.
+- **YAML editor painter missing params** — `_YamlEditorPainter` constructor
+  called without `errorColumn` and `indentGuideColor`, causing a compile error.
+- **Status changes not tracked** — `updateStatus()` in `ApplicationsProvider`
+  called `copyWith(status: ...)` instead of `withStatusChange()`, so no history
+  entry was ever appended.
+
+---
+
+## [1.2.2] - 2026-05-03
+
+### Fixed
+
+- **YAML import with de-indented block scalar lines** — If a line inside a
+  cover letter paragraph accidentally lost its indentation (e.g. `Prior to
+  this,` at column 0 instead of column 6), the YAML parser terminated the block
+  scalar early and reported a cryptic "Expected ':'" error at the next mapping
+  key. A pre-parse sanitizer in `UnifiedYamlImportService` now detects such
+  orphaned prose lines and restores their indentation before the string reaches
+  the YAML parser. Well-formed files are unaffected.
+
+---
+
 ## [1.2.1] - 2026-03-21
 
 ### Added
 
 #### Notes Screen
+
 - **Cheat sheet collapsed preview** — When collapsed, interview cheat sheet
   cards now show useful chips: today's interviews, upcoming dates, and
   sections-filled count.
@@ -22,6 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   State persisted via preferences.
 
 #### Cover Letter Placeholders
+
 - **Clickable insertion chips** — Placeholder chips (==COMPANY==, ==POSITION==,
   ==RECIPIENT_NAME==, ==LOCATION==, ==SALARY==) can be clicked to insert at
   cursor position in the profile, template editor, and job application editor.
@@ -99,6 +229,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Code Quality & DRY
+
 - **`PlatformUtils`** — Consolidates 7 duplicated `Process.run` blocks into
   `openUrl()`, `openFolder()`, and `openFolderAndSelect()`.
 - **`DateFormatUtils`** — Eliminated 3 identical `_formatDate` methods by
@@ -115,6 +246,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   5 intentionally kept (tryParse, font probing, enum fallback).
 
 #### Structural Refactors
+
 - **`UnifiedImportResult` sealed class** — Replaced nullable-field class with
   `CvImportResult`, `CoverLetterImportResult`, and `ImportError` subtypes.
   Dialog uses Dart 3 pattern matching.
@@ -128,6 +260,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Deleted `ElectricCoverLetterTemplate`** — Dead code with zero callers.
 
 #### Caching
+
 - **Filtered applications list** — Provider now caches the result and
   invalidates on data/filter changes instead of recalculating every build.
 
@@ -191,6 +324,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 #### Profile Import / Export
+
 - **Work experience `description` not exported** — Descriptions were silently
   dropped, causing data loss on re-import.
 - **`default_cover_letter` ignored on import** — The value was parsed but
@@ -199,6 +333,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on import. Both directions now work.
 
 #### Profile Import — Target Profile Selector
+
 - **Import always wrote to the active profile** — The dialog now shows a
   target profile chip row so you can import into any language without
   changing the global selection.
@@ -208,6 +343,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   success while writing nothing. Now creates the target profile if needed.
 
 #### Import Service
+
 - **Duplicate language-detection code** — Extracted into a single
   `_detectLanguage()` helper.
 - **Fragile file-path parsing** — Replaced manual string splitting with
@@ -220,6 +356,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 #### UserData Portability
+
 - **Relative path storage** — `folderPath` and `profilePicturePath` are now
   stored relative to the UserData root. Existing folders can be moved freely.
 - **Backward-compatible path resolution** — Stale absolute paths are
@@ -229,6 +366,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   before rewriting, preventing JSON corruption from relative paths.
 
 #### Notes
+
 - **Multi-line text round-trip** — Literal newlines were collapsed by YAML
   line-folding. The serializer now escapes `\n`, `\r`, and `\\` correctly.
 - **Nullable fields can be cleared** — `NoteItem.copyWith` used
@@ -242,6 +380,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Custom Language Import
+
 - **Import language files** — Add any UI language by importing a JSON locale
   file from Settings > Language. Appears immediately in the language
   selector and PDF editor.
@@ -257,12 +396,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### PDF Language System
+
 - Replaced `CvLanguage` enum with a plain language code string. Old
   `pdf_settings.json` files with enum values are upgraded transparently.
 - Section headers fall back to English for languages without explicit
   translations.
 
 #### PDF Editor — Full UI Localization
+
 - All hardcoded English strings in the PDF editor now use the localization
   system: sidebar headers, toolbar tooltips, template panel buttons, info
   panels, and cover letter preset descriptions.
@@ -278,6 +419,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 #### Backup & Restore
+
 - **Profile pictures missing after restore** — `profilePicturePath` was an
   absolute path tied to the original machine. Restore now remaps it.
 - **Application data inaccessible after restore** — `folderPath` was also
@@ -293,6 +435,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 #### Backup & Restore
+
 - **Restore always failed** — Safety backup used the public `createBackup()`
   which rejects destinations inside UserData.
 - **Old backups rejected** — Pre-v1.1.1 backups without `manifest.json` were
@@ -307,6 +450,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `settings.json`. Now requires an exact root-level match.
 
 #### Software Updates
+
 - **False "up to date" report** — Version comparison was gated on download
   availability. Version detection and download are now independent.
 - **404 shown as "up to date"** — Now shows a proper error message.
@@ -317,7 +461,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.1] - 2026-02-15
 
-### Backup System Overhaul
+### Added
 
 This release makes backup and restore safe and reliable for production use.
 
@@ -332,7 +476,7 @@ This release makes backup and restore safe and reliable for production use.
 - **Better UX** — Warning dialog before backup creation. Clear error messages
   for disk full, permission denied, etc.
 
-### Bug Fixes
+### Fixed
 
 - Settings could be lost due to path inconsistencies
 - Corrupted backups could destroy all user data
@@ -345,6 +489,7 @@ This release makes backup and restore safe and reliable for production use.
 ### Added
 
 #### Full Localization (English & German)
+
 - App-wide localization system via JSON locale files
 - All UI strings, skill levels, language proficiency levels, interest levels,
   note types, and note priorities translated
@@ -416,6 +561,7 @@ The first stable release of MyJob — a portable Windows desktop app for
 managing job applications.
 
 **Core features:**
+
 - Bilingual profile management (English & German)
 - Job application tracking with status, dates, contacts, and notes
 - Notes system with types, priorities, tags, due dates, and archiving

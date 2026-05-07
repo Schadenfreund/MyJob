@@ -6,7 +6,7 @@ import '../services/profile_autofill_service.dart';
 import '../widgets/common/custom_text_field.dart';
 import '../widgets/autofill_button.dart';
 import '../widgets/profile_long_text_editor.dart'
-    show InsertableChip, PlaceholderHighlightController;
+    show InsertableChip, InsertableChipRow, PlaceholderHighlightController;
 import '../utils/ui_utils.dart';
 import '../localization/app_localizations.dart';
 
@@ -40,10 +40,11 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
   late TextEditingController _jobTitleController;
 
   // Letter content controllers
-  late TextEditingController _greetingController;
+  late PlaceholderHighlightController _greetingController;
   late PlaceholderHighlightController _bodyController;
   late TextEditingController _closingController;
   late FocusNode _bodyFocusNode;
+  late FocusNode _greetingFocusNode;
 
   @override
   void initState() {
@@ -58,9 +59,10 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
     _recipientTitleController = TextEditingController();
     _companyNameController = TextEditingController();
     _jobTitleController = TextEditingController();
-    _greetingController = TextEditingController(text: widget.template.greeting);
+    _greetingController = PlaceholderHighlightController(text: widget.template.greeting);
     _bodyController = PlaceholderHighlightController(text: widget.template.body);
     _bodyFocusNode = FocusNode();
+    _greetingFocusNode = FocusNode();
     _closingController = TextEditingController(text: widget.template.closing);
 
     // Add listeners (recipient fields are read-only in template mode)
@@ -81,6 +83,7 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
     _greetingController.dispose();
     _bodyController.dispose();
     _bodyFocusNode.dispose();
+    _greetingFocusNode.dispose();
     _closingController.dispose();
     super.dispose();
   }
@@ -307,6 +310,24 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
     );
   }
 
+  void _insertAtGreetingCursor(String text) {
+    final selection = _greetingController.selection;
+    final currentText = _greetingController.text;
+    if (selection.isValid && selection.start >= 0) {
+      final newText = currentText.replaceRange(selection.start, selection.end, text);
+      _greetingController.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: selection.start + text.length),
+      );
+    } else {
+      _greetingController.value = TextEditingValue(
+        text: '$currentText$text',
+        selection: TextSelection.collapsed(offset: currentText.length + text.length),
+      );
+    }
+    _greetingFocusNode.requestFocus();
+  }
+
   void _insertAtBodyCursor(String text) {
     final selection = _bodyController.selection;
     final currentText = _bodyController.text;
@@ -334,6 +355,28 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
     _bodyFocusNode.requestFocus();
   }
 
+  Widget _buildGreetingChips(ThemeData theme) {
+    final chips = [
+      InsertableChip(
+        label: '==CONTACT_FIRST_NAME==',
+        insertText: '==CONTACT_FIRST_NAME==',
+        description: context.tr('cover_letter_placeholder_contact_first'),
+      ),
+      InsertableChip(
+        label: '==CONTACT_LAST_NAME==',
+        insertText: '==CONTACT_LAST_NAME==',
+        description: context.tr('cover_letter_placeholder_contact_last'),
+      ),
+      InsertableChip(
+        label: '==COMPANY==',
+        insertText: '==COMPANY==',
+        description: context.tr('cover_letter_placeholder_company'),
+      ),
+    ];
+    return _buildChipRow(theme, chips, _insertAtGreetingCursor,
+        label: context.tr('greeting_placeholders_label'));
+  }
+
   Widget _buildPlaceholderChips(ThemeData theme) {
     final chips = [
       InsertableChip(
@@ -347,9 +390,14 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
         description: context.tr('cover_letter_placeholder_position'),
       ),
       InsertableChip(
-        label: '==RECIPIENT_NAME==',
-        insertText: '==RECIPIENT_NAME==',
-        description: context.tr('cover_letter_placeholder_recipient'),
+        label: '==CONTACT_FIRST_NAME==',
+        insertText: '==CONTACT_FIRST_NAME==',
+        description: context.tr('cover_letter_placeholder_contact_first'),
+      ),
+      InsertableChip(
+        label: '==CONTACT_LAST_NAME==',
+        insertText: '==CONTACT_LAST_NAME==',
+        description: context.tr('cover_letter_placeholder_contact_last'),
       ),
       InsertableChip(
         label: '==LOCATION==',
@@ -363,92 +411,29 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
       ),
     ];
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.12),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.touch_app_outlined,
-                  size: 14, color: theme.colorScheme.primary),
-              const SizedBox(width: 6),
-              Text(
-                context.tr('cover_letter_placeholders_title'),
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: chips.map((chip) {
-              return Tooltip(
-                message: chip.description,
-                child: InkWell(
-                  onTap: () => _insertAtBodyCursor(chip.insertText),
-                  borderRadius: BorderRadius.circular(6),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                    decoration: BoxDecoration(
-                      color:
-                          theme.colorScheme.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color:
-                            theme.colorScheme.primary.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add,
-                            size: 12, color: theme.colorScheme.primary),
-                        const SizedBox(width: 4),
-                        Text(
-                          chip.label,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontFamily: 'monospace',
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            context.tr('cover_letter_placeholders_footer'),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
-              fontSize: 11,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
-      ),
+    return _buildChipRow(theme, chips, _insertAtBodyCursor,
+        label: context.tr('cover_letter_placeholders_title'),
+        footer: context.tr('cover_letter_placeholders_footer'));
+  }
+
+  Widget _buildChipRow(
+    ThemeData _,
+    List<InsertableChip> chips,
+    void Function(String) onInsert, {
+    required String label,
+    String? footer,
+  }) {
+    return InsertableChipRow(
+      chips: chips,
+      onInsert: onInsert,
+      title: label,
+      footer: footer,
     );
   }
 
   Widget _buildLetterTab() {
     final theme = Theme.of(context);
+    _greetingController.highlightColor = theme.colorScheme.primary;
     _bodyController.highlightColor = theme.colorScheme.primary;
 
     return SingleChildScrollView(
@@ -467,13 +452,16 @@ class _TabbedCoverLetterEditorState extends State<TabbedCoverLetterEditor>
           // Greeting
           CustomTextField(
             controller: _greetingController,
+            focusNode: _greetingFocusNode,
             label: context.tr('greeting'),
             hint: 'Dear Hiring Manager,',
             prefixIcon: Icons.waving_hand,
           ),
+          const SizedBox(height: 8),
+          _buildGreetingChips(theme),
           const SizedBox(height: 12),
 
-          // Insertable placeholder chips
+          // Body placeholder chips
           _buildPlaceholderChips(theme),
 
           const SizedBox(height: 12),

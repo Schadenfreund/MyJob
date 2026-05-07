@@ -1073,42 +1073,18 @@ class _ProfileSections extends StatelessWidget {
           color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
         ),
       ),
-      content: ProfileLongTextEditor(
-        initialValue: coverLetterBody,
-        onSave: (val) => userDataProvider.updateDefaultCoverLetterBody(val),
-        hintText: context.tr('cover_letter_hint'),
-        helpText: context.tr('cover_letter_help'),
-        minLines: 8,
-        highlightColor: theme.colorScheme.primary,
-        chipsTitle: context.tr('cover_letter_placeholders_title'),
-        chipsFooter: context.tr('cover_letter_placeholders_footer'),
-        insertableChips: [
-          InsertableChip(
-            label: '==COMPANY==',
-            insertText: '==COMPANY==',
-            description: context.tr('cover_letter_placeholder_company'),
-          ),
-          InsertableChip(
-            label: '==POSITION==',
-            insertText: '==POSITION==',
-            description: context.tr('cover_letter_placeholder_position'),
-          ),
-          InsertableChip(
-            label: '==RECIPIENT_NAME==',
-            insertText: '==RECIPIENT_NAME==',
-            description: context.tr('cover_letter_placeholder_recipient'),
-          ),
-          InsertableChip(
-            label: '==LOCATION==',
-            insertText: '==LOCATION==',
-            description: context.tr('cover_letter_placeholder_location'),
-          ),
-          InsertableChip(
-            label: '==SALARY==',
-            insertText: '==SALARY==',
-            description: context.tr('cover_letter_placeholder_salary'),
-          ),
-        ],
+      content: _DefaultCoverLetterEditor(
+        greeting: userDataProvider.defaultGreeting,
+        body: coverLetterBody,
+        closing: userDataProvider.defaultClosing,
+        onSave: (greeting, body, closing) async {
+          final p = context.read<UserDataProvider>();
+          await Future.wait([
+            p.updateDefaultGreeting(greeting),
+            p.updateDefaultCoverLetterBody(body),
+            p.updateDefaultClosing(closing),
+          ]);
+        },
       ),
     );
   }
@@ -1131,6 +1107,289 @@ class _ProfileSections extends StatelessWidget {
         profile: profile,
         isCV: isCV,
       ),
+    );
+  }
+}
+
+/// Unified greeting + body + closing editor for the default cover letter card.
+/// Mirrors the structure of [TabbedCoverLetterEditor]'s letter tab and shares
+/// the same [InsertableChipRow] widget for placeholder chips.
+class _DefaultCoverLetterEditor extends StatefulWidget {
+  const _DefaultCoverLetterEditor({
+    required this.greeting,
+    required this.body,
+    required this.closing,
+    required this.onSave,
+  });
+
+  final String greeting;
+  final String body;
+  final String closing;
+  final Future<void> Function(String greeting, String body, String closing)
+      onSave;
+
+  @override
+  State<_DefaultCoverLetterEditor> createState() =>
+      _DefaultCoverLetterEditorState();
+}
+
+class _DefaultCoverLetterEditorState extends State<_DefaultCoverLetterEditor> {
+  late final PlaceholderHighlightController _greetingController;
+  late final PlaceholderHighlightController _bodyController;
+  late final TextEditingController _closingController;
+  late final FocusNode _greetingFocusNode;
+  late final FocusNode _bodyFocusNode;
+  bool _isModified = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _greetingController = PlaceholderHighlightController(text: widget.greeting);
+    _bodyController = PlaceholderHighlightController(text: widget.body);
+    _closingController = TextEditingController(text: widget.closing);
+    _greetingFocusNode = FocusNode();
+    _bodyFocusNode = FocusNode();
+    _greetingController.addListener(_checkModified);
+    _bodyController.addListener(_checkModified);
+    _closingController.addListener(_checkModified);
+  }
+
+  @override
+  void didUpdateWidget(_DefaultCoverLetterEditor old) {
+    super.didUpdateWidget(old);
+    if (_isModified) return;
+    if (widget.greeting != old.greeting) _greetingController.text = widget.greeting;
+    if (widget.body != old.body) _bodyController.text = widget.body;
+    if (widget.closing != old.closing) _closingController.text = widget.closing;
+  }
+
+  @override
+  void dispose() {
+    _greetingController.dispose();
+    _bodyController.dispose();
+    _closingController.dispose();
+    _greetingFocusNode.dispose();
+    _bodyFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _checkModified() {
+    final modified = _greetingController.text != widget.greeting ||
+        _bodyController.text != widget.body ||
+        _closingController.text != widget.closing;
+    if (modified != _isModified) setState(() => _isModified = modified);
+  }
+
+  void _discard() {
+    _greetingController.text = widget.greeting;
+    _bodyController.text = widget.body;
+    _closingController.text = widget.closing;
+    setState(() => _isModified = false);
+  }
+
+  Future<void> _save() async {
+    await widget.onSave(
+      _greetingController.text,
+      _bodyController.text,
+      _closingController.text,
+    );
+    setState(() => _isModified = false);
+  }
+
+  void _insertAt(TextEditingController ctrl, FocusNode focus, String text) {
+    final sel = ctrl.selection;
+    final cur = ctrl.text;
+    if (sel.isValid && sel.start >= 0) {
+      ctrl.value = TextEditingValue(
+        text: cur.replaceRange(sel.start, sel.end, text),
+        selection: TextSelection.collapsed(offset: sel.start + text.length),
+      );
+    } else {
+      ctrl.value = TextEditingValue(
+        text: '$cur$text',
+        selection: TextSelection.collapsed(offset: cur.length + text.length),
+      );
+    }
+    focus.requestFocus();
+  }
+
+  List<InsertableChip> _greetingChips(BuildContext context) => [
+        InsertableChip(
+          label: '==CONTACT_FIRST_NAME==',
+          insertText: '==CONTACT_FIRST_NAME==',
+          description: context.tr('cover_letter_placeholder_contact_first'),
+        ),
+        InsertableChip(
+          label: '==CONTACT_LAST_NAME==',
+          insertText: '==CONTACT_LAST_NAME==',
+          description: context.tr('cover_letter_placeholder_contact_last'),
+        ),
+        InsertableChip(
+          label: '==COMPANY==',
+          insertText: '==COMPANY==',
+          description: context.tr('cover_letter_placeholder_company'),
+        ),
+      ];
+
+  List<InsertableChip> _bodyChips(BuildContext context) => [
+        InsertableChip(
+          label: '==COMPANY==',
+          insertText: '==COMPANY==',
+          description: context.tr('cover_letter_placeholder_company'),
+        ),
+        InsertableChip(
+          label: '==POSITION==',
+          insertText: '==POSITION==',
+          description: context.tr('cover_letter_placeholder_position'),
+        ),
+        InsertableChip(
+          label: '==CONTACT_FIRST_NAME==',
+          insertText: '==CONTACT_FIRST_NAME==',
+          description: context.tr('cover_letter_placeholder_contact_first'),
+        ),
+        InsertableChip(
+          label: '==CONTACT_LAST_NAME==',
+          insertText: '==CONTACT_LAST_NAME==',
+          description: context.tr('cover_letter_placeholder_contact_last'),
+        ),
+        InsertableChip(
+          label: '==LOCATION==',
+          insertText: '==LOCATION==',
+          description: context.tr('cover_letter_placeholder_location'),
+        ),
+        InsertableChip(
+          label: '==SALARY==',
+          insertText: '==SALARY==',
+          description: context.tr('cover_letter_placeholder_salary'),
+        ),
+      ];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    _greetingController.highlightColor = theme.colorScheme.primary;
+    _bodyController.highlightColor = theme.colorScheme.primary;
+
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide:
+          BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
+    );
+    final focusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+    );
+    final fillColor =
+        theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2);
+
+    InputDecoration fieldDecoration(String label, String hint, IconData icon) =>
+        InputDecoration(
+          labelText: label,
+          hintText: hint,
+          prefixIcon: Icon(icon, size: 20),
+          border: border,
+          enabledBorder: border,
+          focusedBorder: focusedBorder,
+          filled: true,
+          fillColor: fillColor,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.tr('cover_letter_help'),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Greeting
+        TextField(
+          controller: _greetingController,
+          focusNode: _greetingFocusNode,
+          decoration: fieldDecoration(
+            context.tr('greeting'),
+            'Dear Hiring Manager,',
+            Icons.waving_hand,
+          ),
+        ),
+        const SizedBox(height: 8),
+        InsertableChipRow(
+          chips: _greetingChips(context),
+          onInsert: (t) => _insertAt(_greetingController, _greetingFocusNode, t),
+          title: context.tr('greeting_placeholders_label'),
+        ),
+        const SizedBox(height: 12),
+
+        // Body
+        TextField(
+          controller: _bodyController,
+          focusNode: _bodyFocusNode,
+          minLines: 8,
+          maxLines: null,
+          style: theme.textTheme.bodyMedium,
+          decoration: InputDecoration(
+            hintText: context.tr('cover_letter_hint'),
+            hintStyle: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4)),
+            border: border,
+            enabledBorder: border,
+            focusedBorder: focusedBorder,
+            filled: true,
+            fillColor: fillColor,
+            contentPadding: const EdgeInsets.all(16),
+          ),
+        ),
+        const SizedBox(height: 8),
+        InsertableChipRow(
+          chips: _bodyChips(context),
+          onInsert: (t) => _insertAt(_bodyController, _bodyFocusNode, t),
+          title: context.tr('cover_letter_placeholders_title'),
+          footer: context.tr('cover_letter_placeholders_footer'),
+        ),
+        const SizedBox(height: 12),
+
+        // Closing
+        TextField(
+          controller: _closingController,
+          decoration: fieldDecoration(
+            context.tr('closing'),
+            'Kind regards,',
+            Icons.edit_note,
+          ),
+        ),
+
+        // Save bar
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          child: SizedBox(
+            height: _isModified ? null : 0,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Row(
+                children: [
+                  const Spacer(),
+                  TextButton(
+                    onPressed: _discard,
+                    child: Text(context.tr('discard')),
+                  ),
+                  const SizedBox(width: 12),
+                  UIUtils.buildPrimaryButton(
+                    label: context.tr('save_changes'),
+                    onPressed: _save,
+                    icon: Icons.save_outlined,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

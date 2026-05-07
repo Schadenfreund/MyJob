@@ -211,7 +211,8 @@ class ApplicationsProvider extends ChangeNotifier {
     required DocumentLanguage baseLanguage,
     String? location,
     String? jobUrl,
-    String? contactPerson,
+    String? contactFirstName,
+    String? contactLastName,
     String? contactEmail,
     String? notes,
     String? salary,
@@ -227,7 +228,8 @@ class ApplicationsProvider extends ChangeNotifier {
       lastUpdated: DateTime.now(),
       location: location,
       jobUrl: jobUrl,
-      contactPerson: contactPerson,
+      contactFirstName: contactFirstName,
+      contactLastName: contactLastName,
       contactEmail: contactEmail,
       notes: notes,
       salary: salary,
@@ -269,22 +271,41 @@ class ApplicationsProvider extends ChangeNotifier {
     }
   }
 
-  /// Update application status
+  /// Update application status, recording the transition in statusHistory.
   Future<void> updateStatus(String id, ApplicationStatus status) async {
     final index = _applications.indexWhere((app) => app.id == id);
-    if (index != -1) {
-      final updated = _applications[index].copyWith(
-        status: status,
-        lastUpdated: DateTime.now(),
-        applicationDate: status == ApplicationStatus.applied
-            ? DateTime.now()
-            : _applications[index].applicationDate,
-      );
-      await _appRepo.save(updated);
-      _applications[index] = updated;
-      _invalidateCache();
-      notifyListeners();
-    }
+    if (index == -1) return;
+    final updated = _applications[index].withStatusChange(status);
+    await _appRepo.save(updated);
+    _applications[index] = updated;
+    _invalidateCache();
+    notifyListeners();
+  }
+
+  /// Replace the full status history list (used by the history editor).
+  /// Derives current status and applicationDate from the updated history.
+  Future<void> updateStatusHistory(
+      String id, List<StatusChange> history) async {
+    final index = _applications.indexWhere((app) => app.id == id);
+    if (index == -1) return;
+    final app = _applications[index];
+    final sorted = [...history]
+      ..sort((a, b) => a.changedAt.compareTo(b.changedAt));
+    final newStatus =
+        sorted.isNotEmpty ? sorted.last.status : app.status;
+    final appliedEntry = sorted
+        .where((e) => e.status == ApplicationStatus.applied)
+        .lastOrNull;
+    final updated = app.copyWith(
+      status: newStatus,
+      statusHistory: sorted,
+      lastUpdated: DateTime.now(),
+      applicationDate: appliedEntry?.changedAt ?? app.applicationDate,
+    );
+    await _appRepo.save(updated);
+    _applications[index] = updated;
+    _invalidateCache();
+    notifyListeners();
   }
 
   /// Delete an application

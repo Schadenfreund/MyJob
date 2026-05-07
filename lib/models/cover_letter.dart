@@ -111,15 +111,19 @@ class CoverLetter {
     );
   }
 
-  /// Process the body text by replacing placeholders with actual values
-  /// Placeholders use the format ==PLACEHOLDER_NAME==
-  String get processedBody {
-    var result = body;
+  String _applyPlaceholders(String text) {
+    var result = text;
     for (final entry in placeholders.entries) {
       result = result.replaceAll('==${entry.key}==', entry.value);
     }
     return result;
   }
+
+  String get processedGreeting => _applyPlaceholders(greeting);
+
+  /// Process the body text by replacing placeholders with actual values
+  /// Placeholders use the format ==PLACEHOLDER_NAME==
+  String get processedBody => _applyPlaceholders(body);
 
   /// Extract placeholder names from the body text
   List<String> get extractedPlaceholders {

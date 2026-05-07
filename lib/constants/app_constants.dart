@@ -60,7 +60,8 @@ class FileConfig {
 /// Application metadata
 class AppInfo {
   static const String appName = 'MyJob';
-  static const String version = '1.2.1';
+  // Populated from pubspec.yaml at startup via PackageInfo; never hardcode here.
+  static String version = 'unknown';
   static const String description = 'Job Application Management Tool';
   static const String supportEmail = 'support@myjob.app';
 }

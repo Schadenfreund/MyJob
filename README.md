@@ -8,12 +8,28 @@ A portable Windows desktop app for managing job applications, generating profess
 
 ## Features
 
-- **Multilingual Profiles** — Maintain a separate profile per language; switch with one click
-- **Custom Translations** — Import any language as a JSON file; it appears immediately in the UI, Profile selector, and PDF editor
-- **Job Application Tracking** — Track status, notes, salary expectations, and contacts for every application
-- **Notes & Todos** — Organize with priorities, due dates, tags, and archiving
-- **Professional PDF Generation** — Multiple CV and cover letter templates with customizable colors, fonts, and layout presets
-- **Backup & Restore** — Create and restore ZIP backups of all your data, including safety backups on every restore
+- **Multilingual Profiles** — Maintain a separate profile per language;
+  switch with one click
+- **Custom Translations** — Import any language as a JSON file; it appears
+  immediately in the UI, Profile selector, and PDF editor
+- **Job Application Tracking** — Track status, salary, contacts, and notes
+  per application with full status history and timestamps
+- **Application Statistics** — Per-status stat cards (Applied, Interviewing,
+  Successful, Rejected, No Response) plus an application funnel Sankey chart
+  showing interview conversion rates
+- **Export Reports** — Bilingual (EN/DE) Markdown reports covering the active
+  pipeline, outcomes, full chronological log, and per-application status
+  timelines
+- **Notes & Todos** — Organize with priorities, due dates, tags, archiving,
+  and a calendar timeline view
+- **Professional PDF Generation** — Multiple CV and cover letter templates
+  with customizable colors, fonts, and layout presets; slider values are
+  directly editable
+- **Cover Letter Placeholders** — Insert ==COMPANY==, ==POSITION==,
+  ==CONTACT_FIRST_NAME==, ==CONTACT_LAST_NAME==, and more via chips;
+  auto-filled on application creation
+- **Backup & Restore** — Create and restore ZIP backups of all your data,
+  including automatic safety backups on every restore
 - **Auto-Update** — Check for and install updates directly from the app
 - **Dark / Light Mode** — Five accent color themes to choose from
 
@@ -237,5 +253,5 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ---
 
-**Version**: 1.2.0
+**Version**: 1.2.3
 **Author**: Ivan Buric

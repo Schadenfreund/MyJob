@@ -43,7 +43,8 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
   final _positionController = TextEditingController();
   final _locationController = TextEditingController();
   final _jobUrlController = TextEditingController();
-  final _contactPersonController = TextEditingController();
+  final _contactFirstNameController = TextEditingController();
+  final _contactLastNameController = TextEditingController();
   final _contactEmailController = TextEditingController();
   final _notesController = TextEditingController();
   final _salaryController = TextEditingController();
@@ -77,7 +78,12 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
         _jobUrlController.text = widget.prefillJobUrl!;
       }
       if (widget.prefillContactPerson != null) {
-        _contactPersonController.text = widget.prefillContactPerson!;
+        // Split legacy single-field prefill into first/last
+        final parts = widget.prefillContactPerson!.split(' ');
+        _contactFirstNameController.text = parts.first;
+        if (parts.length > 1) {
+          _contactLastNameController.text = parts.sublist(1).join(' ');
+        }
       }
       if (widget.prefillContactEmail != null) {
         _contactEmailController.text = widget.prefillContactEmail!;
@@ -96,7 +102,8 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
       _positionController.text = _existingApplication!.position;
       _locationController.text = _existingApplication!.location ?? '';
       _jobUrlController.text = _existingApplication!.jobUrl ?? '';
-      _contactPersonController.text = _existingApplication!.contactPerson ?? '';
+      _contactFirstNameController.text = _existingApplication!.contactFirstName ?? '';
+      _contactLastNameController.text = _existingApplication!.contactLastName ?? '';
       _contactEmailController.text = _existingApplication!.contactEmail ?? '';
       _notesController.text = _existingApplication!.notes ?? '';
       _salaryController.text = _existingApplication!.salary ?? '';
@@ -121,7 +128,8 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
     _positionController.dispose();
     _locationController.dispose();
     _jobUrlController.dispose();
-    _contactPersonController.dispose();
+    _contactFirstNameController.dispose();
+    _contactLastNameController.dispose();
     _contactEmailController.dispose();
     _notesController.dispose();
     _salaryController.dispose();
@@ -321,13 +329,30 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
                             ?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 16),
 
-                    TextFormField(
-                      controller: _contactPersonController,
-                      decoration: InputDecoration(
-                        labelText: context.tr('contact_name_label'),
-                        hintText: context.tr('contact_name_hint'),
-                        prefixIcon: Icon(Icons.person, size: 20),
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _contactFirstNameController,
+                            decoration: InputDecoration(
+                              labelText: context.tr('contact_first_name_label'),
+                              hintText: context.tr('contact_first_name_hint'),
+                              prefixIcon: const Icon(Icons.person, size: 20),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _contactLastNameController,
+                            decoration: InputDecoration(
+                              labelText: context.tr('contact_last_name_label'),
+                              hintText: context.tr('contact_last_name_hint'),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
 
@@ -386,27 +411,33 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
     final applicationsProvider = context.read<ApplicationsProvider>();
 
     if (_isEditing && _existingApplication != null) {
-      await applicationsProvider.updateApplication(
-        _existingApplication!.copyWith(
-          company: _companyController.text,
-          position: _positionController.text,
-          location: _locationController.text.isEmpty
-              ? null
-              : _locationController.text,
-          jobUrl:
-              _jobUrlController.text.isEmpty ? null : _jobUrlController.text,
-          contactPerson: _contactPersonController.text.isEmpty
-              ? null
-              : _contactPersonController.text,
-          contactEmail: _contactEmailController.text.isEmpty
-              ? null
-              : _contactEmailController.text,
-          notes: _notesController.text.isEmpty ? null : _notesController.text,
-          salary:
-              _salaryController.text.isEmpty ? null : _salaryController.text,
-          status: _status,
-        ),
+      // Apply non-status field changes first, then route status through
+      // withStatusChange so the transition is recorded in statusHistory.
+      var updated = _existingApplication!.copyWith(
+        company: _companyController.text,
+        position: _positionController.text,
+        location: _locationController.text.isEmpty
+            ? null
+            : _locationController.text,
+        jobUrl:
+            _jobUrlController.text.isEmpty ? null : _jobUrlController.text,
+        contactFirstName: _contactFirstNameController.text.isEmpty
+            ? null
+            : _contactFirstNameController.text,
+        contactLastName: _contactLastNameController.text.isEmpty
+            ? null
+            : _contactLastNameController.text,
+        contactEmail: _contactEmailController.text.isEmpty
+            ? null
+            : _contactEmailController.text,
+        notes: _notesController.text.isEmpty ? null : _notesController.text,
+        salary:
+            _salaryController.text.isEmpty ? null : _salaryController.text,
       );
+      if (_status != _existingApplication!.status) {
+        updated = updated.withStatusChange(_status);
+      }
+      await applicationsProvider.updateApplication(updated);
 
       // Save subject to cover letter if it changed
       if (_existingApplication!.folderPath != null) {
@@ -436,9 +467,12 @@ class _ApplicationEditorDialogState extends State<ApplicationEditorDialog> {
         location:
             _locationController.text.isEmpty ? null : _locationController.text,
         jobUrl: _jobUrlController.text.isEmpty ? null : _jobUrlController.text,
-        contactPerson: _contactPersonController.text.isEmpty
+        contactFirstName: _contactFirstNameController.text.isEmpty
             ? null
-            : _contactPersonController.text,
+            : _contactFirstNameController.text,
+        contactLastName: _contactLastNameController.text.isEmpty
+            ? null
+            : _contactLastNameController.text,
         contactEmail: _contactEmailController.text.isEmpty
             ? null
             : _contactEmailController.text,

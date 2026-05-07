@@ -165,15 +165,21 @@ class CoverLetterInstance {
     required String applicationId,
     String? companyName,
     String? jobTitle,
-    String? contactPerson,
+    String? contactFirstName,
+    String? contactLastName,
     String? location,
     String? salary,
   }) {
+    final contactPerson = [contactFirstName, contactLastName]
+        .where((s) => s != null && s.isNotEmpty)
+        .join(' ');
     // Auto-fill placeholders
     final placeholders = <String, String>{};
     if (companyName != null) placeholders['COMPANY'] = companyName;
     if (jobTitle != null) placeholders['POSITION'] = jobTitle;
-    if (contactPerson != null) placeholders['RECIPIENT_NAME'] = contactPerson;
+    if (contactPerson.isNotEmpty) placeholders['RECIPIENT_NAME'] = contactPerson;
+    if (contactFirstName != null) placeholders['CONTACT_FIRST_NAME'] = contactFirstName;
+    if (contactLastName != null) placeholders['CONTACT_LAST_NAME'] = contactLastName;
     if (location != null) placeholders['LOCATION'] = location;
     if (salary != null) placeholders['SALARY'] = salary;
 

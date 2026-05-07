@@ -28,6 +28,20 @@ class StatusChange {
         'changedAt': changedAt.toIso8601String(),
         'notes': notes,
       };
+
+  StatusChange copyWith({
+    ApplicationStatus? status,
+    DateTime? changedAt,
+    Object? notes = _unset,
+  }) {
+    return StatusChange(
+      status: status ?? this.status,
+      changedAt: changedAt ?? this.changedAt,
+      notes: notes == _unset ? this.notes : notes as String?,
+    );
+  }
+
+  static const _unset = Object();
 }
 
 /// Model representing a job application
@@ -43,7 +57,8 @@ class JobApplication {
     this.lastUpdated,
     this.location,
     this.jobUrl,
-    this.contactPerson,
+    this.contactFirstName,
+    this.contactLastName,
     this.contactEmail,
     this.notes,
     this.salary,
@@ -75,7 +90,10 @@ class JobApplication {
           : null,
       location: json['location'] as String?,
       jobUrl: json['jobUrl'] as String?,
-      contactPerson: json['contactPerson'] as String?,
+      contactFirstName: json['contactFirstName'] as String? ??
+          _splitLegacyContactPerson(json['contactPerson'] as String?)[0],
+      contactLastName: json['contactLastName'] as String? ??
+          _splitLegacyContactPerson(json['contactPerson'] as String?)[1],
       contactEmail: json['contactEmail'] as String?,
       notes: json['notes'] as String?,
       salary: json['salary'] as String?,
@@ -107,8 +125,24 @@ class JobApplication {
   final DateTime? lastUpdated;
   final String? location;
   final String? jobUrl;
-  final String? contactPerson;
+  final String? contactFirstName;
+  final String? contactLastName;
   final String? contactEmail;
+
+  /// Full contact name derived from first + last name.
+  String? get contactPerson {
+    final parts = [contactFirstName, contactLastName]
+        .where((s) => s != null && s.isNotEmpty)
+        .join(' ');
+    return parts.isEmpty ? null : parts;
+  }
+
+  static List<String?> _splitLegacyContactPerson(String? value) {
+    if (value == null || value.isEmpty) return [null, null];
+    final idx = value.indexOf(' ');
+    if (idx == -1) return [value, null];
+    return [value.substring(0, idx), value.substring(idx + 1)];
+  }
   final String? notes;
   final String? salary;
   final DateTime? interviewDate;
@@ -131,7 +165,8 @@ class JobApplication {
         'lastUpdated': lastUpdated?.toIso8601String(),
         'location': location,
         'jobUrl': jobUrl,
-        'contactPerson': contactPerson,
+        'contactFirstName': contactFirstName,
+        'contactLastName': contactLastName,
         'contactEmail': contactEmail,
         'notes': notes,
         'salary': salary,
@@ -153,7 +188,8 @@ class JobApplication {
     DateTime? lastUpdated,
     String? location,
     String? jobUrl,
-    String? contactPerson,
+    String? contactFirstName,
+    String? contactLastName,
     String? contactEmail,
     String? notes,
     String? salary,
@@ -173,7 +209,8 @@ class JobApplication {
       lastUpdated: lastUpdated ?? this.lastUpdated,
       location: location ?? this.location,
       jobUrl: jobUrl ?? this.jobUrl,
-      contactPerson: contactPerson ?? this.contactPerson,
+      contactFirstName: contactFirstName ?? this.contactFirstName,
+      contactLastName: contactLastName ?? this.contactLastName,
       contactEmail: contactEmail ?? this.contactEmail,
       notes: notes ?? this.notes,
       salary: salary ?? this.salary,
@@ -184,22 +221,28 @@ class JobApplication {
     );
   }
 
-  /// Create a copy with a new status and add to history
-  JobApplication withStatusChange(ApplicationStatus newStatus,
-      {String? notes}) {
-    // Don't add to history if status hasn't changed
+  /// Create a copy with a new status, recording the transition in [statusHistory].
+  ///
+  /// [at] defaults to now; pass a custom value when back-filling history entries.
+  /// Automatically sets [applicationDate] the first time status reaches [applied].
+  JobApplication withStatusChange(
+    ApplicationStatus newStatus, {
+    String? notes,
+    DateTime? at,
+  }) {
     if (newStatus == status) return this;
-
-    final statusChange = StatusChange(
-      status: newStatus,
-      changedAt: DateTime.now(),
-      notes: notes,
-    );
-
+    final when = at ?? DateTime.now();
     return copyWith(
       status: newStatus,
       lastUpdated: DateTime.now(),
-      statusHistory: [...safeStatusHistory, statusChange],
+      applicationDate: newStatus == ApplicationStatus.applied &&
+              applicationDate == null
+          ? when
+          : applicationDate,
+      statusHistory: [
+        ...safeStatusHistory,
+        StatusChange(status: newStatus, changedAt: when, notes: notes),
+      ],
     );
   }
 

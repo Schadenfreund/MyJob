@@ -31,7 +31,7 @@ import '../constants/app_constants.dart';
 import '../localization/app_localizations.dart';
 import '../services/log_service.dart';
 import '../widgets/profile_long_text_editor.dart'
-    show InsertableChip, PlaceholderHighlightController;
+    show InsertableChip, InsertableChipRow, PlaceholderHighlightController;
 
 /// Modern tabbed CV content editor for job applications
 ///
@@ -66,12 +66,12 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   JobCoverLetter? _jobCoverLetter;
 
   // Cover letter text controllers
-  late TextEditingController _recipientNameController;
   late TextEditingController _recipientTitleController;
   late TextEditingController _subjectController;
-  late TextEditingController _greetingController;
+  late PlaceholderHighlightController _greetingController;
   late PlaceholderHighlightController _bodyController;
   late TextEditingController _closingController;
+  late FocusNode _greetingFocusNode;
   late FocusNode _bodyFocusNode;
 
   // Application details controllers - centralized for immediate saving
@@ -80,7 +80,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   late TextEditingController _locationController;
   late TextEditingController _jobUrlController;
   late TextEditingController _salaryController;
-  late TextEditingController _contactPersonController;
+  late TextEditingController _contactFirstNameController;
+  late TextEditingController _contactLastNameController;
   late TextEditingController _contactEmailController;
   late TextEditingController _notesController;
 
@@ -105,30 +106,25 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     _jobCoverLetter = widget.coverLetter as JobCoverLetter?;
 
     // Initialize cover letter controllers with loaded data
-    _recipientNameController = TextEditingController(
-      text: _jobCoverLetter?.recipientName ??
-          widget.applicationContext?.contactPerson ??
-          '',
-    );
     _recipientTitleController = TextEditingController(
       text: _jobCoverLetter?.recipientTitle ?? '',
     );
     _subjectController = TextEditingController(
       text: _jobCoverLetter?.subject ?? '',
     );
-    _greetingController = TextEditingController(
+    _greetingController = PlaceholderHighlightController(
       text: _jobCoverLetter?.greeting ?? 'Dear Hiring Manager,',
     );
     _bodyController = PlaceholderHighlightController(
       text: _jobCoverLetter?.body ?? '',
     );
+    _greetingFocusNode = FocusNode();
     _bodyFocusNode = FocusNode();
     _closingController = TextEditingController(
       text: _jobCoverLetter?.closing ?? 'Sincerely,',
     );
 
     // Add listeners for auto-save
-    _recipientNameController.addListener(_updateCoverLetter);
     _recipientTitleController.addListener(_updateCoverLetter);
     _subjectController.addListener(_updateCoverLetter);
     _greetingController.addListener(_updateCoverLetter);
@@ -142,8 +138,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     _locationController = TextEditingController(text: app?.location ?? '');
     _jobUrlController = TextEditingController(text: app?.jobUrl ?? '');
     _salaryController = TextEditingController(text: app?.salary ?? '');
-    _contactPersonController =
-        TextEditingController(text: app?.contactPerson ?? '');
+    _contactFirstNameController =
+        TextEditingController(text: app?.contactFirstName ?? '');
+    _contactLastNameController =
+        TextEditingController(text: app?.contactLastName ?? '');
     _contactEmailController =
         TextEditingController(text: app?.contactEmail ?? '');
     _notesController = TextEditingController(text: app?.notes ?? '');
@@ -154,7 +152,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     _locationController.addListener(_onApplicationFieldChanged);
     _jobUrlController.addListener(_onApplicationFieldChanged);
     _salaryController.addListener(_onApplicationFieldChanged);
-    _contactPersonController.addListener(_onApplicationFieldChanged);
+    _contactFirstNameController.addListener(_onApplicationFieldChanged);
+    _contactFirstNameController.addListener(_updateCoverLetter);
+    _contactLastNameController.addListener(_onApplicationFieldChanged);
+    _contactLastNameController.addListener(_updateCoverLetter);
     _contactEmailController.addListener(_onApplicationFieldChanged);
     _notesController.addListener(_onApplicationFieldChanged);
   }
@@ -180,7 +181,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       _locationController.removeListener(_onApplicationFieldChanged);
       _jobUrlController.removeListener(_onApplicationFieldChanged);
       _salaryController.removeListener(_onApplicationFieldChanged);
-      _contactPersonController.removeListener(_onApplicationFieldChanged);
+      _contactFirstNameController.removeListener(_onApplicationFieldChanged);
+      _contactFirstNameController.removeListener(_updateCoverLetter);
+      _contactLastNameController.removeListener(_onApplicationFieldChanged);
+      _contactLastNameController.removeListener(_updateCoverLetter);
       _contactEmailController.removeListener(_onApplicationFieldChanged);
       _notesController.removeListener(_onApplicationFieldChanged);
 
@@ -190,7 +194,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       _locationController.text = app?.location ?? '';
       _jobUrlController.text = app?.jobUrl ?? '';
       _salaryController.text = app?.salary ?? '';
-      _contactPersonController.text = app?.contactPerson ?? '';
+      _contactFirstNameController.text = app?.contactFirstName ?? '';
+      _contactLastNameController.text = app?.contactLastName ?? '';
       _contactEmailController.text = app?.contactEmail ?? '';
       _notesController.text = app?.notes ?? '';
 
@@ -200,7 +205,10 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       _locationController.addListener(_onApplicationFieldChanged);
       _jobUrlController.addListener(_onApplicationFieldChanged);
       _salaryController.addListener(_onApplicationFieldChanged);
-      _contactPersonController.addListener(_onApplicationFieldChanged);
+      _contactFirstNameController.addListener(_onApplicationFieldChanged);
+      _contactFirstNameController.addListener(_updateCoverLetter);
+      _contactLastNameController.addListener(_onApplicationFieldChanged);
+      _contactLastNameController.addListener(_updateCoverLetter);
       _contactEmailController.addListener(_onApplicationFieldChanged);
       _notesController.addListener(_onApplicationFieldChanged);
     }
@@ -211,16 +219,12 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       _jobCoverLetter = newCoverLetter;
 
       // Update controller text without triggering listeners
-      _recipientNameController.removeListener(_updateCoverLetter);
       _recipientTitleController.removeListener(_updateCoverLetter);
       _subjectController.removeListener(_updateCoverLetter);
       _greetingController.removeListener(_updateCoverLetter);
       _bodyController.removeListener(_updateCoverLetter);
       _closingController.removeListener(_updateCoverLetter);
 
-      _recipientNameController.text = newCoverLetter?.recipientName ??
-          widget.applicationContext?.contactPerson ??
-          '';
       _recipientTitleController.text = newCoverLetter?.recipientTitle ?? '';
       _subjectController.text = newCoverLetter?.subject ?? '';
       _greetingController.text =
@@ -229,7 +233,6 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
       _closingController.text = newCoverLetter?.closing ?? 'Sincerely,';
 
       // Re-add listeners
-      _recipientNameController.addListener(_updateCoverLetter);
       _recipientTitleController.addListener(_updateCoverLetter);
       _subjectController.addListener(_updateCoverLetter);
       _greetingController.addListener(_updateCoverLetter);
@@ -241,11 +244,11 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   @override
   void dispose() {
     _tabController.dispose();
-    _recipientNameController.dispose();
     _recipientTitleController.dispose();
     _subjectController.dispose();
     _greetingController.dispose();
     _bodyController.dispose();
+    _greetingFocusNode.dispose();
     _bodyFocusNode.dispose();
     _closingController.dispose();
     _companyController.dispose();
@@ -253,7 +256,8 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
     _locationController.dispose();
     _jobUrlController.dispose();
     _salaryController.dispose();
-    _contactPersonController.dispose();
+    _contactFirstNameController.dispose();
+    _contactLastNameController.dispose();
     _contactEmailController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -269,10 +273,12 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
   void _updateCoverLetter() {
     if (_jobCoverLetter == null) return;
 
+    final recipientName = [
+      _contactFirstNameController.text,
+      _contactLastNameController.text,
+    ].where((s) => s.isNotEmpty).join(' ');
     final updatedCoverLetter = _jobCoverLetter!.copyWith(
-      recipientName: _recipientNameController.text.isEmpty
-          ? null
-          : _recipientNameController.text,
+      recipientName: recipientName.isEmpty ? null : recipientName,
       recipientTitle: _recipientTitleController.text.isEmpty
           ? null
           : _recipientTitleController.text,
@@ -288,6 +294,24 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
 
     // Auto-save to storage
     _saveCoverLetter(updatedCoverLetter);
+  }
+
+  /// Insert text at current cursor position in the greeting field.
+  void _insertAtGreetingCursor(String text) {
+    final selection = _greetingController.selection;
+    final currentText = _greetingController.text;
+    if (selection.isValid && selection.start >= 0) {
+      _greetingController.value = TextEditingValue(
+        text: currentText.replaceRange(selection.start, selection.end, text),
+        selection: TextSelection.collapsed(offset: selection.start + text.length),
+      );
+    } else {
+      _greetingController.value = TextEditingValue(
+        text: '$currentText$text',
+        selection: TextSelection.collapsed(offset: currentText.length + text.length),
+      );
+    }
+    _greetingFocusNode.requestFocus();
   }
 
   /// Insert text at current cursor position in the body field.
@@ -349,9 +373,12 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
           _locationController.text.isEmpty ? null : _locationController.text,
       jobUrl: _jobUrlController.text.isEmpty ? null : _jobUrlController.text,
       salary: _salaryController.text.isEmpty ? null : _salaryController.text,
-      contactPerson: _contactPersonController.text.isEmpty
+      contactFirstName: _contactFirstNameController.text.isEmpty
           ? null
-          : _contactPersonController.text,
+          : _contactFirstNameController.text,
+      contactLastName: _contactLastNameController.text.isEmpty
+          ? null
+          : _contactLastNameController.text,
       contactEmail: _contactEmailController.text.isEmpty
           ? null
           : _contactEmailController.text,
@@ -654,13 +681,29 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              TextFormField(
-                controller: _contactPersonController,
-                decoration: InputDecoration(
-                  labelText: context.tr('contact_person'),
-                  hintText: 'Hiring Manager Name',
-                  prefixIcon: const Icon(Icons.person_outline),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _contactFirstNameController,
+                      decoration: InputDecoration(
+                        labelText: context.tr('contact_first_name_label'),
+                        hintText: context.tr('contact_first_name_hint'),
+                        prefixIcon: const Icon(Icons.person_outline),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _contactLastNameController,
+                      decoration: InputDecoration(
+                        labelText: context.tr('contact_last_name_label'),
+                        hintText: context.tr('contact_last_name_hint'),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
@@ -1341,13 +1384,16 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
 
   Widget _buildCoverLetterTab() {
     final theme = Theme.of(context);
+    _greetingController.highlightColor = theme.colorScheme.primary;
     _bodyController.highlightColor = theme.colorScheme.primary;
     final application = widget.applicationContext;
     _bodyController.filledValues = [
       if (application?.company.isNotEmpty == true) application!.company,
       if (application?.position.isNotEmpty == true) application!.position,
-      if (application?.contactPerson?.isNotEmpty == true)
-        application!.contactPerson!,
+      if (application?.contactFirstName?.isNotEmpty == true)
+        application!.contactFirstName!,
+      if (application?.contactLastName?.isNotEmpty == true)
+        application!.contactLastName!,
       if (application?.location?.isNotEmpty == true) application!.location!,
       if (application?.salary?.isNotEmpty == true) application!.salary!,
     ];
@@ -1377,13 +1423,29 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
             title: context.tr('recipient_info'),
             icon: Icons.person_outline,
             children: [
-              TextFormField(
-                controller: _recipientNameController,
-                decoration: InputDecoration(
-                  labelText: context.tr('recipient_name'),
-                  hintText: 'e.g., Jane Smith',
-                  prefixIcon: const Icon(Icons.person_outline),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _contactFirstNameController,
+                      decoration: InputDecoration(
+                        labelText: context.tr('contact_first_name_label'),
+                        hintText: context.tr('contact_first_name_hint'),
+                        prefixIcon: const Icon(Icons.person_outline),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _contactLastNameController,
+                      decoration: InputDecoration(
+                        labelText: context.tr('contact_last_name_label'),
+                        hintText: context.tr('contact_last_name_hint'),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
@@ -1438,11 +1500,34 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
             children: [
               TextFormField(
                 controller: _greetingController,
+                focusNode: _greetingFocusNode,
                 decoration: InputDecoration(
                   labelText: context.tr('greeting'),
                   hintText: 'Dear [Name],',
                   prefixIcon: const Icon(Icons.waving_hand_outlined),
                 ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              InsertableChipRow(
+                chips: [
+                  InsertableChip(
+                    label: '==CONTACT_FIRST_NAME==',
+                    insertText: '==CONTACT_FIRST_NAME==',
+                    description: context.tr('cover_letter_placeholder_contact_first'),
+                  ),
+                  InsertableChip(
+                    label: '==CONTACT_LAST_NAME==',
+                    insertText: '==CONTACT_LAST_NAME==',
+                    description: context.tr('cover_letter_placeholder_contact_last'),
+                  ),
+                  InsertableChip(
+                    label: '==COMPANY==',
+                    insertText: '==COMPANY==',
+                    description: context.tr('cover_letter_placeholder_company'),
+                  ),
+                ],
+                onInsert: _insertAtGreetingCursor,
+                title: context.tr('greeting_placeholders_label'),
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -1508,9 +1593,14 @@ class _JobCvEditorWidgetState extends State<JobCvEditorWidget>
         description: context.tr('cover_letter_placeholder_position'),
       ),
       InsertableChip(
-        label: '==RECIPIENT_NAME==',
-        insertText: '==RECIPIENT_NAME==',
-        description: context.tr('cover_letter_placeholder_recipient'),
+        label: '==CONTACT_FIRST_NAME==',
+        insertText: '==CONTACT_FIRST_NAME==',
+        description: context.tr('cover_letter_placeholder_contact_first'),
+      ),
+      InsertableChip(
+        label: '==CONTACT_LAST_NAME==',
+        insertText: '==CONTACT_LAST_NAME==',
+        description: context.tr('cover_letter_placeholder_contact_last'),
       ),
       InsertableChip(
         label: '==LOCATION==',

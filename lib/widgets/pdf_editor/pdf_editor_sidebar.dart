@@ -1614,18 +1614,55 @@ class _PdfSlider extends StatefulWidget {
 
 class _PdfSliderState extends State<_PdfSlider> {
   late double _localValue;
+  bool _editing = false;
+  late final TextEditingController _textController;
+  late final FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
     _localValue = widget.value;
+    _textController = TextEditingController();
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus) _commitText();
+    });
   }
 
   @override
   void didUpdateWidget(_PdfSlider oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.value != widget.value) {
+    if (oldWidget.value != widget.value && !_editing) {
       _localValue = widget.value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _startEditing() {
+    _textController.text = _localValue.toStringAsFixed(2);
+    _textController.selection =
+        TextSelection(baseOffset: 0, extentOffset: _textController.text.length);
+    setState(() => _editing = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
+  }
+
+  void _commitText() {
+    final parsed = double.tryParse(_textController.text.replaceAll(',', '.'));
+    if (parsed != null) {
+      final clamped = parsed.clamp(widget.min, widget.max);
+      setState(() {
+        _localValue = clamped;
+        _editing = false;
+      });
+      widget.onChanged(clamped);
+    } else {
+      setState(() => _editing = false);
     }
   }
 
@@ -1645,14 +1682,50 @@ class _PdfSliderState extends State<_PdfSlider> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            Text(
-              _localValue.toStringAsFixed(2),
-              style: TextStyle(
-                color: widget.accentColor,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
+            if (_editing)
+              SizedBox(
+                width: 54,
+                height: 22,
+                child: TextField(
+                  controller: _textController,
+                  focusNode: _focusNode,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: widget.accentColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
+                    enabledBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white24),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide:
+                          BorderSide(color: widget.accentColor, width: 1.5),
+                    ),
+                  ),
+                  onSubmitted: (_) => _commitText(),
+                ),
+              )
+            else
+              GestureDetector(
+                onTap: _startEditing,
+                child: Text(
+                  _localValue.toStringAsFixed(2),
+                  style: TextStyle(
+                    color: widget.accentColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                    decorationColor: widget.accentColor.withValues(alpha: 0.5),
+                  ),
+                ),
               ),
-            ),
           ],
         ),
         const SizedBox(height: 6),
@@ -1669,7 +1742,10 @@ class _PdfSliderState extends State<_PdfSlider> {
             min: widget.min,
             max: widget.max,
             onChanged: (val) {
-              setState(() => _localValue = val);
+              setState(() {
+                _localValue = val;
+                _editing = false;
+              });
             },
             onChangeEnd: (val) {
               widget.onChanged(val);

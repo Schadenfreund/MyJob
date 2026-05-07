@@ -5,8 +5,10 @@ import 'package:file_picker/file_picker.dart';
 import '../../providers/applications_provider.dart';
 import '../../providers/user_data_provider.dart';
 import '../../providers/app_state.dart';
+import '../../constants/app_constants.dart';
 import '../../models/job_application.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/application_status_helper.dart';
 import '../../utils/ui_utils.dart';
 import '../../utils/dialog_utils.dart';
 import '../../utils/platform_utils.dart';
@@ -289,6 +291,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     final apps = provider.filterByTimeRange(
         provider.allApplications, _timeRange);
     final stats = provider.computeStatistics(apps);
+    final sankeyData = _SankeyData.compute(apps);
 
     return AppCardContainer(
       padding: EdgeInsets.zero,
@@ -343,7 +346,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                         context.tr('period'),
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.textTheme.bodySmall?.color
-                              ?.withOpacity(0.7),
+                              ?.withValues(alpha: 0.7),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -362,6 +365,21 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   _buildStatRow(context, stats),
+                  if (sankeyData.applied > 0) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    const Divider(height: 1),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      context.tr('application_funnel'),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    _ApplicationSankey(data: sankeyData),
+                  ],
                 ],
               ),
             ),
@@ -385,48 +403,26 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
             color: theme.colorScheme.primary,
           ),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildCompactStatItem(
-            context,
-            label: context.tr('stat_active'),
-            value: stats.active.toString(),
-            icon: Icons.pending_actions,
-            color: AppColors.statusApplied,
+        ...[
+          (ApplicationStatus.applied,     context.tr('stat_applied'),      stats.applied),
+          (ApplicationStatus.interviewing, context.tr('stat_interviewing'), stats.interviewing),
+          (ApplicationStatus.successful,
+              _statsExpanded ? context.tr('stat_successful') : context.tr('stat_success'),
+              stats.successful),
+          (ApplicationStatus.rejected,    context.tr('stat_rejected'),     stats.rejected),
+          (ApplicationStatus.noResponse,  context.tr('stat_no_response'),  stats.noResponse),
+        ].expand((entry) => [
+          const SizedBox(width: 10),
+          Expanded(
+            child: _buildCompactStatItem(
+              context,
+              label: entry.$2,
+              value: entry.$3.toString(),
+              icon: ApplicationStatusHelper.getIcon(entry.$1),
+              color: ApplicationStatusHelper.getColor(entry.$1),
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildCompactStatItem(
-            context,
-            label: _statsExpanded
-                ? context.tr('stat_successful')
-                : context.tr('stat_success'),
-            value: stats.successful.toString(),
-            icon: Icons.check_circle_outline,
-            color: AppColors.statusAccepted,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildCompactStatItem(
-            context,
-            label: context.tr('stat_rejected'),
-            value: stats.rejected.toString(),
-            icon: Icons.cancel_outlined,
-            color: AppColors.statusRejected,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildCompactStatItem(
-            context,
-            label: context.tr('stat_no_response'),
-            value: stats.noResponse.toString(),
-            icon: Icons.schedule,
-            color: AppColors.statusWithdrawn,
-          ),
-        ),
+        ]),
       ],
     );
   }
@@ -445,12 +441,12 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         decoration: BoxDecoration(
           color: isSelected
               ? theme.colorScheme.primary
-              : theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: isSelected
                 ? theme.colorScheme.primary
-                : theme.colorScheme.outline.withOpacity(0.2),
+                : theme.colorScheme.outline.withValues(alpha: 0.2),
           ),
         ),
         child: Text(
@@ -459,7 +455,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
             fontWeight: FontWeight.w600,
             color: isSelected
                 ? theme.colorScheme.onPrimary
-                : theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
             fontSize: 11,
           ),
         ),
@@ -479,11 +475,9 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,7 +499,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
               fontSize: 10,
             ),
             overflow: TextOverflow.ellipsis,
@@ -593,47 +587,30 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
         ],
-        if (successfulApps.isNotEmpty) ...[
-          _buildCollapsibleSection(
-            context,
-            title: context.tr('section_successful'),
-            count: successfulApps.length,
-            icon: Icons.check_circle,
-            color: AppColors.statusAccepted,
-            isExpanded: _successfulExpanded,
-            onToggle: () => _saveSuccessfulExpanded(!_successfulExpanded),
-            apps: successfulApps,
-            provider: provider,
-          ),
-          const SizedBox(height: AppSpacing.md),
-        ],
-        if (noResponseApps.isNotEmpty) ...[
-          _buildCollapsibleSection(
-            context,
-            title: context.tr('section_no_response'),
-            count: noResponseApps.length,
-            icon: Icons.schedule,
-            color: AppColors.statusWithdrawn,
-            isExpanded: _noResponseExpanded,
-            onToggle: () => _saveNoResponseExpanded(!_noResponseExpanded),
-            apps: noResponseApps,
-            provider: provider,
-          ),
-          const SizedBox(height: AppSpacing.md),
-        ],
-        if (rejectedApps.isNotEmpty) ...[
-          _buildCollapsibleSection(
-            context,
-            title: context.tr('section_rejected'),
-            count: rejectedApps.length,
-            icon: Icons.cancel,
-            color: AppColors.statusRejected,
-            isExpanded: _rejectedExpanded,
-            onToggle: () => _saveRejectedExpanded(!_rejectedExpanded),
-            apps: rejectedApps,
-            provider: provider,
-          ),
-        ],
+        ...[
+          (ApplicationStatus.successful, context.tr('section_successful'),
+              successfulApps, _successfulExpanded, _saveSuccessfulExpanded),
+          (ApplicationStatus.noResponse, context.tr('section_no_response'),
+              noResponseApps, _noResponseExpanded, _saveNoResponseExpanded),
+          (ApplicationStatus.rejected, context.tr('section_rejected'),
+              rejectedApps, _rejectedExpanded, _saveRejectedExpanded),
+        ].expand((e) {
+          if (e.$3.isEmpty) return const <Widget>[];
+          return [
+            _buildCollapsibleSection(
+              context,
+              title: e.$2,
+              count: e.$3.length,
+              icon: ApplicationStatusHelper.getIcon(e.$1),
+              color: ApplicationStatusHelper.getColor(e.$1),
+              isExpanded: e.$4,
+              onToggle: () => e.$5(!e.$4),
+              apps: e.$3,
+              provider: provider,
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ];
+        }),
       ],
     );
   }
@@ -666,7 +643,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
+                      color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(icon, size: 18, color: color),
@@ -683,7 +660,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
+                      color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -727,6 +704,8 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                     onOpenFolder: () => _openFolder(context, application),
                     onStatusChange: (status) =>
                         provider.updateStatus(application.id, status),
+                    onHistoryChanged: (history) =>
+                        provider.updateStatusHistory(application.id, history),
                   );
                 },
               ),
@@ -1016,4 +995,373 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
       }
     }
   }
+}
+
+// ── Application Funnel Sankey ────────────────────────────────────────────────
+
+/// Computed funnel data for the Sankey chart.
+class _SankeyData {
+  const _SankeyData({
+    required this.applied,
+    required this.interviewed,
+    required this.successful,
+    required this.successfulViaInterview,
+    required this.activeInterviewing,
+    required this.rejectedAfterInterview,
+    required this.noResponseAfterInterview,
+    required this.activeApplied,
+    required this.rejectedWithoutInterview,
+    required this.noResponseWithoutInterview,
+  });
+
+  final int applied;
+  final int interviewed;
+  final int successful;
+  final int successfulViaInterview;
+  final int activeInterviewing;
+  final int rejectedAfterInterview;
+  final int noResponseAfterInterview;
+  final int activeApplied;
+  final int rejectedWithoutInterview;
+  final int noResponseWithoutInterview;
+
+  int get successfulDirect => successful - successfulViaInterview;
+  int get notInterviewed => applied - interviewed;
+  int get activeTotal => activeInterviewing + activeApplied;
+  int get rejectedTotal => rejectedAfterInterview + rejectedWithoutInterview;
+  int get noResponseTotal => noResponseAfterInterview + noResponseWithoutInterview;
+
+  static _SankeyData compute(List<JobApplication> apps) {
+    int successfulViaInterview = 0, activeInterviewing = 0;
+    int rejectedAfterInterview = 0, noResponseAfterInterview = 0;
+    int successfulDirect = 0, activeApplied = 0;
+    int rejectedDirect = 0, noResponseDirect = 0;
+
+    for (final app in apps) {
+      if (app.status == ApplicationStatus.draft) continue;
+
+      final hadInterview =
+          app.status == ApplicationStatus.interviewing ||
+          app.safeStatusHistory
+              .any((e) => e.status == ApplicationStatus.interviewing);
+      // Apps reverted to applied after interview are counted as "not interviewed"
+      // to keep flows visually clean.
+      final passedInterview =
+          hadInterview && app.status != ApplicationStatus.applied;
+
+      if (passedInterview) {
+        switch (app.status) {
+          case ApplicationStatus.successful:
+            successfulViaInterview++;
+          case ApplicationStatus.interviewing:
+            activeInterviewing++;
+          case ApplicationStatus.rejected:
+            rejectedAfterInterview++;
+          default:
+            noResponseAfterInterview++;
+        }
+      } else {
+        switch (app.status) {
+          case ApplicationStatus.applied:
+            activeApplied++;
+          case ApplicationStatus.successful:
+            successfulDirect++;
+          case ApplicationStatus.rejected:
+            rejectedDirect++;
+          case ApplicationStatus.noResponse:
+            noResponseDirect++;
+          default:
+            break;
+        }
+      }
+    }
+
+    final interviewed = successfulViaInterview +
+        activeInterviewing +
+        rejectedAfterInterview +
+        noResponseAfterInterview;
+
+    return _SankeyData(
+      applied: interviewed + successfulDirect + activeApplied +
+          rejectedDirect + noResponseDirect,
+      interviewed: interviewed,
+      successful: successfulViaInterview + successfulDirect,
+      successfulViaInterview: successfulViaInterview,
+      activeInterviewing: activeInterviewing,
+      rejectedAfterInterview: rejectedAfterInterview,
+      noResponseAfterInterview: noResponseAfterInterview,
+      activeApplied: activeApplied,
+      rejectedWithoutInterview: rejectedDirect,
+      noResponseWithoutInterview: noResponseDirect,
+    );
+  }
+}
+
+/// Sankey funnel chart showing the application pipeline.
+class _ApplicationSankey extends StatelessWidget {
+  const _ApplicationSankey({required this.data});
+
+  final _SankeyData data;
+
+  @override
+  Widget build(BuildContext context) {
+    if (data.applied == 0) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 190,
+          child: CustomPaint(
+            painter: _SankeyPainter(
+              data: data,
+              primaryColor: theme.colorScheme.primary,
+            ),
+          ),
+        ),
+        // Middle-column legend (interviewed / not-interviewed split)
+        if (data.interviewed > 0 && data.notInterviewed > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _SankeyLegend(
+                    'Interviewed: ${data.interviewed}',
+                    ApplicationStatusHelper.getColor(ApplicationStatus.interviewing)),
+                const SizedBox(width: 16),
+                _SankeyLegend(
+                    'Not Interviewed: ${data.notInterviewed}',
+                    AppColors.statusDraft),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SankeyLegend extends StatelessWidget {
+  const _SankeyLegend(this.label, this.color);
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration:
+              BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: color,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SankeyPainter extends CustomPainter {
+  _SankeyPainter({required this.data, required this.primaryColor});
+
+  final _SankeyData data;
+  final Color primaryColor;
+
+  // Right-column colors routed through the single source of truth.
+  Color get _cSuccess        => ApplicationStatusHelper.getColor(ApplicationStatus.successful);
+  Color get _cActive         => ApplicationStatusHelper.getColor(ApplicationStatus.applied);
+  Color get _cRejected       => ApplicationStatusHelper.getColor(ApplicationStatus.rejected);
+  Color get _cNoResp         => ApplicationStatusHelper.getColor(ApplicationStatus.noResponse);
+  // Middle-column colors: interviewing status color for the "interviewed" path;
+  // draft color for the "never reached interview" path (neutral, distinct from _cNoResp).
+  Color get _cInterview      => ApplicationStatusHelper.getColor(ApplicationStatus.interviewing);
+  Color get _cNotInterviewed => AppColors.statusDraft;
+
+  static const _nw = 13.0; // node width
+  static const _gap = 5.0; // gap between stacked nodes
+  static const _lw = 58.0; // left-side label reserve
+  static const _rw = 90.0; // right-side label reserve
+  static const _vPad = 8.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final avH = size.height - 2 * _vPad;
+    if (avH <= 0 || data.applied == 0) return;
+
+    final c0 = _lw; // left node x
+    final c2 = size.width - _rw - _nw; // right node x
+    final c1 = c0 + (c2 - c0) / 2 - _nw / 2; // middle node x
+
+    // Proportional height relative to total applied pool
+    double rh(int n, double pool) => n > 0 ? n / data.applied * pool : 0.0;
+
+    // ── Middle column ──────────────────────────────────────────────────────
+    final mGap =
+        (data.interviewed > 0 && data.notInterviewed > 0) ? _gap : 0.0;
+    final mAvH = avH - mGap;
+    final iH = rh(data.interviewed, mAvH);
+    final nIH = rh(data.notInterviewed, mAvH);
+    final iTop = _vPad;
+    final nITop = _vPad + iH + mGap;
+
+    // ── Right column ───────────────────────────────────────────────────────
+    final rights = <(int, Color, String)>[
+      (data.successful, _cSuccess, 'Successful'),
+      (data.activeTotal, _cActive, 'Active'),
+      (data.rejectedTotal, _cRejected, 'Rejected'),
+      (data.noResponseTotal, _cNoResp, 'No Response'),
+    ].where((r) => r.$1 > 0).toList();
+
+    final nR = rights.length;
+    final rGapTotal = nR > 1 ? (nR - 1) * _gap : 0.0;
+    final rAvH = avH - rGapTotal;
+
+    final rects = <(Rect, Color, String, int)>[];
+    var rY = _vPad;
+    for (final (count, color, label) in rights) {
+      final h = rh(count, rAvH);
+      rects.add((Rect.fromLTWH(c2, rY, _nw, h), color, label, count));
+      rY += h + _gap;
+    }
+
+    // ── Flows ──────────────────────────────────────────────────────────────
+    void drawFlow(double sx, double sy1, double sy2, double tx, double ty1,
+        double ty2, Color c) {
+      if (sy2 - sy1 < 0.5 || ty2 - ty1 < 0.5) return;
+      final mx = (sx + tx) / 2;
+      final path = Path()
+        ..moveTo(sx, sy1)
+        ..cubicTo(mx, sy1, mx, ty1, tx, ty1)
+        ..lineTo(tx, ty2)
+        ..cubicTo(mx, ty2, mx, sy2, sx, sy2)
+        ..close();
+      canvas.drawPath(
+          path,
+          Paint()
+            ..color = c.withValues(alpha: 0.22)
+            ..style = PaintingStyle.fill);
+    }
+
+    // Left → middle
+    var lOff = _vPad;
+    if (data.interviewed > 0) {
+      final lH = rh(data.interviewed, avH);
+      drawFlow(c0 + _nw, lOff, lOff + lH, c1, iTop, iTop + iH, _cInterview);
+      lOff += lH;
+    }
+    if (data.notInterviewed > 0) {
+      final lH = rh(data.notInterviewed, avH);
+      drawFlow(c0 + _nw, lOff, lOff + lH, c1, nITop, nITop + nIH, _cNotInterviewed);
+    }
+
+    // Middle → right (track fill offset per right-node color)
+    var iOff = iTop;
+    var nIOff = nITop;
+    final rFill = {for (final (r, c, _, _) in rects) c: r.top};
+
+    void midFlow(int count, bool fromInterview, Color rc) {
+      if (count == 0) return;
+      final tH = rh(count, rAvH);
+      final tY1 = rFill[rc]!;
+      rFill[rc] = tY1 + tH;
+      if (fromInterview && data.interviewed > 0) {
+        final sH = count / data.interviewed * iH;
+        drawFlow(c1 + _nw, iOff, iOff + sH, c2, tY1, tY1 + tH, rc);
+        iOff += sH;
+      } else if (!fromInterview && data.notInterviewed > 0) {
+        final sH = count / data.notInterviewed * nIH;
+        drawFlow(c1 + _nw, nIOff, nIOff + sH, c2, tY1, tY1 + tH, rc);
+        nIOff += sH;
+      }
+    }
+
+    midFlow(data.successfulViaInterview, true, _cSuccess);
+    midFlow(data.successfulDirect, false, _cSuccess);
+    midFlow(data.activeInterviewing, true, _cActive);
+    midFlow(data.rejectedAfterInterview, true, _cRejected);
+    midFlow(data.noResponseAfterInterview, true, _cNoResp);
+    midFlow(data.activeApplied, false, _cActive);
+    midFlow(data.rejectedWithoutInterview, false, _cRejected);
+    midFlow(data.noResponseWithoutInterview, false, _cNoResp);
+
+    // ── Nodes ──────────────────────────────────────────────────────────────
+    const r = Radius.circular(3);
+    void node(Rect rect, Color c) => canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, r),
+        Paint()
+          ..color = c
+          ..style = PaintingStyle.fill);
+
+    node(Rect.fromLTWH(c0, _vPad, _nw, avH), primaryColor);
+    if (iH >= 1) node(Rect.fromLTWH(c1, iTop, _nw, iH), _cInterview);
+    if (nIH >= 1) node(Rect.fromLTWH(c1, nITop, _nw, nIH), _cNotInterviewed);
+    for (final (rect, color, _, _) in rects) {
+      node(rect, color);
+    }
+
+    // ── Labels ─────────────────────────────────────────────────────────────
+    void lbl(String text, Color c, double x, double y, TextAlign align,
+        double maxW) {
+      final tp = TextPainter(
+        text: TextSpan(
+            text: text,
+            style: TextStyle(
+                color: c,
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                height: 1.3)),
+        textAlign: align,
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: maxW);
+      tp.paint(canvas,
+          Offset(align == TextAlign.right ? x - tp.width : x, y - tp.height / 2));
+    }
+
+    // Left label
+    lbl('Applied\n${data.applied}', primaryColor, c0 - 4, _vPad + avH / 2,
+        TextAlign.right, _lw - 8);
+
+    // Right labels: resolve overlaps so every node always gets a label.
+    // Preferred Y = node centre. "Push down" pass ensures no two labels
+    // overlap (assuming ~24 px per 2-line label).
+    const lblH = 24.0;
+    final preferred = [
+      for (final (rect, _, _, _) in rects) rect.top + rect.height / 2,
+    ];
+    final resolved = List<double>.from(preferred);
+    for (var i = 1; i < resolved.length; i++) {
+      final minY = resolved[i - 1] + lblH + 2;
+      if (resolved[i] < minY) resolved[i] = minY;
+    }
+
+    final tickPaint = Paint()..strokeWidth = 0.7..style = PaintingStyle.stroke;
+    for (var i = 0; i < rects.length; i++) {
+      final (rect, color, label, count) = rects[i];
+      final nodeY = rect.top + rect.height / 2;
+      final labelY = resolved[i];
+      // Draw a small tick line when the label had to be shifted
+      if ((labelY - nodeY).abs() > 4) {
+        tickPaint.color = color.withValues(alpha: 0.45);
+        canvas.drawLine(
+            Offset(c2 + _nw + 2, nodeY), Offset(c2 + _nw + 6, labelY), tickPaint);
+      }
+      lbl('$label\n$count', color, c2 + _nw + 6, labelY, TextAlign.left, _rw - 8);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SankeyPainter old) =>
+      old.data != data || old.primaryColor != primaryColor;
 }

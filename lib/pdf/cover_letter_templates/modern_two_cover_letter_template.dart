@@ -93,7 +93,7 @@ class ModernTwoCoverLetterTemplate {
                     if (s.customization.showGreeting) ...[
                       pw.Text(
                         CvTranslations.translateGreeting(
-                          coverLetter.greeting,
+                          coverLetter.processedGreeting,
                           s.customization.language,
                         ),
                         style: pw.TextStyle(

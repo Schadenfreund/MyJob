@@ -464,6 +464,10 @@ class _JobApplicationPdfDialogState
       'POSITION': widget.application.position,
       if (widget.application.contactPerson?.isNotEmpty == true)
         'RECIPIENT_NAME': widget.application.contactPerson!,
+      if (widget.application.contactFirstName?.isNotEmpty == true)
+        'CONTACT_FIRST_NAME': widget.application.contactFirstName!,
+      if (widget.application.contactLastName?.isNotEmpty == true)
+        'CONTACT_LAST_NAME': widget.application.contactLastName!,
       if (widget.application.location?.isNotEmpty == true)
         'LOCATION': widget.application.location!,
       if (widget.application.salary?.isNotEmpty == true)

@@ -211,7 +211,8 @@ class TemplatesProvider extends ChangeNotifier {
     required String applicationId,
     String? companyName,
     String? jobTitle,
-    String? contactPerson,
+    String? contactFirstName,
+    String? contactLastName,
     String? location,
     String? salary,
   }) async {
@@ -226,7 +227,8 @@ class TemplatesProvider extends ChangeNotifier {
       applicationId: applicationId,
       companyName: companyName,
       jobTitle: jobTitle,
-      contactPerson: contactPerson,
+      contactFirstName: contactFirstName,
+      contactLastName: contactLastName,
       location: location,
       salary: salary,
     );

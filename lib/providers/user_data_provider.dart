@@ -45,6 +45,9 @@ class UserDataProvider with ChangeNotifier {
   String get profileSummary => currentProfile?.profileSummary ?? '';
   String get defaultCoverLetterBody =>
       currentProfile?.defaultCoverLetterBody ?? '';
+  String get defaultGreeting =>
+      currentProfile?.defaultGreeting ?? 'Dear Hiring Manager,';
+  String get defaultClosing => currentProfile?.defaultClosing ?? 'Kind regards,';
 
   bool get hasData {
     final profile = currentProfile;
@@ -125,9 +128,21 @@ class UserDataProvider with ChangeNotifier {
   Future<void> updateDefaultCoverLetterBody(String body) async {
     final profile = currentProfile;
     if (profile == null) return;
+    await _saveProfile(profile.copyWith(defaultCoverLetterBody: body));
+  }
 
-    final updated = profile.copyWith(defaultCoverLetterBody: body);
-    await _saveProfile(updated);
+  /// Update default cover letter greeting
+  Future<void> updateDefaultGreeting(String greeting) async {
+    final profile = currentProfile;
+    if (profile == null) return;
+    await _saveProfile(profile.copyWith(defaultGreeting: greeting));
+  }
+
+  /// Update default cover letter closing
+  Future<void> updateDefaultClosing(String closing) async {
+    final profile = currentProfile;
+    if (profile == null) return;
+    await _saveProfile(profile.copyWith(defaultClosing: closing));
   }
 
   /// Update profile summary

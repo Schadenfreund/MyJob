@@ -90,6 +90,115 @@ class InsertableChip {
   });
 }
 
+/// A standalone chip-row widget used to insert placeholders into a text field.
+///
+/// Call [onInsert] when a chip is tapped; the parent controls which controller
+/// receives the text (body, greeting, closing, etc.).
+class InsertableChipRow extends StatelessWidget {
+  const InsertableChipRow({
+    required this.chips,
+    required this.onInsert,
+    this.title,
+    this.footer,
+    super.key,
+  });
+
+  final List<InsertableChip> chips;
+  final void Function(String) onInsert;
+  final String? title;
+  final String? footer;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(8),
+        border:
+            Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null) ...[
+            Row(
+              children: [
+                Icon(Icons.touch_app_outlined,
+                    size: 14, color: theme.colorScheme.primary),
+                const SizedBox(width: 6),
+                Text(
+                  title!,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: chips.map((chip) {
+              return Tooltip(
+                message: chip.description,
+                child: InkWell(
+                  onTap: () => onInsert(chip.insertText),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(
+                      color:
+                          theme.colorScheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                          color: theme.colorScheme.primary
+                              .withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add,
+                            size: 12, color: theme.colorScheme.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          chip.label,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          if (footer != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              footer!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color:
+                    theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// A specialized editor for long text sections in the profile (Profile Summary, Cover Letter)
 ///
 /// Features:
@@ -306,87 +415,12 @@ class _ProfileLongTextEditorState extends State<ProfileLongTextEditor> {
     );
   }
 
-  Widget _buildInsertableChips(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.12),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (widget.chipsTitle != null) ...[
-            Row(
-              children: [
-                Icon(Icons.touch_app_outlined, size: 14, color: theme.colorScheme.primary),
-                const SizedBox(width: 6),
-                Text(
-                  widget.chipsTitle!,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-          ],
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: widget.insertableChips!.map((chip) {
-              return Tooltip(
-                message: chip.description,
-                child: InkWell(
-                  onTap: () => _insertAtCursor(chip.insertText),
-                  borderRadius: BorderRadius.circular(6),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add, size: 12, color: theme.colorScheme.primary),
-                        const SizedBox(width: 4),
-                        Text(
-                          chip.label,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontFamily: 'monospace',
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          if (widget.chipsFooter != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              widget.chipsFooter!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
-                fontSize: 11,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-        ],
-      ),
+  Widget _buildInsertableChips(ThemeData _) {
+    return InsertableChipRow(
+      chips: widget.insertableChips!,
+      onInsert: _insertAtCursor,
+      title: widget.chipsTitle,
+      footer: widget.chipsFooter,
     );
   }
 }
