@@ -53,7 +53,8 @@
       "Bash(python3:*)",
       "Bash(powershell -Command:*)",
       "Bash(powershell -File:*)",
-      "Bash(dart analyze:*)"
+      "Bash(dart analyze:*)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\flutter\\\\bin\\\\flutter.bat\" analyze lib/services/application_statistics_markdown_service.dart 2>&1 | Select-Object -First 30)"
     ]
   }
 }

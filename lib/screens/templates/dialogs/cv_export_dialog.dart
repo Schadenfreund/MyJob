@@ -6,6 +6,7 @@ import '../../../services/pdf_service.dart';
 import '../../../services/settings_service.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/platform_utils.dart';
+import '../../../utils/dialog_utils.dart';
 
 /// Dialog for exporting CV as PDF
 class CvExportDialog extends StatefulWidget {
@@ -156,21 +157,21 @@ class _CvExportDialogState extends State<CvExportDialog> {
         accentColor: settings.accentColor,
       );
 
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.tr('cv_exported_success')),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            action: SnackBarAction(
-              label: context.tr('open_folder'),
-              textColor: Colors.white,
-              onPressed: () {
-                PlatformUtils.openFolderAndSelect(result);
-              },
-            ),
-          ),
-        );
+      if (!mounted) return;
+
+      final shouldOpen = await DialogUtils.showExportSuccess(
+        context,
+        title: context.tr('export_successful_title'),
+        message: context.tr('pdf_export_done_message'),
+        noLabel: context.tr('no'),
+        openFolderLabel: context.tr('open_folder'),
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      if (shouldOpen) {
+        await PlatformUtils.openFolderAndSelect(result);
       }
     } catch (e) {
       if (mounted) {

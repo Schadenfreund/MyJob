@@ -13,7 +13,6 @@ import '../models/template_customization.dart';
 import '../models/cv_data.dart';
 
 import '../models/cover_letter.dart';
-import '../utils/platform_utils.dart';
 import '../models/user_data/work_experience.dart';
 import '../models/user_data/skill.dart';
 import '../constants/app_constants.dart';
@@ -539,17 +538,6 @@ class _JobApplicationPdfDialogState
     final bytes = await generatePdfBytes();
     final file = File(outputPath);
     await file.writeAsBytes(bytes);
-
-    // Auto-open exports folder after successful export
-    await _openExportsFolder();
-  }
-
-  /// Open the exports folder in the system file explorer
-  Future<void> _openExportsFolder() async {
-    final exportsPath = _getOrCreateExportsFolder();
-    if (exportsPath == null) return;
-
-    await PlatformUtils.openFolder(exportsPath);
   }
 
   @override

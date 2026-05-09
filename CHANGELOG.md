@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.4] - 2026-05-09
+
+### Changed
+
+#### Export Report
+
+- **Trimmed report structure** — Removed the Full Application Log and Status
+  History sections. The export now contains: Header, At a Glance, Active
+  Applications, and Closed Applications only.
+- **Removed rate metrics** — Response rate, interview rate, and success rate
+  line removed from the At a Glance table (redundant with the percentage
+  column).
+- **Removed auxiliary columns** — Salary and Contact columns removed from
+  the Interviewing and Awaiting tables; Drafts sub-section removed from the
+  Active Applications section.
+- **Removed follow-up hint** — The "sorted by longest wait / follow up after
+  14 days" note removed from the Awaiting Response section.
+- **DE: "Im Gespräch" → "Vorstellungsgespräch"** — Used in the At a Glance
+  table and the Interviewing section header.
+- **Column alignment** — At a Glance table now uses left-aligned status
+  column and right-aligned count/share columns (`| :---- | ----: | ----: |`).
+
+#### PDF Export — Open Folder Dialog
+
+- **Post-export folder dialog** — After exporting a PDF from the PDF editor
+  (CV or cover letter), a dialog now appears asking whether to open the
+  containing folder. Matches the existing export report flow.
+- **CV Export dialog** — The same dialog is shown after exporting from the
+  Templates tab CV export dialog (replaces the snackbar with "Open Folder"
+  action).
+- **`DialogUtils.showExportSuccess`** — Extracted shared utility in
+  `dialog_utils.dart` used by the PDF editor, the CV export dialog, and the
+  statistics export. DRY: no inline `showDialog<bool>` blocks at call sites.
+
+---
+
 ## [1.2.3] - 2026-05-07
 
 ### Added

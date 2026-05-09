@@ -229,6 +229,7 @@
   "stats_exported": "Statistiken erfolgreich exportiert!\n2 Dateien erstellt: EN und DE",
   "export_successful_title": "Export erfolgreich",
   "export_successful_message": "Zwei Markdown-Dateien wurden erstellt:\n\n• Application_Statistics_EN_{date}.md\n• Application_Statistics_DE_{date}.md\n\nMöchtest du den Ordner öffnen?",
+  "pdf_export_done_message": "Dein PDF wurde erfolgreich gespeichert.\n\nMöchtest du den Ordner öffnen?",
   "no": "Nein",
   "open_folder": "Ordner öffnen",
   "failed_export_stats": "Statistiken konnten nicht exportiert werden: {error}",

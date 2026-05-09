@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:path/path.dart' as path;
 import '../localization/app_localizations.dart';
+import '../utils/dialog_utils.dart';
+import '../utils/platform_utils.dart';
 import 'package:printing/printing.dart';
 import '../models/template_style.dart';
 import '../models/template_customization.dart';
@@ -302,13 +303,21 @@ abstract class BaseTemplatePdfPreviewDialogState<
       if (result == null || !mounted) return;
 
       _controller.setGenerating(true);
-
       await exportPdf(context, result);
-
       if (!mounted) return;
       _controller.setGenerating(false);
 
-      showSuccess('PDF exported to ${path.basename(result)}');
+      final shouldOpen = await DialogUtils.showExportSuccess(
+        context,
+        title: context.tr('export_successful_title'),
+        message: context.tr('pdf_export_done_message'),
+        noLabel: context.tr('no'),
+        openFolderLabel: context.tr('open_folder'),
+      );
+
+      if (shouldOpen && mounted) {
+        await PlatformUtils.openFolderAndSelect(result);
+      }
     } catch (e) {
       if (!mounted) return;
       _controller.setGenerating(false);

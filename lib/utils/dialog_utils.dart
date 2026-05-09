@@ -224,6 +224,39 @@ class DialogUtils {
   }
 
   // ============================================================================
+  // EXPORT SUCCESS DIALOG
+  // ============================================================================
+
+  /// Shows a post-export dialog offering to open the containing folder.
+  /// Returns true if the user chose to open the folder.
+  static Future<bool> showExportSuccess(
+    BuildContext context, {
+    required String title,
+    required String message,
+    required String noLabel,
+    required String openFolderLabel,
+  }) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(noLabel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(openFolderLabel),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  // ============================================================================
   // INPUT DIALOGS
   // ============================================================================
 

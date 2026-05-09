@@ -964,27 +964,16 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
 
       UIUtils.showSuccess(context, context.tr('stats_exported'));
 
-      // Offer to open folder
-      final shouldOpen = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(context.tr('export_successful_title')),
-          content: Text(context.tr('export_successful_message',
-              {'date': result.dateString ?? ''})),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(context.tr('no')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(context.tr('open_folder')),
-            ),
-          ],
-        ),
+      final shouldOpen = await DialogUtils.showExportSuccess(
+        context,
+        title: context.tr('export_successful_title'),
+        message: context.tr('export_successful_message',
+            {'date': result.dateString ?? ''}),
+        noLabel: context.tr('no'),
+        openFolderLabel: context.tr('open_folder'),
       );
 
-      if (shouldOpen == true) {
+      if (shouldOpen) {
         await PlatformUtils.openFolder(outputDir);
       }
     } catch (e) {

@@ -24,29 +24,18 @@ class ApplicationStatisticsMarkdownService {
     final stats = _calculateStatistics(applications);
     final byStatus = _groupByStatus(applications);
 
-    final sortedByDate = applications.toList()
-      ..sort((a, b) {
-        if (a.applicationDate == null && b.applicationDate == null) return 0;
-        if (a.applicationDate == null) return 1;
-        if (b.applicationDate == null) return -1;
-        return b.applicationDate!.compareTo(a.applicationDate!);
-      });
-
     final interviewing = byStatus[ApplicationStatus.interviewing] ?? [];
     final awaiting = byStatus[ApplicationStatus.applied] ?? []
       ..sort((a, b) =>
           _daysSince(b.applicationDate).compareTo(_daysSince(a.applicationDate)));
-    final drafts = byStatus[ApplicationStatus.draft] ?? [];
     final successful = byStatus[ApplicationStatus.successful] ?? [];
     final rejected = byStatus[ApplicationStatus.rejected] ?? [];
     final noResponse = byStatus[ApplicationStatus.noResponse] ?? [];
 
     _writeHeader(buffer, stats, isGerman);
     _writeAtAGlance(buffer, stats, isGerman);
-    _writeActivePipeline(buffer, interviewing, awaiting, drafts, isGerman);
+    _writeActivePipeline(buffer, interviewing, awaiting, isGerman);
     _writeOutcomes(buffer, successful, rejected, noResponse, isGerman);
-    _writeFullLog(buffer, sortedByDate, isGerman);
-    _writeStatusTimeline(buffer, sortedByDate, isGerman);
 
     return buffer.toString();
   }
@@ -86,9 +75,9 @@ class ApplicationStatisticsMarkdownService {
 
     if (isGerman) {
       buffer.writeln('| Status | Anzahl | Anteil |');
-      buffer.writeln('|--------|-------:|-------:|');
+      buffer.writeln('| :---- | ----: | ----: |');
       buffer.writeln(
-          '| Im Gespräch | ${stats['interviewing']} | ${pct(stats['interviewing'] as int)} |');
+          '| Vorstellungsgespräch | ${stats['interviewing']} | ${pct(stats['interviewing'] as int)} |');
       buffer.writeln(
           '| Beworben / Wartend | ${stats['applied']} | ${pct(stats['applied'] as int)} |');
       buffer.writeln(
@@ -103,12 +92,9 @@ class ApplicationStatisticsMarkdownService {
           '| Keine Antwort | ${stats['noResponse']} | ${pct(stats['noResponse'] as int)} |');
       buffer.writeln(
           '| **Abgeschlossen gesamt** | **${stats['closed']}** | **${pct(stats['closed'] as int)}** |');
-      buffer.writeln();
-      buffer.writeln(
-          '**Antwortquote:** ${stats['responseRate']}% · **Gesprächsquote:** ${stats['interviewRate']}% · **Erfolgsquote:** ${stats['successRate']}%');
     } else {
       buffer.writeln('| Status | Count | Share |');
-      buffer.writeln('|--------|------:|------:|');
+      buffer.writeln('| :---- | ----: | ----: |');
       buffer.writeln(
           '| Interviewing | ${stats['interviewing']} | ${pct(stats['interviewing'] as int)} |');
       buffer.writeln(
@@ -125,9 +111,6 @@ class ApplicationStatisticsMarkdownService {
           '| No Response | ${stats['noResponse']} | ${pct(stats['noResponse'] as int)} |');
       buffer.writeln(
           '| **Closed total** | **${stats['closed']}** | **${pct(stats['closed'] as int)}** |');
-      buffer.writeln();
-      buffer.writeln(
-          '**Response rate:** ${stats['responseRate']}% · **Interview rate:** ${stats['interviewRate']}% · **Success rate:** ${stats['successRate']}%');
     }
 
     buffer.writeln();
@@ -139,36 +122,32 @@ class ApplicationStatisticsMarkdownService {
     StringBuffer buffer,
     List<JobApplication> interviewing,
     List<JobApplication> awaiting,
-    List<JobApplication> drafts,
     bool isGerman,
   ) {
-    final total = interviewing.length + awaiting.length + drafts.length;
+    final total = interviewing.length + awaiting.length;
     if (total == 0) return;
 
     buffer.writeln(isGerman
         ? '## Aktive Bewerbungen ($total)'
-        : '## Active Pipeline ($total)');
+        : '## Active Applications ($total)');
     buffer.writeln();
 
     // ── Interviewing ──────────────────────────────────────────────────────────
     if (interviewing.isNotEmpty) {
       buffer.writeln(isGerman
-          ? '### Im Gespräch (${interviewing.length})'
+          ? '### Vorstellungsgespräch (${interviewing.length})'
           : '### Interviewing (${interviewing.length})');
       buffer.writeln();
       buffer.writeln(isGerman
-          ? '| Beworben | Unternehmen | Position | Standort | Tage im Status | Gehalt | Kontakt |'
-          : '| Applied | Company | Position | Location | Days in Stage | Salary | Contact |');
-      buffer.writeln(
-          '|---------|-------------|----------|----------|--------------|--------|---------|');
+          ? '| Beworben | Unternehmen | Position | Standort | Tage im Status |'
+          : '| Applied | Company | Position | Location | Days in Stage |');
+      buffer.writeln('|---------|-------------|----------|----------|--------------|');
 
       for (final app in interviewing) {
         final applied = _fmtDate(app.applicationDate);
         final days = _daysSince(_currentStatusDate(app));
-        final salary = _orDash(app.salary);
-        final contact = _orDash(app.contactPerson);
         buffer.writeln(
-            '| $applied | ${app.company} | ${app.position} | ${app.location ?? '-'} | ${days}d | $salary | $contact |');
+            '| $applied | ${app.company} | ${app.position} | ${app.location ?? '-'} | ${days}d |');
       }
       buffer.writeln();
     }
@@ -179,45 +158,16 @@ class ApplicationStatisticsMarkdownService {
           ? '### Wartend auf Antwort (${awaiting.length})'
           : '### Awaiting Response (${awaiting.length})');
       buffer.writeln();
-      if (isGerman) {
-        buffer.writeln(
-            '*Sortiert nach längster Wartezeit. Bewerbungen mit > 14 Tagen ohne Antwort können nachgehakt werden.*');
-      } else {
-        buffer.writeln(
-            '*Sorted by longest wait. Applications with > 14 days without reply may be worth following up.*');
-      }
-      buffer.writeln();
       buffer.writeln(isGerman
-          ? '| Beworben | Unternehmen | Position | Standort | Wartezeit | Gehalt |'
-          : '| Applied | Company | Position | Location | Waiting | Salary |');
-      buffer.writeln(
-          '|---------|-------------|----------|----------|---------|--------|');
+          ? '| Beworben | Unternehmen | Position | Standort | Wartezeit |'
+          : '| Applied | Company | Position | Location | Waiting |');
+      buffer.writeln('|---------|-------------|----------|----------|---------|');
 
       for (final app in awaiting) {
         final applied = _fmtDate(app.applicationDate);
         final waiting = _daysSince(app.applicationDate);
-        final salary = _orDash(app.salary);
         buffer.writeln(
-            '| $applied | ${app.company} | ${app.position} | ${app.location ?? '-'} | ${waiting}d | $salary |');
-      }
-      buffer.writeln();
-    }
-
-    // ── Drafts ────────────────────────────────────────────────────────────────
-    if (drafts.isNotEmpty) {
-      buffer.writeln(isGerman
-          ? '### Entwürfe (${drafts.length})'
-          : '### Drafts (${drafts.length})');
-      buffer.writeln();
-      buffer.writeln(isGerman
-          ? '| Unternehmen | Position | Standort | Zuletzt bearbeitet |'
-          : '| Company | Position | Location | Last Edited |');
-      buffer.writeln('|-------------|----------|----------|--------------------|');
-
-      for (final app in drafts) {
-        final edited = _fmtDate(app.lastUpdated ?? app.applicationDate);
-        buffer.writeln(
-            '| ${app.company} | ${app.position} | ${app.location ?? '-'} | $edited |');
+            '| $applied | ${app.company} | ${app.position} | ${app.location ?? '-'} | ${waiting}d |');
       }
       buffer.writeln();
     }
@@ -238,7 +188,7 @@ class ApplicationStatisticsMarkdownService {
 
     buffer.writeln(isGerman
         ? '## Abgeschlossene Bewerbungen ($total)'
-        : '## Outcomes ($total)');
+        : '## Closed Applications ($total)');
     buffer.writeln();
 
     // ── Successful ────────────────────────────────────────────────────────────
@@ -248,19 +198,18 @@ class ApplicationStatisticsMarkdownService {
           : '### ✓ Successful (${successful.length})');
       buffer.writeln();
       buffer.writeln(isGerman
-          ? '| Beworben | Unternehmen | Position | Standort | Angebot am | Dauer | Gehalt |'
-          : '| Applied | Company | Position | Location | Offer Date | Days | Salary |');
+          ? '| Beworben | Unternehmen | Position | Standort | Angebot am | Dauer |'
+          : '| Applied | Company | Position | Location | Offer Date | Days |');
       buffer.writeln(
-          '|---------|-------------|----------|----------|------------|-------|--------|');
+          '|---------|-------------|----------|----------|------------|-------|');
 
       for (final app in successful) {
         final applied = _fmtDate(app.applicationDate);
         final outcomeDate = _getOutcomeDate(app);
         final offerDate = _fmtDate(outcomeDate);
         final days = _daysBetween(app.applicationDate, outcomeDate);
-        final salary = _orDash(app.salary);
         buffer.writeln(
-            '| $applied | ${app.company} | ${app.position} | ${app.location ?? '-'} | $offerDate | $days | $salary |');
+            '| $applied | ${app.company} | ${app.position} | ${app.location ?? '-'} | $offerDate | $days |');
       }
       buffer.writeln();
     }
@@ -312,131 +261,6 @@ class ApplicationStatisticsMarkdownService {
       }
       buffer.writeln();
     }
-
-    buffer.writeln('---');
-    buffer.writeln();
-  }
-
-  static void _writeFullLog(
-      StringBuffer buffer, List<JobApplication> applications, bool isGerman) {
-    buffer.writeln(isGerman
-        ? '## Vollständiger Bewerbungslog (${applications.length})'
-        : '## Full Application Log (${applications.length})');
-    buffer.writeln();
-    buffer.writeln(isGerman
-        ? 'Alle Bewerbungen chronologisch, neueste zuerst. Notizen und Statusverläufe finden sich im Abschnitt *Statusverlauf* unten.'
-        : 'All applications chronologically, most recent first. Notes and status histories are in the *Status History* section below.');
-    buffer.writeln();
-
-    if (applications.isEmpty) {
-      buffer.writeln(
-          isGerman ? '*Keine Bewerbungen vorhanden.*' : '*No applications.*');
-      buffer.writeln();
-      return;
-    }
-
-    buffer.writeln(isGerman
-        ? '| Datum | Unternehmen | Position | Standort | Status | Gehalt |'
-        : '| Date | Company | Position | Location | Status | Salary |');
-    buffer.writeln('|-------|-------------|----------|----------|--------|--------|');
-
-    for (final app in applications) {
-      final date = app.applicationDate != null
-          ? _fmtDate(app.applicationDate)
-          : (isGerman ? 'Entwurf' : 'Draft');
-      final status =
-          isGerman ? _getStatusLabelDe(app.status) : _getStatusLabel(app.status);
-      final salary = app.salary?.isNotEmpty == true
-          ? app.salary!.replaceAll('|', '\\|')
-          : '-';
-      buffer.writeln(
-          '| $date | ${app.company} | ${app.position} | ${app.location ?? '-'} | $status | $salary |');
-    }
-
-    buffer.writeln();
-    buffer.writeln('---');
-    buffer.writeln();
-  }
-
-  static void _writeStatusTimeline(
-      StringBuffer buffer, List<JobApplication> applications, bool isGerman) {
-    final relevant = applications
-        .where((app) =>
-            app.status != ApplicationStatus.draft ||
-            app.safeStatusHistory.isNotEmpty)
-        .toList();
-
-    if (relevant.isEmpty) return;
-
-    buffer.writeln(isGerman ? '## Statusverlauf' : '## Status History');
-    buffer.writeln();
-    buffer.writeln(isGerman
-        ? 'Detaillierter Statusverlauf jeder Bewerbung inkl. Notizen, neueste zuerst.'
-        : 'Detailed status progression per application including notes, most recent first.');
-    buffer.writeln();
-
-    for (final app in relevant) {
-      final statusLabel = isGerman
-          ? _getStatusLabelDe(app.status)
-          : _getStatusLabel(app.status);
-      buffer.writeln('### ${app.company} – ${app.position} ($statusLabel)');
-      buffer.writeln();
-
-      // Metadata line
-      final meta = <String>[];
-      if (app.applicationDate != null) {
-        meta.add(isGerman
-            ? 'Beworben: ${_fmtDate(app.applicationDate)}'
-            : 'Applied: ${_fmtDate(app.applicationDate)}');
-      }
-      if (app.location?.isNotEmpty == true) {
-        meta.add(isGerman ? 'Ort: ${app.location}' : 'Location: ${app.location}');
-      }
-      if (app.salary?.isNotEmpty == true) {
-        meta.add(isGerman ? 'Gehalt: ${app.salary}' : 'Salary: ${app.salary}');
-      }
-      if (app.contactPerson?.isNotEmpty == true) {
-        meta.add(isGerman
-            ? 'Kontakt: ${app.contactPerson}'
-            : 'Contact: ${app.contactPerson}');
-        if (app.contactEmail?.isNotEmpty == true) {
-          meta.last += ' (${app.contactEmail})';
-        }
-      }
-      if (meta.isNotEmpty) {
-        buffer.writeln(meta.join(' · '));
-        buffer.writeln();
-      }
-
-      // Notes
-      if (app.notes?.isNotEmpty == true) {
-        buffer.writeln(isGerman ? '> **Notiz:** ${app.notes}' : '> **Note:** ${app.notes}');
-        buffer.writeln();
-      }
-
-      // Status history table
-      final history = _effectiveHistory(app);
-      if (history.isEmpty) {
-        buffer.writeln(
-            isGerman ? '*Kein Verlauf vorhanden.*' : '*No history available.*');
-      } else {
-        buffer.writeln(isGerman
-            ? '| Datum | Status | Notizen |'
-            : '| Date | Status | Notes |');
-        buffer.writeln('|-------|--------|---------|');
-        for (final entry in history) {
-          final date = _fmtDate(entry.changedAt);
-          final entryStatus = isGerman
-              ? _getStatusLabelDe(entry.status)
-              : _getStatusLabel(entry.status);
-          final notes = entry.notes?.isNotEmpty == true
-              ? entry.notes!.replaceAll('\n', ' ').replaceAll('|', '\\|')
-              : '-';
-          buffer.writeln('| $date | $entryStatus | $notes |');
-        }
-      }
-      buffer.writeln();
-    }
   }
 
   // ===========================================================================
@@ -454,9 +278,6 @@ class ApplicationStatisticsMarkdownService {
     final d = to.difference(from).inDays;
     return '${d}d';
   }
-
-  static String _orDash(String? value) =>
-      value?.isNotEmpty == true ? value! : '-';
 
   /// Date when the application last transitioned to its current status.
   static DateTime? _currentStatusDate(JobApplication app) {
@@ -480,28 +301,6 @@ class ApplicationStatisticsMarkdownService {
           .changedAt;
     }
     return app.lastUpdated;
-  }
-
-  /// Returns actual history if present, otherwise synthesises from legacy fields.
-  static List<StatusChange> _effectiveHistory(JobApplication app) {
-    if (app.safeStatusHistory.isNotEmpty) {
-      return app.chronologicalStatusHistory;
-    }
-    final synthetic = <StatusChange>[];
-    final created = app.applicationDate ?? app.lastUpdated;
-    if (created != null) {
-      synthetic.add(StatusChange(
-          status: app.status == ApplicationStatus.draft
-              ? ApplicationStatus.draft
-              : ApplicationStatus.applied,
-          changedAt: created));
-    }
-    if (app.status != ApplicationStatus.draft &&
-        app.status != ApplicationStatus.applied &&
-        app.lastUpdated != null) {
-      synthetic.add(StatusChange(status: app.status, changedAt: app.lastUpdated!));
-    }
-    return synthetic;
   }
 
   // ===========================================================================
@@ -529,9 +328,6 @@ class ApplicationStatisticsMarkdownService {
     final active = draft + applied + interviewing;
     final closed = successful + rejected + noResponse;
 
-    String rate(num n) =>
-        total > 0 ? (n / total * 100).toStringAsFixed(1) : '0.0';
-
     return {
       'total': total,
       'draft': draft,
@@ -542,9 +338,6 @@ class ApplicationStatisticsMarkdownService {
       'noResponse': noResponse,
       'active': active,
       'closed': closed,
-      'successRate': rate(successful),
-      'responseRate': rate(total - noResponse),
-      'interviewRate': rate(interviewing + successful),
     };
   }
 
@@ -564,22 +357,4 @@ class ApplicationStatisticsMarkdownService {
     }
     return grouped;
   }
-
-  static String _getStatusLabel(ApplicationStatus status) => switch (status) {
-        ApplicationStatus.draft => 'Draft',
-        ApplicationStatus.applied => 'Applied',
-        ApplicationStatus.interviewing => 'Interviewing',
-        ApplicationStatus.successful => 'Successful',
-        ApplicationStatus.rejected => 'Rejected',
-        ApplicationStatus.noResponse => 'No Response',
-      };
-
-  static String _getStatusLabelDe(ApplicationStatus status) => switch (status) {
-        ApplicationStatus.draft => 'Entwurf',
-        ApplicationStatus.applied => 'Beworben',
-        ApplicationStatus.interviewing => 'Im Gespräch',
-        ApplicationStatus.successful => 'Erfolgreich',
-        ApplicationStatus.rejected => 'Abgelehnt',
-        ApplicationStatus.noResponse => 'Keine Antwort',
-      };
 }
