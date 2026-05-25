@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.5] - 2026-05-25
+
+### Changed
+
+#### Export Report
+
+- **Simplified header** — Removed the total count from the header line; it
+  now shows only the generation date. Total is in the At a Glance table.
+- **Redesigned At a Glance table** — Dropped the percentage/share column.
+  New rows: `Bewerbungen gesamt`, `Aktive Bewerbungen`, `Abgelehnt`,
+  `Keine Antwort`, and `*Vorstellungsgespräche bisher*` (italic). Cleaner
+  and matches real reporting needs.
+- **Active count excludes drafts** — `Aktive Bewerbungen` = applied +
+  interviewing only; drafts are not submitted applications.
+- **Interview counter** — `Vorstellungsgespräche bisher` counts every
+  application that ever reached the interviewing stage (current interviewers
+  plus historical, sourced from status history with fallback to the legacy
+  `interviewDate` field).
+- **Interview annotation in Rejected** — When a rejected application had an
+  interview, the rejection date cell shows the interview date inline:
+  `30.03.2026 *(Vorstellungsgespräch am 25.03.2026)*` (DE) /
+  `*(Interview on 25.03.2026)*` (EN).
+- **DE: "Wartend auf Antwort" → "Warten auf Antwort"** — Grammatically
+  correct German.
+
+---
+
 ## [1.2.4] - 2026-05-09
 
 ### Changed

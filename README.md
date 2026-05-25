@@ -253,5 +253,5 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ---
 
-**Version**: 1.2.4
+**Version**: 1.2.5
 **Author**: Ivan Buric
