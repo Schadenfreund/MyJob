@@ -36,6 +36,11 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+Set-Location -LiteralPath $PSScriptRoot
+. (Join-Path $PSScriptRoot 'scripts/release-package.ps1')
+if ($SkipBuild -and ($BumpMajor -or $BumpMinor -or $BumpPatch)) {
+    throw 'A version bump requires a fresh build.'
+}
 
 # ============== HELP ==============
 if ($Help) {
@@ -203,23 +208,6 @@ function New-GitTag {
     return $true
 }
 
-function New-Checksum {
-    param([string]$FilePath)
-
-    $hash = Get-FileHash -Path $FilePath -Algorithm SHA256
-    $checksumFile = "$FilePath.sha256"
-    $checksumContent = "$($hash.Hash.ToLower())  $(Split-Path $FilePath -Leaf)"
-
-    if ($DryRun) {
-        Write-Host "  [DRY RUN] Would create checksum: $checksumFile" -ForegroundColor Cyan
-    } else {
-        $checksumContent | Out-File $checksumFile -Encoding ASCII -NoNewline
-        Write-Host "  Created checksum: $checksumFile" -ForegroundColor Green
-    }
-
-    return $checksumFile
-}
-
 # ============== MAIN SCRIPT ==============
 
 Write-Host ""
@@ -263,8 +251,9 @@ Write-Host "[3/8] Validating Changelog" -ForegroundColor Yellow
 Test-ChangelogEntry -Version $Version | Out-Null
 
 # Configuration
-$ReleaseName = "$AppName-v$Version-windows"
-$BuildPath = "build\windows\x64\runner\Release"
+$PackageVersion = if ($DryRun -and ($BumpMajor -or $BumpMinor -or $BumpPatch)) { "$Version+1" }
+    else { Get-ReleaseVersion $PSScriptRoot }
+$ReleaseName = "$AppName-v$PackageVersion-windows"
 $OutputPath = "releases\$ReleaseName"
 
 if ($DryRun) {
@@ -288,67 +277,32 @@ if ($DryRun) {
     exit 0
 }
 
-# Step 4: Clean previous builds
-Write-Host ""
-Write-Host "[4/8] Cleaning previous builds..." -ForegroundColor Yellow
-if (Test-Path "build") {
-    Remove-Item -Recurse -Force "build"
-}
-if (Test-Path "releases\$ReleaseName") {
-    Remove-Item -Recurse -Force "releases\$ReleaseName"
-}
-
-# Step 5: Build
-if ($SkipBuild) {
-    Write-Host ""
-    Write-Host "[5/8] Skipping Flutter build (using existing)" -ForegroundColor Gray
-} else {
-    Write-Host ""
-    Write-Host "[5/8] Building Windows release..." -ForegroundColor Yellow
+$BuildSource = $null
+if (-not $SkipBuild) {
     flutter clean
-    flutter pub get --offline
-    flutter build windows --release
-
-    if (-not (Test-Path "$BuildPath\$ExeName")) {
-        Write-Host "Build failed! $ExeName not found." -ForegroundColor Red
-        exit 1
+    if ($LASTEXITCODE -ne 0) { throw 'Flutter clean failed.' }
+    flutter pub get
+    if ($LASTEXITCODE -ne 0) { throw 'Flutter dependency resolution failed.' }
+    $BuildSource = @(Get-ReleaseSourceManifest $PSScriptRoot)
+    flutter build windows --release --no-pub
+    if ($LASTEXITCODE -ne 0) { throw 'Flutter Windows build failed.' }
+}
+$FlutterExecutable = if (-not $SkipBuild) { 'flutter' }
+$release = New-WindowsReleasePackage -ProjectRoot $PSScriptRoot -AppName $AppName -ExeName $ExeName `
+    -BuildSource $BuildSource -FlutterExecutable $FlutterExecutable -WriteChecksum -PreparePackage {
+    param($OutputPath, $SourcePath)
+    # Copy DEMO_DATA folder (sample CV and cover letter templates)
+    Write-Host "  Copying demo data..." -ForegroundColor Gray
+    if (Test-Path -LiteralPath (Join-Path $SourcePath 'DEMO_DATA')) {
+        Copy-Item -LiteralPath (Join-Path $SourcePath 'DEMO_DATA') -Destination $OutputPath -Recurse
     }
-    Write-Host "  Build successful!" -ForegroundColor Green
-}
 
-# Step 6: Create release package
-Write-Host ""
-Write-Host "[6/8] Creating release package..." -ForegroundColor Yellow
-New-Item -ItemType Directory -Force -Path $OutputPath | Out-Null
+    # Create UserData structure (for portable app)
+    Write-Host "  Creating UserData structure..." -ForegroundColor Gray
+    New-Item -ItemType Directory -Force -Path "$OutputPath\UserData" | Out-Null
 
-# Copy executable and DLLs
-Write-Host "  Copying executable and DLLs..." -ForegroundColor Gray
-Copy-Item "$BuildPath\$ExeName" $OutputPath
-Get-ChildItem "$BuildPath\*.dll" | Copy-Item -Destination $OutputPath
-
-# Copy data folder (flutter assets)
-Write-Host "  Copying app resources..." -ForegroundColor Gray
-Copy-Item "$BuildPath\data" $OutputPath -Recurse
-
-# Copy documentation
-Write-Host "  Copying documentation..." -ForegroundColor Gray
-Copy-Item "README.md" $OutputPath -ErrorAction SilentlyContinue
-Copy-Item "LICENSE" $OutputPath -ErrorAction SilentlyContinue
-Copy-Item "CHANGELOG.md" $OutputPath -ErrorAction SilentlyContinue
-Copy-Item "QUICK_START.md" $OutputPath -ErrorAction SilentlyContinue
-
-# Copy DEMO_DATA folder (sample CV and cover letter templates)
-Write-Host "  Copying demo data..." -ForegroundColor Gray
-if (Test-Path "DEMO_DATA") {
-    Copy-Item "DEMO_DATA" $OutputPath -Recurse
-}
-
-# Create UserData structure (for portable app)
-Write-Host "  Creating UserData structure..." -ForegroundColor Gray
-New-Item -ItemType Directory -Force -Path "$OutputPath\UserData" | Out-Null
-
-# Create UserData README
-@"
+    # Create UserData README
+    @"
 # UserData Folder
 
 This folder contains your personal settings and configurations.
@@ -366,71 +320,8 @@ This folder contains your personal settings and configurations.
 - **Backup Recommended:**
   Consider backing up this folder before major updates.
 "@ | Out-File "$OutputPath\UserData\README.txt" -Encoding UTF8
-
-Write-Host "  Release package created!" -ForegroundColor Green
-
-# Step 7: Create ZIP archive and checksum
-Write-Host ""
-Write-Host "[7/8] Creating ZIP archive and checksum..." -ForegroundColor Yellow
-$ZipPath = "releases\$ReleaseName.zip"
-if (Test-Path $ZipPath) {
-    Remove-Item $ZipPath
 }
 
-Compress-Archive -Path $OutputPath -DestinationPath $ZipPath -CompressionLevel Optimal
-
-# Get file size
-$ZipSize = (Get-Item $ZipPath).Length / 1MB
-Write-Host "  ZIP created: $ZipPath ($([math]::Round($ZipSize, 2)) MB)" -ForegroundColor Green
-
-# Create SHA256 checksum
-New-Checksum -FilePath $ZipPath | Out-Null
-
-# Step 8: Git tagging
-Write-Host ""
-if ($AutoTag) {
-    Write-Host "[8/8] Creating Git Tag..." -ForegroundColor Yellow
-    New-GitTag -Version $Version | Out-Null
-} else {
-    Write-Host "[8/8] Skipping Git Tag (use -AutoTag to enable)" -ForegroundColor Gray
-}
-
-# Summary
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Release Package Summary" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Version:      $Version" -ForegroundColor White
-Write-Host "  Package:      $ZipPath" -ForegroundColor White
-Write-Host "  Checksum:     $ZipPath.sha256" -ForegroundColor White
-Write-Host "  Size:         $([math]::Round($ZipSize, 2)) MB" -ForegroundColor White
-Write-Host "  Folder:       $OutputPath" -ForegroundColor White
-Write-Host ""
-
-# Package Contents
-Write-Host "Package Contents:" -ForegroundColor Yellow
-Get-ChildItem $OutputPath -Recurse -File | Select-Object -ExpandProperty FullName | ForEach-Object {
-    $relativePath = $_.Substring((Get-Item $OutputPath).FullName.Length + 1)
-    Write-Host "  - $relativePath" -ForegroundColor Gray
-}
-
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Next Steps" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-
-if (-not $AutoTag) {
-    Write-Host "1. Create Git tag (or re-run with -AutoTag):" -ForegroundColor White
-    Write-Host "   git tag -a v$Version -m `"Release v$Version`"" -ForegroundColor Gray
-    Write-Host "   git push origin v$Version" -ForegroundColor Gray
-    Write-Host ""
-}
-
-Write-Host "2. Create GitHub Release at:" -ForegroundColor White
-Write-Host "   https://github.com/Schadenfreund/MyJob/releases/new?tag=v$Version" -ForegroundColor Gray
-Write-Host ""
-Write-Host "3. Upload these files to the release:" -ForegroundColor White
-Write-Host "   - $ZipPath" -ForegroundColor Gray
-Write-Host "   - $ZipPath.sha256" -ForegroundColor Gray
-Write-Host ""
-Write-Host "Release build complete!" -ForegroundColor Green
+if ($AutoTag) { New-GitTag -Version $Version | Out-Null }
+Write-Host "Created $($release.ZipPath) with $($release.SourceFiles) source files." -ForegroundColor Green
+Write-Host "Test folder: $($release.OutputPath)"
