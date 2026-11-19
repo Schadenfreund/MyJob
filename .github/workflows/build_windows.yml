@@ -1,0 +1,38 @@
+name: Build Windows release
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.8'
+          channel: stable
+          cache: true
+
+      - name: Build and verify the Windows release
+        shell: powershell
+        run: ./build-release.ps1
+
+      - name: Upload the verified release
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyJob-Windows-release
+          path: |
+            releases/*.zip
+            releases/*.zip.sha256
+          if-no-files-found: error
